@@ -872,4 +872,49 @@ describe('GTPL built-in control flow', () => {
     expect(result.diagnostics.some(({ code }) => code === 'GTPL3102')).toBe(true);
   });
 
+
+  it('preserves following siblings after surplus closing braces around a switch', () => {
+    const source = '@switch (role) { @case ("admin") { <StLabel /> } } } <StButton />';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('switch-block');
+    if (block?.kind !== 'switch-block') return;
+    expect(block.cases).toHaveLength(1);
+    expect(result.nodes.some((node) => node.kind === 'element' && node.name === 'StButton')).toBe(true);
+    expect(result.diagnostics.some(({ code }) => code === 'GTPL3106')).toBe(false);
+  });
+
+  it('recovers a valid switch case after a malformed case header', () => {
+    const source = '@switch (role) { @case "broken" {} @case ("admin") { <StLabel /> } } <StButton />';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('switch-block');
+    if (block?.kind !== 'switch-block') return;
+    expect(block.cases.some(({ expressions }) => expressions.includes('"admin"'))).toBe(true);
+    expect(result.nodes.some((node) => node.kind === 'element' && node.name === 'StButton')).toBe(true);
+    expect(result.diagnostics.some(({ code }) => code === 'GTPL3003')).toBe(true);
+  });
+
+  it('keeps deeply nested switch cases isolated across valid closing boundaries', () => {
+    const depth = 48;
+    const nested = Array.from({ length: depth }, (_, index) =>
+      `@switch (state${index}) { @case ("a${index}") { `
+    ).join('');
+    const closing = ' } }'.repeat(depth);
+    const source = `@switch (root) { @case ("root") { ${nested}<StLabel />${closing} } @case ("next") {} }`;
+    const result = parseGtpl(source);
+    const root = result.nodes[0];
+    expect(root?.kind).toBe('switch-block');
+    if (root?.kind !== 'switch-block') return;
+    expect(root.cases.map(({ expressions }) => expressions)).toEqual([['"root"'], ['"next"']]);
+    let current = root.cases[0]?.children.find((node) => node.kind === 'switch-block');
+    for (let index = 0; index < depth; index += 1) {
+      expect(current?.kind).toBe('switch-block');
+      if (current?.kind !== 'switch-block') return;
+      expect(current.cases[0]?.expressions).toEqual([`"a${index}"`]);
+      current = current.cases[0]?.children.find((node) => node.kind === 'switch-block');
+    }
+    expect(result.diagnostics).toHaveLength(0);
+  });
+
 });

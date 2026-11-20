@@ -1,1 +1,1 @@
-export { EventEmitter } from '../../../shared/src/events/event-emitter.js';
+export { EventEmitter } from '../../../../shared/src/events/event-emitter.js';

@@ -224,6 +224,83 @@ describe('parseGtpl', () => {
     expect(parseGtpl(repeated).nodes.at(-1)).toMatchObject({ kind: 'element', name: 'StButton' });
   });
 
+  it('survives a deterministic fuzz corpus of mixed valid and malformed GTPL tokens', () => {
+    const tokens = [
+      '<StBox>', '</StBox>', '<StLabel />', '<StLabel title=>',
+      '<StLabel title="a > b">', '</StMissing>', 'text', '{{ user.name }}',
+      '{{ { name: user.name } }}', '{{ "unterminated }}', '<!-- comment -->',
+      '@if (ready) {', '@else {', '@for (item of items; track item.id) {',
+      '@empty {', '@switch (state) {', '@case ("ready") {', '@default {',
+      '@let value = user.name;', '}', '}}', '>', '="value"', "'\\\\''",
+    ];
+    let seed = 0x51f15e;
+    const random = (limit: number): number => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed % limit;
+    };
+    const sources = Array.from({ length: 400 }, () =>
+      Array.from({ length: 1 + random(28) }, () => tokens[random(tokens.length)] ?? '')
+        .join(random(2) ? ' ' : '\\n'),
+    );
+
+    const assertSpans = (nodes: readonly import('../ast/types.js').GtplNode[], source: string): void => {
+      for (const node of nodes) {
+        expect(node.span.start).toBeGreaterThanOrEqual(0);
+        expect(node.span.end).toBeGreaterThanOrEqual(node.span.start);
+        expect(node.span.end).toBeLessThanOrEqual(source.length);
+        if (node.kind === 'element' || node.kind === 'for-block') {
+          assertSpans(node.children, source);
+          if (node.kind === 'for-block') assertSpans(node.empty, source);
+        } else if (node.kind === 'if-block') {
+          for (const branch of node.branches) {
+            expect(branch.span.start).toBeGreaterThanOrEqual(node.span.start);
+            expect(branch.span.end).toBeLessThanOrEqual(source.length);
+            assertSpans(branch.children, source);
+          }
+        } else if (node.kind === 'switch-block') {
+          for (const item of node.cases) {
+            expect(item.span.start).toBeGreaterThanOrEqual(node.span.start);
+            expect(item.span.end).toBeLessThanOrEqual(source.length);
+            assertSpans(item.children, source);
+          }
+          if (node.defaultCase) {
+            expect(node.defaultCase.span.start).toBeGreaterThanOrEqual(node.span.start);
+            expect(node.defaultCase.span.end).toBeLessThanOrEqual(source.length);
+            assertSpans(node.defaultCase.children, source);
+          }
+        } else if (node.kind === 'text') {
+          for (const part of node.parts) {
+            expect(part.span.start).toBeGreaterThanOrEqual(node.span.start);
+            expect(part.span.end).toBeLessThanOrEqual(node.span.end);
+          }
+        }
+      }
+    };
+
+    for (const source of sources) {
+      const result = parseGtpl(source);
+      assertSpans(result.nodes, source);
+      for (const diagnostic of result.diagnostics) {
+        expect(diagnostic.span.start).toBeGreaterThanOrEqual(0);
+        expect(diagnostic.span.end).toBeGreaterThanOrEqual(diagnostic.span.start);
+        expect(diagnostic.span.end).toBeLessThanOrEqual(source.length);
+      }
+    }
+  });
+
+  it('handles deeply nested control-flow and element structures within a practical depth', () => {
+    const depth = 180;
+    const source = '@if (ready) {'.repeat(depth)
+      + '<StBox>'.repeat(depth)
+      + '<StLabel />'
+      + '</StBox>'.repeat(depth)
+      + '}'.repeat(depth);
+    const result = parseGtpl(source);
+    expect(result.diagnostics).toHaveLength(0);
+    expect(result.nodes).toHaveLength(1);
+    expect(result.nodes[0]?.span.end).toBe(source.length);
+  });
+
 });
 
 

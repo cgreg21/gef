@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { emitGtplTemplate } from './template.js';
 import { parseGtpl } from '../parser/parser.js';
 import { lowerGtplStructuralDirectives } from '../lowering/structural.js';
+import { mountGtplTemplate, type GtplRenderHost } from '../../../../runtime/src/index.js';
 
 function emit(source: string, componentMembers: string[] = []): string {
   const parsed = parseGtpl(source);
@@ -56,6 +57,28 @@ describe('emitGtplTemplate', () => {
     const output = emitGtplTemplate(lowered.nodes, { componentMembers: ['volume'] });
     expect(output).toContain('"value": ctx.volume');
     expect(output).toContain('"valueChange": ($event) => (ctx.volume = $event)');
+  });
+
+  it('runs generated template source through the runtime and host', () => {
+    type Node = { kind: string; value?: unknown; children?: readonly Node[] };
+    const parsed = parseGtpl('<StLabel class="title">Hello {{name}}</StLabel>');
+    const lowered = lowerGtplStructuralDirectives(parsed.nodes);
+    const source = emitGtplTemplate(lowered.nodes, { componentMembers: ['name'] });
+    const render = new Function(`return ${source}`)() as (context: { name: string }, runtime: unknown) => Node;
+    const host: GtplRenderHost<Node> = {
+      destroy: () => {},
+      element: (kind, value, children) => ({ kind, value, children: [children] }),
+      text: (value) => ({ kind: 'text', value }),
+      fragment: (children) => ({ kind: 'fragment', children }),
+      repeat: (items) => ({ kind: 'repeat', value: items }),
+    };
+    const view = mountGtplTemplate({ name: 'GEF' }, render, host);
+    expect(view.node).toMatchObject({
+      kind: 'StLabel',
+      value: { class: 'title' },
+      children: [{ kind: 'fragment', children: [{ kind: 'text', value: 'Hello GEF' }] }],
+    });
+    view.dispose();
   });
 
   it('rejects structural shorthand until its dedicated lowering pass exists', () => {

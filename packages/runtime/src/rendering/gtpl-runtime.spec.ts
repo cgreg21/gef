@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGtplRenderRuntime, type GtplRenderHost } from './gtpl-runtime.js';
+import { createGtplRenderRuntime, mountGtplTemplate, type GtplRenderHost } from './gtpl-runtime.js';
 
 type Node = { readonly kind: string; readonly value?: unknown; readonly children?: readonly Node[] };
 
@@ -63,8 +63,7 @@ describe('createGtplRenderRuntime', () => {
     expect(runtime.switch(0, cases)).toEqual({ kind: 'zero' });
   });
 
-  it('mounts a generated view and destroys its root exactly once', async () => {
-    const { mountGtplTemplate } = await import('./gtpl-runtime.js');
+  it('mounts a generated view and destroys its root exactly once', () => {
     const destroyed: Node[] = [];
     const host = createHost();
     const view = mountGtplTemplate(

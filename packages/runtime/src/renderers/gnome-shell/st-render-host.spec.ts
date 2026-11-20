@@ -82,15 +82,22 @@ describe('createStRenderHost', () => {
     expect(host.element('GefCustom', {}, host.fragment([]))).toBeInstanceOf(FakeActor);
   });
 
-  it('rejects unknown selectors and containers with multiple children', () => {
+  it('rejects unknown selectors', () => {
     const host = createStRenderHost(createSt());
     expect(() => host.element('Unknown', {}, host.fragment([]))).toThrow(/Unknown GNOME Shell component/);
-    const bin = new FakeActor();
-    expect(() => {
-      const invalid = host.fragment([host.text('one'), host.text('two')]);
-      (bin as FakeActor).set_child(invalid);
-      throw new Error('container shape is not exposed by the host');
-    }).toThrow();
+  });
+
+  it('creates fragment and repeat containers with their child actors', () => {
+    const host = createStRenderHost(createSt());
+    const first = host.text('first');
+    const second = host.text('second');
+    const fragment = host.fragment([first, second]) as FakeActor;
+    const repeat = host.repeat([
+      { key: 'a', index: 0, node: first },
+      { key: 'b', index: 1, node: second },
+    ]) as FakeActor;
+    expect(fragment.children).toEqual([first, second]);
+    expect(repeat.children).toEqual([first, second]);
   });
 
   it('destroys a root and its child actors idempotently', () => {

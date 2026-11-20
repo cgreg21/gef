@@ -26,6 +26,7 @@ export interface StRenderHostOptions {
 }
 
 function propertyName(name: string): string {
+  if (name === 'class' || name === 'className') return 'style_class';
   return name
     .replace(/-([a-z])/g, (_match, letter: string) => letter.toUpperCase())
     .replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)

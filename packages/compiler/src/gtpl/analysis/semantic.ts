@@ -9,7 +9,7 @@ import type {
   SwitchBlockNode,
   TextNode,
 } from '../ast/types.js';
-import type { ExpressionNode } from '../expression/parser.js';
+import type { ExpressionNode } from '../ast/expression.js';
 
 export interface GtplSemanticOptions {
   /** Component members visible from the template's root scope. */

@@ -105,7 +105,7 @@ No template or expression parsing should occur in the installed extension runtim
 - Do not use `eval`, `Function`, or dynamic code evaluation for expressions.
 - Do not treat interpolated values as markup.
 - Escape or reject unsupported constructs at compile time; never silently reinterpret them.
-- Diagnostics must include the source file and 1-based line/column (expression diagnostics currently report source-relative offsets).
+- Diagnostics must include the source file and 1-based line/column. The standalone expression parser reports expression-relative offsets; the GTPL parser remaps them to template-file positions.
 - Unknown renderer elements and properties are errors once renderer metadata is available.
 
 ## Status

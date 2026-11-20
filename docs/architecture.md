@@ -15,7 +15,7 @@ Keep framework code in domain-specific subdirectories. Within `packages/compiler
 ## Compiler
 TypeScript, .gtpl and SCSS are processed at build time. Templates are not parsed in the installed extension. There is no browser DOM, Chromium, or runtime HTML parser.
 
-The current compiler provides GTPL parsing, expression ASTs, source diagnostics, lexical scope checks and component input/output binding validation. The declaration API includes `@Component`, `@Directive`, `@Pipe`, `@Input`, `@Output`, `@HostBinding` and `@HostListener`; these decorators produce immutable metadata. Rendering, expression execution, pipe lowering and native host event wiring are not yet implemented.
+The current compiler provides GTPL parsing, expression ASTs, source diagnostics, lexical scope checks and component input/output binding validation. The AST is the dependency-neutral model: parsers create it, while analysis and validation consume it without importing parser implementation modules. The declaration API includes `@Component`, `@Directive`, `@Pipe`, `@Input`, `@Output`, `@HostBinding` and `@HostListener`; these decorators produce immutable metadata. Rendering, expression execution, pipe lowering and native host event wiring are not yet implemented.
 
 ## KISS and package boundaries
 Keep the compiler in one package until a concrete need justifies splitting it. Add abstractions only when they remove real duplication or simplify a real use case. Keep the Core small and explicit. The public component declaration API may be expressive; decorators compile into plain metadata and do not require runtime reflection or a dependency-injection container.

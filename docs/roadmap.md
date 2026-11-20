@@ -9,7 +9,7 @@
 - [x] Nested elements, attributes, interpolation and expression AST.
 - [x] Angular-like @if, @for, @switch and @let parsing.
 - [x] Lexical scope and optional component identifier checks.
-- [x] Plain component metadata and input/output binding validation.
+- [x] Decorator-based component declarations (`@Component`, `@Input`, `@Output`) and immutable metadata extraction.\n- [x] Disposable output event emitter.\n- [x] Component input/output binding validation.
 - [ ] Parser fuzzing and malformed-input corpus.
 - [ ] Type-check expressions against TypeScript component members.
 - [ ] Lower structural shorthand and control flow.

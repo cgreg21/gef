@@ -14,7 +14,7 @@ TypeScript, .gtpl and SCSS are processed at build time. Templates are not parsed
 The current compiler provides GTPL parsing, expression ASTs, source diagnostics, lexical scope checks, optional identifier validation and plain-data component input/output metadata validation. It does not yet render templates, execute expressions, type-check component members or generate code.
 
 ## KISS and package boundaries
-Keep the compiler in one package until a concrete need justifies splitting it. Add abstractions only when they remove real duplication or simplify a real use case. Prefer plain metadata over decorators and runtime reflection where it is sufficient.
+Keep the compiler in one package until a concrete need justifies splitting it. Add abstractions only when they remove real duplication or simplify a real use case. Keep the Core small and explicit. The public component declaration API may be expressive; decorators compile into plain metadata and do not require runtime reflection or a dependency-injection container.
 
 ## Runtime constraints
 - TypeScript compiles to JavaScript; GJS does not execute TypeScript.

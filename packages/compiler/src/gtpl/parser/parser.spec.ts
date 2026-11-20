@@ -314,7 +314,7 @@ describe('GTPL built-in control flow', () => {
 
 
   it('keeps escaped quotes inside @if conditions', () => {
-    const source = String.raw`@if (isReady("a\\")b")) { <StLabel /> } <StButton />`;
+    const source = String.raw`@if (isReady("a\")b")) { <StLabel /> } <StButton />`;
     const result = parseGtpl(source);
     const block = result.nodes[0];
     expect(block?.kind).toBe('if-block');
@@ -325,12 +325,12 @@ describe('GTPL built-in control flow', () => {
   });
 
   it('does not terminate @let at a semicolon inside an escaped string', () => {
-    const source = String.raw`@let value = "a\\\";b"; <StLabel />`;
+    const source = String.raw`@let value = "a\";b"; <StLabel />`;
     const result = parseGtpl(source);
     expect(result.nodes[0]).toMatchObject({
       kind: 'let-declaration',
       name: 'value',
-      expression: String.raw`"a\\\";b"`,
+      expression: String.raw`"a\";b"`,
     });
     expect(result.nodes[1]?.kind).toBe('element');
     expect(result.diagnostics).toHaveLength(0);

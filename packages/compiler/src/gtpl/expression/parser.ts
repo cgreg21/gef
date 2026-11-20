@@ -313,7 +313,8 @@ class ExpressionParser {
   }
 
   private decodeString(raw: string): string {
-    return raw.slice(1, -1).replace(/\\(['"\\nrt])/g, (_match, escaped: string) => {
+    const content = raw.endsWith(raw[0] ?? '') ? raw.slice(1, -1) : raw.slice(1);
+    return content.replace(/\\(['"\\nrt])/g, (_match, escaped: string) => {
       if (escaped === 'n') return '\n';
       if (escaped === 'r') return '\r';
       if (escaped === 't') return '\t';

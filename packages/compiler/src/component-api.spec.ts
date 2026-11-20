@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Component, EventEmitter, getComponentMetadata, Input, Output } from './component-api.js';
+import { Component, Directive, EventEmitter, getComponentMetadata, getDirectiveMetadata, getPipeMetadata, HostBinding, HostListener, Input, Output, Pipe } from './component-api.js';
 
 @Component({ selector: 'GefButton', template: '<button>{{ label }}</button>', styles: ['button { color: white; }'] })
 class ButtonComponent {
@@ -33,5 +33,36 @@ describe('component declaration API', () => {
     const emitter = new EventEmitter<string>(); const listener = vi.fn();
     emitter.subscribe(listener); emitter.clear(); emitter.emit('ignored');
     expect(listener).not.toHaveBeenCalled();
+  });
+});
+
+@Directive({ selector: '[gefTooltip]' })
+class TooltipDirective {
+  @Input() text = '';
+  @HostBinding('accessible-name') accessibleName = '';
+  @HostListener('button-press', ['$event']) onPress(_event: unknown): void {}
+}
+@Pipe({ name: 'uppercase' })
+class UppercasePipe { transform(value: unknown): string { return String(value).toUpperCase(); } }
+
+describe('directive and pipe declarations', () => {
+  it('collects directive inputs and host bindings/listeners', () => {
+    expect(getDirectiveMetadata(TooltipDirective)).toEqual({
+      selector: '[gefTooltip]', inputs: ['text'], outputs: [],
+      hostBindings: [{ member: 'accessibleName', property: 'accessible-name' }],
+      hostListeners: [{ member: 'onPress', event: 'button-press', args: ['$event'] }],
+    });
+  });
+  it('registers pipes as pure by default', () => {
+    expect(getPipeMetadata(UppercasePipe)).toEqual({ name: 'uppercase', pure: true });
+    expect(new UppercasePipe().transform('gef')).toBe('GEF');
+  });
+  it('supports explicitly impure pipes', () => {
+    @Pipe({ name: 'clock', pure: false })
+    class ClockPipe { transform(value: unknown): unknown { return value; } }
+    expect(getPipeMetadata(ClockPipe)?.pure).toBe(false);
+  });
+  it('rejects invalid pipe names', () => {
+    expect(() => Pipe({ name: 'not valid' })(class Invalid {})).toThrow(/pipe name/);
   });
 });

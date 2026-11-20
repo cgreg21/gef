@@ -11,7 +11,7 @@ The two renderers may share template syntax and metadata, but not widget impleme
 ## Compiler
 TypeScript, .gtpl and SCSS are processed at build time. Templates are not parsed in the installed extension. There is no browser DOM, Chromium, or runtime HTML parser.
 
-The current compiler provides GTPL parsing, expression ASTs, source diagnostics, lexical scope checks, optional identifier validation and plain-data component input/output metadata validation. It does not yet render templates, execute expressions, type-check component members or generate code.
+The current compiler provides GTPL parsing, expression ASTs, source diagnostics, lexical scope checks and component input/output binding validation. The declaration API includes `@Component`, `@Directive`, `@Pipe`, `@Input`, `@Output`, `@HostBinding` and `@HostListener`; these decorators produce immutable metadata. Rendering, expression execution, pipe lowering and native host event wiring are not yet implemented.
 
 ## KISS and package boundaries
 Keep the compiler in one package until a concrete need justifies splitting it. Add abstractions only when they remove real duplication or simplify a real use case. Keep the Core small and explicit. The public component declaration API may be expressive; decorators compile into plain metadata and do not require runtime reflection or a dependency-injection container.

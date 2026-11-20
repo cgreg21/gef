@@ -430,7 +430,13 @@ class GtplParser {
           if (parsed.expression) parsedExpressions.push(parsed.expression);
           else this.report('GTPL3103', 'Invalid @case expression.', valueContent.start - 1, this.offset);
           this.skipWhitespace();
-          if (!hasOpeningParen) break;
+          if (!hasOpeningParen) {
+            while (!this.eof() && this.peek() !== '{' && this.peek() !== '}'
+              && !this.startsWithDirective('@case') && !this.startsWithDirective('@default')) {
+              this.offset += 1;
+            }
+            break;
+          }
         }
         const children = this.parseBraceBlock(true);
         cases.push({ expressions, parsedExpressions, span: this.span(caseStart, this.offset), children });

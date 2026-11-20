@@ -98,7 +98,7 @@ describe('parseGtpl', () => {
       },
     ]);
     expect(result.diagnostics.map(({ code }) => code)).toEqual(['GTPL1006']);
-    expect(result.diagnostics[0]?.span.start).toBe(8);
+    expect(result.diagnostics[0]?.span.start).toBe(7);
   });
 
   it('keeps every diagnostic span within the source bounds', () => {

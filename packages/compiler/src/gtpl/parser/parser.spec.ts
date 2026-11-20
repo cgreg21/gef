@@ -160,6 +160,70 @@ describe('parseGtpl', () => {
     expect(result.diagnostics.some((item) => item.code === 'GTPL1006')).toBe(true);
   });
 
+  it('keeps diagnostics and node spans within bounds for adversarial malformed templates', () => {
+    const fragments = [
+      '<', '</', '<StLabel', '<StLabel =x>', '<StLabel title=>',
+      '<StLabel title="unterminated>', '<StLabel title="a\\\"b>',
+      '</StBox extra>', '{{', '{{ value', '{{ "}}" }}',
+      '<!--', '@if', '@if (', '@if (ready {', '@for (item of)',
+      '@switch (state) { @case () {', '@let = value;',
+      '@else {', '@case (value) {', '}}}}', '>>>>',
+    ];
+    const sources = fragments.map((fragment, index) =>
+      fragments.slice(index).join(' ').slice(0, 180),
+    );
+
+    for (const source of sources) {
+      const result = parseGtpl(source);
+      const visit = (nodes: typeof result.nodes): void => {
+        for (const node of nodes) {
+          expect(node.span.start).toBeGreaterThanOrEqual(0);
+          expect(node.span.end).toBeGreaterThanOrEqual(node.span.start);
+          expect(node.span.end).toBeLessThanOrEqual(source.length);
+          if (node.kind === 'element' || node.kind === 'for-block') {
+            visit(node.children);
+            if (node.kind === 'for-block') visit(node.empty);
+          } else if (node.kind === 'if-block') {
+            for (const branch of node.branches) {
+              expect(branch.span.end).toBeLessThanOrEqual(source.length);
+              visit(branch.children);
+            }
+          } else if (node.kind === 'switch-block') {
+            for (const item of node.cases) {
+              expect(item.span.end).toBeLessThanOrEqual(source.length);
+              visit(item.children);
+            }
+            if (node.defaultCase) {
+              expect(node.defaultCase.span.end).toBeLessThanOrEqual(source.length);
+              visit(node.defaultCase.children);
+            }
+          }
+        }
+      };
+      visit(result.nodes);
+      for (const diagnostic of result.diagnostics) {
+        expect(diagnostic.span.start).toBeGreaterThanOrEqual(0);
+        expect(diagnostic.span.end).toBeGreaterThanOrEqual(diagnostic.span.start);
+        expect(diagnostic.span.end).toBeLessThanOrEqual(source.length);
+        const prefix = source.slice(0, diagnostic.span.start);
+        expect(diagnostic.span.line).toBe(prefix.split('\\n').length);
+        expect(diagnostic.span.column).toBe(prefix.length - prefix.lastIndexOf('\\n'));
+      }
+    }
+  });
+
+  it('handles deeply nested and repeated malformed markup without losing the final sibling', () => {
+    const depth = 96;
+    const nested = '<StBox>'.repeat(depth) + '<StLabel title=>broken' + '</StBox>'.repeat(depth);
+    const repeated = '<StLabel title=>'.repeat(160) + '<StButton />';
+    for (const source of [nested, repeated]) {
+      const result = parseGtpl(source);
+      expect(result.nodes.length).toBeGreaterThan(0);
+      expect(result.nodes.every((node) => node.span.end <= source.length)).toBe(true);
+    }
+    expect(parseGtpl(repeated).nodes.at(-1)).toMatchObject({ kind: 'element', name: 'StButton' });
+  });
+
 });
 
 

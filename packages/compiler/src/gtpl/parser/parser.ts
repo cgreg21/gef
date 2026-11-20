@@ -445,7 +445,10 @@ class GtplParser {
       else if (char === ')') round = Math.max(0, round - 1);
       else if (char === '[') square += 1;
       else if (char === ']') square = Math.max(0, square - 1);
-      else if (char === ';' && round === 0 && square === 0) break;
+      else if (round === 0 && square === 0) {
+        if (char === ';') break;
+        if (this.blockDepth > 0 && (char === '}' || this.isTagStart(this.offset))) break;
+      }
       this.offset += 1;
     }
     return this.source.slice(start, this.offset).trim();

@@ -15,7 +15,8 @@
 - [x] Parse static, property, event, two-way, structural, and local-reference attributes.
 - [x] Parse text interpolation boundaries.
 - [x] Produce source-located diagnostics for malformed markup.
-- [ ] Add expression AST and formal expression grammar.
+- [x] Add an expression AST and initial expression parser.
+- [ ] Connect expression parsing to all template bindings and interpolation nodes.
 - [ ] Add parser fuzzing and malformed-input corpus.
 
 ## Milestone 2 — compiler semantics

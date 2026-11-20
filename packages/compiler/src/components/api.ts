@@ -94,13 +94,3 @@ export function getComponentMetadata(type: Function): ComponentMetadata | undefi
 export function getDirectiveMetadata(type: Function): DirectiveMetadata | undefined { return directives.get(type); }
 export function getPipeMetadata(type: Function): PipeMetadata | undefined { return pipes.get(type); }
 
-/** Minimal output emitter with explicitly disposable subscriptions. */
-export class EventEmitter<T> {
-  readonly #listeners = new Set<(value: T) => void>();
-  emit(value: T): void { for (const listener of [...this.#listeners]) listener(value); }
-  subscribe(listener: (value: T) => void): { unsubscribe(): void } {
-    this.#listeners.add(listener); let active = true;
-    return { unsubscribe: () => { if (!active) return; active = false; this.#listeners.delete(listener); } };
-  }
-  clear(): void { this.#listeners.clear(); }
-}

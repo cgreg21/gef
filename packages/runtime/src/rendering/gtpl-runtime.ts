@@ -47,7 +47,7 @@ export interface GtplSwitchCase<Node> {
 /** Runtime surface targeted by JavaScript emitted by emitGtplTemplate. */
 export interface GtplRenderRuntime<Node> {
   bind<T>(get: () => T): GtplBinding<T>;
-  element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node): Node;
+  element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node | undefined): Node;
   text(value: string | GtplBinding<string>): Node;
   fragment(children: readonly Node[]): Node;
   if<T>(condition: T | GtplBinding<T>, render: (value: T) => Node, fallback?: () => Node): Node;

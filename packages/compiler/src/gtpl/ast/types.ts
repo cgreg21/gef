@@ -1,5 +1,6 @@
 import type { ExpressionNode } from './expression.js';
 import type { SourceSpan } from '../source/span.js';
+import type { Diagnostic } from '../diagnostics/diagnostic.js';
 
 export type { SourceSpan } from '../source/span.js';
 export type { Diagnostic } from '../diagnostics/diagnostic.js';

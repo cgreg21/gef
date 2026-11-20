@@ -326,6 +326,25 @@ describe('GTPL built-in control flow', () => {
     expect(result.diagnostics.some((item) => item.code === 'GTPL3006')).toBe(true);
   });
 
+  it('keeps nested switch labels inside their own switch and preserves source spans', () => {
+    const source = '@switch (kind) { @case ("outer") { @switch (state) { @case ("ready") {} @case ("busy") {} } } @case ("other") {} }';
+    const result = parseGtpl(source);
+    const outer = result.nodes[0];
+    expect(outer?.kind).toBe('switch-block');
+    if (outer?.kind !== 'switch-block') return;
+    expect(outer.cases).toHaveLength(2);
+    const nested = outer.cases[0]?.children[0];
+    expect(nested?.kind).toBe('switch-block');
+    if (nested?.kind !== 'switch-block') return;
+    expect(nested.cases).toHaveLength(2);
+    expect(nested.cases.map((item) => item.expressions)).toEqual([['"ready"'], ['"busy"']]);
+    for (const item of [...outer.cases, ...nested.cases]) {
+      expect(source.slice(item.span.start, item.span.end)).toContain('@case');
+      expect(item.span.end).toBeGreaterThan(item.span.start);
+    }
+    expect(outer.cases[1]?.expressions).toEqual(['"other"']);
+  });
+
   it('preserves switch labels after an unclosed nested control-flow block', () => {
     const source = '@switch (role) { @case ("admin") { @if (ready) { <StLabel /> @case ("editor") { <StButton /> } } }';
     const result = parseGtpl(source);

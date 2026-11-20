@@ -78,7 +78,12 @@ class ReactiveEffect implements ReactiveObserver {
   #disposed = false;
 
   constructor(private readonly callback: () => void) {
-    this.run();
+    try {
+      this.run();
+    } catch (error) {
+      this.dispose();
+      throw error;
+    }
   }
 
   dependOn(signal: Signal<unknown>): void {

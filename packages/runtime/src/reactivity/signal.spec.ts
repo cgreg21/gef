@@ -58,6 +58,18 @@ describe('signals', () => {
     expect(listener).toHaveBeenCalledWith(1, 0);
   });
 
+  it('cleans dependencies when an effect throws during its initial run', () => {
+    const value = signal(0);
+    const callback = vi.fn(() => {
+      value.get();
+      throw new Error('initial effect failed');
+    });
+    expect(() => effect(callback)).toThrow('initial effect failed');
+    expect(callback).toHaveBeenCalledTimes(1);
+    value.set(1);
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
   it('handles a signal update requested from inside an effect without recursion', () => {
     const value = signal(0);
     const observed: number[] = [];

@@ -23,9 +23,12 @@
 
 ## Runtime and renderers
 - [x] Initial resource scope with reverse-order, idempotent cleanup.
-- [ ] Integrate resource ownership into component and renderer lifecycles.
-- [ ] Dependency injection and reactive signals.
-- [ ] GNOME Shell 51 St/Clutter renderer and integration tests.
+- [x] Initial renderer-independent GTPL runtime and disposable render views.
+- [x] Initial GNOME Shell St host adapter (static rendering and signal cleanup).
+- [x] Synchronous signal, computed and effect primitives.
+- [ ] Integrate reactive updates, keyed reconciliation and resource ownership into component lifecycles.
+- [ ] Dependency injection.
+- [ ] GNOME Shell 51 St/Clutter integration tests.
 - [ ] GTK4/libadwaita preferences renderer.
 - [ ] Native GJS code generation and source maps.
 

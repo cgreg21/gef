@@ -20,7 +20,7 @@ The current compiler provides GTPL parsing, structural-directive lowering for `*
 
 ## Runtime foundation
 
-The initial `ResourceScope` owns cleanup callbacks for a runtime object. It runs them once in reverse registration order, immediately cleans resources registered after disposal, and continues cleanup if one callback throws before rethrowing the first error. This primitive is not yet connected to component or renderer lifecycles.
+The `ResourceScope` owns cleanup callbacks and disposes them once in reverse registration order. The renderer-independent `createGtplRenderRuntime` implements generated element, text, fragment, conditional, loop and switch calls through a platform host. `mountGtplTemplate` creates a disposable view and owns destruction of its root. The initial GNOME Shell host maps common St selectors to injected St constructors, applies GObject properties, connects signal handlers and destroys actors. It currently performs initial static rendering; keyed repeat reconciliation and reactive template updates are not connected yet. The runtime also provides synchronous `signal`, `computed` and `effect` primitives, but generated templates do not yet subscribe to them.
 
 ## KISS and package boundaries
 

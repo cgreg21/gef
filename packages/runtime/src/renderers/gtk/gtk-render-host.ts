@@ -96,7 +96,8 @@ export function createGtkRenderHost(
 
   const own = (actor: GtkActor, scope: ResourceScope): void => {
     resources.set(actor, scope);
-    actor.connect('destroy', () => scope.dispose());
+    const id = actor.connect('destroy', () => scope.dispose());
+    scope.add(() => actor.disconnect(id));
   };
 
   const disposeWidget = (actor: GtkActor): void => {
@@ -148,13 +149,13 @@ export function createGtkRenderHost(
         for (const [property, binding] of bindings) {
           scope.add(effect(() => actor.set_property(property, binding.get())));
         }
-        let previousClasses = [...classes];
         for (const binding of classBindings) {
+          let previousDynamicClasses: string[] = [];
           scope.add(effect(() => {
             const nextClasses = classNames(binding.get());
-            for (const name of previousClasses) if (!nextClasses.includes(name)) actor.remove_css_class?.(name);
-            for (const name of nextClasses) if (!previousClasses.includes(name)) actor.add_css_class?.(name);
-            previousClasses = nextClasses;
+            for (const name of previousDynamicClasses) if (!nextClasses.includes(name)) actor.remove_css_class?.(name);
+            for (const name of nextClasses) if (!previousDynamicClasses.includes(name)) actor.add_css_class?.(name);
+            previousDynamicClasses = nextClasses;
           }));
         }
         if (child) {

@@ -19,10 +19,6 @@ class FakeWidget implements GtkActor {
     if (index !== -1) this.children.splice(index, 1);
     (child as FakeWidget).parent = null;
   }
-  set_child(child: GtkActor | null): void {
-    for (const previous of [...this.children]) this.remove(previous);
-    if (child) this.attach(child);
-  }
   set_property(name: string, value: unknown): void { this.properties[name] = value; }
   connect(name: string, callback: (actor: GtkActor, ...args: unknown[]) => unknown): number {
     const id = this.nextSignal++;
@@ -44,15 +40,22 @@ class FakeWidget implements GtkActor {
   }
 }
 
+class FakeSingleChild extends FakeWidget {
+  set_child(child: GtkActor | null): void {
+    for (const previous of [...this.children]) this.remove(previous);
+    if (child) this.append(child);
+  }
+}
+
 function constructor(): GtkWidgetConstructor { return FakeWidget; }
 function createGtk(): GtkNamespace {
   return {
     Box: constructor(),
     Label: constructor(),
-    Button: constructor(),
+    Button: FakeSingleChild,
     Entry: constructor(),
     Image: constructor(),
-    ScrolledWindow: constructor(),
+    ScrolledWindow: FakeSingleChild,
   };
 }
 

@@ -840,7 +840,7 @@ describe('GTPL built-in control flow', () => {
     expect(block.cases[0]?.children[0]?.kind).toBe('for-block');
     expect(block.cases[1]?.expressions).toEqual(['"editor"']);
     expect(block.cases[1]?.children[0]?.kind).toBe('element');
-    expect(result.diagnostics.filter(({ code }) => code === 'GTPL3006')).toHaveLength(1);
+    expect(result.diagnostics.filter(({ code }) => code === 'GTPL3006')).toHaveLength(2);
   });
 
   it('keeps @case labels inside a nested switch when an outer case contains an @if', () => {

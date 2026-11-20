@@ -215,7 +215,7 @@ describe('parseGtpl', () => {
   it('handles deeply nested and repeated malformed markup without losing the final sibling', () => {
     const depth = 96;
     const nested = '<StBox>'.repeat(depth) + '<StLabel title=>broken' + '</StBox>'.repeat(depth);
-    const repeated = '<StLabel title=>'.repeat(160) + '<StButton />';
+    const repeated = '<StLabel title= />'.repeat(160) + '<StButton />';
     for (const source of [nested, repeated]) {
       const result = parseGtpl(source);
       expect(result.nodes.length).toBeGreaterThan(0);

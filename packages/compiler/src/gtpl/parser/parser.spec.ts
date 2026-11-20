@@ -815,4 +815,18 @@ describe('GTPL built-in control flow', () => {
     expect(block.span.end).toBe(source.length);
   });
 
+
+  it('recovers a missing element closing tag before the next switch case', () => {
+    const source = '@switch (role) { @case ("admin") { <StBox><StLabel /> @case ("editor") { <StButton /> } } }';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('switch-block');
+    if (block?.kind !== 'switch-block') return;
+    expect(block.cases).toHaveLength(2);
+    expect(block.cases[0]?.children[0]?.kind).toBe('element');
+    expect(block.cases[1]?.expressions).toEqual(['"editor"']);
+    expect(block.cases[1]?.children[0]?.kind).toBe('element');
+    expect(result.diagnostics.some(({ code }) => code === 'GTPL1006')).toBe(true);
+  });
+
 });

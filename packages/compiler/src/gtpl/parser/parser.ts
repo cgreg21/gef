@@ -153,7 +153,8 @@ class GtplParser {
     if (!selfClosing) {
       let closed = false;
       while (!this.eof()) {
-        if (this.blockDepth > 0 && (this.peek() === '}' || this.isIfBranchStart())) break;
+        if (this.blockDepth > 0 && (this.peek() === '}' || this.isIfBranchStart()
+          || (this.switchCaseDepth > 0 && (this.startsWithDirective('@case') || this.startsWithDirective('@default'))))) break;
         if (this.startsWith('<!--')) {
           this.parseComment();
           continue;

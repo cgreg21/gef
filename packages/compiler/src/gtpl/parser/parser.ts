@@ -347,7 +347,7 @@ class GtplParser {
           }
           expressions.push(value);
           if (parsed.expression) parsedExpressions.push(parsed.expression);
-          else this.report('GTPL3103', 'Invalid @case expression.', valueStart, this.offset);
+          else this.report('GTPL3103', 'Invalid @case expression.', valueContent.start - 1, this.offset);
           this.skipWhitespace();
         }
         const children = this.parseBraceBlock();

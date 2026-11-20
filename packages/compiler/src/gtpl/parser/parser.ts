@@ -2,7 +2,6 @@ import type {
   AttributeKind,
   Diagnostic,
   ElementNode,
-  ExpressionNode,
   ForContextAlias,
   GtplAttribute,
   GtplNode,
@@ -15,6 +14,7 @@ import type {
   TextNode,
   TextPart,
 } from '../ast/types.js';
+import type { ExpressionNode } from '../ast/expression.js';
 import { parseGtplExpression } from '../expression/parser.js';
 
 class GtplParser {

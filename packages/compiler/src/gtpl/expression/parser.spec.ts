@@ -68,6 +68,13 @@ describe('parseGtplExpression', () => {
     expect(result.diagnostics.some((item) => item.code === 'GTPL2005')).toBe(true);
   });
 
+  it('keeps unterminated string spans within the source', () => {
+    const source = '"unfinished\\';
+    const result = parseGtplExpression(source);
+    const diagnostic = result.diagnostics.find((item) => item.code === 'GTPL2005');
+    expect(diagnostic?.span.end).toBe(source.length);
+  });
+
   it('reports empty expressions', () => {
     const result = parseGtplExpression('   ');
     expect(result.expression).toBeNull();

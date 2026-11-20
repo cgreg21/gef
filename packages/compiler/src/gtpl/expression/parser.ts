@@ -278,7 +278,7 @@ class ExpressionParser {
       while (this.offset < this.source.length) {
         const current = this.source[this.offset] ?? '';
         if (current === '\\') {
-          this.offset += 2;
+          this.offset = Math.min(this.offset + 2, this.source.length);
           continue;
         }
         if (current === char) {

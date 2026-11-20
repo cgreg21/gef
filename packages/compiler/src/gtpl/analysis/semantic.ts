@@ -214,6 +214,10 @@ class GtplSemanticAnalyzer {
         this.checkExpression(expression.target, scope, sourceSpan);
         this.checkExpression(expression.value, scope, sourceSpan);
         return;
+      case 'pipe':
+        this.checkExpression(expression.expression, scope, sourceSpan);
+        for (const argument of expression.arguments) this.checkExpression(argument, scope, sourceSpan);
+        return;
       case 'array':
         for (const element of expression.elements) this.checkExpression(element, scope, sourceSpan);
         return;

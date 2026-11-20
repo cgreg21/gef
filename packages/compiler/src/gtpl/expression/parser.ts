@@ -160,9 +160,9 @@ class ExpressionParser {
 
       if (this.current.value === '?' && minPrecedence <= 0) {
         this.advance();
-        const consequent = this.parseExpression(0);
+        const consequent = this.parseExpression(1);
         this.expect(':');
-        const alternate = this.parseExpression(0);
+        const alternate = this.parseExpression(1);
         if (!consequent || !alternate) return left;
         left = {
           kind: 'conditional',
@@ -170,6 +170,32 @@ class ExpressionParser {
           consequent,
           alternate,
           span: { start: left.span.start, end: alternate.span.end },
+        };
+        continue;
+      }
+
+      if (this.current.value === '|' && minPrecedence <= 0) {
+        this.advance();
+        if (this.current.kind !== 'identifier') {
+          this.report('GTPL2010', 'Expected a pipe name after "|".', this.current.start, this.current.end);
+          return left;
+        }
+        const name = this.current.value;
+        const nameEnd = this.current.end;
+        this.advance();
+        const args: ExpressionNode[] = [];
+        while (this.current.value === ':') {
+          this.advance();
+          const argument = this.parseExpression(1);
+          if (!argument) break;
+          args.push(argument);
+        }
+        left = {
+          kind: 'pipe',
+          expression: left,
+          name,
+          arguments: args,
+          span: { start: left.span.start, end: args.at(-1)?.span.end ?? nameEnd },
         };
         continue;
       }

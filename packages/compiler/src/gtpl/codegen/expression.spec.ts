@@ -33,6 +33,10 @@ describe('emitGtplExpression', () => {
       .toBe('[( !busy), (-count), (enabled ? "yes" : "no")]'.replace('( !busy)', '(!busy)'));
   });
 
+  it('emits pipe expressions', () => {
+    expect(emit('name | uppercase:2')).toBe('runtime.pipe("uppercase", name, 2)');
+  });
+
   it('emits assignments', () => {
     expect(emit('state = $event')).toBe('(state = $event)');
   });

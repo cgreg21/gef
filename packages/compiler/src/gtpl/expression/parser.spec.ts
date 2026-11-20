@@ -45,6 +45,22 @@ describe('parseGtplExpression', () => {
     expect(result.expression).toMatchObject({ kind: 'conditional' });
   });
 
+  it('parses chained pipes and pipe arguments', () => {
+    expect(parseGtplExpression('name | uppercase | slice:1:3')).toMatchObject({
+      diagnostics: [],
+      expression: {
+        kind: 'pipe',
+        name: 'slice',
+        arguments: [{ kind: 'literal', value: 1 }, { kind: 'literal', value: 3 }],
+        expression: { kind: 'pipe', name: 'uppercase' },
+      },
+    });
+  });
+
+  it('reports a missing pipe name', () => {
+    expect(parseGtplExpression('name | 3').diagnostics.map((item) => item.code)).toContain('GTPL2010');
+  });
+
   it('parses right-associative assignments and rejects invalid targets', () => {
     expect(parseGtplExpression('state = next = $event')).toMatchObject({
       diagnostics: [],
@@ -230,6 +246,10 @@ describe('parseGtplExpression', () => {
         case 'assignment':
           assertExpressionSpans(node.target, source);
           assertExpressionSpans(node.value, source);
+          break;
+        case 'pipe':
+          assertExpressionSpans(node.expression, source);
+          for (const argument of node.arguments) assertExpressionSpans(argument, source);
           break;
         case 'unary':
           assertExpressionSpans(node.argument, source);

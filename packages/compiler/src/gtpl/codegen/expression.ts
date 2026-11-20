@@ -47,6 +47,8 @@ export function emitGtplExpression(
         return `(${emit(node.test)} ? ${emit(node.consequent)} : ${emit(node.alternate)})`;
       case 'assignment':
         return `(${emit(node.target)} = ${emit(node.value)})`;
+      case 'pipe':
+        return `runtime.pipe(${JSON.stringify(node.name)}, ${emit(node.expression)}${node.arguments.length ? `, ${node.arguments.map(emit).join(', ')}` : ''})`;
       case 'array':
         return `[${node.elements.map(emit).join(', ')}]`;
     }

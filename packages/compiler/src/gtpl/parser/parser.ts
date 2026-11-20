@@ -17,7 +17,7 @@ import type { SourceSpan } from '../source/span.js';
 import type { ExpressionNode } from '../ast/expression.js';
 import { parseGtplExpression } from '../expression/parser.js';
 
-const BLOCK_DIRECTIVES = ['@if', '@for', '@switch', '@let', '@case', '@default', '@empty'] as const;
+const BLOCK_DIRECTIVES = ['@if', '@else', '@for', '@switch', '@let', '@case', '@default', '@empty'] as const;
 
 function advanceQuotedCharacter(
   source: string,

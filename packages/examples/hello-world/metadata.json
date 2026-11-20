@@ -1,0 +1,7 @@
+{
+  "uuid": "gef-hello-world@example.com",
+  "name": "GEF Hello World",
+  "description": "Minimal GNOME Shell 51 extension built with GEF runtime modules.",
+  "shell-version": ["51"],
+  "version": 1
+}

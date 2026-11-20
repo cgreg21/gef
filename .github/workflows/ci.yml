@@ -34,3 +34,5 @@ jobs:
         run: npm test
       - name: Build packages
         run: npm run build
+      - name: Package GNOME Shell example
+        run: npm run package:example

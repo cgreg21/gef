@@ -12,7 +12,8 @@
     "test": "vitest run",
     "check": "npm run typecheck && npm test",
     "build": "tsc -p tsconfig.build.json",
-    "gef": "node dist/cli/src/index.js"
+    "gef": "node dist/cli/src/index.js",
+    "package:example": "node scripts/package-extension.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

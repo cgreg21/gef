@@ -89,13 +89,19 @@ export function createGtplRenderRuntime<Node>(host: GtplRenderHost<Node>): GtplR
           if (values.length === 0) return { items: [], empty: renderEmpty() };
           const count = values.length;
           const keys = new Set<unknown>();
-          const items = values.map((item, index) => {
-            const key = trackBy(item, index, count);
-            if (keys.has(key)) throw new Error('Duplicate GTPL @for track key.');
-            keys.add(key);
-            return { key, index, node: renderItem(item, index, count) };
-          });
-          return { items };
+          const items: GtplRepeatItem<Node>[] = [];
+          try {
+            values.forEach((item, index) => {
+              const key = trackBy(item, index, count);
+              if (keys.has(key)) throw new Error('Duplicate GTPL @for track key.');
+              keys.add(key);
+              items.push({ key, index, node: renderItem(item, index, count) });
+            });
+            return { items };
+          } catch (error) {
+            for (const item of items) host.destroy(item.node);
+            throw error;
+          }
         },
       });
     },

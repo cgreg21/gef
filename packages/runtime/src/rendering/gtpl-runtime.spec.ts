@@ -60,6 +60,21 @@ describe('createGtplRenderRuntime', () => {
     });
   });
 
+  it('rejects duplicate track keys and cleans nodes already rendered', () => {
+    const destroyed: unknown[] = [];
+    const runtime = createGtplRenderRuntime({
+      ...createHost(),
+      destroy: (node) => { destroyed.push(node); },
+    });
+    expect(() => runtime.for(
+      ['same', 'same'],
+      (value) => ({ kind: 'item', value }),
+      () => 'duplicate',
+      () => ({ kind: 'empty' }),
+    )).toThrow('Duplicate GTPL @for track key.');
+    expect(destroyed).toEqual([{ kind: 'item', value: 'same' }]);
+  });
+
   it('uses the empty branch for null and empty iterables', () => {
     const runtime = createGtplRenderRuntime(createHost());
     const empty = () => ({ kind: 'empty' });

@@ -51,10 +51,10 @@ class GtplParser {
   }
 
   private parseNode(): GtplNode | null {
-    if (this.startsWith('@if')) return this.parseIfBlock();
-    if (this.startsWith('@for')) return this.parseForBlock();
-    if (this.startsWith('@switch')) return this.parseSwitchBlock();
-    if (this.startsWith('@let')) return this.parseLetDeclaration();
+    if (this.startsWithDirective('@if')) return this.parseIfBlock();
+    if (this.startsWithDirective('@for')) return this.parseForBlock();
+    if (this.startsWithDirective('@switch')) return this.parseSwitchBlock();
+    if (this.startsWithDirective('@let')) return this.parseLetDeclaration();
     if (this.peek() === '<' && this.isTagStart(this.offset)) {
       return this.parseElement();
     }
@@ -285,8 +285,8 @@ class GtplParser {
       const children = this.parseBraceBlock();
       branches.push({ condition, ...(alias ? { alias } : {}), ...(parsed.expression ? { parsedCondition: parsed.expression } : {}), span: this.span(branchStart, this.offset), children });
       this.skipWhitespace();
-      if (this.startsWith('@else if')) { keyword = '@else if'; continue; }
-      if (this.startsWith('@else')) {
+      if (this.startsWithDirective('@else if')) { keyword = '@else if'; continue; }
+      if (this.startsWithDirective('@else')) {
         const elseStart = this.offset;
         this.offset += '@else'.length;
         this.skipWhitespace();
@@ -323,12 +323,12 @@ class GtplParser {
     while (!this.eof()) {
       this.skipWhitespace();
       if (this.peek() === '}') break;
-      if (this.startsWith('@case')) {
+      if (this.startsWithDirective('@case')) {
         if (sawDefault) this.report('GTPL3102', '@case cannot appear after @default.', this.offset, this.offset + 5);
         const caseStart = this.offset;
         const expressions: string[] = [];
         const parsedExpressions: ExpressionNode[] = [];
-        while (this.startsWith('@case')) {
+        while (this.startsWithDirective('@case')) {
           this.offset += '@case'.length;
           this.skipWhitespace();
           const valueStart = this.offset;
@@ -347,7 +347,7 @@ class GtplParser {
         cases.push({ expressions, parsedExpressions, span: this.span(caseStart, this.offset), children });
         continue;
       }
-      if (this.startsWith('@default')) {
+      if (this.startsWithDirective('@default')) {
         const defaultStart = this.offset;
         this.offset += '@default'.length;
         this.skipWhitespace();
@@ -513,7 +513,7 @@ class GtplParser {
     const children = this.parseBraceBlock();
     this.skipWhitespace();
     let empty: GtplNode[] = [];
-    if (this.startsWith('@empty')) { this.offset += '@empty'.length; this.skipWhitespace(); empty = this.parseBraceBlock(); }
+    if (this.startsWithDirective('@empty')) { this.offset += '@empty'.length; this.skipWhitespace(); empty = this.parseBraceBlock(); }
     return { kind: 'for-block', item, collection, track, aliases, children, empty,
       ...(parsedCollection.expression ? { parsedCollection: parsedCollection.expression } : {}),
       ...(parsedTrack.expression ? { parsedTrack: parsedTrack.expression } : {}),
@@ -666,6 +666,11 @@ class GtplParser {
 
   private startsWith(value: string): boolean {
     return this.source.startsWith(value, this.offset);
+  }
+
+  private startsWithDirective(value: string): boolean {
+    return this.startsWith(value)
+      && !/[A-Za-z0-9_$]/.test(this.source[this.offset + value.length] ?? '');
   }
 
   private peek(): string {

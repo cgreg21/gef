@@ -248,6 +248,17 @@ describe('GTPL built-in control flow', () => {
     expect(result.diagnostics.some((item) => item.code === 'GTPL3204')).toBe(true);
   });
 
+  it('does not treat longer identifiers as control-flow directives', () => {
+    const source = '@if (ready) { @for (item of items; track item.id) { @switch (item.kind) { @case ("ok") { <StLabel /> } } } } @elsewhere <StButton />';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('if-block');
+    if (block?.kind !== 'if-block') return;
+    expect(block.branches).toHaveLength(1);
+    expect(block.branches[0]?.children[1]?.kind).toBe('text');
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3005')).toBe(false);
+  });
+
   it('reports malformed switch structures and missing @let terminators', () => {
     const switchResult = parseGtpl('@switch (role) { @default {} @case ("late") {} @default {} }');
     expect(switchResult.diagnostics.some((item) => item.code === 'GTPL3102')).toBe(true);

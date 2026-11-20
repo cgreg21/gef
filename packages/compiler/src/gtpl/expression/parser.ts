@@ -31,6 +31,7 @@ interface Token {
   readonly value: string;
   readonly start: number;
   readonly end: number;
+  readonly terminated?: boolean;
 }
 
 const BINARY_PRECEDENCE: Readonly<Record<string, number>> = {
@@ -227,7 +228,7 @@ class ExpressionParser {
       this.advance();
       return {
         kind: 'literal',
-        value: this.decodeString(token.value),
+        value: this.decodeString(token.value, token.terminated === true),
         raw: token.value,
         span: { start: token.start, end: token.end },
       };
@@ -275,6 +276,7 @@ class ExpressionParser {
 
     if (char === '"' || char === "'") {
       this.offset += 1;
+      let terminated = false;
       while (this.offset < this.source.length) {
         const current = this.source[this.offset] ?? '';
         if (current === '\\') {
@@ -283,16 +285,17 @@ class ExpressionParser {
         }
         if (current === char) {
           this.offset += 1;
+          terminated = true;
           break;
         }
         if (current === '\n' || current === '\r') break;
         this.offset += 1;
       }
       const raw = this.source.slice(start, this.offset);
-      if (raw.length < 2 || raw[raw.length - 1] !== char) {
+      if (!terminated) {
         this.report('GTPL2005', 'Unterminated string literal.', start, this.offset);
       }
-      return { kind: 'string', value: raw, start, end: this.offset };
+      return { kind: 'string', value: raw, start, end: this.offset, terminated };
     }
 
     for (const operator of OPERATORS) {
@@ -312,8 +315,8 @@ class ExpressionParser {
     return { kind: 'operator', value: char, start, end: this.offset };
   }
 
-  private decodeString(raw: string): string {
-    const content = raw.endsWith(raw[0] ?? '') ? raw.slice(1, -1) : raw.slice(1);
+  private decodeString(raw: string, terminated: boolean): string {
+    const content = raw.slice(1, terminated ? -1 : undefined);
     return content.replace(/\\(['"\\nrt])/g, (_match, escaped: string) => {
       if (escaped === 'n') return '\n';
       if (escaped === 'r') return '\r';

@@ -77,6 +77,15 @@ describe('parseGtplExpression', () => {
     expect(result.diagnostics.some((item) => item.code === 'GTPL2005')).toBe(true);
   });
 
+  it('preserves an escaped quote at the end of an unterminated string', () => {
+    const result = parseGtplExpression('"unfinished\\"');
+    expect(result.expression).toMatchObject({
+      kind: 'literal',
+      value: 'unfinished"',
+    });
+    expect(result.diagnostics.some((item) => item.code === 'GTPL2005')).toBe(true);
+  });
+
   it('keeps unterminated string spans within the source', () => {
     const source = '"unfinished\\';
     const result = parseGtplExpression(source);

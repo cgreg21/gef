@@ -204,12 +204,11 @@ describe('GTPL built-in control flow', () => {
     expect(block.branches[0]).toMatchObject({ condition: 'user.profile', alias: 'profile', parsedCondition: { kind: 'member', property: 'profile' } });
   });
   it('keeps escaped quotes and semicolons inside @for header strings', () => {
-    const source = String.raw\`@for (item of getItems("a\\";b"); track item.id) { <StLabel /> }\`;
+    const source = String.raw`@for (item of getItems("a\";b"); track item.id) { <StLabel /> }`;
     const result = parseGtpl(source);
     expect(result.diagnostics).toHaveLength(0);
-    expect(result.nodes[0]).toMatchObject({ kind: 'for-block', collection: String.raw\`getItems("a\\";b")\` });
+    expect(result.nodes[0]).toMatchObject({ kind: 'for-block', collection: String.raw`getItems("a\";b")` });
   });
-
   it('parses @for contextual aliases and nested semicolons safely', () => {
     const result = parseGtpl('@for (item of getItems("a;b"); track item.id; let idx = $index, e = $even) { <StLabel>{{ idx }} {{ e }}</StLabel> }');
     expect(result.diagnostics).toHaveLength(0);

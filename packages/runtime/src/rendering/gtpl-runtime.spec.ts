@@ -26,6 +26,20 @@ describe('createGtplRenderRuntime', () => {
     expect(node).toMatchObject({ kind: 'StLabel', value: { text: 'Ready' }, children: [{ kind: 'text', value: 'Hello' }] });
   });
 
+  it('runs registered template pipes', () => {
+    const runtime = createGtplRenderRuntime(createHost());
+    const pipes = new (class {
+      transform(name: string, value: unknown): unknown {
+        return name === 'upper' ? String(value).toUpperCase() : value;
+      }
+    })();
+    const withPipes = createGtplRenderRuntime(createHost(), {
+      transform: (name, value, ...args) => pipes.transform(name, value, ...args),
+    });
+    expect(withPipes.pipe('upper', 'gef')).toBe('GEF');
+    expect(runtime.text('static')).toEqual({ kind: 'text', value: 'static' });
+  });
+
   it('creates explicit binding values for reactive hosts', () => {
     const runtime = createGtplRenderRuntime(createHost());
     const value = runtime.bind(() => 'current');

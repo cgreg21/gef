@@ -13,3 +13,5 @@ export * from './renderers/gtk/gtk-render-host.js';
 export * from './components/component-ref.js';
 
 export * from '../../shared/src/events/event-emitter.js';
+
+export * from './pipes/pipe-registry.js';

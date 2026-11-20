@@ -1,3 +1,4 @@
+import { PipeRegistry } from '../pipes/pipe-registry.js';
 import { ResourceScope } from '../resources/resource-scope.js';
 
 export interface GtplRepeatItem<Node> {
@@ -46,6 +47,7 @@ export interface GtplSwitchCase<Node> {
 
 /** Runtime surface targeted by JavaScript emitted by emitGtplTemplate. */
 export interface GtplRenderRuntime<Node> {
+  pipe(name: string, value: unknown, ...args: unknown[]): unknown;
   bind<T>(get: () => T): GtplBinding<T>;
   element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node | undefined): Node;
   text(value: string | GtplBinding<string>): Node;
@@ -68,8 +70,9 @@ export interface GtplRenderRuntime<Node> {
  * Creates the renderer-independent runtime used by generated GTPL functions.
  * A platform host owns native widget creation and keyed-list reconciliation.
  */
-export function createGtplRenderRuntime<Node>(host: GtplRenderHost<Node>): GtplRenderRuntime<Node> {
+export function createGtplRenderRuntime<Node>(host: GtplRenderHost<Node>, pipes: PipeRegistry = new PipeRegistry()): GtplRenderRuntime<Node> {
   return {
+    pipe: (name, value, ...args) => pipes.transform(name, value, ...args),
     bind: (get) => ({ kind: 'binding', get }),
     element: (name, attributes, children) => host.element(name, attributes, children),
     text: (value) => host.text(value),
@@ -124,8 +127,9 @@ export function mountGtplTemplate<Context, Node>(
   context: Context,
   render: GtplRenderFunction<Context, Node>,
   host: GtplRenderHost<Node>,
+  pipes?: PipeRegistry,
 ): GtplRenderView<Node> {
-  const node = render(context, createGtplRenderRuntime(host));
+  const node = render(context, createGtplRenderRuntime(host, pipes));
   const resources = new ResourceScope();
   resources.add(() => host.destroy(node));
   return { node, dispose: () => resources.dispose() };

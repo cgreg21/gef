@@ -1,11 +1,13 @@
 import { Injector, type Provider } from '../di/injector.js';
 import { mountGtplTemplate, type GtplRenderFunction, type GtplRenderHost, type GtplRenderView } from '../rendering/gtpl-runtime.js';
 import { ResourceScope } from '../resources/resource-scope.js';
+import type { PipeRegistry } from '../pipes/pipe-registry.js';
 
 export interface ComponentDefinition<Instance, Node> {
   readonly create: (injector: Injector) => Instance;
   readonly render: GtplRenderFunction<Instance, Node>;
   readonly providers?: readonly Provider[];
+  readonly pipes?: PipeRegistry;
   readonly dispose?: (instance: Instance) => void;
 }
 
@@ -32,7 +34,7 @@ export function mountComponent<Instance, Node>(
   try {
     const instance = definition.create(injector);
     if (definition.dispose) resources.add(() => definition.dispose?.(instance));
-    const view = mountGtplTemplate(instance, definition.render, host);
+    const view = mountGtplTemplate(instance, definition.render, host, definition.pipes);
     resources.add(() => view.dispose());
     return {
       instance,

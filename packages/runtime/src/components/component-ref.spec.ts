@@ -1,0 +1,70 @@
+import { describe, expect, it, vi } from 'vitest';
+import { InjectionToken, Injector } from '../di/injector.js';
+import { mountComponent } from './component-ref.js';
+import type { GtplRenderHost } from '../rendering/gtpl-runtime.js';
+
+type Node = { readonly kind: string; readonly value?: unknown; readonly children?: readonly Node[] };
+
+function createHost(order: string[] = []): GtplRenderHost<Node> {
+  return {
+    destroy: () => { order.push('view'); },
+    element: (name, attributes, child) => ({ kind: name, value: attributes, children: child ? [child] : [] }),
+    text: (value) => ({ kind: 'text', value: typeof value === 'string' ? value : value.get() }),
+    fragment: (children) => ({ kind: 'fragment', children }),
+    repeat: (state) => ({ kind: 'repeat', value: state.get() }),
+    conditional: (condition, render, fallback) => condition.get() ? render(condition.get()) : fallback(),
+    switch: (value, cases, renderDefault) => {
+      const current = value.get();
+      return cases.find((branch) => branch.values.some((candidate) => Object.is(candidate, current)))?.render()
+        ?? renderDefault?.() ?? { kind: 'fragment', children: [] };
+    },
+  };
+}
+
+describe('mountComponent', () => {
+  it('owns component, view and child injector lifetimes in reverse order', () => {
+    const DEPENDENCY = new InjectionToken<string>('dependency');
+    const order: string[] = [];
+    const parent = new Injector([{ provide: DEPENDENCY, useValue: 'ready' }]);
+    const component = mountComponent({
+      create: (injector) => ({ value: injector.get(DEPENDENCY) }),
+      render: (instance, runtime) => runtime.text(instance.value),
+      providers: [{ provide: new InjectionToken('local'), useValue: {}, dispose: () => order.push('injector') }],
+      dispose: () => order.push('component'),
+    }, parent, createHost(order));
+
+    expect(component.view.node).toEqual({ kind: 'text', value: 'ready' });
+    component.destroy();
+    component.destroy();
+    expect(order).toEqual(['view', 'component', 'injector']);
+    expect(parent.get(DEPENDENCY)).toBe('ready');
+    parent.destroy();
+  });
+
+  it('cleans up the child injector when component creation fails', () => {
+    const LOCAL = new InjectionToken<object>('local');
+    const dispose = vi.fn();
+    const parent = new Injector();
+    expect(() => mountComponent({
+      providers: [{ provide: LOCAL, useValue: {}, dispose }],
+      create: () => { throw new Error('create failed'); },
+      render: () => ({ kind: 'unused' }),
+    }, parent, createHost())).toThrow('create failed');
+    expect(dispose).not.toHaveBeenCalled();
+    parent.destroy();
+  });
+
+  it('cleans component and injector if template rendering fails', () => {
+    const LOCAL = new InjectionToken<object>('local');
+    const order: string[] = [];
+    const parent = new Injector();
+    expect(() => mountComponent({
+      providers: [{ provide: LOCAL, useValue: {}, dispose: () => order.push('injector') }],
+      create: () => ({ value: 'ready' }),
+      render: () => { throw new Error('render failed'); },
+      dispose: () => order.push('component'),
+    }, parent, createHost())).toThrow('render failed');
+    expect(order).toEqual(['component', 'injector']);
+    parent.destroy();
+  });
+});

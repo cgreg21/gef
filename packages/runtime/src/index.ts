@@ -9,3 +9,5 @@ export * from './reactivity/signal.js';
 export * from './di/injector.js';
 
 export * from './renderers/gtk/gtk-render-host.js';
+
+export * from './components/component-ref.js';

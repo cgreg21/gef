@@ -79,6 +79,51 @@ describe('parseGtplExpression', () => {
     });
   });
 
+  it('recovers missing commas in calls and arrays', () => {
+    const call = parseGtplExpression('format(first second)');
+    expect(call.expression).toMatchObject({
+      kind: 'call',
+      arguments: [
+        { kind: 'identifier', name: 'first' },
+        { kind: 'identifier', name: 'second' },
+      ],
+    });
+    expect(call.diagnostics.some((item) => item.code === 'GTPL2008')).toBe(true);
+
+    const array = parseGtplExpression('[first second]');
+    expect(array.expression).toMatchObject({
+      kind: 'array',
+      elements: [
+        { kind: 'identifier', name: 'first' },
+        { kind: 'identifier', name: 'second' },
+      ],
+    });
+    expect(array.diagnostics.some((item) => item.code === 'GTPL2008')).toBe(true);
+  });
+
+  it('preserves partial call, array and computed member nodes when closers are missing', () => {
+    expect(parseGtplExpression('format(value').expression).toMatchObject({
+      kind: 'call',
+      arguments: [{ kind: 'identifier', name: 'value' }],
+    });
+    expect(parseGtplExpression('[value').expression).toMatchObject({
+      kind: 'array',
+      elements: [{ kind: 'identifier', name: 'value' }],
+    });
+    expect(parseGtplExpression('items[index').expression).toMatchObject({
+      kind: 'member',
+      computed: true,
+      property: { kind: 'identifier', name: 'index' },
+    });
+  });
+
+  it('does not consume a closing delimiter when an operand is missing', () => {
+    const result = parseGtplExpression('format(value +)');
+    expect(result.expression).toMatchObject({ kind: 'call' });
+    expect(result.diagnostics.some((item) => item.code === 'GTPL2004')).toBe(true);
+    expect(result.diagnostics.every((item) => item.span.start >= 0 && item.span.end <= 'format(value +)'.length)).toBe(true);
+  });
+
   it('reports trailing tokens instead of silently accepting them', () => {
     const result = parseGtplExpression('value anotherValue');
     expect(result.diagnostics.some((item) => item.code === 'GTPL2002')).toBe(true);

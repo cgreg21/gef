@@ -109,14 +109,14 @@ class ExpressionParser {
         this.advance();
         const property = this.parseExpression(0);
         const close = this.expect(']');
-        if (!property || !close) return left;
+        if (!property) return left;
         left = {
           kind: 'member',
           object: left,
           property,
           computed: true,
           optional: false,
-          span: { start: left.span.start, end: close.end },
+          span: { start: left.span.start, end: close?.end ?? property.span.end },
         };
         continue;
       }
@@ -126,13 +126,12 @@ class ExpressionParser {
         this.advance();
         const args = this.parseDelimitedExpressions(')');
         const close = this.expect(')');
-        if (!close) return left;
         left = {
           kind: 'call',
           callee: left,
           arguments: args,
           optional: false,
-          span: { start: left.span.start, end: close.end },
+          span: { start: left.span.start, end: close?.end ?? args.at(-1)?.span.end ?? this.getCurrentToken().start },
         };
         continue;
       }
@@ -177,8 +176,15 @@ class ExpressionParser {
     while (this.getCurrentToken().kind !== 'eof' && this.getCurrentToken().value !== closing) {
       const expression = this.parseExpression(0);
       if (expression) expressions.push(expression);
-      if (this.getCurrentToken().value !== ',') break;
-      this.advance();
+
+      if (this.getCurrentToken().value === ',') {
+        this.advance();
+        continue;
+      }
+      if (this.getCurrentToken().kind === 'eof' || this.getCurrentToken().value === closing) break;
+
+      const token = this.getCurrentToken();
+      this.report('GTPL2008', 'Expected \",\" between expressions.', token.start, token.end);
     }
     return expressions;
   }
@@ -209,8 +215,11 @@ class ExpressionParser {
       this.advance();
       const elements = this.parseDelimitedExpressions(']');
       const close = this.expect(']');
-      if (!close) return null;
-      return { kind: 'array', elements, span: { start: token.start, end: close.end } };
+      return {
+        kind: 'array',
+        elements,
+        span: { start: token.start, end: close?.end ?? elements.at(-1)?.span.end ?? this.getCurrentToken().start },
+      };
     }
 
     if (token.kind === 'number') {
@@ -247,7 +256,7 @@ class ExpressionParser {
     }
 
     this.report('GTPL2004', `Expected an expression, found "${token.value || 'end of input'}".`, token.start, token.end);
-    if (token.kind !== 'eof') this.advance();
+    if (token.kind !== 'eof' && ![')', ']', ',', ':'].includes(token.value)) this.advance();
     return null;
   }
 

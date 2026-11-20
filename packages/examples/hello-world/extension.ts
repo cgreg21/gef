@@ -4,28 +4,18 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import {
   createStRenderHost,
   mountGtplTemplate,
-  type GtplRenderRuntime,
   type GtplRenderView,
   type StActor,
   type StNamespace,
 } from '../../runtime/src/index.js';
+import renderTemplate from './template.js';
 
 export default class GefHelloWorldExtension extends Extension {
   private view: GtplRenderView<StActor> | undefined;
 
   override enable(): void {
     const host = createStRenderHost(St as StNamespace);
-    this.view = mountGtplTemplate(
-      { label: 'GEF' },
-      (context, runtime: GtplRenderRuntime<StActor>) => runtime.element(
-        'StButton',
-        {},
-        runtime.element('StLabel', {
-          text: runtime.bind(() => context.label),
-        }, undefined),
-      ),
-      host,
-    );
+    this.view = mountGtplTemplate({}, renderTemplate, host);
     Main.panel.addToStatusArea('gef-hello-world', this.view.node);
   }
 

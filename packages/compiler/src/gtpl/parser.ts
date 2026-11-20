@@ -196,6 +196,7 @@ class GtplParser {
   private parseText(): TextNode {
     const start = this.offset;
     while (!this.eof() && this.peek() !== '<') {
+      if (this.offset > start && this.isBlockDirectiveStart()) break;
       if (this.blockDepth > 0 && this.peek() === '}') {
         if (this.startsWith('}}')) {
           this.offset += 2;
@@ -579,6 +580,11 @@ class GtplParser {
     else this.report('GTPL3006', 'Unterminated control-flow block.', this.offset, this.offset);
     this.blockDepth -= 1;
     return children;
+  }
+
+  private isBlockDirectiveStart(): boolean {
+    return ['@if', '@for', '@switch', '@let'].some((keyword) => this.startsWith(keyword)
+      && !/[A-Za-z0-9_$]/.test(this.source[this.offset + keyword.length] ?? ''));
   }
 
   private parseComment(): void {

@@ -14,20 +14,22 @@
 - [x] Disposable output event emitter.
 - [x] Component input/output binding validation.
 - [x] Organize compiler implementation by domain subdirectories with focused package entry points.
-- [ ] Parser fuzzing and malformed-input corpus.
+- [x] Deterministic parser fuzz corpus and malformed-input regression tests.
 - [ ] Type-check expressions against TypeScript component members.
 - [x] Emit JavaScript source for parsed expression ASTs.\n- [x] Emit initial JavaScript render-function source for GTPL ASTs (runtime contract injected; structural shorthand and two-way bindings remain pending).
 - [x] Provide a combined GTPL parse, semantic and component validation API.
-- [ ] Complete JavaScript template generation and connect it to the executable runtime.
+- [x] Connect supported generated templates to the executable renderer-independent runtime.
+- [ ] Complete source maps, diagnostics mapping and remaining template constructs.
 - [ ] Switch exhaustiveness checks using TypeScript types.
 
 ## Runtime and renderers
 - [x] Initial resource scope with reverse-order, idempotent cleanup.
 - [x] Initial renderer-independent GTPL runtime and disposable render views.
-- [x] Initial GNOME Shell St host adapter (static rendering and signal cleanup).
+- [x] Initial GNOME Shell St host adapter with reactive property/text bindings and signal cleanup.
 - [x] Synchronous signal, computed and effect primitives.
-- [ ] Integrate reactive updates, keyed reconciliation and resource ownership into component lifecycles.
-- [ ] Dependency injection.
+- [x] Reactive `@if`, `@switch` and keyed `@for` updates in the St host.
+- [x] Explicit hierarchical dependency injector with scoped disposal.
+- [ ] Component lifecycle integration, directive instantiation and DI scopes.
 - [ ] GNOME Shell 51 St/Clutter integration tests.
 - [ ] GTK4/libadwaita preferences renderer.
 - [ ] Native GJS code generation and source maps.

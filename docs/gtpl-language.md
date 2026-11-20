@@ -54,6 +54,7 @@ The initial expression parser supports:
 - Unary operators: `!`, unary `+`, and unary `-`.
 - Binary operators: arithmetic, comparison, equality, logical AND/OR, nullish coalescing, and exponentiation.
 - Conditional expressions: `condition ? whenTrue : whenFalse`.
+- Assignments to identifier and member-expression targets, for event handlers and lowered two-way bindings.
 - Array literals.
 
 Object literals, statements, `new`, arbitrary global access, and JavaScript function/arrow declarations are intentionally not part of the initial grammar. Simple assignments to identifiers and member expressions are supported for event handlers and two-way bindings. Pipes and local-variable declarations will be specified separately.
@@ -112,4 +113,4 @@ No template or expression parsing should occur in the installed extension runtim
 
 Implemented: template structure parser, Angular-style `@switch` / `@case` / `@default` selection (including grouped cases and `@default never` syntax), `@let` local declarations, binding-attribute classification, interpolation boundary parsing, expression AST/parser, integration of expression trees into bindings/interpolations, template-positioned expression diagnostics, and syntax/integration tests.
 
-Implemented: structural shorthand lowering, two-way binding lowering, initial template JavaScript source generation. Not yet implemented: expression type checking against TypeScript members, renderer validation, complete runtime execution and renderer-specific code generation. Component, directive and pipe declaration metadata plus component input/output contract validation are implemented.
+Implemented: structural shorthand and two-way binding lowering, initial JavaScript template generation, renderer-independent execution runtime, reactive text/property bindings, reactive `@if`/`@switch`/keyed `@for` updates in the GNOME Shell host, and deterministic render-view disposal. Still pending: TypeScript-aware expression type checking, complete renderer validation, source maps, full component/directive instantiation, GTK4/libadwaita rendering and production GNOME Shell integration tests. Component, directive and pipe declaration metadata plus component input/output contract validation are implemented.

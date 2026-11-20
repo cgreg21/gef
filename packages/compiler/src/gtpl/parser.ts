@@ -257,6 +257,7 @@ class GtplParser {
       const conditionOffset = conditionStart + 1;
       const parsed = parseGtplExpression(condition);
       for (const diagnostic of parsed.diagnostics) this.report(diagnostic.code, diagnostic.message, conditionOffset + diagnostic.span.start, conditionOffset + diagnostic.span.end);
+      this.skipWhitespace();
       const children = this.parseBraceBlock();
       branches.push({ condition, ...(parsed.expression ? { parsedCondition: parsed.expression } : {}), span: this.span(conditionStart, this.offset), children });
       this.skipWhitespace();

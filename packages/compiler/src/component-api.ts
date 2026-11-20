@@ -19,14 +19,6 @@ const components = new WeakMap<Function, ComponentMetadata>();
 const directives = new WeakMap<Function, DirectiveMetadata>();
 const pipes = new WeakMap<Function, PipeMetadata>();
 
-function addMember(metadata: MemberMetadata): void {
-  const prototype = currentDecoratorPrototype;
-  if (!prototype) throw new TypeError('Invalid GEF member decorator target.');
-  const members = membersByPrototype.get(prototype) ?? [];
-  members.push(metadata);
-  membersByPrototype.set(prototype, members);
-}
-let currentDecoratorPrototype: object | null = null;
 function recordMember(build: (member: string) => MemberMetadata): PropertyDecorator {
   return (prototype, key) => {
     if (typeof key !== 'string') throw new TypeError('GEF member decorators require string property names.');
@@ -64,7 +56,7 @@ function collectMembers(target: Function): readonly MemberMetadata[] {
   return membersByPrototype.get(target.prototype) ?? [];
 }
 function names(members: readonly MemberMetadata[], kind: 'input' | 'output'): readonly string[] {
-  const result = members.filter((item) => item.kind === kind).map((item) => item.publicName);
+  const result = members.filter((item): item is Extract<MemberMetadata, { kind: 'input' | 'output' }> => item.kind === kind).map((item) => item.publicName);
   assertUnique(result, kind);
   return Object.freeze(result);
 }

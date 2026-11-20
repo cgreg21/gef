@@ -108,14 +108,14 @@ describe('GTPL expression integration', () => {
   });
 
   it('maps binding expression diagnostics to template line and column', () => {
-    const result = parseGtpl('<StBox>\\n  <StLabel [visible]="device." />\\n</StBox>');
+    const result = parseGtpl('<StBox>\n  <StLabel [visible]="device." />\n</StBox>');
     const diagnostic = result.diagnostics.find((item) => item.code === 'GTPL2003');
     expect(diagnostic?.span.line).toBe(2);
     expect(diagnostic?.span.column).toBeGreaterThan(20);
   });
 
   it('maps interpolation expression diagnostics to template coordinates', () => {
-    const result = parseGtpl('<StLabel>\\n  {{ device. }}\\n</StLabel>');
+    const result = parseGtpl('<StLabel>\n  {{ device. }}\n</StLabel>');
     const diagnostic = result.diagnostics.find((item) => item.code === 'GTPL2003');
     expect(diagnostic?.span.line).toBe(2);
     expect(diagnostic?.span.column).toBeGreaterThan(10);

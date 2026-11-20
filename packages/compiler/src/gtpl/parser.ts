@@ -174,7 +174,7 @@ class GtplParser {
     const attribute: GtplAttribute = { name, value, kind, span: this.span(start, this.offset), valueSpan };
     if (kind === 'property' || kind === 'event' || kind === 'two-way' || kind === 'structural') {
       // *gefFor has a dedicated microsyntax (let item of items), parsed in a later compiler phase.
-      if (!(kind === 'structural' && name === 'gefFor' && /^\\s*let\\s+/.test(value))) {
+      if (!(kind === 'structural' && name === 'gefFor' && /^\s*let\s+/.test(value))) {
         const parsed = parseGtplExpression(value);
         for (const diagnostic of parsed.diagnostics) {
           this.report(diagnostic.code, diagnostic.message, valueStart + diagnostic.span.start, valueStart + diagnostic.span.end);

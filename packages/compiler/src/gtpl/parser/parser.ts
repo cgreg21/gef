@@ -137,6 +137,7 @@ class GtplParser {
         openingTagClosed = true;
         break;
       }
+      if (this.isTagStart(this.offset)) break;
       const attribute = this.parseAttribute();
       if (attribute) attributes.push(attribute);
       else {
@@ -151,7 +152,7 @@ class GtplParser {
     }
 
     const children: GtplNode[] = [];
-    if (!selfClosing) {
+    if (!selfClosing && openingTagClosed) {
       let closed = false;
       while (!this.eof()) {
         if (this.blockDepth > 0 && (this.peek() === '}' || this.isIfBranchStart()
@@ -220,6 +221,7 @@ class GtplParser {
         valueStart = this.offset;
         let closed = false;
         while (!this.eof()) {
+          if (this.peek() === '\n' && this.isRecoveryBoundaryAfterNewline(this.offset + 1)) break;
           const next = advanceQuotedCharacter(this.source, this.offset, quote);
           this.offset = next.offset;
           if (next.closesQuote) {

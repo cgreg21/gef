@@ -817,6 +817,15 @@ describe('GTPL built-in control flow', () => {
     expect(source.slice(element.span.start, element.span.end)).toBe(source);
   });
 
+  it('recovers a following sibling after an unterminated quoted attribute', () => {
+    const source = '<StLabel title="unfinished\n<StButton />';
+    const result = parseGtpl(source);
+    expect(result.nodes.some((node) => node.kind === 'element' && node.name === 'StLabel')).toBe(true);
+    expect(result.nodes.some((node) => node.kind === 'element' && node.name === 'StButton')).toBe(true);
+    expect(result.diagnostics.some(({ code }) => code === 'GTPL1007')).toBe(true);
+    expect(result.diagnostics.some(({ code }) => code === 'GTPL1004')).toBe(true);
+  });
+
   it('reports an unterminated opening tag when the final greater-than is inside a quoted value', () => {
     const result = parseGtpl('<StLabel title="unfinished>');
     expect(result.diagnostics.map(({ code }) => code)).toEqual(['GTPL1007', 'GTPL1004', 'GTPL1006']);

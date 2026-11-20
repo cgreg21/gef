@@ -15,12 +15,12 @@ describe('emitGtplTemplate', () => {
     const output = emit('<label class="title">Hello {{name}}</label>', ['name']);
     expect(output).toContain('runtime.element("label"');
     expect(output).toContain('"class": "title"');
-    expect(output).toContain('String(ctx.name ?? \'\')');
+    expect(output).toContain('runtime.text(runtime.bind(() => String(ctx.name ?? \'\')))');
   });
 
   it('emits property bindings and event callbacks', () => {
     const output = emit('<button [sensitive]="enabled" (clicked)="activate()">Go</button>', ['enabled', 'activate']);
-    expect(output).toContain('"sensitive": ctx.enabled');
+    expect(output).toContain('"sensitive": runtime.bind(() => ctx.enabled)');
     expect(output).toContain('"clicked": ($event) => (ctx.activate())');
   });
 
@@ -55,7 +55,7 @@ describe('emitGtplTemplate', () => {
     const lowered = lowerGtplStructuralDirectives(parsed.nodes);
     expect(lowered.diagnostics).toEqual([]);
     const output = emitGtplTemplate(lowered.nodes, { componentMembers: ['volume'] });
-    expect(output).toContain('"value": ctx.volume');
+    expect(output).toContain('"value": runtime.bind(() => ctx.volume)');
     expect(output).toContain('"valueChange": ($event) => (ctx.volume = $event)');
   });
 
@@ -68,7 +68,7 @@ describe('emitGtplTemplate', () => {
     const host: GtplRenderHost<Node> = {
       destroy: () => {},
       element: (kind, value, children) => ({ kind, value, children: [children] }),
-      text: (value) => ({ kind: 'text', value }),
+      text: (value) => ({ kind: 'text', value: typeof value === 'string' ? value : value.get() }),
       fragment: (children) => ({ kind: 'fragment', children }),
       repeat: (items) => ({ kind: 'repeat', value: items }),
     };

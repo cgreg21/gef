@@ -6,10 +6,21 @@ export interface GtplRepeatItem<Node> {
   readonly node: Node;
 }
 
+export interface GtplBinding<T> {
+  readonly kind: 'binding';
+  readonly get: () => T;
+}
+
+export function isGtplBinding(value: unknown): value is GtplBinding<unknown> {
+  return typeof value === 'object' && value !== null
+    && 'kind' in value && value.kind === 'binding'
+    && 'get' in value && typeof value.get === 'function';
+}
+
 export interface GtplRenderHost<Node> {
   destroy(node: Node): void;
   element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node): Node;
-  text(value: string): Node;
+  text(value: string | GtplBinding<string>): Node;
   fragment(children: readonly Node[]): Node;
   repeat(items: readonly GtplRepeatItem<Node>[]): Node;
 }
@@ -28,8 +39,9 @@ export interface GtplSwitchCase<Node> {
 
 /** Runtime surface targeted by JavaScript emitted by emitGtplTemplate. */
 export interface GtplRenderRuntime<Node> {
+  bind<T>(get: () => T): GtplBinding<T>;
   element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node): Node;
-  text(value: string): Node;
+  text(value: string | GtplBinding<string>): Node;
   fragment(children: readonly Node[]): Node;
   if<T>(condition: T, render: (value: T) => Node, fallback?: () => Node): Node;
   for<T>(
@@ -51,6 +63,7 @@ export interface GtplRenderRuntime<Node> {
  */
 export function createGtplRenderRuntime<Node>(host: GtplRenderHost<Node>): GtplRenderRuntime<Node> {
   return {
+    bind: (get) => ({ kind: 'binding', get }),
     element: (name, attributes, children) => host.element(name, attributes, children),
     text: (value) => host.text(value),
     fragment: (children) => host.fragment(children),

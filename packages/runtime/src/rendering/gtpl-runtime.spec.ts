@@ -20,6 +20,13 @@ describe('createGtplRenderRuntime', () => {
     expect(node).toMatchObject({ kind: 'StLabel', value: { text: 'Ready' }, children: [{ kind: 'text', value: 'Hello' }] });
   });
 
+  it('creates explicit binding values for reactive hosts', () => {
+    const runtime = createGtplRenderRuntime(createHost());
+    const value = runtime.bind(() => 'current');
+    expect(value.kind).toBe('binding');
+    expect(value.get()).toBe('current');
+  });
+
   it('renders only the selected conditional branch and passes the condition value', () => {
     const runtime = createGtplRenderRuntime(createHost());
     expect(runtime.if('ready', (value) => ({ kind: 'yes', value }), () => ({ kind: 'no' })))

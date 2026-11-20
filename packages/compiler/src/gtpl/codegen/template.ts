@@ -60,7 +60,10 @@ export function emitGtplTemplate(
       ? JSON.stringify(part.value)
       : `String(${expression(part.parsedExpression, locals, options)} ?? '')`);
     if (value.length === 0) return 'runtime.text("")';
-    return `runtime.text(${value.length === 1 ? value[0] : value.join(' + ')})`;
+    const text = value.length === 1 ? value[0] : value.join(' + ');
+    return node.parts.some((part) => part.kind === 'interpolation')
+      ? `runtime.text(runtime.bind(() => ${text}))`
+      : `runtime.text(${text})`;
   };
 
   const renderElement = (node: ElementNode, locals: ReadonlySet<string>): string => {
@@ -75,7 +78,9 @@ export function emitGtplTemplate(
       } else {
         const attributeLocals = attribute.kind === 'event' ? new Set([...locals, '$event']) : locals;
         const emitted = expression(attribute.parsedExpression, attributeLocals, options);
-        value = attribute.kind === 'event' ? `($event) => ${emitted}` : emitted;
+        value = attribute.kind === 'event'
+          ? `($event) => ${emitted}`
+          : attribute.kind === 'property' ? `runtime.bind(() => ${emitted})` : emitted;
       }
       attributes.push(`${JSON.stringify(attribute.name)}: ${value}`);
     }

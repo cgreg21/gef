@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createStRenderHost, type StActor, type StNamespace, type StWidgetConstructor } from './st-render-host.js';
+import { createGtplRenderRuntime } from '../../rendering/gtpl-runtime.js';
+import { signal } from '../../reactivity/signal.js';
 
 class FakeActor implements StActor {
   readonly properties: Record<string, unknown>;
@@ -27,9 +29,14 @@ class FakeActor implements StActor {
   }
 
   destroy(): void {
+    this.emit('destroy');
     this.destroyed = true;
     this.signals.clear();
     for (const child of this.children) child.destroy();
+  }
+
+  set_property(name: string, value: unknown): void {
+    this.properties[name] = value;
   }
 
   emit(name: string, ...args: unknown[]): unknown {
@@ -77,6 +84,28 @@ describe('createStRenderHost', () => {
     expect(received).toBe(2);
     host.destroy(actor);
     expect(actor.signals.size).toBe(0);
+  });
+
+  it('updates bound properties and text from signals, then unsubscribes on destroy', () => {
+    const host = createStRenderHost(createSt());
+    const runtime = createGtplRenderRuntime(host);
+    const title = signal('before');
+    const actor = host.element('StLabel', { text: runtime.bind(() => title.get()) }, host.fragment([])) as FakeActor;
+    expect(actor.properties.text).toBe('before');
+    title.set('after');
+    expect(actor.properties.text).toBe('after');
+    host.destroy(actor);
+    title.set('ignored');
+    expect(actor.properties.text).toBe('after');
+
+    const text = signal('first');
+    const label = host.text(runtime.bind(() => text.get())) as FakeActor;
+    expect(label.properties.text).toBe('first');
+    text.set('second');
+    expect(label.properties.text).toBe('second');
+    host.destroy(label);
+    text.set('third');
+    expect(label.properties.text).toBe('second');
   });
 
   it('supports custom component constructors', () => {

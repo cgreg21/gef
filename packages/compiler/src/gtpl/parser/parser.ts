@@ -188,13 +188,25 @@ class GtplParser {
       // *gefFor has a dedicated microsyntax (let item of items), parsed in a later compiler phase.
       if (!(kind === 'structural' && (name === 'for' || name === 'gefFor') && /^\s*let\s+/.test(value))) {
         const parsed = parseGtplExpression(value);
-        for (const diagnostic of parsed.diagnostics) {
-          this.report(diagnostic.code, diagnostic.message, valueStart + diagnostic.span.start, valueStart + diagnostic.span.end);
-        }
+        this.reportExpressionDiagnostics(parsed, valueStart);
         if (parsed.expression) return { ...attribute, parsedExpression: parsed.expression };
       }
     }
     return attribute;
+  }
+
+  private reportExpressionDiagnostics(
+    parsed: ReturnType<typeof parseGtplExpression>,
+    sourceOffset: number,
+  ): void {
+    for (const diagnostic of parsed.diagnostics) {
+      this.report(
+        diagnostic.code,
+        diagnostic.message,
+        sourceOffset + diagnostic.span.start,
+        sourceOffset + diagnostic.span.end,
+      );
+    }
   }
 
   private parseText(): TextNode {
@@ -234,9 +246,7 @@ class GtplParser {
         this.report('GTPL1010', 'Interpolation expression cannot be empty.', matchStart, start + pattern.lastIndex);
       }
       const parsed = parseGtplExpression(expression.trim());
-      for (const diagnostic of parsed.diagnostics) {
-        this.report(diagnostic.code, diagnostic.message, expressionStart + diagnostic.span.start, expressionStart + diagnostic.span.end);
-      }
+      this.reportExpressionDiagnostics(parsed, expressionStart);
       parts.push({
         kind: 'interpolation',
         expression: expression.trim(),
@@ -286,7 +296,7 @@ class GtplParser {
         this.report('GTPL3007', 'Invalid @if alias; expected "condition; as name".', conditionStart, this.offset);
       }
       const parsed = parseGtplExpression(condition);
-      for (const diagnostic of parsed.diagnostics) this.report(diagnostic.code, diagnostic.message, conditionOffset + diagnostic.span.start, conditionOffset + diagnostic.span.end);
+      this.reportExpressionDiagnostics(parsed, conditionOffset);
       this.skipWhitespace();
       const children = this.parseBraceBlock();
       blockEnd = this.offset;
@@ -314,9 +324,7 @@ class GtplParser {
     const expression = expressionContent.value.trim();
     const expressionOffset = expressionContent.start + expressionContent.value.length - expressionContent.value.trimStart().length;
     const parsedExpression = parseGtplExpression(expression);
-    for (const diagnostic of parsedExpression.diagnostics) {
-      this.report(diagnostic.code, diagnostic.message, expressionOffset + diagnostic.span.start, expressionOffset + diagnostic.span.end);
-    }
+    this.reportExpressionDiagnostics(parsedExpression, expressionOffset);
     this.skipWhitespace();
     if (this.peek() !== '{') {
       this.report('GTPL3101', 'Expected "{" after @switch expression.', this.offset, this.offset + 1);
@@ -343,9 +351,7 @@ class GtplParser {
           const value = valueContent.value.trim();
           const parsed = parseGtplExpression(value);
           const valueOffset = valueContent.start + valueContent.value.length - valueContent.value.trimStart().length;
-          for (const diagnostic of parsed.diagnostics) {
-            this.report(diagnostic.code, diagnostic.message, valueOffset + diagnostic.span.start, valueOffset + diagnostic.span.end);
-          }
+          this.reportExpressionDiagnostics(parsed, valueOffset);
           expressions.push(value);
           if (parsed.expression) parsedExpressions.push(parsed.expression);
           else this.report('GTPL3103', 'Invalid @case expression.', valueContent.start - 1, this.offset);
@@ -372,9 +378,7 @@ class GtplParser {
             neverExpression = neverContent.value.trim();
             const neverOffset = neverContent.start + neverContent.value.length - neverContent.value.trimStart().length;
             const parsed = parseGtplExpression(neverExpression);
-            for (const diagnostic of parsed.diagnostics) {
-              this.report(diagnostic.code, diagnostic.message, neverOffset + diagnostic.span.start, neverOffset + diagnostic.span.end);
-            }
+            this.reportExpressionDiagnostics(parsed, neverOffset);
             if (parsed.expression) parsedNeverExpression = parsed.expression;
             this.skipWhitespace();
           }
@@ -426,9 +430,7 @@ class GtplParser {
     if (this.peek() === ';') this.offset += 1;
     else this.report('GTPL3204', 'Expected ";" to terminate @let declaration.', start, this.offset);
     const parsed = parseGtplExpression(expression);
-    for (const diagnostic of parsed.diagnostics) {
-      this.report(diagnostic.code, diagnostic.message, expressionStart + diagnostic.span.start, expressionStart + diagnostic.span.end);
-    }
+    this.reportExpressionDiagnostics(parsed, expressionStart);
     return { kind: 'let-declaration', name, expression,
       ...(parsed.expression ? { parsedExpression: parsed.expression } : {}),
       span: this.span(start, this.offset) };
@@ -483,7 +485,7 @@ class GtplParser {
     const collection = loop?.[2] ?? '';
     const collectionOffset = headerContent.start + (segments[0]?.start ?? 0) + (segments[0]?.value.indexOf(collection) ?? 0);
     const parsedCollection = parseGtplExpression(collection);
-    for (const diagnostic of parsedCollection.diagnostics) this.report(diagnostic.code, diagnostic.message, collectionOffset + diagnostic.span.start, collectionOffset + diagnostic.span.end);
+    this.reportExpressionDiagnostics(parsedCollection, collectionOffset);
 
     let track = '';
     let trackOffset = headerStart;
@@ -523,7 +525,7 @@ class GtplParser {
     }
     if (!sawTrack) this.report('GTPL3002', '@for requires a track expression.', headerStart, this.offset);
     const parsedTrack = parseGtplExpression(track);
-    for (const diagnostic of parsedTrack.diagnostics) this.report(diagnostic.code, diagnostic.message, trackOffset + diagnostic.span.start, trackOffset + diagnostic.span.end);
+    this.reportExpressionDiagnostics(parsedTrack, trackOffset);
     this.skipWhitespace();
     const children = this.parseBraceBlock();
     let blockEnd = this.offset;

@@ -1,3 +1,5 @@
+import type { ExpressionNode } from './expression.js';
+
 export interface SourceSpan {
   readonly start: number;
   readonly end: number;
@@ -11,19 +13,17 @@ export interface Diagnostic {
   readonly span: SourceSpan;
 }
 
-export type AttributeKind =
-  | 'static'
-  | 'property'
-  | 'event'
-  | 'two-way'
-  | 'structural'
-  | 'reference';
+export type AttributeKind = 'static' | 'property' | 'event' | 'two-way' | 'structural' | 'reference';
 
 export interface GtplAttribute {
   readonly name: string;
   readonly value: string;
   readonly kind: AttributeKind;
   readonly span: SourceSpan;
+  /** Exact source range occupied by the attribute value (excluding quotes). */
+  readonly valueSpan: SourceSpan;
+  /** Parsed expression for expression-bearing bindings; absent for static/reference values and *gefFor microsyntax. */
+  readonly parsedExpression?: ExpressionNode;
 }
 
 export interface TextPart {
@@ -36,6 +36,8 @@ export interface InterpolationPart {
   readonly kind: 'interpolation';
   readonly expression: string;
   readonly span: SourceSpan;
+  readonly expressionSpan: SourceSpan;
+  readonly parsedExpression?: ExpressionNode;
 }
 
 export type TextPartNode = TextPart | InterpolationPart;

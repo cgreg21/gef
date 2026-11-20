@@ -16,7 +16,7 @@
 - [x] Parse text interpolation boundaries.
 - [x] Produce source-located diagnostics for malformed markup.
 - [x] Add an expression AST and initial expression parser.
-- [ ] Connect expression parsing to all template bindings and interpolation nodes.
+- [x] Connect expression parsing to property, event, two-way, structural bindings, and interpolation nodes (except the dedicated `*gefFor` microsyntax).
 - [ ] Add parser fuzzing and malformed-input corpus.
 
 ## Milestone 2 — compiler semantics

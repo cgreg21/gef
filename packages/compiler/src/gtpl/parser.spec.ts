@@ -84,3 +84,54 @@ describe('parseGtpl', () => {
     expect(result.diagnostics.some((diagnostic) => diagnostic.code === 'GTPL1012')).toBe(true);
   });
 });
+
+
+describe('GTPL expression integration', () => {
+  it('attaches parsed expression trees to interpolations and bindings', () => {
+    const result = parseGtpl('<StLabel [visible]="device.connected">{{ device.name }}</StLabel>');
+    expect(result.diagnostics).toHaveLength(0);
+    const root = result.nodes[0];
+    expect(root?.kind).toBe('element');
+    if (root?.kind !== 'element') return;
+    expect(root.attributes[0]?.parsedExpression).toMatchObject({
+      kind: 'member',
+      property: 'connected',
+    });
+    const text = root.children[0];
+    expect(text?.kind).toBe('text');
+    if (text?.kind !== 'text') return;
+    const interpolation = text.parts.find((part) => part.kind === 'interpolation');
+    expect(interpolation).toMatchObject({
+      kind: 'interpolation',
+      parsedExpression: { kind: 'member', property: 'name' },
+    });
+  });
+
+  it('maps binding expression diagnostics to template line and column', () => {
+    const result = parseGtpl('<StBox>\\n  <StLabel [visible]="device." />\\n</StBox>');
+    const diagnostic = result.diagnostics.find((item) => item.code === 'GTPL2003');
+    expect(diagnostic?.span.line).toBe(2);
+    expect(diagnostic?.span.column).toBeGreaterThan(20);
+  });
+
+  it('maps interpolation expression diagnostics to template coordinates', () => {
+    const result = parseGtpl('<StLabel>\\n  {{ device. }}\\n</StLabel>');
+    const diagnostic = result.diagnostics.find((item) => item.code === 'GTPL2003');
+    expect(diagnostic?.span.line).toBe(2);
+    expect(diagnostic?.span.column).toBeGreaterThan(10);
+  });
+
+  it('does not parse static values, local references, or *gefFor microsyntax as expressions', () => {
+    const result = parseGtpl('<StLabel title="hello" #label *gefFor="let item of items" />');
+    expect(result.diagnostics).toHaveLength(0);
+    const root = result.nodes[0];
+    expect(root?.kind).toBe('element');
+    if (root?.kind !== 'element') return;
+    expect(root.attributes.every((attribute) => !('parsedExpression' in attribute))).toBe(true);
+  });
+
+  it('reports invalid expressions in property, event, and two-way bindings', () => {
+    const result = parseGtpl('<StButton [visible]="foo." (clicked)="run(]" [(value)]="[" />');
+    expect(result.diagnostics.filter((item) => item.code.startsWith('GTPL200')).length).toBeGreaterThanOrEqual(3);
+  });
+});

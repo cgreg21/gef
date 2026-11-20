@@ -58,7 +58,7 @@ The initial expression parser supports:
 
 Object literals, assignments, statements, `new`, arbitrary global access, and JavaScript function/arrow declarations are intentionally not part of the initial grammar. Pipes and local-variable declarations will be specified separately.
 
-The parser produces a typed expression AST and syntax diagnostics. It does not yet type-check identifiers against a component class or renderer metadata; that belongs to the semantic-analysis phase.
+The parser produces a typed expression AST and syntax diagnostics. Expression-bearing property, event, two-way, and structural bindings are parsed during GTPL parsing; interpolation expressions are parsed as well. Parsed trees are attached to their AST nodes while original expression text and source spans are preserved. `*gefFor="let item of items"` is recognized as dedicated microsyntax and intentionally deferred to structural-directive parsing. Expression diagnostics are translated to template-file line and column positions. This phase does not type-check identifiers against a component class or renderer metadata; that belongs to semantic analysis.
 
 ## Initial template grammar sketch
 
@@ -102,6 +102,6 @@ No template or expression parsing should occur in the installed extension runtim
 
 ## Status
 
-Implemented: template structure parser, binding-attribute classification, interpolation boundary parsing, expression AST/parser, and syntax-level tests.
+Implemented: template structure parser, binding-attribute classification, interpolation boundary parsing, expression AST/parser, integration of expression trees into bindings/interpolations, template-positioned expression diagnostics, and syntax/integration tests.
 
 Not yet implemented: connecting expression parsing to every template binding during compilation, expression type checking, component metadata, directive lowering, renderer validation, and JavaScript code generation.

@@ -10,6 +10,7 @@ import type {
   TextNode,
   TextPart,
 } from './ast.js';
+import { parseGtplExpression } from './expression.js';
 
 class GtplParser {
   private offset = 0;
@@ -140,23 +141,27 @@ class GtplParser {
     this.skipWhitespace();
 
     let value = '';
+    let valueStart = this.offset;
+    let valueEnd = this.offset;
     if (this.peek() === '=') {
       this.offset += 1;
       this.skipWhitespace();
       const quote = this.peek();
       if (quote === '"' || quote === "'") {
         this.offset += 1;
-        const valueStart = this.offset;
+        valueStart = this.offset;
         while (!this.eof() && this.peek() !== quote) this.offset += 1;
-        value = this.source.slice(valueStart, this.offset);
+        valueEnd = this.offset;
+        value = this.source.slice(valueStart, valueEnd);
         if (this.peek() === quote) this.offset += 1;
         else this.report('GTPL1007', 'Unterminated quoted attribute value.', start, this.offset);
       } else {
-        const valueStart = this.offset;
+        valueStart = this.offset;
         while (!this.eof() && !this.isWhitespace(this.peek()) && this.peek() !== '>' && !this.startsWith('/>')) {
           this.offset += 1;
         }
-        value = this.source.slice(valueStart, this.offset);
+        valueEnd = this.offset;
+        value = this.source.slice(valueStart, valueEnd);
         if (value.length === 0) {
           this.report('GTPL1008', 'Expected an attribute value after "=".', start, this.offset);
         }
@@ -165,7 +170,19 @@ class GtplParser {
 
     const kind = this.attributeKind(rawName);
     const name = this.normalizedAttributeName(rawName, kind);
-    return { name, value, kind, span: this.span(start, this.offset) };
+    const valueSpan = this.span(valueStart, valueEnd);
+    const attribute: GtplAttribute = { name, value, kind, span: this.span(start, this.offset), valueSpan };
+    if (kind === 'property' || kind === 'event' || kind === 'two-way' || kind === 'structural') {
+      // *gefFor has a dedicated microsyntax (let item of items), parsed in a later compiler phase.
+      if (!(kind === 'structural' && name === 'gefFor' && /^\\s*let\\s+/.test(value))) {
+        const parsed = parseGtplExpression(value);
+        for (const diagnostic of parsed.diagnostics) {
+          this.report(diagnostic.code, diagnostic.message, valueStart + diagnostic.span.start, valueStart + diagnostic.span.end);
+        }
+        if (parsed.expression) return { ...attribute, parsedExpression: parsed.expression };
+      }
+    }
+    return attribute;
   }
 
   private parseText(): TextNode {
@@ -188,13 +205,22 @@ class GtplParser {
         });
       }
       const expression = match[1] ?? '';
+      const leadingWhitespace = expression.length - expression.trimStart().length;
+      const expressionStart = matchStart + 2 + leadingWhitespace;
+      const expressionEnd = expressionStart + expression.trim().length;
       if (expression.trim().length === 0) {
         this.report('GTPL1010', 'Interpolation expression cannot be empty.', matchStart, start + pattern.lastIndex);
+      }
+      const parsed = parseGtplExpression(expression.trim());
+      for (const diagnostic of parsed.diagnostics) {
+        this.report(diagnostic.code, diagnostic.message, expressionStart + diagnostic.span.start, expressionStart + diagnostic.span.end);
       }
       parts.push({
         kind: 'interpolation',
         expression: expression.trim(),
         span: this.span(matchStart, start + pattern.lastIndex),
+        expressionSpan: this.span(expressionStart, expressionEnd),
+        ...(parsed.expression ? { parsedExpression: parsed.expression } : {}),
       });
       cursor = pattern.lastIndex;
     }

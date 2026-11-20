@@ -157,6 +157,19 @@ describe('GTPL built-in control flow', () => {
     expect(block.branches[1]?.parsedCondition).toMatchObject({ kind: 'identifier', name: 'loading' });
     expect(block.branches[2]?.condition).toBeUndefined();
   });
+  it('includes the control-flow directive in every @if branch span', () => {
+    const source = '@if (ready) { <StLabel /> } @else if (loading) { <StSpinner /> } @else { <StButton /> }';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('if-block');
+    if (block?.kind !== 'if-block') return;
+    expect(block.branches[0]?.span.start).toBe(source.indexOf('@if'));
+    expect(block.branches[0]?.span.end).toBe(source.indexOf('} @else') + 1);
+    expect(block.branches[1]?.span.start).toBe(source.indexOf('@else if'));
+    expect(block.branches[2]?.span.start).toBe(source.lastIndexOf('@else'));
+    expect(block.branches[2]?.span.end).toBe(source.length);
+  });
+
   it('preserves the complete source span of an @else branch', () => {
     const source = '@if (ready) { <StLabel /> } @else { <StButton /> }';
     const result = parseGtpl(source);

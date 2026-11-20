@@ -266,6 +266,7 @@ class GtplParser {
     let keyword = '@if';
     let first = true;
     while (first || keyword === '@else if') {
+      const branchStart = this.offset;
       first = false;
       this.offset += keyword.length;
       this.skipWhitespace();
@@ -282,7 +283,7 @@ class GtplParser {
       for (const diagnostic of parsed.diagnostics) this.report(diagnostic.code, diagnostic.message, conditionOffset + diagnostic.span.start, conditionOffset + diagnostic.span.end);
       this.skipWhitespace();
       const children = this.parseBraceBlock();
-      branches.push({ condition, ...(alias ? { alias } : {}), ...(parsed.expression ? { parsedCondition: parsed.expression } : {}), span: this.span(conditionStart, this.offset), children });
+      branches.push({ condition, ...(alias ? { alias } : {}), ...(parsed.expression ? { parsedCondition: parsed.expression } : {}), span: this.span(branchStart, this.offset), children });
       this.skipWhitespace();
       if (this.startsWith('@else if')) { keyword = '@else if'; continue; }
       if (this.startsWith('@else')) {

@@ -829,4 +829,47 @@ describe('GTPL built-in control flow', () => {
     expect(result.diagnostics.some(({ code }) => code === 'GTPL1006')).toBe(true);
   });
 
+
+  it('recovers the next switch case after an unterminated nested @for block', () => {
+    const source = '@switch (role) { @case ("admin") { @for (item of items; track item.id) { <StLabel /> @case ("editor") { <StButton /> } } }';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('switch-block');
+    if (block?.kind !== 'switch-block') return;
+    expect(block.cases).toHaveLength(2);
+    expect(block.cases[0]?.children[0]?.kind).toBe('for-block');
+    expect(block.cases[1]?.expressions).toEqual(['"editor"']);
+    expect(block.cases[1]?.children[0]?.kind).toBe('element');
+    expect(result.diagnostics.filter(({ code }) => code === 'GTPL3006')).toHaveLength(1);
+  });
+
+  it('keeps @case labels inside a nested switch when an outer case contains an @if', () => {
+    const source = '@switch (role) { @case ("admin") { @if (ready) { @switch (state) { @case ("ready") {} @case ("busy") {} } } } @case ("editor") {} }';
+    const result = parseGtpl(source);
+    const outer = result.nodes[0];
+    expect(outer?.kind).toBe('switch-block');
+    if (outer?.kind !== 'switch-block') return;
+    expect(outer.cases.map(({ expressions }) => expressions)).toEqual([['"admin"'], ['"editor"']]);
+    const conditional = outer.cases[0]?.children[0];
+    expect(conditional?.kind).toBe('if-block');
+    if (conditional?.kind !== 'if-block') return;
+    const nested = conditional.branches[0]?.children[0];
+    expect(nested?.kind).toBe('switch-block');
+    if (nested?.kind !== 'switch-block') return;
+    expect(nested.cases.map(({ expressions }) => expressions)).toEqual([['"ready"'], ['"busy"']]);
+    expect(result.diagnostics).toHaveLength(0);
+  });
+
+  it('recovers an outer switch after an unterminated @default body', () => {
+    const source = '@switch (role) { @case ("admin") {} @default { @if (ready) { <StLabel /> } @case ("editor") {} }';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('switch-block');
+    if (block?.kind !== 'switch-block') return;
+    expect(block.cases).toHaveLength(2);
+    expect(block.defaultCase?.children[0]?.kind).toBe('if-block');
+    expect(result.diagnostics.some(({ code }) => code === 'GTPL3006')).toBe(true);
+    expect(result.diagnostics.some(({ code }) => code === 'GTPL3102')).toBe(true);
+  });
+
 });

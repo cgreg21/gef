@@ -42,7 +42,8 @@ describe('emitGtplTemplate', () => {
     let calls = 0;
     const runtime = {
       fragment: (children: unknown[]) => children,
-      text: (value: string) => value,
+      bind: (get: () => unknown) => ({ kind: 'binding', get }),
+      text: (value: string | { get: () => unknown }) => typeof value === 'string' ? value : String(value.get()),
       if: (condition: unknown, yes: (value: unknown) => unknown, no: () => unknown) =>
         condition ? yes(condition) : no(),
     };

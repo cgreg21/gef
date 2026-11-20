@@ -266,6 +266,7 @@ class GtplParser {
     const branches: IfBranch[] = [];
     let keyword = '@if';
     let first = true;
+    let blockEnd = start;
     while (first || keyword === '@else if') {
       const branchStart = this.offset;
       first = false;
@@ -284,6 +285,7 @@ class GtplParser {
       for (const diagnostic of parsed.diagnostics) this.report(diagnostic.code, diagnostic.message, conditionOffset + diagnostic.span.start, conditionOffset + diagnostic.span.end);
       this.skipWhitespace();
       const children = this.parseBraceBlock();
+      blockEnd = this.offset;
       branches.push({ condition, ...(alias ? { alias } : {}), ...(parsed.expression ? { parsedCondition: parsed.expression } : {}), span: this.span(branchStart, this.offset), children });
       this.skipWhitespace();
       if (this.startsWithDirective('@else if')) { keyword = '@else if'; continue; }
@@ -292,11 +294,12 @@ class GtplParser {
         this.offset += '@else'.length;
         this.skipWhitespace();
         const elseChildren = this.parseBraceBlock();
+        blockEnd = this.offset;
         branches.push({ span: this.span(elseStart, this.offset), children: elseChildren });
       }
       break;
     }
-    return { kind: 'if-block', branches, span: this.span(start, this.offset) };
+    return { kind: 'if-block', branches, span: this.span(start, blockEnd) };
   }
 
   private parseSwitchBlock(): GtplNode {
@@ -396,7 +399,7 @@ class GtplParser {
     if (cases.length === 0) this.report('GTPL3108', '@switch requires at least one @case.', start, this.offset);
     return { kind: 'switch-block', expression, cases, ...(defaultCase ? { defaultCase } : {}),
       ...(parsedExpression.expression ? { parsedExpression: parsedExpression.expression } : {}),
-      span: this.span(start, this.offset) };
+      span: this.span(start, blockEnd) };
   }
 
   private parseLetDeclaration(): GtplNode {
@@ -517,9 +520,15 @@ class GtplParser {
     for (const diagnostic of parsedTrack.diagnostics) this.report(diagnostic.code, diagnostic.message, trackOffset + diagnostic.span.start, trackOffset + diagnostic.span.end);
     this.skipWhitespace();
     const children = this.parseBraceBlock();
+    let blockEnd = this.offset;
     this.skipWhitespace();
     let empty: GtplNode[] = [];
-    if (this.startsWithDirective('@empty')) { this.offset += '@empty'.length; this.skipWhitespace(); empty = this.parseBraceBlock(); }
+    if (this.startsWithDirective('@empty')) {
+      this.offset += '@empty'.length;
+      this.skipWhitespace();
+      empty = this.parseBraceBlock();
+      blockEnd = this.offset;
+    }
     return { kind: 'for-block', item, collection, track, aliases, children, empty,
       ...(parsedCollection.expression ? { parsedCollection: parsedCollection.expression } : {}),
       ...(parsedTrack.expression ? { parsedTrack: parsedTrack.expression } : {}),

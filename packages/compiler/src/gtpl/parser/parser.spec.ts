@@ -212,6 +212,35 @@ describe('GTPL built-in control flow', () => {
     expect(block.collection).toBe('getItems("a;b")');
     expect(block.aliases).toEqual([{ name: 'idx', context: '$index' }, { name: 'e', context: '$even' }]);
   });
+  it('excludes trailing whitespace from @if source spans', () => {
+    const source = '@if (ready) { <StLabel /> }   <StButton />';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('if-block');
+    if (block?.kind !== 'if-block') return;
+    expect(block.span.end).toBe(source.indexOf('}') + 1);
+    expect(result.nodes[1]?.kind).toBe('element');
+  });
+
+  it('excludes trailing whitespace from @for source spans', () => {
+    const source = '@for (item of items; track item.id) { <StLabel /> }   <StButton />';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('for-block');
+    if (block?.kind !== 'for-block') return;
+    expect(block.span.end).toBe(source.indexOf('}') + 1);
+    expect(result.nodes[1]?.kind).toBe('element');
+  });
+
+  it('includes the @empty branch but excludes trailing whitespace from @for spans', () => {
+    const source = '@for (item of items; track item.id) {} @empty { <StLabel /> }   <StButton />';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('for-block');
+    if (block?.kind !== 'for-block') return;
+    expect(block.span.end).toBe(source.indexOf('}') + 1 + source.slice(source.indexOf('}') + 1).indexOf('}') );
+  });
+
   it('parses @for with track and @empty', () => {
     const result = parseGtpl('@for (device of devices; track device.id) { <StLabel>{{ device.name }}</StLabel> } @empty { <StLabel>No devices</StLabel> }');
     expect(result.diagnostics).toHaveLength(0);

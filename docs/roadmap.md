@@ -16,7 +16,9 @@
 - [x] Organize compiler implementation by domain subdirectories with focused package entry points.
 - [ ] Parser fuzzing and malformed-input corpus.
 - [ ] Type-check expressions against TypeScript component members.
-- [ ] Lower structural shorthand and control flow.
+- [x] Emit JavaScript source for parsed expression ASTs.
+- [x] Provide a combined GTPL parse, semantic and component validation API.
+- [ ] Generate complete JavaScript templates and lower structural shorthand/control flow.
 - [ ] Switch exhaustiveness checks using TypeScript types.
 
 ## Runtime and renderers

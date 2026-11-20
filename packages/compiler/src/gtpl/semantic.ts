@@ -95,20 +95,20 @@ class GtplSemanticAnalyzer {
   private visitText(node: TextNode, scope: Scope): void {
     for (const part of node.parts) {
       if (part.kind === 'interpolation' && part.parsedExpression) {
-        this.checkExpression(part.parsedExpression, scope);
+        this.checkExpression(part.parsedExpression, scope, part.expressionSpan);
       }
     }
   }
 
   private visitElement(node: ElementNode, scope: Scope): void {
     for (const attribute of node.attributes) {
-      if (attribute.parsedExpression) this.checkExpression(attribute.parsedExpression, scope);
+      if (attribute.parsedExpression) this.checkExpression(attribute.parsedExpression, scope, attribute.valueSpan);
     }
     for (const child of node.children) this.visit(child, scope);
   }
 
   private visitLet(node: LetDeclarationNode, scope: Scope): void {
-    if (node.parsedExpression) this.checkExpression(node.parsedExpression, scope);
+    if (node.parsedExpression) this.checkExpression(node.parsedExpression, scope, node.span);
     if (!this.isValidIdentifier(node.name)) {
       this.report('GTPL4001', `Invalid template variable name "${node.name}".`, node.span);
       return;
@@ -122,7 +122,7 @@ class GtplSemanticAnalyzer {
 
   private visitIf(node: IfBlockNode, parent: Scope): void {
     for (const branch of node.branches) {
-      if (branch.parsedCondition) this.checkExpression(branch.parsedCondition, parent);
+      if (branch.parsedCondition) this.checkExpression(branch.parsedCondition, parent, branch.span);
       const branchScope = new Scope(parent);
       if (branch.alias) {
         this.declare(branchScope, {
@@ -136,7 +136,7 @@ class GtplSemanticAnalyzer {
   }
 
   private visitFor(node: ForBlockNode, parent: Scope): void {
-    if (node.parsedCollection) this.checkExpression(node.parsedCollection, parent);
+    if (node.parsedCollection) this.checkExpression(node.parsedCollection, parent, node.span);
 
     const loopScope = new Scope(parent);
     this.declare(loopScope, { name: node.item, kind: 'for-item', span: node.span });
@@ -146,7 +146,7 @@ class GtplSemanticAnalyzer {
     for (const alias of node.aliases) {
       this.declare(loopScope, { name: alias.name, kind: 'for-alias', span: node.span });
     }
-    if (node.parsedTrack) this.checkExpression(node.parsedTrack, loopScope);
+    if (node.parsedTrack) this.checkExpression(node.parsedTrack, loopScope, node.span);
     for (const child of node.children) this.visit(child, loopScope);
 
     const emptyScope = new Scope(parent);
@@ -154,22 +154,22 @@ class GtplSemanticAnalyzer {
   }
 
   private visitSwitch(node: SwitchBlockNode, parent: Scope): void {
-    if (node.parsedExpression) this.checkExpression(node.parsedExpression, parent);
+    if (node.parsedExpression) this.checkExpression(node.parsedExpression, parent, node.span);
     for (const branch of node.cases) {
-      for (const expression of branch.parsedExpressions) this.checkExpression(expression, parent);
+      for (const expression of branch.parsedExpressions) this.checkExpression(expression, parent, branch.span);
       const caseScope = new Scope(parent);
       for (const child of branch.children) this.visit(child, caseScope);
     }
     if (node.defaultCase) {
       if (node.defaultCase.parsedNeverExpression) {
-        this.checkExpression(node.defaultCase.parsedNeverExpression, parent);
+        this.checkExpression(node.defaultCase.parsedNeverExpression, parent, node.defaultCase.span);
       }
       const defaultScope = new Scope(parent);
       for (const child of node.defaultCase.children) this.visit(child, defaultScope);
     }
   }
 
-  private checkExpression(expression: ExpressionNode, scope: Scope): void {
+  private checkExpression(expression: ExpressionNode, scope: Scope, sourceSpan: SourceSpan): void {
     switch (expression.kind) {
       case 'literal':
         return;
@@ -181,34 +181,34 @@ class GtplSemanticAnalyzer {
           this.report(
             'GTPL4002',
             `Unknown template identifier "${expression.name}". Add it to the component context or declare it in the template.`,
-            this.expressionSpan(expression.span),
+            sourceSpan,
           );
         }
         return;
       case 'member':
-        this.checkExpression(expression.object, scope);
+        this.checkExpression(expression.object, scope, sourceSpan);
         if (expression.computed && typeof expression.property !== 'string') {
-          this.checkExpression(expression.property, scope);
+          this.checkExpression(expression.property, scope, sourceSpan);
         }
         return;
       case 'call':
-        this.checkExpression(expression.callee, scope);
-        for (const argument of expression.arguments) this.checkExpression(argument, scope);
+        this.checkExpression(expression.callee, scope, sourceSpan);
+        for (const argument of expression.arguments) this.checkExpression(argument, scope, sourceSpan);
         return;
       case 'unary':
-        this.checkExpression(expression.argument, scope);
+        this.checkExpression(expression.argument, scope, sourceSpan);
         return;
       case 'binary':
-        this.checkExpression(expression.left, scope);
-        this.checkExpression(expression.right, scope);
+        this.checkExpression(expression.left, scope, sourceSpan);
+        this.checkExpression(expression.right, scope, sourceSpan);
         return;
       case 'conditional':
-        this.checkExpression(expression.test, scope);
-        this.checkExpression(expression.consequent, scope);
-        this.checkExpression(expression.alternate, scope);
+        this.checkExpression(expression.test, scope, sourceSpan);
+        this.checkExpression(expression.consequent, scope, sourceSpan);
+        this.checkExpression(expression.alternate, scope, sourceSpan);
         return;
       case 'array':
-        for (const element of expression.elements) this.checkExpression(element, scope);
+        for (const element of expression.elements) this.checkExpression(element, scope, sourceSpan);
         return;
     }
   }
@@ -231,13 +231,6 @@ class GtplSemanticAnalyzer {
   private isValidIdentifier(name: string): boolean {
     return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(name)
       && !['true', 'false', 'null', 'undefined', 'this', 'new'].includes(name);
-  }
-
-  private expressionSpan(span: { readonly start: number; readonly end: number }): SourceSpan {
-    // Expression spans are relative to their own expression; enclosing AST nodes retain
-    // absolute template spans. Exact remapping is added when expression source spans are
-    // represented directly on every AST expression node.
-    return { start: span.start, end: span.end, line: 1, column: span.start + 1 };
   }
 
   private report(code: string, message: string, span: SourceSpan): void {

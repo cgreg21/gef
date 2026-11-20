@@ -313,6 +313,30 @@ describe('GTPL built-in control flow', () => {
     expect(result.diagnostics.some((item) => item.code === 'GTPL3106')).toBe(true);
   });
 
+  it('recovers a missing @case closing brace before the next case', () => {
+    const source = '@switch (role) { @case ("admin") { <StLabel /> @case ("editor") { <StButton /> } @default { <StBox /> } }';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('switch-block');
+    if (block?.kind !== 'switch-block') return;
+    expect(block.cases).toHaveLength(2);
+    expect(block.cases[0]?.children).toHaveLength(1);
+    expect(block.cases[1]?.expressions).toEqual(['"editor"']);
+    expect(block.defaultCase?.children).toHaveLength(1);
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3006')).toBe(true);
+  });
+
+  it('recovers a missing @default closing brace before a later case', () => {
+    const source = '@switch (role) { @case ("admin") {} @default { <StLabel /> @case ("editor") {} }';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('switch-block');
+    if (block?.kind !== 'switch-block') return;
+    expect(block.defaultCase?.children).toHaveLength(1);
+    expect(block.cases).toHaveLength(2);
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3006')).toBe(true);
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3102')).toBe(true);
+  });
   it('keeps the first @default when a duplicate is reported', () => {
     const result = parseGtpl('@switch (role) { @case ("admin") {} @default { <StLabel>first</StLabel> } @default { <StLabel>second</StLabel> } }');
     const block = result.nodes[0];

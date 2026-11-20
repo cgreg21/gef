@@ -350,7 +350,7 @@ class GtplParser {
           else this.report('GTPL3103', 'Invalid @case expression.', valueContent.start - 1, this.offset);
           this.skipWhitespace();
         }
-        const children = this.parseBraceBlock();
+        const children = this.parseBraceBlock(true);
         cases.push({ expressions, parsedExpressions, span: this.span(caseStart, this.offset), children });
         continue;
       }
@@ -385,7 +385,7 @@ class GtplParser {
               ...(parsedNeverExpression ? { parsedNeverExpression } : {}) };
           }
         } else {
-          const children = this.parseBraceBlock();
+          const children = this.parseBraceBlock(true);
           if (!duplicateDefault) {
             defaultCase = { exhaustive: false, span: this.span(defaultStart, this.offset), children };
           }
@@ -594,7 +594,7 @@ class GtplParser {
     return { value, start };
   }
 
-  private parseBraceBlock(): GtplNode[] {
+  private parseBraceBlock(stopAtSwitchLabel = false): GtplNode[] {
     const children: GtplNode[] = [];
     if (this.peek() !== '{') { this.report('GTPL3005', 'Expected "{" to start control-flow block.', this.offset, this.offset + 1); return children; }
     this.offset += 1;
@@ -602,6 +602,7 @@ class GtplParser {
     while (!this.eof()) {
       this.skipWhitespace();
       if (this.peek() === '}') break;
+      if (stopAtSwitchLabel && (this.startsWithDirective('@case') || this.startsWithDirective('@default'))) break;
       const before = this.offset;
       const node = this.parseNode();
       if (node) children.push(node);

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Component, Directive, EventEmitter, getComponentMetadata, getDirectiveMetadata, getPipeMetadata, HostBinding, HostListener, Input, Output, Pipe } from './component-api.js';
+import { Component, Directive, EventEmitter, getComponentMetadata, getDirectiveMetadata, getPipeMetadata, HostBinding, HostListener, Input, Output, Pipe } from './api.js';
 
 @Component({ selector: 'GefButton', template: '<button>{{ label }}</button>', styles: ['button { color: white; }'] })
 class ButtonComponent {

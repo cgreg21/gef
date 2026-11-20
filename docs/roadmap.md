@@ -13,6 +13,7 @@
 - [x] Directive and pipe declaration metadata (`@Directive`, `@Pipe`, `@HostBinding`, `@HostListener`).
 - [x] Disposable output event emitter.
 - [x] Component input/output binding validation.
+- [x] Organize compiler implementation by domain subdirectories with focused package entry points.
 - [ ] Parser fuzzing and malformed-input corpus.
 - [ ] Type-check expressions against TypeScript component members.
 - [ ] Lower structural shorthand and control flow.

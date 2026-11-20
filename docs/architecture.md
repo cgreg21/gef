@@ -10,7 +10,7 @@ The two renderers may share template syntax and metadata, but not widget impleme
 
 ## Repository organization
 
-Keep framework code in domain-specific subdirectories. Within `packages/compiler/src`, GTPL parsing and analysis live in `gtpl/`, while public component declarations live in `components/`. Keep package entry points focused on exports; do not accumulate domain implementations at `src/` root. Apply the same rule to future runtime domains such as lifecycle, dependency injection, reactivity, resources and renderers.
+Keep framework code in domain-specific subdirectories. Within `packages/compiler/src`, GTPL responsibilities are separated into `gtpl/ast/`, `gtpl/expression/`, `gtpl/parser/`, `gtpl/analysis/` and `gtpl/validation/`. Public component declarations live in `components/`. Keep package entry points focused on exports; do not accumulate domain implementations at `src/` root. Apply the same rule to future runtime domains such as lifecycle, dependency injection, reactivity, resources and renderers.
 
 ## Compiler
 TypeScript, .gtpl and SCSS are processed at build time. Templates are not parsed in the installed extension. There is no browser DOM, Chromium, or runtime HTML parser.

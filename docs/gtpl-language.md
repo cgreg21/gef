@@ -14,7 +14,7 @@ my-component/
   my-component.component.spec.ts
 ```
 
-The TypeScript component metadata references its template with `templateUrl`. A standalone reusable template may also use the `.gtpl` extension.
+The current `@Component` API accepts an inline `template` string. External `.gtpl` file loading and a `templateUrl` option remain planned; the file layout above describes the intended component organization.
 
 ## Node model
 
@@ -64,7 +64,15 @@ The parser produces a typed expression AST and syntax diagnostics. Control flow 
 
 ```ebnf
 Template       ::= Node*
-Node           ::= Element | Text | Comment | LetDeclaration | IfBlock | ForBlock | SwitchBlock\nIfBlock        ::= "@if" "(" Expression (";" "as" Identifier)? ")" "{" Node* "}" ("@else if" "(" Expression ")" "{" Node* "}")* ("@else" "{" Node* "}")?\nForBlock       ::= "@for" "(" Identifier "of" Expression ";" "track" Expression (";" "let" Alias ("," Alias)*)? ")" "{" Node* "}" ("@empty" "{" Node* "}")?\nSwitchBlock    ::= "@switch" "(" Expression ")" "{" (SwitchCase | SwitchDefault)* "}"\nSwitchCase     ::= ("@case" "(" Expression ")")+ "{" Node* "}"\nSwitchDefault  ::= "@default" ("{" Node* "}" | "never" ("(" Expression ")")? ";")\nLetDeclaration ::= "@let" Identifier "=" Expression ";"\nAlias          ::= Identifier "=" ContextVariable\nContextVariable ::= "$count" | "$index" | "$first" | "$last" | "$even" | "$odd"
+Node           ::= Element | Text | Comment | LetDeclaration | IfBlock | ForBlock | SwitchBlock
+IfBlock        ::= "@if" "(" Expression (";" "as" Identifier)? ")" "{" Node* "}" ("@else if" "(" Expression ")" "{" Node* "}")* ("@else" "{" Node* "}")?
+ForBlock       ::= "@for" "(" Identifier "of" Expression ";" "track" Expression (";" "let" Alias ("," Alias)*)? ")" "{" Node* "}" ("@empty" "{" Node* "}")?
+SwitchBlock    ::= "@switch" "(" Expression ")" "{" (SwitchCase | SwitchDefault)* "}"
+SwitchCase     ::= ("@case" "(" Expression ")")+ "{" Node* "}"
+SwitchDefault  ::= "@default" ("{" Node* "}" | "never" ("(" Expression ")")? ";")
+LetDeclaration ::= "@let" Identifier "=" Expression ";"
+Alias          ::= Identifier "=" ContextVariable
+ContextVariable ::= "$count" | "$index" | "$first" | "$last" | "$even" | "$odd"
 Element        ::= OpenTag Node* CloseTag | SelfClosingTag
 OpenTag        ::= "<" Name Attribute* ">"
 CloseTag       ::= "</" Name ">"
@@ -104,4 +112,4 @@ No template or expression parsing should occur in the installed extension runtim
 
 Implemented: template structure parser, Angular-style `@switch` / `@case` / `@default` selection (including grouped cases and `@default never` syntax), `@let` local declarations, binding-attribute classification, interpolation boundary parsing, expression AST/parser, integration of expression trees into bindings/interpolations, template-positioned expression diagnostics, and syntax/integration tests.
 
-Not yet implemented: semantic validation of structural shorthand, lowering control-flow nodes to renderer instructions, expression type checking, component metadata, renderer validation, and JavaScript code generation.
+Not yet implemented: semantic validation of structural shorthand, lowering control-flow nodes to renderer instructions, expression type checking against TypeScript members, renderer validation, and JavaScript code generation. Component, directive and pipe declaration metadata plus component input/output contract validation are implemented.

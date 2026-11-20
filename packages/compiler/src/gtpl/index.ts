@@ -1,3 +1,5 @@
 export * from './ast/types.js';
+export * from './analysis/semantic.js';
+export * from './validation/components.js';
 export * from './expression/parser.js';
 export * from './parser/parser.js';

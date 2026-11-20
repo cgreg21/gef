@@ -8,8 +8,8 @@ import type {
   SourceSpan,
   SwitchBlockNode,
   TextNode,
-} from './ast.js';
-import type { ExpressionNode } from './expression.js';
+} from '../ast/types.js';
+import type { ExpressionNode } from '../expression/parser.js';
 
 export interface GtplSemanticOptions {
   /** Component members visible from the template's root scope. */

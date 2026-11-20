@@ -64,6 +64,7 @@ class GtplParser {
   private readonly lineStarts: number[] = [0];
   private blockDepth = 0;
   private switchCaseDepth = 0;
+  private forEmptyDepth = 0;
   private readonly openElementCounts = new Map<string, number>();
 
   constructor(private readonly source: string) {
@@ -154,7 +155,8 @@ class GtplParser {
       let closed = false;
       while (!this.eof()) {
         if (this.blockDepth > 0 && (this.peek() === '}' || this.isIfBranchStart()
-          || (this.switchCaseDepth > 0 && (this.startsWithDirective('@case') || this.startsWithDirective('@default'))))) break;
+          || (this.switchCaseDepth > 0 && (this.startsWithDirective('@case') || this.startsWithDirective('@default')))
+          || (this.forEmptyDepth > 0 && this.startsWithDirective('@empty')))) break;
         if (this.startsWith('<!--')) {
           this.parseComment();
           continue;
@@ -622,7 +624,7 @@ class GtplParser {
     const parsedTrack = parseGtplExpression(track);
     this.reportExpressionDiagnostics(parsedTrack, trackOffset);
     this.skipWhitespace();
-    const children = this.parseBraceBlock();
+    const children = this.parseBraceBlock(false, false, true);
     let blockEnd = this.offset;
     this.skipWhitespace();
     let empty: GtplNode[] = [];
@@ -697,16 +699,22 @@ class GtplParser {
     return { value, start };
   }
 
-  private parseBraceBlock(stopAtSwitchLabel = false, stopAtIfBranch = false): GtplNode[] {
+  private parseBraceBlock(
+    stopAtSwitchLabel = false,
+    stopAtIfBranch = false,
+    stopAtForEmpty = false,
+  ): GtplNode[] {
     const children: GtplNode[] = [];
     if (this.peek() !== '{') { this.report('GTPL3005', 'Expected "{" to start control-flow block.', this.offset, this.offset + 1); return children; }
     this.offset += 1;
     this.blockDepth += 1;
     if (stopAtSwitchLabel) this.switchCaseDepth += 1;
+    if (stopAtForEmpty) this.forEmptyDepth += 1;
     while (!this.eof()) {
       this.skipWhitespace();
       if (this.peek() === '}') break;
       if (stopAtIfBranch && this.isIfBranchStart()) break;
+      if (this.forEmptyDepth > 0 && this.startsWithDirective('@empty')) break;
       if (this.switchCaseDepth > 0 && (this.startsWithDirective('@case') || this.startsWithDirective('@default'))) break;
       const before = this.offset;
       const node = this.parseNode();
@@ -715,6 +723,7 @@ class GtplParser {
     }
     if (this.peek() === '}') this.offset += 1;
     else this.report('GTPL3006', 'Unterminated control-flow block.', this.offset, this.offset);
+    if (stopAtForEmpty) this.forEmptyDepth -= 1;
     if (stopAtSwitchLabel) this.switchCaseDepth -= 1;
     this.blockDepth -= 1;
     return children;

@@ -977,4 +977,18 @@ describe('GTPL built-in control flow', () => {
     }
   });
 
+
+  it('recovers @empty after an unterminated @for body and nested element', () => {
+    const source = '@for (item of items; track item.id) { <StBox><StLabel /> @empty { <StButton /> }';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('for-block');
+    if (block?.kind !== 'for-block') return;
+    expect(block.children[0]?.kind).toBe('element');
+    expect(block.empty[0]).toMatchObject({ kind: 'element', name: 'StButton' });
+    expect(result.diagnostics.filter(({ code }) => code === 'GTPL1006')).toHaveLength(1);
+    expect(result.diagnostics.filter(({ code }) => code === 'GTPL3006')).toHaveLength(1);
+    expect(block.span.end).toBe(source.length);
+  });
+
 });

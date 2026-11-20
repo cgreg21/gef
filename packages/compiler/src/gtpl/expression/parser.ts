@@ -184,7 +184,7 @@ class ExpressionParser {
         const nameEnd = this.current.end;
         this.advance();
         const args: ExpressionNode[] = [];
-        while (this.current.value === ':') {
+        while (this.getCurrentToken().value === ':') {
           this.advance();
           const argument = this.parseExpression(1);
           if (!argument) break;

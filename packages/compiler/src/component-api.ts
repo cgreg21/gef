@@ -61,7 +61,7 @@ function names(members: readonly MemberMetadata[], kind: 'input' | 'output'): re
   return Object.freeze(result);
 }
 function assertUnique(values: readonly string[], kind: string): void {
-  if (new Set(values).size !== values.length) throw new TypeError(`Duplicate GEF ${kind} declaration.`);
+  if (new Set(values).size !== values.length) throw new TypeError(`duplicate ${kind} declaration in GEF metadata.`);
 }
 /** Registers a component and its template contract. */
 export function Component(options: ComponentOptions): ClassDecorator {

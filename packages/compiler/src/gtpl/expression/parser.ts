@@ -125,10 +125,10 @@ class ExpressionParser {
         if (18 < minPrecedence) break;
         this.advance();
         const args: ExpressionNode[] = [];
-        while (this.current.kind !== 'eof' && this.current.value !== ')') {
+        while (this.getCurrentToken().kind !== 'eof' && this.getCurrentToken().value !== ')') {
           const argument = this.parseExpression(0);
           if (argument) args.push(argument);
-          if (this.current.value !== ',') break;
+          if (this.getCurrentToken().value !== ',') break;
           this.advance();
         }
         const close = this.expect(')');
@@ -206,7 +206,7 @@ class ExpressionParser {
       while (this.current.kind !== 'eof' && this.current.value !== ']') {
         const element = this.parseExpression(0);
         if (element) elements.push(element);
-        if (this.current.value !== ',') break;
+        if (this.getCurrentToken().value !== ',') break;
         this.advance();
       }
       const close = this.expect(']');
@@ -333,6 +333,10 @@ class ExpressionParser {
     }
     this.report('GTPL2007', `Expected "${value}", found "${this.current.value || 'end of input'}".`, this.current.start, this.current.end);
     return null;
+  }
+
+  private getCurrentToken(): Token {
+    return this.current;
   }
 
   private advance(): void {

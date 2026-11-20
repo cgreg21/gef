@@ -7,7 +7,6 @@ export type {
   ConditionalExpression,
   ExpressionNode,
   ExpressionSpan,
-  ExpressionSpan,
   IdentifierExpression,
   LiteralExpression,
   MemberExpression,

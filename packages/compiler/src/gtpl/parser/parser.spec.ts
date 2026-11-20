@@ -1020,6 +1020,24 @@ describe('GTPL built-in control flow', () => {
   });
 
 
+  it('reports duplicate @empty blocks and preserves the first empty branch', () => {
+    const source = '@for (item of items; track item.id) {} @empty { <StLabel /> } @empty { <StBox /> } <StButton />';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('for-block');
+    if (block?.kind !== 'for-block') return;
+    expect(block.empty).toMatchObject([{ kind: 'element', name: 'StLabel' }]);
+    expect(result.diagnostics.some(({ code }) => code === 'GTPL3013')).toBe(true);
+    expect(result.nodes.some((node) => node.kind === 'element' && node.name === 'StButton')).toBe(true);
+  });
+
+  it('reports an @empty branch without a block and preserves the following sibling', () => {
+    const source = '@for (item of items; track item.id) {} @empty <StButton />';
+    const result = parseGtpl(source);
+    expect(result.diagnostics.some(({ code }) => code === 'GTPL3005')).toBe(true);
+    expect(result.nodes.some((node) => node.kind === 'element' && node.name === 'StButton')).toBe(true);
+  });
+
   it('recovers @empty after an unterminated @for body and nested element', () => {
     const source = '@for (item of items; track item.id) { <StBox><StLabel /> @empty { <StButton /> }';
     const result = parseGtpl(source);

@@ -633,11 +633,20 @@ class GtplParser {
     let blockEnd = this.offset;
     this.skipWhitespace();
     let empty: GtplNode[] = [];
-    if (this.startsWithDirective('@empty')) {
+    let sawEmpty = false;
+    while (this.startsWithDirective('@empty')) {
+      const emptyStart = this.offset;
       this.offset += '@empty'.length;
       this.skipWhitespace();
-      empty = this.parseBraceBlock();
+      const children = this.parseBraceBlock();
+      if (sawEmpty) {
+        this.report('GTPL3013', 'Only one @empty block is allowed in @for.', emptyStart, this.offset);
+      } else {
+        empty = children;
+      }
+      sawEmpty = true;
       blockEnd = this.offset;
+      this.skipWhitespace();
     }
     return { kind: 'for-block', item, collection, track, aliases, children, empty,
       ...(parsedCollection.expression ? { parsedCollection: parsedCollection.expression } : {}),

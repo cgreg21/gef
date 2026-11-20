@@ -10,7 +10,7 @@ The two renderers may share template syntax and metadata, but not widget impleme
 
 ## Repository organization
 
-Keep framework code in domain-specific subdirectories. Within `packages/compiler/src`, GTPL responsibilities are separated into `gtpl/ast/`, `gtpl/expression/`, `gtpl/parser/`, `gtpl/analysis/`, `gtpl/lowering/`, `gtpl/codegen/` and `gtpl/validation/`. Public component declarations live in `components/`. Runtime code is split into `resources/`, `rendering/`, `renderers/`, `reactivity/` and `di/`. Keep package entry points focused on exports; do not accumulate domain implementations at `src/` root.
+Keep framework code in domain-specific subdirectories. Within `packages/compiler/src`, GTPL responsibilities are separated into `gtpl/ast/`, `gtpl/expression/`, `gtpl/parser/`, `gtpl/analysis/`, `gtpl/lowering/`, `gtpl/codegen/` and `gtpl/validation/`. Public component declarations live in `components/`. Shared primitives live in `packages/shared/`; runtime code is split into `resources/`, `rendering/`, `renderers/`, `reactivity/`, `di/` and `components/`. Keep package entry points focused on exports; do not accumulate domain implementations at `src/` root.
 
 ## Compiler
 

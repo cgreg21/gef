@@ -11,7 +11,7 @@
 - [x] Lexical scope and optional component identifier checks.
 - [x] Decorator-based component declarations (`@Component`, `@Input`, `@Output`) and immutable metadata extraction.
 - [x] Directive and pipe declaration metadata (`@Directive`, `@Pipe`, `@HostBinding`, `@HostListener`).
-- [x] Disposable output event emitter.
+- [x] Disposable output event emitter in the shared package, exported by compiler and runtime.
 - [x] Component input/output binding validation.
 - [x] Organize compiler implementation by domain subdirectories with focused package entry points.
 - [x] Deterministic parser fuzz corpus and malformed-input regression tests.
@@ -38,5 +38,6 @@
 
 ## Styles and developer tools
 - [ ] SCSS compilation and St/GTK-specific CSS validation.
-- [ ] CLI: new, generate, build, test, validate, package and doctor.
+- [x] CLI `check` and `compile` commands.
+- [ ] CLI `new`, `generate`, `test`, `package` and `doctor` commands.
 - [ ] Watch mode, diagnostics and examples.

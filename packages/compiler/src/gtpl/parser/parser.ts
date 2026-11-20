@@ -19,6 +19,15 @@ import { parseGtplExpression } from '../expression/parser.js';
 
 const BLOCK_DIRECTIVES = ['@if', '@for', '@switch', '@let', '@case', '@default', '@empty'] as const;
 
+function advanceQuotedCharacter(
+  source: string,
+  offset: number,
+  quote: string,
+): { offset: number; closesQuote: boolean } {
+  if (source[offset] === '\\') return { offset: offset + 2, closesQuote: false };
+  return { offset: offset + 1, closesQuote: source[offset] === quote };
+}
+
 class GtplParser {
   private offset = 0;
   private readonly diagnostics: Diagnostic[] = [];
@@ -449,16 +458,6 @@ class GtplParser {
     return this.source.slice(start, this.offset);
   }
 
-  private advanceQuotedCharacter(quote: string): boolean {
-    if (this.peek() === '\\') {
-      this.offset += 2;
-      return false;
-    }
-    const closesQuote = this.peek() === quote;
-    this.offset += 1;
-    return closesQuote;
-  }
-
   private readUntilSemicolon(): string {
     const start = this.offset;
     let round = 0;
@@ -467,7 +466,9 @@ class GtplParser {
     while (!this.eof()) {
       const char = this.peek();
       if (quote) {
-        if (this.advanceQuotedCharacter(quote)) quote = '';
+        const next = advanceQuotedCharacter(this.source, this.offset, quote);
+        this.offset = next.offset;
+        if (next.closesQuote) quote = '';
         continue;
       }
       if (char === '"' || char === "'") { quote = char; this.offset += 1; continue; }
@@ -576,7 +577,12 @@ class GtplParser {
     for (let index = 0; index < value.length; index += 1) {
       const char = value[index] ?? '';
       if (quote) {
-        if (char === '\\') index += 1;
+        const next = advanceQuotedCharacter(value, index, quote);
+        index = next.offset - 1;
+        if (next.closesQuote) quote = '';
+        continue;
+      }
+      if (char === '\\') index += 1;
         else if (char === quote) quote = '';
         continue;
       }
@@ -605,7 +611,9 @@ class GtplParser {
     while (!this.eof() && depth > 0) {
       const char = this.peek();
       if (quote) {
-        if (this.advanceQuotedCharacter(quote)) quote = '';
+        const next = advanceQuotedCharacter(this.source, this.offset, quote);
+        this.offset = next.offset;
+        if (next.closesQuote) quote = '';
         continue;
       }
       if (char === '"' || char === "'") { quote = char; this.offset += 1; continue; }

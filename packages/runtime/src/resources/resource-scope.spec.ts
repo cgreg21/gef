@@ -39,13 +39,14 @@ describe('ResourceScope', () => {
   it('continues cleanup after an error and rethrows the first error', () => {
     const scope = new ResourceScope();
     const firstError = new Error('first cleanup failed');
+    const lastError = new Error('last cleanup failed');
     const laterCleanup = vi.fn();
 
     scope.add(laterCleanup);
     scope.add(() => { throw firstError; });
-    scope.add(() => { throw new Error('second cleanup failed'); });
+    scope.add(() => { throw lastError; });
 
-    expect(() => scope.dispose()).toThrow(firstError);
+    expect(() => scope.dispose()).toThrow(lastError);
     expect(laterCleanup).toHaveBeenCalledOnce();
     expect(scope.disposed).toBe(true);
   });

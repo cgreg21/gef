@@ -28,6 +28,25 @@ function advanceQuotedCharacter(
   return { offset: offset + 1, closesQuote: source[offset] === quote };
 }
 
+function findInterpolationEnd(source: string, open: number): number {
+  let quote = '';
+  for (let index = open + 2; index < source.length; index += 1) {
+    const char = source[index] ?? '';
+    if (quote) {
+      const next = advanceQuotedCharacter(source, index, quote);
+      index = next.offset - 1;
+      if (next.closesQuote) quote = '';
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+    if (char === '}' && source[index + 1] === '}') return index;
+  }
+  return -1;
+}
+
 class GtplParser {
   private offset = 0;
   private readonly diagnostics: Diagnostic[] = [];
@@ -233,7 +252,15 @@ class GtplParser {
 
   private parseText(): TextNode {
     const start = this.offset;
-    while (!this.eof() && this.peek() !== '<') {
+    while (!this.eof()) {
+      if (this.peek() === '<') break;
+      if (this.startsWith('{{')) {
+        const close = findInterpolationEnd(this.source, this.offset);
+        if (close !== -1) {
+          this.offset = close + 2;
+          continue;
+        }
+      }
       if (this.offset > start && this.isBlockDirectiveStart()) break;
       if (this.blockDepth > 0 && this.peek() === '}') {
         if (this.startsWith('}}')) {
@@ -253,25 +280,7 @@ class GtplParser {
     while (cursor < raw.length) {
       const open = raw.indexOf('{{', cursor);
       if (open === -1) break;
-      let close = -1;
-      let quote = '';
-      for (let index = open + 2; index < raw.length; index += 1) {
-        const char = raw[index] ?? '';
-        if (quote) {
-          const next = advanceQuotedCharacter(raw, index, quote);
-          index = next.offset - 1;
-          if (next.closesQuote) quote = '';
-          continue;
-        }
-        if (char === '"' || char === "'") {
-          quote = char;
-          continue;
-        }
-        if (char === '}' && raw[index + 1] === '}') {
-          close = index;
-          break;
-        }
-      }
+      const close = findInterpolationEnd(raw, open);
       if (close === -1) {
         this.report('GTPL1011', 'Unterminated interpolation; expected "}}".', start + open, end);
         break;

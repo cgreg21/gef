@@ -131,6 +131,18 @@ describe('GTPL expression integration', () => {
     ]);
   });
 
+  it('keeps less-than comparisons inside interpolations', () => {
+    const result = parseGtpl('<StLabel>{{ value < limit }}</StLabel>');
+    expect(result.diagnostics).toHaveLength(0);
+    const element = result.nodes[0];
+    expect(element?.kind).toBe('element');
+    if (element?.kind !== 'element') return;
+    expect(element.children[0]).toMatchObject({
+      kind: 'text',
+      parts: [{ kind: 'interpolation', expression: 'value < limit' }],
+    });
+  });
+
   it('attaches parsed expression trees to interpolations and bindings', () => {
     const result = parseGtpl('<StLabel [visible]="device.connected">{{ device.name }}</StLabel>');
     expect(result.diagnostics).toHaveLength(0);

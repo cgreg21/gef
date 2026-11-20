@@ -48,7 +48,7 @@ class GtplParser {
       const before = this.offset;
       const node = this.parseNode();
       if (node) nodes.push(node);
-      if (this.offset === before) this.offset += 1;
+      this.ensureProgress(before);
     }
     return { nodes, diagnostics: this.diagnostics };
   }
@@ -132,7 +132,7 @@ class GtplParser {
         const before = this.offset;
         const child = this.parseNode();
         if (child) children.push(child);
-        if (this.offset === before) this.offset += 1;
+        this.ensureProgress(before);
       }
       if (!closed) {
         this.report('GTPL1006', `Missing closing tag "</${name}>".`, start, this.offset);
@@ -405,7 +405,7 @@ class GtplParser {
       this.report('GTPL3106', 'Expected @case or @default inside @switch.', this.offset, Math.min(this.offset + 1, this.source.length));
       const before = this.offset;
       const unexpected = this.parseNode();
-      if (unexpected && this.offset === before) this.offset += 1;
+      if (unexpected) this.ensureProgress(before);
     }
     if (this.peek() === '}') this.offset += 1;
     else this.report('GTPL3107', 'Unterminated @switch block.', this.offset, this.offset);
@@ -615,7 +615,7 @@ class GtplParser {
       const before = this.offset;
       const node = this.parseNode();
       if (node) children.push(node);
-      if (before === this.offset && this.peek() !== '}') this.offset += 1;
+      this.ensureProgress(before, true);
     }
     if (this.peek() === '}') this.offset += 1;
     else this.report('GTPL3006', 'Unterminated control-flow block.', this.offset, this.offset);
@@ -688,6 +688,12 @@ class GtplParser {
   private recoverToTagEnd(): void {
     while (!this.eof() && this.peek() !== '>') this.offset += 1;
     if (this.peek() === '>') this.offset += 1;
+  }
+
+  private ensureProgress(previousOffset: number, stopAtClosingBrace = false): void {
+    if (this.offset === previousOffset && !(stopAtClosingBrace && this.peek() === '}')) {
+      this.offset += 1;
+    }
   }
 
   private skipWhitespace(): void {

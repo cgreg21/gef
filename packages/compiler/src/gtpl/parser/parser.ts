@@ -686,6 +686,15 @@ class GtplParser {
         && (this.startsWithDirective('@case') || this.startsWithDirective('@default'))) break;
       const char = this.peek();
       if (quote) {
+        if (char === '\n') {
+          let next = this.offset + 1;
+          while (this.isWhitespace(this.source[next] ?? '')) next += 1;
+          if (this.source[next] === '{' || this.source[next] === '}'
+            || this.isTagStart(next)
+            || ['@else', '@empty', '@case', '@default'].some((directive) =>
+              this.source.startsWith(directive, next)
+              && !/[A-Za-z0-9_$]/.test(this.source[next + directive.length] ?? ''))) break;
+        }
         const next = advanceQuotedCharacter(this.source, this.offset, quote);
         this.offset = next.offset;
         if (next.closesQuote) quote = '';

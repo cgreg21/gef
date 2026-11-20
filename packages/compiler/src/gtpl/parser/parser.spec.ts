@@ -693,6 +693,28 @@ describe('GTPL built-in control flow', () => {
   });
 
 
+  it('recovers an @if block after an unterminated condition string', () => {
+    const source = '@if ("unfinished\n{ <StLabel /> } <StButton />';
+    const result = parseGtpl(source);
+    const block = result.nodes.find((node) => node.kind === 'if-block');
+    expect(block?.kind).toBe('if-block');
+    if (block?.kind !== 'if-block') return;
+    expect(block.branches[0]?.children.some((node) => node.kind === 'element' && node.name === 'StLabel')).toBe(true);
+    expect(result.nodes.some((node) => node.kind === 'element' && node.name === 'StButton')).toBe(true);
+    expect(result.diagnostics.some(({ code }) => code === 'GTPL3004')).toBe(true);
+  });
+
+  it('recovers an @for block after an unterminated collection string', () => {
+    const source = '@for (item of "unfinished\n{ <StLabel /> } @empty { <StButton /> }';
+    const result = parseGtpl(source);
+    const block = result.nodes.find((node) => node.kind === 'for-block');
+    expect(block?.kind).toBe('for-block');
+    if (block?.kind !== 'for-block') return;
+    expect(block.children.some((node) => node.kind === 'element' && node.name === 'StLabel')).toBe(true);
+    expect(block.empty.some((node) => node.kind === 'element' && node.name === 'StButton')).toBe(true);
+    expect(result.diagnostics.some(({ code }) => code === 'GTPL3004')).toBe(true);
+  });
+
   it('keeps escaped quotes inside @if conditions', () => {
     const source = String.raw`@if (isReady("a\")b")) { <StLabel /> } <StButton />`;
     const result = parseGtpl(source);

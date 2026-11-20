@@ -122,15 +122,18 @@ class GtplParser {
     this.openElements.push(name);
     const attributes: GtplAttribute[] = [];
     let selfClosing = false;
+    let openingTagClosed = false;
     while (!this.eof()) {
       this.skipWhitespace();
       if (this.startsWith('/>')) {
         this.offset += 2;
         selfClosing = true;
+        openingTagClosed = true;
         break;
       }
       if (this.peek() === '>') {
         this.offset += 1;
+        openingTagClosed = true;
         break;
       }
       const attribute = this.parseAttribute();
@@ -142,7 +145,7 @@ class GtplParser {
       }
     }
 
-    if (this.eof() && this.source[this.source.length - 1] !== '>') {
+    if (!openingTagClosed) {
       this.report('GTPL1004', `Unterminated opening tag "<${name}".`, start, this.offset);
     }
 

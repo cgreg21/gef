@@ -601,4 +601,14 @@ describe('GTPL built-in control flow', () => {
     expect(source.slice(element.span.start, element.span.end)).toBe(source);
   });
 
+  it('reports an unterminated opening tag when the final greater-than is inside a quoted value', () => {
+    const result = parseGtpl('<StLabel title="unfinished>');
+    expect(result.diagnostics.map(({ code }) => code)).toEqual(['GTPL1007', 'GTPL1004']);
+  });
+
+  it('does not report an unterminated opening tag after a valid quoted value and delimiter', () => {
+    const result = parseGtpl('<StLabel title="complete">');
+    expect(result.diagnostics.map(({ code }) => code)).toEqual(['GTPL1006']);
+  });
+
 });

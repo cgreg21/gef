@@ -111,7 +111,7 @@ export function emitGtplTemplate(
     const empty = renderNodes(node.empty, locals);
     const collection = expression(node.parsedCollection, locals, options);
     const track = expression(node.parsedTrack, loopLocals, options);
-    return `runtime.for(${collection}, (${node.item}, $index, $count) => { const $first = $index === 0; const $last = $index === $count - 1; const $even = $index % 2 === 0; const $odd = !$even; ${aliases} return ${body}; }, (${node.item}, $index, $count) => { const $first = $index === 0; const $last = $index === $count - 1; const $even = $index % 2 === 0; const $odd = !$even; ${aliases} return ${track}; }, () => ${empty})`;
+    return `runtime.for(runtime.bind(() => ${collection}), (${node.item}, $index, $count) => { const $first = $index === 0; const $last = $index === $count - 1; const $even = $index % 2 === 0; const $odd = !$even; ${aliases} return ${body}; }, (${node.item}, $index, $count) => { const $first = $index === 0; const $last = $index === $count - 1; const $even = $index % 2 === 0; const $odd = !$even; ${aliases} return ${track}; }, () => ${empty})`;
   };
 
   const renderSwitch = (node: SwitchBlockNode, locals: ReadonlySet<string>): string => {

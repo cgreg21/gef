@@ -31,7 +31,7 @@ describe('emitGtplTemplate', () => {
 @switch (state) { @case ("ready") { Ready } @default { Wait } }`, ['heading', 'visible', 'items', 'state']);
     expect(output).toContain('const title = ctx.heading');
     expect(output).toContain('runtime.if(runtime.bind(() => ctx.visible)');
-    expect(output).toContain('runtime.for(ctx.items');
+    expect(output).toContain('runtime.for(runtime.bind(() => ctx.items)');
     expect(output).toContain('return (item.id)');
     expect(output).toContain('runtime.switch(runtime.bind(() => ctx.state)');
   });
@@ -74,7 +74,7 @@ describe('emitGtplTemplate', () => {
       element: (kind, value, children) => ({ kind, value, children: [children] }),
       text: (value) => ({ kind: 'text', value: typeof value === 'string' ? value : value.get() }),
       fragment: (children) => ({ kind: 'fragment', children }),
-      repeat: (items) => ({ kind: 'repeat', value: items }),
+      repeat: (state) => ({ kind: 'repeat', value: state.get() }),
       conditional: (condition, renderBranch, fallback) => condition.get() ? renderBranch(condition.get()) : fallback(),
       switch: (value, cases, renderDefault) => {
         const current = value.get();

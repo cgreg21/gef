@@ -17,12 +17,17 @@ export function isGtplBinding(value: unknown): value is GtplBinding<unknown> {
     && 'get' in value && typeof value.get === 'function';
 }
 
+export interface GtplRepeatState<Node> {
+  readonly items: readonly GtplRepeatItem<Node>[];
+  readonly empty?: Node;
+}
+
 export interface GtplRenderHost<Node> {
   destroy(node: Node): void;
   element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node): Node;
   text(value: string | GtplBinding<string>): Node;
   fragment(children: readonly Node[]): Node;
-  repeat(items: readonly GtplRepeatItem<Node>[]): Node;
+  repeat(state: GtplBinding<GtplRepeatState<Node>>): Node;
   conditional<T>(condition: GtplBinding<T>, render: (value: T) => Node, fallback: () => Node): Node;
   switch(value: GtplBinding<unknown>, cases: readonly GtplSwitchCase<Node>[], renderDefault?: (() => Node) | undefined): Node;
 }
@@ -47,7 +52,7 @@ export interface GtplRenderRuntime<Node> {
   fragment(children: readonly Node[]): Node;
   if<T>(condition: T | GtplBinding<T>, render: (value: T) => Node, fallback?: () => Node): Node;
   for<T>(
-    collection: Iterable<T> | null | undefined,
+    collection: Iterable<T> | GtplBinding<Iterable<T> | null | undefined> | null | undefined,
     renderItem: (item: T, index: number, count: number) => Node,
     trackBy: (item: T, index: number, count: number) => unknown,
     renderEmpty: () => Node,
@@ -76,16 +81,23 @@ export function createGtplRenderRuntime<Node>(host: GtplRenderHost<Node>): GtplR
         : condition ? render(condition) : renderFallback();
     },
     for: (collection, renderItem, trackBy, renderEmpty) => {
-      if (collection == null) return renderEmpty();
-      const values = Array.from(collection);
-      if (values.length === 0) return renderEmpty();
-      const count = values.length;
-      const items = values.map((item, index) => ({
-        key: trackBy(item, index, count),
-        index,
-        node: renderItem(item, index, count),
-      }));
-      return host.repeat(items);
+      const getCollection = isGtplBinding(collection) ? collection.get : () => collection;
+      return host.repeat({
+        kind: 'binding',
+        get: () => {
+          const values = Array.from(getCollection() ?? []);
+          if (values.length === 0) return { items: [], empty: renderEmpty() };
+          const count = values.length;
+          const keys = new Set<unknown>();
+          const items = values.map((item, index) => {
+            const key = trackBy(item, index, count);
+            if (keys.has(key)) throw new Error('Duplicate GTPL @for track key.');
+            keys.add(key);
+            return { key, index, node: renderItem(item, index, count) };
+          });
+          return { items };
+        },
+      });
     },
     switch: (value, cases, renderDefault) => {
       const render = (current: unknown): Node => {

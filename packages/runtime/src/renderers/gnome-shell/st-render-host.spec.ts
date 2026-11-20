@@ -18,6 +18,11 @@ class FakeActor implements StActor {
     this.children.push(child);
   }
 
+  remove_child(child: StActor): void {
+    const index = this.children.indexOf(child);
+    if (index !== -1) this.children.splice(index, 1);
+  }
+
   connect(name: string, callback: (actor: StActor, ...args: unknown[]) => unknown): number {
     const id = this.nextSignal++;
     this.signals.set(id, { name, callback });
@@ -138,6 +143,28 @@ describe('createStRenderHost', () => {
     host.destroy(switched);
   });
 
+  it('reconciles repeated items by key when a collection signal changes', () => {
+    const host = createStRenderHost(createSt());
+    const runtime = createGtplRenderRuntime(host);
+    const values = signal(['a', 'b']);
+    const list = runtime.for(
+      runtime.bind(() => values.get()),
+      (value) => host.text(value),
+      (value) => value,
+      () => host.text('empty'),
+    ) as FakeActor;
+    const originalB = list.children[1];
+    values.set(['b', 'c']);
+    expect(list.children).toHaveLength(2);
+    expect(list.children[0]).toBe(originalB);
+    expect((list.children[0] as FakeActor).properties.text).toBe('b');
+    expect((list.children[1] as FakeActor).properties.text).toBe('c');
+    expect((list.children[0] as FakeActor).destroyed).toBe(false);
+    host.destroy(list);
+    values.set(['x']);
+    expect(list.children).toHaveLength(0);
+  });
+
   it('supports custom component constructors', () => {
     const host = createStRenderHost(createSt(), { components: { GefCustom: FakeActor } });
     expect(host.element('GefCustom', {}, host.fragment([]))).toBeInstanceOf(FakeActor);
@@ -153,12 +180,15 @@ describe('createStRenderHost', () => {
     const first = host.text('first');
     const second = host.text('second');
     const fragment = host.fragment([first, second]) as FakeActor;
-    const repeat = host.repeat([
-      { key: 'a', index: 0, node: first },
-      { key: 'b', index: 1, node: second },
-    ]) as FakeActor;
+    const runtime = createGtplRenderRuntime(host);
+    const repeat = runtime.for(
+      ['a', 'b'],
+      (value) => host.text(value),
+      (value) => value,
+      () => host.fragment([]),
+    ) as FakeActor;
     expect(fragment.children).toEqual([first, second]);
-    expect(repeat.children).toEqual([first, second]);
+    expect(repeat.children.map((child) => (child as FakeActor).properties.text)).toEqual(['a', 'b']);
   });
 
   it('destroys a root and its child actors idempotently', () => {

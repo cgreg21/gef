@@ -1,9 +1,10 @@
-import { isGtplBinding, type GtplBinding, type GtplRenderHost, type GtplRepeatItem } from '../../rendering/gtpl-runtime.js';
+import { isGtplBinding, type GtplBinding, type GtplRenderHost, type GtplRepeatItem, type GtplRepeatState } from '../../rendering/gtpl-runtime.js';
 import { effect } from '../../reactivity/signal.js';
 import { ResourceScope } from '../../resources/resource-scope.js';
 
 export interface StActor {
   add_child?(child: StActor): void;
+  remove_child?(child: StActor): void;
   set_child?(child: StActor | null): void;
   set_property(name: string, value: unknown): void;
   connect(signal: string, callback: (actor: StActor, ...args: unknown[]) => unknown): number;
@@ -158,8 +159,34 @@ export function createStRenderHost(
     fragment(children) {
       return makeContainer(children);
     },
-    repeat(items: readonly GtplRepeatItem<StActor>[]) {
-      return makeContainer(items.map((item) => item.node));
+    repeat(state: GtplBinding<GtplRepeatState<StActor>>) {
+      const actor = new St.BoxLayout(options.fragmentOrientation === undefined ? {} : { orientation: options.fragmentOrientation });
+      const resources = new ResourceScope();
+      let previousItems: GtplRepeatItem<StActor>[] = [];
+      let previousEmpty: StActor | undefined;
+      actor.connect('destroy', () => resources.dispose());
+      resources.add(effect(() => {
+        const nextState = state.get();
+        const oldByKey = new Map(previousItems.map((item) => [item.key, item]));
+        const nextItems = nextState.items.map((item) => {
+          const previous = oldByKey.get(item.key);
+          if (!previous) return item;
+          oldByKey.delete(item.key);
+          item.node.destroy();
+          return { ...item, node: previous.node };
+        });
+        for (const item of previousItems) actor.remove_child?.(item.node);
+        if (previousEmpty) actor.remove_child?.(previousEmpty);
+        for (const previous of oldByKey.values()) previous.node.destroy();
+        previousEmpty?.destroy();
+        const nextChildren = nextItems.length
+          ? nextItems.map((item) => item.node)
+          : nextState.empty ? [nextState.empty] : [];
+        for (const child of nextChildren) actor.add_child?.(child);
+        previousItems = nextItems;
+        previousEmpty = nextState.empty;
+      }));
+      return actor;
     },
     destroy(actor) {
       if (destroyed.has(actor)) return;

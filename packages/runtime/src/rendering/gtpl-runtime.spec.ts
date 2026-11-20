@@ -9,7 +9,7 @@ function createHost(): GtplRenderHost<Node> {
     element: (name, attributes, children) => ({ kind: name, value: attributes, children: [children] }),
     text: (value) => ({ kind: 'text', value }),
     fragment: (children) => ({ kind: 'fragment', children }),
-    repeat: (items) => ({ kind: 'repeat', value: items }),
+    repeat: (state) => ({ kind: 'repeat', value: state.get() }),
     conditional: (condition, render, fallback) => condition.get() ? render(condition.get()) : fallback(),
     switch: (value, cases, renderDefault) => {
       const current = value.get();
@@ -51,18 +51,20 @@ describe('createGtplRenderRuntime', () => {
     );
     expect(result).toMatchObject({
       kind: 'repeat',
-      value: [
-        { key: 'a', index: 0, node: { kind: 'item', value: ['a', 0, 2] } },
-        { key: 'b', index: 1, node: { kind: 'item', value: ['b', 1, 2] } },
-      ],
+      value: {
+        items: [
+          { key: 'a', index: 0, node: { kind: 'item', value: ['a', 0, 2] } },
+          { key: 'b', index: 1, node: { kind: 'item', value: ['b', 1, 2] } },
+        ],
+      },
     });
   });
 
   it('uses the empty branch for null and empty iterables', () => {
     const runtime = createGtplRenderRuntime(createHost());
     const empty = () => ({ kind: 'empty' });
-    expect(runtime.for(null, () => ({ kind: 'item' }), () => 0, empty)).toEqual({ kind: 'empty' });
-    expect(runtime.for([], () => ({ kind: 'item' }), () => 0, empty)).toEqual({ kind: 'empty' });
+    expect(runtime.for(null, () => ({ kind: 'item' }), () => 0, empty)).toMatchObject({ kind: 'repeat', value: { items: [], empty: { kind: 'empty' } } });
+    expect(runtime.for([], () => ({ kind: 'item' }), () => 0, empty)).toMatchObject({ kind: 'repeat', value: { items: [], empty: { kind: 'empty' } } });
   });
 
   it('selects the first matching switch case and falls back otherwise', () => {

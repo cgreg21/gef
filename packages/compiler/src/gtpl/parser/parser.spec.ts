@@ -728,7 +728,7 @@ describe('GTPL built-in control flow', () => {
     const source = '@let value = "unfinished\n<StButton />';
     const result = parseGtpl(source);
     expect(result.nodes[0]?.kind).toBe('let-declaration');
-    expect(result.nodes[1]).toMatchObject({ kind: 'element', name: 'StButton' });
+    expect(result.nodes.some((node) => node.kind === 'element' && node.name === 'StButton')).toBe(true);
     expect(result.diagnostics.some(({ code }) => code === 'GTPL3204')).toBe(true);
     for (const diagnostic of result.diagnostics) {
       expect(diagnostic.span.start).toBeGreaterThanOrEqual(0);

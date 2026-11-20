@@ -173,11 +173,18 @@ class GtplParser {
       if (quote === '"' || quote === "'") {
         this.offset += 1;
         valueStart = this.offset;
-        while (!this.eof() && this.peek() !== quote) this.offset += 1;
-        valueEnd = this.offset;
+        let closed = false;
+        while (!this.eof()) {
+          const next = advanceQuotedCharacter(this.source, this.offset, quote);
+          this.offset = next.offset;
+          if (next.closesQuote) {
+            closed = true;
+            break;
+          }
+        }
+        valueEnd = closed ? this.offset - 1 : this.offset;
         value = this.source.slice(valueStart, valueEnd);
-        if (this.peek() === quote) this.offset += 1;
-        else this.report('GTPL1007', 'Unterminated quoted attribute value.', start, this.offset);
+        if (!closed) this.report('GTPL1007', 'Unterminated quoted attribute value.', start, this.offset);
       } else {
         valueStart = this.offset;
         while (!this.eof() && !this.isWhitespace(this.peek()) && this.peek() !== '>' && !this.startsWith('/>')) {

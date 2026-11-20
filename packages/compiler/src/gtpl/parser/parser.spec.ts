@@ -22,6 +22,17 @@ describe('parseGtpl', () => {
     });
   });
 
+  it('keeps escaped quotes inside quoted attribute values', () => {
+    const result = parseGtpl(String.raw`<StLabel title="a\"b" subtitle="next" />`);
+    expect(result.diagnostics).toHaveLength(0);
+    const element = result.nodes[0];
+    expect(element?.kind).toBe('element');
+    if (element?.kind !== 'element') return;
+    expect(element.attributes.map(({ name, value }) => [name, value])).toEqual([
+      ['title', String.raw`a\"b`],
+      ['subtitle', 'next'],
+    ]);
+  });
   it('classifies Angular-inspired binding attributes', () => {
     const result = parseGtpl(
       '<StButton title="Open" [visible]="isVisible" (clicked)="open()" [(value)]="volume" *gefIf="enabled" #button />',

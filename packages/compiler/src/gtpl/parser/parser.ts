@@ -24,7 +24,7 @@ function advanceQuotedCharacter(
   offset: number,
   quote: string,
 ): { offset: number; closesQuote: boolean } {
-  if (source[offset] === '\\') return { offset: offset + 2, closesQuote: false };
+  if (source[offset] === '\\') return { offset: Math.min(offset + 2, source.length), closesQuote: false };
   return { offset: offset + 1, closesQuote: source[offset] === quote };
 }
 

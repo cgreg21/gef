@@ -22,6 +22,12 @@ describe('parseGtpl', () => {
     });
   });
 
+  it('keeps unterminated escaped attribute values within the source span', () => {
+    const source = '<StLabel title="value\\';
+    const result = parseGtpl(source);
+    const diagnostic = result.diagnostics.find((item) => item.code === 'GTPL1007');
+    expect(diagnostic?.span.end).toBe(source.length);
+  });
   it('keeps escaped quotes inside quoted attribute values', () => {
     const result = parseGtpl(String.raw`<StLabel title="a\"b" subtitle="next" />`);
     expect(result.diagnostics).toHaveLength(0);

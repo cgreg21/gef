@@ -190,7 +190,16 @@ class GtplParser {
 
   private parseText(): TextNode {
     const start = this.offset;
-    while (!this.eof() && this.peek() !== '<' && !(this.blockDepth > 0 && this.peek() === '}' && !this.startsWith('}}'))) this.offset += 1;
+    while (!this.eof() && this.peek() !== '<') {
+      if (this.blockDepth > 0 && this.peek() === '}') {
+        if (this.startsWith('}}')) {
+          this.offset += 2;
+          continue;
+        }
+        break;
+      }
+      this.offset += 1;
+    }
     if (this.offset === start) this.offset += 1;
     const end = this.offset;
     const raw = this.source.slice(start, end);

@@ -15,7 +15,7 @@ describe('emitGtplTemplate', () => {
     const output = emit('<label class="title">Hello {{name}}</label>', ['name']);
     expect(output).toContain('runtime.element("label"');
     expect(output).toContain('"class": "title"');
-    expect(output).toContain('runtime.text(runtime.bind(() => String(ctx.name ?? \'\')))');
+    expect(output).toContain(`runtime.text(runtime.bind(() => "Hello " + String(ctx.name ?? '))`);
   });
 
   it('emits property bindings and event callbacks', () => {

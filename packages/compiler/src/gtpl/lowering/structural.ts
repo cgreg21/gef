@@ -1,4 +1,4 @@
-import type { ElementNode, ForBlockNode, GtplNode, IfBlockNode, LetDeclarationNode } from '../ast/types.js';
+import type { ElementNode, ForBlockNode, GtplNode, IfBlockNode } from '../ast/types.js';
 import type { ExpressionNode } from '../ast/expression.js';
 import type { Diagnostic } from '../diagnostics/diagnostic.js';
 import { parseGtplExpression } from '../expression/parser.js';

@@ -776,4 +776,44 @@ describe('GTPL built-in control flow', () => {
     expect(result.diagnostics.map(({ code }) => code)).toEqual(['GTPL1006']);
   });
 
+
+  it('keeps duplicate element-name counts balanced during ancestor-tag recovery', () => {
+    const source = '<StBox><StRow><StBox></StRow></StBox><StButton />';
+    const result = parseGtpl(source);
+    expect(result.nodes).toHaveLength(2);
+    expect(result.nodes[0]?.kind).toBe('element');
+    expect(result.nodes[1]?.kind).toBe('element');
+    expect(result.diagnostics.map(({ code }) => code)).toEqual(['GTPL1006']);
+    expect(source.slice(result.nodes[1]!.span.start, result.nodes[1]!.span.end)).toBe('<StButton />');
+  });
+
+  it('parses deeply mixed control-flow and repeated element names without losing siblings', () => {
+    const depth = 240;
+    const opening = Array.from({ length: depth }, (_, index) =>
+      index % 3 === 0 ? '@if (ready) {' : index % 3 === 1 ? '@for (item of items; track item.id) {' : '<StBox>'
+    ).join('');
+    const closing = Array.from({ length: depth }, (_, index) =>
+      index % 3 === 2 ? '</StBox>' : '}'
+    ).reverse().join('');
+    const source = opening + '<StLabel />' + closing + '<StButton />';
+    const result = parseGtpl(source);
+    expect(result.diagnostics).toHaveLength(0);
+    expect(result.nodes).toHaveLength(2);
+    expect(result.nodes[0]?.span.start).toBe(0);
+    expect(result.nodes[0]?.span.end).toBe(source.indexOf('<StButton />'));
+    expect(result.nodes[1]?.kind).toBe('element');
+  });
+
+  it('recovers an unterminated nested directive before preserving a following top-level element', () => {
+    const source = '@if (ready) { @for (item of items; track item.id) { <StLabel /> } <StButton />';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('if-block');
+    if (block?.kind !== 'if-block') return;
+    expect(block.branches[0]?.children.map((node) => node.kind)).toEqual(['for-block', 'element']);
+    expect(result.diagnostics.filter(({ code }) => code === 'GTPL3006')).toHaveLength(1);
+    expect(result.nodes[1]).toBeUndefined();
+    expect(block.span.end).toBe(source.length);
+  });
+
 });

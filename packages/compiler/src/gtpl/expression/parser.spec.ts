@@ -124,6 +124,31 @@ describe('parseGtplExpression', () => {
     expect(result.diagnostics.every((item) => item.span.start >= 0 && item.span.end <= 'format(value +)'.length)).toBe(true);
   });
 
+  it('parses optional calls and computed optional access', () => {
+    expect(parseGtplExpression('device.load?.(name)').expression).toMatchObject({
+      kind: 'call',
+      optional: true,
+      callee: { kind: 'member', property: 'load' },
+    });
+    expect(parseGtplExpression('device?.[key]').expression).toMatchObject({
+      kind: 'member',
+      computed: true,
+      optional: true,
+    });
+  });
+
+  it('reports unsupported characters only once', () => {
+    const result = parseGtplExpression('value @ other');
+    expect(result.diagnostics.filter((item) => item.code === 'GTPL2006')).toHaveLength(1);
+    expect(result.diagnostics.some((item) => item.code === 'GTPL2004')).toBe(false);
+  });
+
+  it('recovers from mismatched delimiters without stalling', () => {
+    const result = parseGtplExpression('[first)');
+    expect(result.expression).toMatchObject({ kind: 'array' });
+    expect(result.diagnostics.some((item) => item.code === 'GTPL2007')).toBe(true);
+  });
+
   it('reports trailing tokens instead of silently accepting them', () => {
     const result = parseGtplExpression('value anotherValue');
     expect(result.diagnostics.some((item) => item.code === 'GTPL2002')).toBe(true);

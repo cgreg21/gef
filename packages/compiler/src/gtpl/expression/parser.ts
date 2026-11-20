@@ -24,7 +24,7 @@ export interface ExpressionParseResult {
   readonly diagnostics: readonly ExpressionDiagnostic[];
 }
 
-type TokenKind = 'identifier' | 'number' | 'string' | 'operator' | 'eof';
+type TokenKind = 'identifier' | 'number' | 'string' | 'operator' | 'invalid' | 'eof';
 
 interface Token {
   readonly kind: TokenKind;
@@ -87,6 +87,26 @@ class ExpressionParser {
         if (18 < minPrecedence) break;
         const optional = this.current.value === '?.';
         this.advance();
+
+        if (optional && this.current.value === '(') {
+          left = this.parseCall(left, true);
+          continue;
+        }
+        if (optional && this.current.value === '[') {
+          this.advance();
+          const property = this.parseExpression(0);
+          const close = this.expect(']');
+          if (!property) return left;
+          left = {
+            kind: 'member',
+            object: left,
+            property,
+            computed: true,
+            optional: true,
+            span: { start: left.span.start, end: close?.end ?? property.span.end },
+          };
+          continue;
+        }
         if (this.current.kind !== 'identifier') {
           this.report('GTPL2003', 'Expected a property name after member access.', this.current.start, this.current.end);
           return left;
@@ -123,16 +143,7 @@ class ExpressionParser {
 
       if (this.current.value === '(') {
         if (18 < minPrecedence) break;
-        this.advance();
-        const args = this.parseDelimitedExpressions(')');
-        const close = this.expect(')');
-        left = {
-          kind: 'call',
-          callee: left,
-          arguments: args,
-          optional: false,
-          span: { start: left.span.start, end: close?.end ?? args.at(-1)?.span.end ?? this.getCurrentToken().start },
-        };
+        left = this.parseCall(left, false);
         continue;
       }
 
@@ -194,6 +205,19 @@ class ExpressionParser {
     return expressions;
   }
 
+  private parseCall(callee: ExpressionNode, optional: boolean): ExpressionNode {
+    this.advance();
+    const args = this.parseDelimitedExpressions(')');
+    const close = this.expect(')');
+    return {
+      kind: 'call',
+      callee,
+      arguments: args,
+      optional,
+      span: { start: callee.span.start, end: close?.end ?? args.at(-1)?.span.end ?? this.getCurrentToken().start },
+    };
+  }
+
   private parsePrefix(): ExpressionNode | null {
     const token = this.current;
 
@@ -245,6 +269,11 @@ class ExpressionParser {
         raw: token.value,
         span: { start: token.start, end: token.end },
       };
+    }
+
+    if (token.kind === 'invalid') {
+      this.advance();
+      return null;
     }
 
     if (token.kind === 'identifier') {
@@ -325,7 +354,7 @@ class ExpressionParser {
 
     this.offset += 1;
     this.report('GTPL2006', `Unsupported character "${char}" in expression.`, start, this.offset);
-    return { kind: 'operator', value: char, start, end: this.offset };
+    return { kind: 'invalid', value: char, start, end: this.offset };
   }
 
   private decodeString(raw: string, terminated: boolean): string {

@@ -164,6 +164,24 @@ describe('parseGtpl', () => {
 
 
 describe('GTPL expression integration', () => {
+  it('does not close interpolation on nested object literal braces', () => {
+    const source = '<StLabel>{{ ({ profile: { name: user.name } }).profile.name }}</StLabel>';
+    const result = parseGtpl(source);
+    expect(result.diagnostics).toHaveLength(0);
+    const root = result.nodes[0];
+    expect(root?.kind).toBe('element');
+    if (root?.kind !== 'element') return;
+    const text = root.children[0];
+    expect(text?.kind).toBe('text');
+    if (text?.kind !== 'text') return;
+    expect(text.parts).toMatchObject([
+      {
+        kind: 'interpolation',
+        expression: '({ profile: { name: user.name } }).profile.name',
+      },
+    ]);
+  });
+
   it('does not close interpolations on delimiters inside quoted strings', () => {
     const source = String.raw`<StLabel>{{ format("}}", 'value') }}</StLabel>`;
     const result = parseGtpl(source);

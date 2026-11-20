@@ -30,6 +30,7 @@ function advanceQuotedCharacter(
 
 function findInterpolationEnd(source: string, open: number): number {
   let quote = '';
+  let braceDepth = 0;
   for (let index = open + 2; index < source.length; index += 1) {
     const char = source[index] ?? '';
     if (quote) {
@@ -42,7 +43,17 @@ function findInterpolationEnd(source: string, open: number): number {
       quote = char;
       continue;
     }
-    if (char === '}' && source[index + 1] === '}') return index;
+    if (char === '{') {
+      braceDepth += 1;
+      continue;
+    }
+    if (char === '}') {
+      if (braceDepth > 0) {
+        braceDepth -= 1;
+        continue;
+      }
+      if (source[index + 1] === '}') return index;
+    }
   }
   return -1;
 }

@@ -27,7 +27,7 @@ export function checkGtpl(source: string, options: GtplCheckOptions = {}): GtplC
   const semantic = analyzeGtpl(parsed.nodes, options);
   const components = validateGtplComponents(parsed.nodes, {
     components: options.components ?? [],
-    strict: options.strictComponents,
+    strict: options.strictComponents ?? false,
   });
 
   return {

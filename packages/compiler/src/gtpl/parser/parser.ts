@@ -527,6 +527,15 @@ class GtplParser {
     return this.source.slice(start, this.offset);
   }
 
+  private isRecoveryBoundaryAfterNewline(offset: number): boolean {
+    while (this.isWhitespace(this.source[offset] ?? '')) offset += 1;
+    if (this.source[offset] === '{' || this.source[offset] === '}'
+      || this.isTagStart(offset)) return true;
+    return BLOCK_DIRECTIVES.some((directive) =>
+      this.source.startsWith(directive, offset)
+      && !/[A-Za-z0-9_$]/.test(this.source[offset + directive.length] ?? ''));
+  }
+
   private readUntilSemicolon(): string {
     const start = this.offset;
     let round = 0;
@@ -535,11 +544,7 @@ class GtplParser {
     while (!this.eof()) {
       const char = this.peek();
       if (quote) {
-        if (char === '\n') {
-          let next = this.offset + 1;
-          while (this.isWhitespace(this.source[next] ?? '')) next += 1;
-          if (this.isTagStart(next)) break;
-        }
+        if (char === '\n' && this.isRecoveryBoundaryAfterNewline(this.offset + 1)) break;
         const next = advanceQuotedCharacter(this.source, this.offset, quote);
         this.offset = next.offset;
         if (next.closesQuote) quote = '';
@@ -695,15 +700,7 @@ class GtplParser {
         && (this.startsWithDirective('@case') || this.startsWithDirective('@default'))) break;
       const char = this.peek();
       if (quote) {
-        if (char === '\n') {
-          let next = this.offset + 1;
-          while (this.isWhitespace(this.source[next] ?? '')) next += 1;
-          if (this.source[next] === '{' || this.source[next] === '}'
-            || this.isTagStart(next)
-            || ['@else', '@empty', '@case', '@default'].some((directive) =>
-              this.source.startsWith(directive, next)
-              && !/[A-Za-z0-9_$]/.test(this.source[next + directive.length] ?? ''))) break;
-        }
+        if (char === '\n' && this.isRecoveryBoundaryAfterNewline(this.offset + 1)) break;
         const next = advanceQuotedCharacter(this.source, this.offset, quote);
         this.offset = next.offset;
         if (next.closesQuote) quote = '';

@@ -758,6 +758,15 @@ describe('GTPL built-in control flow', () => {
     }
   });
 
+  it('recovers an @let declaration before a following control-flow block after an unterminated string', () => {
+    const source = '@let value = "unfinished\n@if (ready) { <StLabel /> } <StButton />';
+    const result = parseGtpl(source);
+    expect(result.nodes[0]?.kind).toBe('let-declaration');
+    expect(result.nodes.some((node) => node.kind === 'if-block')).toBe(true);
+    expect(result.nodes.some((node) => node.kind === 'element' && node.name === 'StButton')).toBe(true);
+    expect(result.diagnostics.some(({ code }) => code === 'GTPL3204')).toBe(true);
+  });
+
   it('maps control-flow expression diagnostics past leading whitespace', () => {
     const ifSource = '@if (  user. ) {}';
     const ifDiagnostic = parseGtpl(ifSource).diagnostics.find((item) => item.code === 'GTPL2003');

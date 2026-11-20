@@ -174,17 +174,22 @@ class ExpressionParser {
   private parseDelimitedExpressions(closing: string): ExpressionNode[] {
     const expressions: ExpressionNode[] = [];
     while (this.getCurrentToken().kind !== 'eof' && this.getCurrentToken().value !== closing) {
+      const before = this.getCurrentToken();
       const expression = this.parseExpression(0);
       if (expression) expressions.push(expression);
 
-      if (this.getCurrentToken().value === ',') {
+      const current = this.getCurrentToken();
+      if (current.value === ',') {
         this.advance();
         continue;
       }
-      if (this.getCurrentToken().kind === 'eof' || this.getCurrentToken().value === closing) break;
+      if (current.kind === 'eof' || current.value === closing) break;
+      if (current === before) {
+        this.advance();
+        continue;
+      }
 
-      const token = this.getCurrentToken();
-      this.report('GTPL2008', 'Expected \",\" between expressions.', token.start, token.end);
+      this.report('GTPL2008', 'Expected \",\" between expressions.', current.start, current.end);
     }
     return expressions;
   }

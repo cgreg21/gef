@@ -31,6 +31,24 @@ describe('lowerGtplStructuralDirectives', () => {
     });
   });
 
+  it('lowers two-way bindings into a property and a change event', () => {
+    const parsed = parseGtpl('<GefSlider [(value)]="model.volume" />');
+    const result = lowerGtplStructuralDirectives(parsed.nodes);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.nodes[0]).toMatchObject({
+      kind: 'element',
+      attributes: [
+        { kind: 'property', name: 'value', parsedExpression: { kind: 'member' } },
+        { kind: 'event', name: 'valueChange', parsedExpression: { kind: 'assignment', target: { kind: 'member' }, value: { kind: 'identifier', name: '$event' } } },
+      ],
+    });
+  });
+
+  it('rejects non-assignable two-way binding expressions', () => {
+    const result = lowerGtplStructuralDirectives(parseGtpl('<GefSlider [(value)]="getValue()" />').nodes);
+    expect(result.diagnostics.map((item) => item.code)).toContain('GTPL4210');
+  });
+
   it('supports the gef directive names', () => {
     const parsed = parseGtpl('<StLabel *gefIf="ready" /><StLabel *gefFor="let item of items" />');
     const result = lowerGtplStructuralDirectives(parsed.nodes);

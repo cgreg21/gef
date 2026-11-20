@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { emitGtplTemplate } from './template.js';
 import { parseGtpl } from '../parser/parser.js';
+import { lowerGtplStructuralDirectives } from '../lowering/structural.js';
 
 function emit(source: string, componentMembers: string[] = []): string {
   const parsed = parseGtpl(source);
@@ -46,6 +47,15 @@ describe('emitGtplTemplate', () => {
     };
     expect(render({ getValue: () => { calls += 1; return 'ready'; } }, runtime)).toEqual([['ready ']]);
     expect(calls).toBe(1);
+  });
+
+  it('emits lowered two-way bindings as a property and event callback', () => {
+    const parsed = parseGtpl('<GefSlider [(value)]="volume" />');
+    const lowered = lowerGtplStructuralDirectives(parsed.nodes);
+    expect(lowered.diagnostics).toEqual([]);
+    const output = emitGtplTemplate(lowered.nodes, { componentMembers: ['volume'] });
+    expect(output).toContain('"value": ctx.volume');
+    expect(output).toContain('"valueChange": ($event) => (ctx.volume = $event)');
   });
 
   it('rejects structural shorthand until its dedicated lowering pass exists', () => {

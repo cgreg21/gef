@@ -1,4 +1,5 @@
 import type { ElementNode, ForBlockNode, GtplNode, IfBlockNode } from '../ast/types.js';
+import type { AssignmentExpression, IdentifierExpression } from '../ast/expression.js';
 import type { ExpressionNode } from '../ast/expression.js';
 import type { Diagnostic } from '../diagnostics/diagnostic.js';
 import { parseGtplExpression } from '../expression/parser.js';
@@ -126,12 +127,29 @@ function lowerFor(element: ElementNode, value: string, diagnostics: Diagnostic[]
   };
 }
 
+function lowerTwoWayBindings(attributes: ElementNode['attributes'], diagnostics: Diagnostic[]): ElementNode['attributes'] {
+  const lowered: ElementNode['attributes'][number][] = [];
+  for (const attribute of attributes) {
+    if (attribute.kind !== 'two-way') { lowered.push(attribute); continue; }
+    const target = attribute.parsedExpression;
+    if (!target || (target.kind !== 'identifier' && target.kind !== 'member')) {
+      diagnostics.push({ code: 'GTPL4210', message: 'Two-way binding requires an assignable identifier or member expression.', span: attribute.valueSpan });
+      continue;
+    }
+    const event: IdentifierExpression = { kind: 'identifier', name: '$event', span: { start: target.span.end, end: target.span.end + 6 } };
+    const assignment: AssignmentExpression = { kind: 'assignment', target, value: event, span: { start: target.span.start, end: event.span.end } };
+    lowered.push({ ...attribute, kind: 'property' });
+    lowered.push({ ...attribute, name: `${attribute.name}Change`, value: `${attribute.value} = $event`, kind: 'event', parsedExpression: assignment });
+  }
+  return lowered;
+}
+
 function lowerElement(element: ElementNode, diagnostics: Diagnostic[]): GtplNode {
   const structural = element.attributes.filter((attribute) => attribute.kind === 'structural');
   const children = lowerNodes(element.children, diagnostics);
   const cleanElement: ElementNode = {
     ...element,
-    attributes: element.attributes.filter((attribute) => attribute.kind !== 'structural'),
+    attributes: lowerTwoWayBindings(element.attributes.filter((attribute) => attribute.kind !== 'structural'), diagnostics),
     children,
   };
   if (structural.length === 0) return cleanElement;
@@ -187,7 +205,7 @@ function lowerNodes(nodes: readonly GtplNode[], diagnostics: Diagnostic[]): Gtpl
   });
 }
 
-/** Lowers supported structural attributes into the compiler's control-flow AST. */
+/** Lowers structural attributes and two-way bindings into explicit compiler AST nodes. */
 export function lowerGtplStructuralDirectives(nodes: readonly GtplNode[]): GtplLoweringResult {
   const diagnostics: Diagnostic[] = [];
   return { nodes: lowerNodes(nodes, diagnostics), diagnostics };

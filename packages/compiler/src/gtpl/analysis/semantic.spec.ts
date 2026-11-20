@@ -52,6 +52,12 @@ describe('GTPL semantic scopes', () => {
     expect(analyze('<StLabel>{{ componentMember }}</StLabel>')).toHaveLength(0);
   });
 
+  it('resolves $event only inside event handlers', () => {
+    expect(analyze('<StButton (clicked)="activate($event)" />', ['activate'])).toHaveLength(0);
+    const outside = analyze('<StLabel>{{ $event }}</StLabel>', []);
+    expect(outside.some((item) => item.code === 'GTPL4002')).toBe(true);
+  });
+
   it('supports explicitly declared framework globals', () => {
     const parsed = parseGtpl('<StLabel>{{ gettext("Ready") }}</StLabel>');
     const semantic = analyzeGtpl(parsed.nodes, { componentMembers: [], globals: ['gettext'] });

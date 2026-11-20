@@ -73,7 +73,8 @@ export function emitGtplTemplate(
       if (attribute.kind === 'static' || attribute.kind === 'reference') {
         value = JSON.stringify(attribute.value);
       } else {
-        const emitted = expression(attribute.parsedExpression, locals, options);
+        const attributeLocals = attribute.kind === 'event' ? new Set([...locals, '$event']) : locals;
+        const emitted = expression(attribute.parsedExpression, attributeLocals, options);
         value = attribute.kind === 'event' ? `($event) => ${emitted}` : emitted;
       }
       attributes.push(`${JSON.stringify(attribute.name)}: ${value}`);

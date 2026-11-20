@@ -102,7 +102,10 @@ class GtplSemanticAnalyzer {
 
   private visitElement(node: ElementNode, scope: Scope): void {
     for (const attribute of node.attributes) {
-      if (attribute.parsedExpression) this.checkExpression(attribute.parsedExpression, scope, attribute.valueSpan);
+      if (!attribute.parsedExpression) continue;
+      const attributeScope = attribute.kind === 'event' ? new Scope(scope) : scope;
+      if (attribute.kind === 'event') this.declare(attributeScope, { name: '$event', kind: 'let', span: attribute.valueSpan });
+      this.checkExpression(attribute.parsedExpression, attributeScope, attribute.valueSpan);
     }
     for (const child of node.children) this.visit(child, scope);
   }
@@ -206,6 +209,10 @@ class GtplSemanticAnalyzer {
         this.checkExpression(expression.test, scope, sourceSpan);
         this.checkExpression(expression.consequent, scope, sourceSpan);
         this.checkExpression(expression.alternate, scope, sourceSpan);
+        return;
+      case 'assignment':
+        this.checkExpression(expression.target, scope, sourceSpan);
+        this.checkExpression(expression.value, scope, sourceSpan);
         return;
       case 'array':
         for (const element of expression.elements) this.checkExpression(element, scope, sourceSpan);

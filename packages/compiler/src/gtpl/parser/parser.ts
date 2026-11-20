@@ -535,6 +535,11 @@ class GtplParser {
     while (!this.eof()) {
       const char = this.peek();
       if (quote) {
+        if (char === '\n') {
+          let next = this.offset + 1;
+          while (this.isWhitespace(this.source[next] ?? '')) next += 1;
+          if (this.isTagStart(next)) break;
+        }
         const next = advanceQuotedCharacter(this.source, this.offset, quote);
         this.offset = next.offset;
         if (next.closesQuote) quote = '';
@@ -547,7 +552,7 @@ class GtplParser {
       else if (char === ']') square = Math.max(0, square - 1);
       else if (round === 0 && square === 0) {
         if (char === ';') break;
-        if (this.blockDepth > 0 && (char === '}' || this.isTagStart(this.offset))) break;
+        if (char === '}' || this.isTagStart(this.offset)) break;
       }
       this.offset += 1;
     }

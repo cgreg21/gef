@@ -716,6 +716,26 @@ describe('GTPL built-in control flow', () => {
     expect(result.diagnostics).toHaveLength(0);
   });
 
+  it('recovers a following element after an @let declaration is missing its semicolon', () => {
+    const source = '@let value = user.name\n<StButton />';
+    const result = parseGtpl(source);
+    expect(result.nodes[0]).toMatchObject({ kind: 'let-declaration', name: 'value', expression: 'user.name' });
+    expect(result.nodes[1]).toMatchObject({ kind: 'element', name: 'StButton' });
+    expect(result.diagnostics.some(({ code }) => code === 'GTPL3204')).toBe(true);
+  });
+
+  it('recovers a following element after an unterminated @let string', () => {
+    const source = '@let value = "unfinished\n<StButton />';
+    const result = parseGtpl(source);
+    expect(result.nodes[0]?.kind).toBe('let-declaration');
+    expect(result.nodes[1]).toMatchObject({ kind: 'element', name: 'StButton' });
+    expect(result.diagnostics.some(({ code }) => code === 'GTPL3204')).toBe(true);
+    for (const diagnostic of result.diagnostics) {
+      expect(diagnostic.span.start).toBeGreaterThanOrEqual(0);
+      expect(diagnostic.span.end).toBeLessThanOrEqual(source.length);
+    }
+  });
+
   it('maps control-flow expression diagnostics past leading whitespace', () => {
     const ifSource = '@if (  user. ) {}';
     const ifDiagnostic = parseGtpl(ifSource).diagnostics.find((item) => item.code === 'GTPL2003');

@@ -88,7 +88,7 @@ export function emitGtplTemplate(
       if (branch.parsedCondition) {
         const condition = expression(branch.parsedCondition, locals, options);
         const render = branch.alias
-          ? `(value) => { const ${branch.alias} = value; return ${renderNodes(branch.children, new Set([...locals, branch.alias]))}; }`
+          ? `(${branch.alias}) => ${renderNodes(branch.children, new Set([...locals, branch.alias]))}`
           : `() => ${renderNodes(branch.children, locals)}`;
         fallback = `runtime.if(${condition}, ${render}, () => ${fallback})`;
       } else {

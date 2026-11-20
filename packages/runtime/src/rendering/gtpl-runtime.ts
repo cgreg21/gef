@@ -24,7 +24,7 @@ export interface GtplRepeatState<Node> {
 
 export interface GtplRenderHost<Node> {
   destroy(node: Node): void;
-  element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node): Node;
+  element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node | undefined): Node;
   text(value: string | GtplBinding<string>): Node;
   fragment(children: readonly Node[]): Node;
   repeat(state: GtplBinding<GtplRepeatState<Node>>): Node;

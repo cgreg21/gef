@@ -83,6 +83,12 @@ describe('createStRenderHost', () => {
     expect(actor.children).toEqual([child]);
   });
 
+  it('does not add synthetic empty containers to leaf widgets', () => {
+    const host = createStRenderHost(createSt());
+    const actor = host.element('StLabel', {}, undefined) as FakeActor;
+    expect(actor.children).toHaveLength(0);
+  });
+
   it('connects events and passes signal arguments to handlers', () => {
     const host = createStRenderHost(createSt());
     let received: unknown;

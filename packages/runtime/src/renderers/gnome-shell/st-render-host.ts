@@ -102,7 +102,7 @@ export function createStRenderHost(
         for (const [property, binding] of bindings) {
           resources.add(effect(() => actor.set_property(property, binding.get())));
         }
-        appendChildren(actor, [children]);
+        appendChildren(actor, children ? [children] : []);
         return actor;
       } catch (error) {
         actor.destroy();

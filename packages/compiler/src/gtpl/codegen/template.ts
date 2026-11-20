@@ -84,7 +84,8 @@ export function emitGtplTemplate(
       }
       attributes.push(`${JSON.stringify(attribute.name)}: ${value}`);
     }
-    return `runtime.element(${JSON.stringify(node.name)}, { ${attributes.join(', ')} }, ${renderNodes(node.children, locals)})`;
+    const children = node.children.length > 0 ? renderNodes(node.children, locals) : 'undefined';
+    return `runtime.element(${JSON.stringify(node.name)}, { ${attributes.join(', ')} }, ${children})`;
   };
 
   const renderIf = (node: IfBlockNode, locals: ReadonlySet<string>): string => {

@@ -31,7 +31,8 @@
 - [x] Explicit hierarchical dependency injector with scoped disposal.
 - [ ] Component lifecycle integration, directive instantiation and DI scopes.
 - [ ] GNOME Shell 51 St/Clutter integration tests.
-- [ ] GTK4/libadwaita preferences renderer.
+- [x] Initial GTK4/libadwaita host adapter with reactive bindings and keyed loops.
+- [ ] GTK4/libadwaita preferences integration tests and complete renderer coverage.
 - [ ] Native GJS code generation and source maps.
 
 ## Styles and developer tools

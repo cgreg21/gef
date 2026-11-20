@@ -13,7 +13,7 @@ describe('GTPL semantic scopes', () => {
   });
 
   it('does not expose @let declarations before their declaration', () => {
-    const diagnostics = analyze('<StLabel>{{ later }}</StLabel> @let later = model;');
+    const diagnostics = analyze('<StLabel>{{ later }}</StLabel> @let later = model;', ['model']);
     expect(diagnostics.some((item) => item.code === 'GTPL4002' && item.message.includes('"later"'))).toBe(true);
   });
 

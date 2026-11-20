@@ -165,7 +165,7 @@ class GtplParser {
             closed = true;
             break;
           }
-          if (closingName && this.openElements.slice(0, -1).includes(closingName)) {
+          if (closingName && this.openElements.lastIndexOf(closingName) !== -1) {
             this.offset = closingStart;
             break;
           }

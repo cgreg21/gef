@@ -101,6 +101,18 @@ describe('parseGtpl', () => {
     expect(result.diagnostics[0]?.span.start).toBe(7);
   });
 
+  it('recovers an outer closing tag through deeply nested distinct elements', () => {
+    const depth = 180;
+    const names = Array.from({ length: depth }, (_, index) => `StBox${index}`);
+    const source = names.map((name) => `<${name}>`).join('') + `</${names[0]}>`;
+    const result = parseGtpl(source);
+
+    expect(result.nodes).toHaveLength(1);
+    expect(result.nodes[0]).toMatchObject({ kind: 'element', name: names[0] });
+    expect(result.diagnostics.filter((item) => item.code === 'GTPL1006')).toHaveLength(depth - 1);
+    expect(result.diagnostics.some((item) => item.code === 'GTPL1005')).toBe(false);
+  });
+
   it('keeps every diagnostic span within the source bounds', () => {
     const sources = ['@if', '@for (item of items', '<StLabel title="unterminated', '@switch (value)'];
     for (const source of sources) {

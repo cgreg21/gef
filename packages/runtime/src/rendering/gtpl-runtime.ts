@@ -1,3 +1,5 @@
+import { ResourceScope } from '../resources/resource-scope.js';
+
 export interface GtplRepeatItem<Node> {
   readonly key: unknown;
   readonly index: number;
@@ -5,11 +7,19 @@ export interface GtplRepeatItem<Node> {
 }
 
 export interface GtplRenderHost<Node> {
+  destroy(node: Node): void;
   element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node): Node;
   text(value: string): Node;
   fragment(children: readonly Node[]): Node;
   repeat(items: readonly GtplRepeatItem<Node>[]): Node;
 }
+
+export interface GtplRenderView<Node> {
+  readonly node: Node;
+  dispose(): void;
+}
+
+export type GtplRenderFunction<Context, Node> = (context: Context, runtime: GtplRenderRuntime<Node>) => Node;
 
 export interface GtplSwitchCase<Node> {
   readonly values: readonly unknown[];
@@ -64,4 +74,16 @@ export function createGtplRenderRuntime<Node>(host: GtplRenderHost<Node>): GtplR
       return renderDefault?.() ?? host.fragment([]);
     },
   };
+}
+
+/** Renders a generated template and returns an idempotently disposable view. */
+export function mountGtplTemplate<Context, Node>(
+  context: Context,
+  render: GtplRenderFunction<Context, Node>,
+  host: GtplRenderHost<Node>,
+): GtplRenderView<Node> {
+  const node = render(context, createGtplRenderRuntime(host));
+  const resources = new ResourceScope();
+  resources.add(() => host.destroy(node));
+  return { node, dispose: () => resources.dispose() };
 }

@@ -5,6 +5,7 @@ type Node = { readonly kind: string; readonly value?: unknown; readonly children
 
 function createHost(): GtplRenderHost<Node> {
   return {
+    destroy: () => {},
     element: (name, attributes, children) => ({ kind: name, value: attributes, children: [children] }),
     text: (value) => ({ kind: 'text', value }),
     fragment: (children) => ({ kind: 'fragment', children }),
@@ -60,6 +61,21 @@ describe('createGtplRenderRuntime', () => {
     expect(runtime.switch('active', cases, () => ({ kind: 'default' }))).toEqual({ kind: 'active' });
     expect(runtime.switch('missing', cases, () => ({ kind: 'default' }))).toEqual({ kind: 'default' });
     expect(runtime.switch(0, cases)).toEqual({ kind: 'zero' });
+  });
+
+  it('mounts a generated view and destroys its root exactly once', async () => {
+    const { mountGtplTemplate } = await import('./gtpl-runtime.js');
+    const destroyed: Node[] = [];
+    const host = createHost();
+    const view = mountGtplTemplate(
+      { label: 'Ready' },
+      (context, runtime) => runtime.element('StLabel', { text: context.label }, runtime.text(context.label)),
+      { ...host, destroy: (node) => { destroyed.push(node); } },
+    );
+    expect(view.node).toMatchObject({ kind: 'StLabel' });
+    view.dispose();
+    view.dispose();
+    expect(destroyed).toEqual([view.node]);
   });
 
   it('propagates host and render callback errors', () => {

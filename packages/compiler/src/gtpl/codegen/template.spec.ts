@@ -42,13 +42,13 @@ describe('emitGtplTemplate', () => {
     let calls = 0;
     const runtime = {
       fragment: (children: unknown[]) => children,
-      bind: (get: () => unknown) => ({ kind: 'binding', get }),
       text: (value: string | { get: () => unknown }) => typeof value === 'string' ? value : String(value.get()),
       bind: (get: () => unknown) => ({ kind: 'binding', get }),
-      if: (condition: unknown, yes: (value: unknown) => unknown, no: () => unknown) =>
-        typeof condition === 'object' && condition !== null && 'get' in condition
-          ? (condition.get as () => unknown)() ? yes((condition.get as () => unknown)()) : no()
-          : condition ? yes(condition) : no(),
+      if: (condition: unknown, yes: (value: unknown) => unknown, no: () => unknown) => {
+        const value = typeof condition === 'object' && condition !== null && 'get' in condition
+          ? (condition.get as () => unknown)() : condition;
+        return value ? yes(value) : no();
+      },
     };
     expect(render({ getValue: () => { calls += 1; return 'ready'; } }, runtime)).toEqual([['ready ']]);
     expect(calls).toBe(1);
@@ -75,6 +75,12 @@ describe('emitGtplTemplate', () => {
       text: (value) => ({ kind: 'text', value: typeof value === 'string' ? value : value.get() }),
       fragment: (children) => ({ kind: 'fragment', children }),
       repeat: (items) => ({ kind: 'repeat', value: items }),
+      conditional: (condition, renderBranch, fallback) => condition.get() ? renderBranch(condition.get()) : fallback(),
+      switch: (value, cases, renderDefault) => {
+        const current = value.get();
+        return cases.find((branch) => branch.values.some((candidate) => Object.is(candidate, current)))?.render()
+          ?? renderDefault?.() ?? { kind: 'fragment', children: [] };
+      },
     };
     const view = mountGtplTemplate({ name: 'GEF' }, render, host);
     expect(view.node).toMatchObject({

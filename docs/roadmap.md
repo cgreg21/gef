@@ -17,16 +17,23 @@
 - [x] Produce source-located diagnostics for malformed markup.
 - [x] Add an expression AST and initial expression parser.
 - [x] Connect expression parsing to property, event, two-way, structural bindings, and interpolation nodes (except the dedicated `*gefFor` microsyntax).
-- [x] Parse element structural shorthand `*if` / `*for`.\n- [x] Parse block control flow `@if` / `@else if` / `@else` and `@for` / `@empty`.
-- [x] Parse `@if` condition aliases and `@for` contextual-variable aliases.\n- [x] Parse `@switch` / `@case` / `@default`, grouped cases and exhaustive `never` defaults.\n- [x] Parse `@let` local template declarations.\n- [ ] Add parser fuzzing and malformed-input corpus.
+- [x] Parse element structural shorthand `*if` / `*for`.
+- [x] Parse block control flow `@if` / `@else if` / `@else` and `@for` / `@empty`.
+- [x] Parse `@if` condition aliases and `@for` contextual-variable aliases.
+- [x] Parse `@switch` / `@case` / `@default`, grouped cases and exhaustive `never` defaults.
+- [x] Parse `@let` local template declarations.
+- [ ] Add parser fuzzing and malformed-input corpus.
 
 ## Milestone 2 — compiler semantics
 
+- [x] Add initial lexical scope analysis for `@let`, `@if`, `@for`, and `@switch`.
+- [x] Add optional strict identifier validation against a supplied component context.
 - [ ] Component metadata and selector registry.
 - [ ] Renderer metadata for inputs, outputs, and supported properties.
 - [ ] Expression type checking against component class members.
 - [ ] Structural shorthand lowering and built-in control-flow lowering.
 - [ ] Template type-check blocks and actionable diagnostics.
+- [ ] Switch exhaustiveness checking using TypeScript type information.
 
 ## Milestone 3 — runtime and Shell renderer
 

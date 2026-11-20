@@ -213,10 +213,11 @@ describe('GTPL built-in control flow', () => {
     expect(result.nodes[0]).toMatchObject({ kind: 'let-declaration', name: 'currentUser', parsedExpression: { kind: 'member', property: 'profile' } });
   });
   it('reports malformed switch structures and missing @let terminators', () => {
-    const result = parseGtpl('@switch (role) { @default {} @case ("late") {} @default {} } @let value = user.name');
-    expect(result.diagnostics.some((item) => item.code === 'GTPL3102')).toBe(true);
-    expect(result.diagnostics.some((item) => item.code === 'GTPL3104')).toBe(true);
-    expect(result.diagnostics.some((item) => item.code === 'GTPL3204')).toBe(true);
+    const switchResult = parseGtpl('@switch (role) { @default {} @case ("late") {} @default {} }');
+    expect(switchResult.diagnostics.some((item) => item.code === 'GTPL3102')).toBe(true);
+    expect(switchResult.diagnostics.some((item) => item.code === 'GTPL3104')).toBe(true);
+    const letResult = parseGtpl('@let value = user.name');
+    expect(letResult.diagnostics.some((item) => item.code === 'GTPL3204')).toBe(true);
   });
   it('supports nested control-flow blocks', () => {
     const result = parseGtpl('@if (visible) { @for (item of items; track item.id) { <StLabel /> } }');

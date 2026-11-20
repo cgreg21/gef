@@ -280,11 +280,11 @@ class GtplParser {
     const headerStart = this.offset;
     const header = this.readParenthesizedContent();
     const segments = header.split(';').map((part) => part.trim());
-    const loop = /^(?:let\\s+)?([A-Za-z_$][\\w$]*)\\s+of\\s+([\\s\\S]+)$/.exec(segments[0] ?? '');
+    const loop = /^(?:let\s+)?([A-Za-z_$][\w$]*)\s+of\s+([\s\S]+)$/.exec(segments[0] ?? '');
     if (!loop) this.report('GTPL3001', 'Invalid @for header; expected "item of iterable".', headerStart, this.offset);
     const item = loop?.[1] ?? '$item';
     const collection = loop?.[2] ?? '';
-    const trackMatch = segments.slice(1).map((part) => /^track\\s+([\\s\\S]+)$/.exec(part)).find(Boolean);
+    const trackMatch = segments.slice(1).map((part) => /^track\s+([\s\S]+)$/.exec(part)).find(Boolean);
     if (!trackMatch) this.report('GTPL3002', '@for requires a track expression.', headerStart, this.offset);
     const collectionOffset = headerStart + 1 + (segments[0]?.indexOf(collection) ?? 0);
     const parsedCollection = parseGtplExpression(collection);

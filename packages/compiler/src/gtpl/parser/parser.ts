@@ -64,7 +64,7 @@ class GtplParser {
   private readonly lineStarts: number[] = [0];
   private blockDepth = 0;
   private switchCaseDepth = 0;
-  private readonly openElements: string[] = [];
+  private readonly openElementCounts = new Map<string, number>();
 
   constructor(private readonly source: string) {
     for (let i = 0; i < source.length; i += 1) {
@@ -119,7 +119,7 @@ class GtplParser {
       };
     }
 
-    this.openElements.push(name);
+    this.openElementCounts.set(name, (this.openElementCounts.get(name) ?? 0) + 1);
     const attributes: GtplAttribute[] = [];
     let selfClosing = false;
     let openingTagClosed = false;
@@ -165,7 +165,7 @@ class GtplParser {
             closed = true;
             break;
           }
-          if (closingName && this.openElements.lastIndexOf(closingName) !== -1) {
+          if (closingName && (this.openElementCounts.get(closingName) ?? 0) > 0) {
             this.offset = closingStart;
             break;
           }
@@ -187,7 +187,9 @@ class GtplParser {
       }
     }
 
-    this.openElements.pop();
+    const openCount = (this.openElementCounts.get(name) ?? 1) - 1;
+    if (openCount === 0) this.openElementCounts.delete(name);
+    else this.openElementCounts.set(name, openCount);
     return {
       kind: 'element',
       name,

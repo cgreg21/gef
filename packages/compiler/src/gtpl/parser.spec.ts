@@ -157,6 +157,23 @@ describe('GTPL built-in control flow', () => {
     expect(block.branches[1]?.parsedCondition).toMatchObject({ kind: 'identifier', name: 'loading' });
     expect(block.branches[2]?.condition).toBeUndefined();
   });
+  it('parses @if expression aliases', () => {
+    const result = parseGtpl('@if (user.profile; as profile) { <StLabel>{{ profile.name }}</StLabel> }');
+    expect(result.diagnostics).toHaveLength(0);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('if-block');
+    if (block?.kind !== 'if-block') return;
+    expect(block.branches[0]).toMatchObject({ condition: 'user.profile', alias: 'profile', parsedCondition: { kind: 'member', property: 'profile' } });
+  });
+  it('parses @for contextual aliases and nested semicolons safely', () => {
+    const result = parseGtpl('@for (item of getItems("a;b"); track item.id; let idx = $index, e = $even) { <StLabel>{{ idx }} {{ e }}</StLabel> }');
+    expect(result.diagnostics).toHaveLength(0);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('for-block');
+    if (block?.kind !== 'for-block') return;
+    expect(block.collection).toBe('getItems("a;b")');
+    expect(block.aliases).toEqual([{ name: 'idx', context: '$index' }, { name: 'e', context: '$even' }]);
+  });
   it('parses @for with track and @empty', () => {
     const result = parseGtpl('@for (device of devices; track device.id) { <StLabel>{{ device.name }}</StLabel> } @empty { <StLabel>No devices</StLabel> }');
     expect(result.diagnostics).toHaveLength(0);

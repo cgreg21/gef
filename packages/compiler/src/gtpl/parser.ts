@@ -2,6 +2,7 @@ import type {
   AttributeKind,
   Diagnostic,
   ElementNode,
+  ForContextAlias,
   GtplAttribute,
   GtplNode,
   GtplParseResult,
@@ -262,13 +263,19 @@ class GtplParser {
       this.offset += keyword.length;
       this.skipWhitespace();
       const conditionStart = this.offset;
-      const condition = this.readParenthesizedContent();
+      const rawCondition = this.readParenthesizedContent();
+      const aliasMatch = /^(.*?);\s*as\s+([A-Za-z_$][\w$]*)\s*$/.exec(rawCondition);
+      const condition = aliasMatch?.[1]?.trim() ?? rawCondition;
+      const alias = aliasMatch?.[2];
       const conditionOffset = conditionStart + 1;
+      if (rawCondition.includes(';') && !aliasMatch) {
+        this.report('GTPL3007', 'Invalid @if alias; expected "condition; as name".', conditionStart, this.offset);
+      }
       const parsed = parseGtplExpression(condition);
       for (const diagnostic of parsed.diagnostics) this.report(diagnostic.code, diagnostic.message, conditionOffset + diagnostic.span.start, conditionOffset + diagnostic.span.end);
       this.skipWhitespace();
       const children = this.parseBraceBlock();
-      branches.push({ condition, ...(parsed.expression ? { parsedCondition: parsed.expression } : {}), span: this.span(conditionStart, this.offset), children });
+      branches.push({ condition, ...(alias ? { alias } : {}), ...(parsed.expression ? { parsedCondition: parsed.expression } : {}), span: this.span(conditionStart, this.offset), children });
       this.skipWhitespace();
       if (this.startsWith('@else if')) { keyword = '@else if'; continue; }
       if (this.startsWith('@else')) {
@@ -288,18 +295,53 @@ class GtplParser {
     this.skipWhitespace();
     const headerStart = this.offset;
     const header = this.readParenthesizedContent();
-    const segments = header.split(';').map((part) => part.trim());
-    const loop = /^(?:let\s+)?([A-Za-z_$][\w$]*)\s+of\s+([\s\S]+)$/.exec(segments[0] ?? '');
+    const segments = this.splitTopLevelSegments(header);
+    const mainSegment = segments[0]?.value.trim() ?? '';
+    const loop = /^(?:let\s+)?([A-Za-z_$][\w$]*)\s+of\s+([\s\S]+)$/.exec(mainSegment);
     if (!loop) this.report('GTPL3001', 'Invalid @for header; expected "item of iterable".', headerStart, this.offset);
     const item = loop?.[1] ?? '$item';
     const collection = loop?.[2] ?? '';
-    const trackMatch = segments.slice(1).map((part) => /^track\s+([\s\S]+)$/.exec(part)).find(Boolean);
-    if (!trackMatch) this.report('GTPL3002', '@for requires a track expression.', headerStart, this.offset);
-    const collectionOffset = headerStart + 1 + (segments[0]?.indexOf(collection) ?? 0);
+    const collectionOffset = headerStart + 1 + (segments[0]?.start ?? 0) + mainSegment.indexOf(collection);
     const parsedCollection = parseGtplExpression(collection);
     for (const diagnostic of parsedCollection.diagnostics) this.report(diagnostic.code, diagnostic.message, collectionOffset + diagnostic.span.start, collectionOffset + diagnostic.span.end);
-    const track = trackMatch?.[1] ?? '$index';
-    const trackOffset = trackMatch ? headerStart + 1 + header.indexOf(track) : headerStart;
+
+    let track = '';
+    let trackOffset = headerStart;
+    const aliases: ForContextAlias[] = [];
+    let sawTrack = false;
+    for (const segment of segments.slice(1)) {
+      const value = segment.value.trim();
+      if (value.startsWith('track ')) {
+        if (sawTrack) this.report('GTPL3008', 'Only one track expression is allowed in @for.', headerStart + 1 + segment.start, headerStart + 1 + segment.start + segment.value.length);
+        sawTrack = true;
+        track = value.slice(6).trim();
+        trackOffset = headerStart + 1 + segment.start + segment.value.indexOf(track);
+        continue;
+      }
+      if (value.startsWith('let ')) {
+        for (const declaration of value.slice(4).split(',')) {
+          const match = /^\s*([A-Za-z_$][\w$]*)\s*=\s*(\$[A-Za-z]+)\s*$/.exec(declaration);
+          if (!match) {
+            this.report('GTPL3009', 'Invalid @for contextual alias; expected "let name = $index".', headerStart + 1 + segment.start, headerStart + 1 + segment.start + segment.value.length);
+            continue;
+          }
+          const name = match[1]!;
+          const context = match[2]!;
+          if (!['$count', '$index', '$first', '$last', '$even', '$odd'].includes(context)) {
+            this.report('GTPL3010', `Unknown @for contextual variable "${context}".`, headerStart + 1 + segment.start, headerStart + 1 + segment.start + segment.value.length);
+            continue;
+          }
+          if (aliases.some((alias) => alias.name === name)) {
+            this.report('GTPL3011', `Duplicate @for alias "${name}".`, headerStart + 1 + segment.start, headerStart + 1 + segment.start + segment.value.length);
+            continue;
+          }
+          aliases.push({ name, context: context as ForContextAlias['context'] });
+        }
+        continue;
+      }
+      this.report('GTPL3012', 'Unsupported @for header segment; expected "track expression" or "let alias = $index".', headerStart + 1 + segment.start, headerStart + 1 + segment.start + segment.value.length);
+    }
+    if (!sawTrack) this.report('GTPL3002', '@for requires a track expression.', headerStart, this.offset);
     const parsedTrack = parseGtplExpression(track);
     for (const diagnostic of parsedTrack.diagnostics) this.report(diagnostic.code, diagnostic.message, trackOffset + diagnostic.span.start, trackOffset + diagnostic.span.end);
     this.skipWhitespace();
@@ -307,10 +349,37 @@ class GtplParser {
     this.skipWhitespace();
     let empty: GtplNode[] = [];
     if (this.startsWith('@empty')) { this.offset += '@empty'.length; this.skipWhitespace(); empty = this.parseBraceBlock(); }
-    return { kind: 'for-block', item, collection, track, children, empty,
+    return { kind: 'for-block', item, collection, track, aliases, children, empty,
       ...(parsedCollection.expression ? { parsedCollection: parsedCollection.expression } : {}),
       ...(parsedTrack.expression ? { parsedTrack: parsedTrack.expression } : {}),
       span: this.span(start, this.offset) };
+  }
+
+  private splitTopLevelSegments(value: string): { value: string; start: number }[] {
+    const segments: { value: string; start: number }[] = [];
+    let start = 0;
+    let round = 0;
+    let square = 0;
+    let quote = '';
+    for (let index = 0; index < value.length; index += 1) {
+      const char = value[index] ?? '';
+      if (quote) {
+        if (char === '\\') index += 1;
+        else if (char === quote) quote = '';
+        continue;
+      }
+      if (char === '"' || char === "'") { quote = char; continue; }
+      if (char === '(') round += 1;
+      else if (char === ')') round = Math.max(0, round - 1);
+      else if (char === '[') square += 1;
+      else if (char === ']') square = Math.max(0, square - 1);
+      else if (char === ';' && round === 0 && square === 0) {
+        segments.push({ value: value.slice(start, index), start });
+        start = index + 1;
+      }
+    }
+    segments.push({ value: value.slice(start), start });
+    return segments;
   }
 
   private readParenthesizedContent(): string {

@@ -58,6 +58,7 @@ export interface ElementNode {
 
 export interface IfBranch {
   readonly condition?: string;
+  readonly alias?: string;
   readonly parsedCondition?: ExpressionNode;
   readonly span: SourceSpan;
   readonly children: readonly GtplNode[];
@@ -67,6 +68,10 @@ export interface IfBlockNode {
   readonly branches: readonly IfBranch[];
   readonly span: SourceSpan;
 }
+export interface ForContextAlias {
+  readonly name: string;
+  readonly context: '$count' | '$index' | '$first' | '$last' | '$even' | '$odd';
+}
 export interface ForBlockNode {
   readonly kind: 'for-block';
   readonly item: string;
@@ -74,6 +79,7 @@ export interface ForBlockNode {
   readonly parsedCollection?: ExpressionNode;
   readonly track: string;
   readonly parsedTrack?: ExpressionNode;
+  readonly aliases: readonly ForContextAlias[];
   readonly empty: readonly GtplNode[];
   readonly children: readonly GtplNode[];
   readonly span: SourceSpan;

@@ -84,7 +84,35 @@ export interface ForBlockNode {
   readonly children: readonly GtplNode[];
   readonly span: SourceSpan;
 }
-export type GtplNode = ElementNode | TextNode | IfBlockNode | ForBlockNode;
+export interface SwitchCaseNode {
+  readonly expressions: readonly string[];
+  readonly parsedExpressions: readonly ExpressionNode[];
+  readonly span: SourceSpan;
+  readonly children: readonly GtplNode[];
+}
+export interface SwitchDefaultNode {
+  readonly exhaustive: boolean;
+  readonly neverExpression?: string;
+  readonly parsedNeverExpression?: ExpressionNode;
+  readonly span: SourceSpan;
+  readonly children: readonly GtplNode[];
+}
+export interface SwitchBlockNode {
+  readonly kind: 'switch-block';
+  readonly expression: string;
+  readonly parsedExpression?: ExpressionNode;
+  readonly cases: readonly SwitchCaseNode[];
+  readonly defaultCase?: SwitchDefaultNode;
+  readonly span: SourceSpan;
+}
+export interface LetDeclarationNode {
+  readonly kind: 'let-declaration';
+  readonly name: string;
+  readonly expression: string;
+  readonly parsedExpression?: ExpressionNode;
+  readonly span: SourceSpan;
+}
+export type GtplNode = ElementNode | TextNode | IfBlockNode | ForBlockNode | SwitchBlockNode | LetDeclarationNode;
 
 export interface GtplParseResult {
   readonly nodes: readonly GtplNode[];

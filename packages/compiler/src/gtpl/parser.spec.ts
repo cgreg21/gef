@@ -182,6 +182,42 @@ describe('GTPL built-in control flow', () => {
     expect(block).toMatchObject({ item:'device', collection:'devices', track:'device.id', parsedCollection:{kind:'identifier',name:'devices'}, parsedTrack:{kind:'member',property:'id'} });
     expect(block.children).toHaveLength(1); expect(block.empty).toHaveLength(1);
   });
+  it('parses @switch with grouped @case labels and @default', () => {
+    const result = parseGtpl(`@switch (user.role) {
+      @case ('admin') { <StLabel>Admin</StLabel> }
+      @case ('editor')
+      @case ('reviewer') { <StLabel>Editor</StLabel> }
+      @default { <StLabel>Viewer</StLabel> }
+    }`);
+    expect(result.diagnostics).toHaveLength(0);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('switch-block');
+    if (block?.kind !== 'switch-block') return;
+    expect(block.parsedExpression).toMatchObject({ kind: 'member', property: 'role' });
+    expect(block.cases).toHaveLength(2);
+    expect(block.cases[1]?.expressions).toEqual(["'editor'", "'reviewer'"]);
+    expect(block.cases[1]?.children[0]?.kind).toBe('element');
+    expect(block.defaultCase?.exhaustive).toBe(false);
+  });
+  it('parses exhaustive @default never and optional checked expression', () => {
+    const result = parseGtpl('@switch (state) { @case ("ready") {} @default never(state); }');
+    expect(result.diagnostics).toHaveLength(0);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('switch-block');
+    if (block?.kind !== 'switch-block') return;
+    expect(block.defaultCase).toMatchObject({ exhaustive: true, neverExpression: 'state', parsedNeverExpression: { kind: 'identifier', name: 'state' } });
+  });
+  it('parses @let local template declarations', () => {
+    const result = parseGtpl('@let currentUser = user.profile; <StLabel>{{ currentUser.name }}</StLabel>');
+    expect(result.diagnostics).toHaveLength(0);
+    expect(result.nodes[0]).toMatchObject({ kind: 'let-declaration', name: 'currentUser', parsedExpression: { kind: 'member', property: 'profile' } });
+  });
+  it('reports malformed switch structures and missing @let terminators', () => {
+    const result = parseGtpl('@switch (role) { @default {} @case ("late") {} @default {} } @let value = user.name');
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3102')).toBe(true);
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3104')).toBe(true);
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3204')).toBe(true);
+  });
   it('supports nested control-flow blocks', () => {
     const result = parseGtpl('@if (visible) { @for (item of items; track item.id) { <StLabel /> } }');
     expect(result.diagnostics).toHaveLength(0);

@@ -8,6 +8,8 @@ import type {
   GtplParseResult,
   InterpolationPart,
   SourceSpan,
+  SwitchCaseNode,
+  SwitchDefaultNode,
   TextNode,
   TextPart,
 } from './ast.js';
@@ -49,6 +51,8 @@ class GtplParser {
   private parseNode(): GtplNode | null {
     if (this.startsWith('@if')) return this.parseIfBlock();
     if (this.startsWith('@for')) return this.parseForBlock();
+    if (this.startsWith('@switch')) return this.parseSwitchBlock();
+    if (this.startsWith('@let')) return this.parseLetDeclaration();
     if (this.peek() === '<' && this.isTagStart(this.offset)) {
       return this.parseElement();
     }
@@ -287,6 +291,159 @@ class GtplParser {
       break;
     }
     return { kind: 'if-block', branches, span: this.span(start, this.offset) };
+  }
+
+  private parseSwitchBlock(): GtplNode {
+    const start = this.offset;
+    this.offset += '@switch'.length;
+    this.skipWhitespace();
+    const expressionStart = this.offset;
+    const expression = this.readParenthesizedContent();
+    const expressionOffset = expressionStart + 1;
+    const parsedExpression = parseGtplExpression(expression);
+    for (const diagnostic of parsedExpression.diagnostics) {
+      this.report(diagnostic.code, diagnostic.message, expressionOffset + diagnostic.span.start, expressionOffset + diagnostic.span.end);
+    }
+    this.skipWhitespace();
+    if (this.peek() !== '{') {
+      this.report('GTPL3101', 'Expected "{" after @switch expression.', this.offset, this.offset + 1);
+      return { kind: 'switch-block', expression, cases: [], span: this.span(start, this.offset),
+        ...(parsedExpression.expression ? { parsedExpression: parsedExpression.expression } : {}) };
+    }
+    this.offset += 1;
+    this.blockDepth += 1;
+    const cases: SwitchCaseNode[] = [];
+    let defaultCase: SwitchDefaultNode | undefined;
+    let sawDefault = false;
+    while (!this.eof()) {
+      this.skipWhitespace();
+      if (this.peek() === '}') break;
+      if (this.startsWith('@case')) {
+        if (sawDefault) this.report('GTPL3102', '@case cannot appear after @default.', this.offset, this.offset + 5);
+        const caseStart = this.offset;
+        const expressions: string[] = [];
+        const parsedExpressions: import('./expression.js').ExpressionNode[] = [];
+        while (this.startsWith('@case')) {
+          this.offset += '@case'.length;
+          this.skipWhitespace();
+          const valueStart = this.offset;
+          const value = this.readParenthesizedContent();
+          const parsed = parseGtplExpression(value);
+          const valueOffset = valueStart + 1;
+          for (const diagnostic of parsed.diagnostics) {
+            this.report(diagnostic.code, diagnostic.message, valueOffset + diagnostic.span.start, valueOffset + diagnostic.span.end);
+          }
+          expressions.push(value);
+          if (parsed.expression) parsedExpressions.push(parsed.expression);
+          else this.report('GTPL3103', 'Invalid @case expression.', valueStart, this.offset);
+          this.skipWhitespace();
+        }
+        const children = this.parseBraceBlock();
+        cases.push({ expressions, parsedExpressions, span: this.span(caseStart, this.offset), children });
+        continue;
+      }
+      if (this.startsWith('@default')) {
+        const defaultStart = this.offset;
+        this.offset += '@default'.length;
+        this.skipWhitespace();
+        if (sawDefault) this.report('GTPL3104', 'Only one @default block is allowed.', defaultStart, this.offset);
+        sawDefault = true;
+        if (this.startsWith('never') && !/[A-Za-z0-9_$]/.test(this.source[this.offset + 5] ?? '')) {
+          this.offset += 'never'.length;
+          this.skipWhitespace();
+          let neverExpression: string | undefined;
+          let parsedNeverExpression: import('./expression.js').ExpressionNode | undefined;
+          if (this.peek() === '(') {
+            const neverStart = this.offset;
+            neverExpression = this.readParenthesizedContent();
+            const parsed = parseGtplExpression(neverExpression);
+            for (const diagnostic of parsed.diagnostics) {
+              this.report(diagnostic.code, diagnostic.message, neverStart + 1 + diagnostic.span.start, neverStart + 1 + diagnostic.span.end);
+            }
+            parsedNeverExpression = parsed.expression;
+            this.skipWhitespace();
+          }
+          if (this.peek() === ';') this.offset += 1;
+          else this.report('GTPL3105', 'Expected ";" after @default never.', this.offset, this.offset + 1);
+          defaultCase = { exhaustive: true, span: this.span(defaultStart, this.offset), children: [],
+            ...(neverExpression !== undefined ? { neverExpression } : {}),
+            ...(parsedNeverExpression ? { parsedNeverExpression } : {}) };
+        } else {
+          const children = this.parseBraceBlock();
+          defaultCase = { exhaustive: false, span: this.span(defaultStart, this.offset), children };
+        }
+        continue;
+      }
+      this.report('GTPL3106', 'Expected @case or @default inside @switch.', this.offset, Math.min(this.offset + 1, this.source.length));
+      const before = this.offset;
+      const unexpected = this.parseNode();
+      if (unexpected && this.offset === before) this.offset += 1;
+    }
+    if (this.peek() === '}') this.offset += 1;
+    else this.report('GTPL3107', 'Unterminated @switch block.', this.offset, this.offset);
+    this.blockDepth -= 1;
+    if (cases.length === 0) this.report('GTPL3108', '@switch requires at least one @case.', start, this.offset);
+    return { kind: 'switch-block', expression, cases, ...(defaultCase ? { defaultCase } : {}),
+      ...(parsedExpression.expression ? { parsedExpression: parsedExpression.expression } : {}),
+      span: this.span(start, this.offset) };
+  }
+
+  private parseLetDeclaration(): GtplNode {
+    const start = this.offset;
+    this.offset += '@let'.length;
+    if (!this.isWhitespace(this.peek())) {
+      this.report('GTPL3201', 'Expected whitespace after @let.', start, this.offset);
+    }
+    this.skipWhitespace();
+    const nameStart = this.offset;
+    const name = this.readIdentifier();
+    if (!name) this.report('GTPL3202', 'Expected a variable name after @let.', nameStart, this.offset);
+    this.skipWhitespace();
+    if (this.peek() !== '=') this.report('GTPL3203', 'Expected "=" in @let declaration.', this.offset, this.offset + 1);
+    else this.offset += 1;
+    this.skipWhitespace();
+    const expressionStart = this.offset;
+    const expression = this.readUntilSemicolon();
+    if (this.peek() === ';') this.offset += 1;
+    else this.report('GTPL3204', 'Expected ";" to terminate @let declaration.', start, this.offset);
+    const parsed = parseGtplExpression(expression);
+    for (const diagnostic of parsed.diagnostics) {
+      this.report(diagnostic.code, diagnostic.message, expressionStart + diagnostic.span.start, expressionStart + diagnostic.span.end);
+    }
+    return { kind: 'let-declaration', name, expression,
+      ...(parsed.expression ? { parsedExpression: parsed.expression } : {}),
+      span: this.span(start, this.offset) };
+  }
+
+  private readIdentifier(): string {
+    const start = this.offset;
+    if (!/[A-Za-z_$]/.test(this.peek())) return '';
+    this.offset += 1;
+    while (/[A-Za-z0-9_$]/.test(this.peek())) this.offset += 1;
+    return this.source.slice(start, this.offset);
+  }
+
+  private readUntilSemicolon(): string {
+    const start = this.offset;
+    let round = 0;
+    let square = 0;
+    let quote = '';
+    while (!this.eof()) {
+      const char = this.peek();
+      if (quote) {
+        if (char === '\\\\') this.offset += 2;
+        else { if (char === quote) quote = ''; this.offset += 1; }
+        continue;
+      }
+      if (char === '"' || char === "'") { quote = char; this.offset += 1; continue; }
+      if (char === '(') round += 1;
+      else if (char === ')') round = Math.max(0, round - 1);
+      else if (char === '[') square += 1;
+      else if (char === ']') square = Math.max(0, square - 1);
+      else if (char === ';' && round === 0 && square === 0) break;
+      this.offset += 1;
+    }
+    return this.source.slice(start, this.offset).trim();
   }
 
   private parseForBlock(): GtplNode {

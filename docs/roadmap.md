@@ -20,7 +20,8 @@
 - [ ] Switch exhaustiveness checks using TypeScript types.
 
 ## Runtime and renderers
-- [ ] Resource ownership and deterministic cleanup.
+- [x] Initial resource scope with reverse-order, idempotent cleanup.
+- [ ] Integrate resource ownership into component and renderer lifecycles.
 - [ ] Dependency injection and reactive signals.
 - [ ] GNOME Shell 51 St/Clutter renderer and integration tests.
 - [ ] GTK4/libadwaita preferences renderer.

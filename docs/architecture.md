@@ -10,17 +10,24 @@ The two renderers may share template syntax and metadata, but not widget impleme
 
 ## Repository organization
 
-Keep framework code in domain-specific subdirectories. Within `packages/compiler/src`, GTPL responsibilities are separated into `gtpl/ast/`, `gtpl/expression/`, `gtpl/parser/`, `gtpl/analysis/` and `gtpl/validation/`. Public component declarations live in `components/`. Keep package entry points focused on exports; do not accumulate domain implementations at `src/` root. Apply the same rule to future runtime domains such as lifecycle, dependency injection, reactivity, resources and renderers.
+Keep framework code in domain-specific subdirectories. Within `packages/compiler/src`, GTPL responsibilities are separated into `gtpl/ast/`, `gtpl/expression/`, `gtpl/parser/`, `gtpl/analysis/` and `gtpl/validation/`. Public component declarations live in `components/`. Runtime code belongs in `packages/runtime/src/` and is split by responsibility, beginning with `resources/`. Keep package entry points focused on exports; do not accumulate domain implementations at `src/` root. Apply the same rule to future lifecycle, dependency injection, reactivity and renderer domains.
 
 ## Compiler
+
 TypeScript, .gtpl and SCSS are processed at build time. Templates are not parsed in the installed extension. There is no browser DOM, Chromium, or runtime HTML parser.
 
 The current compiler provides GTPL parsing, expression ASTs, source diagnostics, lexical scope checks and component input/output binding validation. The AST is the dependency-neutral model: parsers create it, while analysis and validation consume it without importing parser implementation modules. The declaration API includes `@Component`, `@Directive`, `@Pipe`, `@Input`, `@Output`, `@HostBinding` and `@HostListener`; these decorators produce immutable metadata. Rendering, expression execution, pipe lowering and native host event wiring are not yet implemented.
 
+## Runtime foundation
+
+The initial `ResourceScope` owns cleanup callbacks for a runtime object. It runs them once in reverse registration order, immediately cleans resources registered after disposal, and continues cleanup if one callback throws before rethrowing the first error. This primitive is not yet connected to component or renderer lifecycles.
+
 ## KISS and package boundaries
+
 Keep the compiler in one package until a concrete need justifies splitting it. Add abstractions only when they remove real duplication or simplify a real use case. Keep the Core small and explicit. The public component declaration API may be expressive; decorators compile into plain metadata and do not require runtime reflection or a dependency-injection container.
 
 ## Runtime constraints
+
 - TypeScript compiles to JavaScript; GJS does not execute TypeScript.
 - Node.js tools are build-time only.
 - Preserve gi:// and resource:/// imports as GJS-native imports.
@@ -30,4 +37,5 @@ Keep the compiler in one package until a concrete need justifies splitting it. A
 - Every signal, timeout, actor, D-Bus subscription and reactive effect needs an explicit cleanup owner.
 
 ## Styling
+
 SCSS is a source language, not a promise of browser CSS compatibility. Validate St CSS and GTK CSS separately.

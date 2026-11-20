@@ -420,6 +420,7 @@ class GtplParser {
         while (this.startsWithDirective('@case')) {
           this.offset += '@case'.length;
           this.skipWhitespace();
+          const hasOpeningParen = this.peek() === '(';
           const valueContent = this.readParenthesizedContent();
           const value = valueContent.value.trim();
           const parsed = parseGtplExpression(value);
@@ -429,6 +430,7 @@ class GtplParser {
           if (parsed.expression) parsedExpressions.push(parsed.expression);
           else this.report('GTPL3103', 'Invalid @case expression.', valueContent.start - 1, this.offset);
           this.skipWhitespace();
+          if (!hasOpeningParen) break;
         }
         const children = this.parseBraceBlock(true);
         cases.push({ expressions, parsedExpressions, span: this.span(caseStart, this.offset), children });

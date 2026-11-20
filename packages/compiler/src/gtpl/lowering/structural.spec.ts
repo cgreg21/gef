@@ -39,7 +39,7 @@ describe('lowerGtplStructuralDirectives', () => {
   });
 
   it('reports invalid microsyntax and duplicate structural directives', () => {
-    const parsed = parseGtpl('<StLabel *if="ready" *for="let item in items" />');
+    const parsed = parseGtpl('<StLabel *if="ready" *for="let item of items" /><StLabel *for="let item in items" />');
     const result = lowerGtplStructuralDirectives(parsed.nodes);
     expect(result.diagnostics.map((item) => item.code)).toContain('GTPL4201');
     expect(result.diagnostics.map((item) => item.code)).toContain('GTPL4203');

@@ -260,7 +260,7 @@ class GtplParser {
 
   private parseIfBlock(): GtplNode {
     const start = this.offset;
-    const branches: import('./ast.js').IfBranch[] = [];
+    const branches: import('../ast/types.js').IfBranch[] = [];
     let keyword = '@if';
     let first = true;
     while (first || keyword === '@else if') {
@@ -323,7 +323,7 @@ class GtplParser {
         if (sawDefault) this.report('GTPL3102', '@case cannot appear after @default.', this.offset, this.offset + 5);
         const caseStart = this.offset;
         const expressions: string[] = [];
-        const parsedExpressions: import('./expression.js').ExpressionNode[] = [];
+        const parsedExpressions: import('../expression/parser.js').ExpressionNode[] = [];
         while (this.startsWith('@case')) {
           this.offset += '@case'.length;
           this.skipWhitespace();
@@ -353,7 +353,7 @@ class GtplParser {
           this.offset += 'never'.length;
           this.skipWhitespace();
           let neverExpression: string | undefined;
-          let parsedNeverExpression: import('./expression.js').ExpressionNode | undefined;
+          let parsedNeverExpression: import('../expression/parser.js').ExpressionNode | undefined;
           if (this.peek() === '(') {
             const neverStart = this.offset;
             neverExpression = this.readParenthesizedContent();

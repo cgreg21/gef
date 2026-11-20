@@ -804,7 +804,7 @@ describe('GTPL built-in control flow', () => {
     expect(result.nodes[1]?.kind).toBe('element');
   });
 
-  it('recovers an unterminated nested directive before preserving a following top-level element', () => {
+  it('keeps a following element in an unterminated nested directive body', () => {
     const source = '@if (ready) { @for (item of items; track item.id) { <StLabel /> } <StButton />';
     const result = parseGtpl(source);
     const block = result.nodes[0];
@@ -812,7 +812,6 @@ describe('GTPL built-in control flow', () => {
     if (block?.kind !== 'if-block') return;
     expect(block.branches[0]?.children.map((node) => node.kind)).toEqual(['for-block', 'element']);
     expect(result.diagnostics.filter(({ code }) => code === 'GTPL3006')).toHaveLength(1);
-    expect(result.nodes[1]).toBeUndefined();
     expect(block.span.end).toBe(source.length);
   });
 

@@ -10,7 +10,9 @@
 - [x] Angular-like @if, @for, @switch and @let parsing.
 - [x] Lexical scope and optional component identifier checks.
 - [x] Decorator-based component declarations (`@Component`, `@Input`, `@Output`) and immutable metadata extraction.
-- [x] Directive and pipe declaration metadata (`@Directive`, `@Pipe`, `@HostBinding`, `@HostListener`).\n- [x] Disposable output event emitter.\n- [x] Component input/output binding validation.
+- [x] Directive and pipe declaration metadata (`@Directive`, `@Pipe`, `@HostBinding`, `@HostListener`).
+- [x] Disposable output event emitter.
+- [x] Component input/output binding validation.
 - [ ] Parser fuzzing and malformed-input corpus.
 - [ ] Type-check expressions against TypeScript component members.
 - [ ] Lower structural shorthand and control flow.

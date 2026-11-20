@@ -421,7 +421,7 @@ class GtplParser {
           this.offset += '@case'.length;
           this.skipWhitespace();
           const hasOpeningParen = this.peek() === '(';
-          const valueContent = this.readParenthesizedContent();
+          const valueContent = this.readParenthesizedContent(true);
           const value = valueContent.value.trim();
           const parsed = parseGtplExpression(value);
           const valueOffset = this.getTrimmedContentOffset(valueContent);
@@ -455,7 +455,7 @@ class GtplParser {
           let neverExpression: string | undefined;
           let parsedNeverExpression: ExpressionNode | undefined;
           if (this.peek() === '(') {
-            const neverContent = this.readParenthesizedContent();
+            const neverContent = this.readParenthesizedContent(true);
             neverExpression = neverContent.value.trim();
             const neverOffset = this.getTrimmedContentOffset(neverContent);
             const parsed = parseGtplExpression(neverExpression);
@@ -666,7 +666,7 @@ class GtplParser {
     return segments;
   }
 
-  private readParenthesizedContent(): { value: string; start: number } {
+  private readParenthesizedContent(stopAtSwitchLabel = false): { value: string; start: number } {
     if (this.peek() !== '(') {
       this.report('GTPL3003', 'Expected "(" after control-flow keyword.', this.offset, this.offset + 1);
       return { value: '', start: this.offset };
@@ -675,6 +675,8 @@ class GtplParser {
     let depth = 1;
     let quote = '';
     while (!this.eof() && depth > 0) {
+      if (stopAtSwitchLabel
+        && (this.startsWithDirective('@case') || this.startsWithDirective('@default'))) break;
       const char = this.peek();
       if (quote) {
         const next = advanceQuotedCharacter(this.source, this.offset, quote);
@@ -683,7 +685,8 @@ class GtplParser {
         continue;
       }
       if (char === '"' || char === "'") { quote = char; this.offset += 1; continue; }
-      if (depth === 1 && (char === '{' || char === '}')) break;
+      // A template block starts here; an unmatched nested parenthesis must not consume it.
+      if (char === '{' || char === '}') break;
       if (char === '(') depth += 1;
       if (char === ')') depth -= 1;
       if (depth > 0) this.offset += 1;

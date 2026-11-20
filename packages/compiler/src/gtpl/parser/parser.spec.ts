@@ -954,4 +954,27 @@ describe('GTPL built-in control flow', () => {
     expect(result.diagnostics.some(({ code }) => code === 'GTPL3106')).toBe(true);
   });
 
+
+  it('recovers switch cases after nested unclosed parentheses in case headers', () => {
+    const sources = [
+      '@switch (role) { @case (matches((role) { @case ("admin") {} } <StButton />',
+      '@switch (role) { @case (matches(role { @case ("admin") {} } <StButton />',
+      '@switch (role) { @case ("broken" @default {} @case ("admin") {} } <StButton />',
+    ];
+
+    for (const source of sources) {
+      const result = parseGtpl(source);
+      const block = result.nodes[0];
+      expect(block?.kind).toBe('switch-block');
+      if (block?.kind !== 'switch-block') continue;
+      expect(block.cases.some(({ expressions }) => expressions.includes('"admin"'))).toBe(true);
+      expect(result.nodes.some((node) => node.kind === 'element' && node.name === 'StButton')).toBe(true);
+      expect(result.diagnostics.some(({ code }) => code === 'GTPL3004')).toBe(true);
+      for (const diagnostic of result.diagnostics) {
+        expect(diagnostic.span.start).toBeGreaterThanOrEqual(0);
+        expect(diagnostic.span.end).toBeLessThanOrEqual(source.length);
+      }
+    }
+  });
+
 });

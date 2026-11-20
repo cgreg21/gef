@@ -24,12 +24,13 @@ function createHost(order: string[] = []): GtplRenderHost<Node> {
 describe('mountComponent', () => {
   it('owns component, view and child injector lifetimes in reverse order', () => {
     const DEPENDENCY = new InjectionToken<string>('dependency');
+    const LOCAL = new InjectionToken<object>('local');
     const order: string[] = [];
     const parent = new Injector([{ provide: DEPENDENCY, useValue: 'ready' }]);
     const component = mountComponent({
-      create: (injector) => ({ value: injector.get(DEPENDENCY) }),
+      create: (injector) => { injector.get(LOCAL); return { value: injector.get(DEPENDENCY) }; },
       render: (instance, runtime) => runtime.text(instance.value),
-      providers: [{ provide: new InjectionToken('local'), useValue: {}, dispose: () => order.push('injector') }],
+      providers: [{ provide: LOCAL, useValue: {}, dispose: () => order.push('injector') }],
       dispose: () => order.push('component'),
     }, parent, createHost(order));
 
@@ -60,7 +61,7 @@ describe('mountComponent', () => {
     const parent = new Injector();
     expect(() => mountComponent({
       providers: [{ provide: LOCAL, useValue: {}, dispose: () => order.push('injector') }],
-      create: () => ({ value: 'ready' }),
+      create: (injector) => { injector.get(LOCAL); return { value: 'ready' }; },
       render: () => { throw new Error('render failed'); },
       dispose: () => order.push('component'),
     }, parent, createHost())).toThrow('render failed');

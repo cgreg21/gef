@@ -17,6 +17,8 @@ import type { SourceSpan } from '../source/span.js';
 import type { ExpressionNode } from '../ast/expression.js';
 import { parseGtplExpression } from '../expression/parser.js';
 
+const BLOCK_DIRECTIVES = ['@if', '@for', '@switch', '@let', '@case', '@default', '@empty'] as const;
+
 class GtplParser {
   private offset = 0;
   private readonly diagnostics: Diagnostic[] = [];
@@ -623,7 +625,7 @@ class GtplParser {
   }
 
   private isBlockDirectiveStart(): boolean {
-    return ['@if', '@for', '@switch', '@let', '@case', '@default', '@empty'].some((keyword) => this.startsWithDirective(keyword));
+    return BLOCK_DIRECTIVES.some((keyword) => this.startsWithDirective(keyword));
   }
 
   private parseComment(): void {

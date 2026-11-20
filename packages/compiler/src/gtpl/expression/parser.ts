@@ -124,13 +124,7 @@ class ExpressionParser {
       if (this.current.value === '(') {
         if (18 < minPrecedence) break;
         this.advance();
-        const args: ExpressionNode[] = [];
-        while (this.getCurrentToken().kind !== 'eof' && this.getCurrentToken().value !== ')') {
-          const argument = this.parseExpression(0);
-          if (argument) args.push(argument);
-          if (this.getCurrentToken().value !== ',') break;
-          this.advance();
-        }
+        const args = this.parseDelimitedExpressions(')');
         const close = this.expect(')');
         if (!close) return left;
         left = {
@@ -178,6 +172,17 @@ class ExpressionParser {
     return left;
   }
 
+  private parseDelimitedExpressions(closing: string): ExpressionNode[] {
+    const expressions: ExpressionNode[] = [];
+    while (this.getCurrentToken().kind !== 'eof' && this.getCurrentToken().value !== closing) {
+      const expression = this.parseExpression(0);
+      if (expression) expressions.push(expression);
+      if (this.getCurrentToken().value !== ',') break;
+      this.advance();
+    }
+    return expressions;
+  }
+
   private parsePrefix(): ExpressionNode | null {
     const token = this.current;
 
@@ -202,13 +207,7 @@ class ExpressionParser {
 
     if (token.value === '[') {
       this.advance();
-      const elements: ExpressionNode[] = [];
-      while (this.current.kind !== 'eof' && this.current.value !== ']') {
-        const element = this.parseExpression(0);
-        if (element) elements.push(element);
-        if (this.getCurrentToken().value !== ',') break;
-        this.advance();
-      }
+      const elements = this.parseDelimitedExpressions(']');
       const close = this.expect(']');
       if (!close) return null;
       return { kind: 'array', elements, span: { start: token.start, end: close.end } };

@@ -58,6 +58,27 @@ describe('parseGtplExpression', () => {
     });
   });
 
+  it('parses call arguments with a trailing comma', () => {
+    const result = parseGtplExpression('format(value,)');
+    expect(result.diagnostics).toHaveLength(0);
+    expect(result.expression).toMatchObject({
+      kind: 'call',
+      arguments: [{ kind: 'identifier', name: 'value' }],
+    });
+  });
+
+  it('parses array elements with a trailing comma', () => {
+    const result = parseGtplExpression('[first, second,]');
+    expect(result.diagnostics).toHaveLength(0);
+    expect(result.expression).toMatchObject({
+      kind: 'array',
+      elements: [
+        { kind: 'identifier', name: 'first' },
+        { kind: 'identifier', name: 'second' },
+      ],
+    });
+  });
+
   it('reports trailing tokens instead of silently accepting them', () => {
     const result = parseGtplExpression('value anotherValue');
     expect(result.diagnostics.some((item) => item.code === 'GTPL2002')).toBe(true);

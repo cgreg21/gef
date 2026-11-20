@@ -261,6 +261,19 @@ describe('GTPL built-in control flow', () => {
     expect(result.diagnostics.some((item) => item.code === 'GTPL3005')).toBe(false);
   });
 
+  it('keeps the first @default when a duplicate is reported', () => {
+    const result = parseGtpl('@switch (role) { @case ("admin") {} @default { <StLabel>first</StLabel> } @default { <StLabel>second</StLabel> } }');
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('switch-block');
+    if (block?.kind !== 'switch-block') return;
+    expect(block.defaultCase?.children).toHaveLength(1);
+    const child = block.defaultCase?.children[0];
+    expect(child?.kind).toBe('element');
+    if (child?.kind !== 'element') return;
+    expect(child.children[0]).toMatchObject({ kind: 'text', parts: [{ kind: 'text', value: 'first' }] });
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3104')).toBe(true);
+  });
+
   it('reports malformed switch structures and missing @let terminators', () => {
     const switchResult = parseGtpl('@switch (role) { @default {} @case ("late") {} @default {} }');
     expect(switchResult.diagnostics.some((item) => item.code === 'GTPL3102')).toBe(true);

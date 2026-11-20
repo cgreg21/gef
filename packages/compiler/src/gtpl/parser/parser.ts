@@ -351,7 +351,8 @@ class GtplParser {
         const defaultStart = this.offset;
         this.offset += '@default'.length;
         this.skipWhitespace();
-        if (sawDefault) this.report('GTPL3104', 'Only one @default block is allowed.', defaultStart, this.offset);
+        const duplicateDefault = sawDefault;
+        if (duplicateDefault) this.report('GTPL3104', 'Only one @default block is allowed.', defaultStart, this.offset);
         sawDefault = true;
         if (this.startsWith('never') && !/[A-Za-z0-9_$]/.test(this.source[this.offset + 5] ?? '')) {
           this.offset += 'never'.length;
@@ -370,12 +371,16 @@ class GtplParser {
           }
           if (this.peek() === ';') this.offset += 1;
           else this.report('GTPL3105', 'Expected ";" after @default never.', this.offset, this.offset + 1);
-          defaultCase = { exhaustive: true, span: this.span(defaultStart, this.offset), children: [],
-            ...(neverExpression !== undefined ? { neverExpression } : {}),
-            ...(parsedNeverExpression ? { parsedNeverExpression } : {}) };
+          if (!duplicateDefault) {
+            defaultCase = { exhaustive: true, span: this.span(defaultStart, this.offset), children: [],
+              ...(neverExpression !== undefined ? { neverExpression } : {}),
+              ...(parsedNeverExpression ? { parsedNeverExpression } : {}) };
+          }
         } else {
           const children = this.parseBraceBlock();
-          defaultCase = { exhaustive: false, span: this.span(defaultStart, this.offset), children };
+          if (!duplicateDefault) {
+            defaultCase = { exhaustive: false, span: this.span(defaultStart, this.offset), children };
+          }
         }
         continue;
       }

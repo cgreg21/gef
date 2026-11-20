@@ -360,7 +360,7 @@ class GtplParser {
             for (const diagnostic of parsed.diagnostics) {
               this.report(diagnostic.code, diagnostic.message, neverStart + 1 + diagnostic.span.start, neverStart + 1 + diagnostic.span.end);
             }
-            parsedNeverExpression = parsed.expression;
+            if (parsed.expression) parsedNeverExpression = parsed.expression;
             this.skipWhitespace();
           }
           if (this.peek() === ';') this.offset += 1;

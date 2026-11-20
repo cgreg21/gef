@@ -1,4 +1,5 @@
-import type { Diagnostic, ElementNode, GtplNode } from '../ast/types.js';
+import type { ElementNode, GtplNode } from '../ast/types.js';
+import type { Diagnostic } from '../diagnostics/diagnostic.js';
 
 export interface GtplComponentDefinition {
   readonly selector: string;

@@ -1,17 +1,8 @@
 import type { ExpressionNode } from './expression.js';
+import type { SourceSpan } from '../source/span.js';
 
-export interface SourceSpan {
-  readonly start: number;
-  readonly end: number;
-  readonly line: number;
-  readonly column: number;
-}
-
-export interface Diagnostic {
-  readonly code: string;
-  readonly message: string;
-  readonly span: SourceSpan;
-}
+export type { SourceSpan } from '../source/span.js';
+export type { Diagnostic } from '../diagnostics/diagnostic.js';
 
 export type AttributeKind = 'static' | 'property' | 'event' | 'two-way' | 'structural' | 'reference';
 

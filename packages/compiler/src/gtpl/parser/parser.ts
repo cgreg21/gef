@@ -1,6 +1,5 @@
 import type {
   AttributeKind,
-  Diagnostic,
   ElementNode,
   ForContextAlias,
   GtplAttribute,
@@ -8,12 +7,13 @@ import type {
   GtplParseResult,
   IfBranch,
   InterpolationPart,
-  SourceSpan,
   SwitchCaseNode,
   SwitchDefaultNode,
   TextNode,
   TextPart,
 } from '../ast/types.js';
+import type { Diagnostic } from '../diagnostics/diagnostic.js';
+import type { SourceSpan } from '../source/span.js';
 import type { ExpressionNode } from '../ast/expression.js';
 import { parseGtplExpression } from '../expression/parser.js';
 

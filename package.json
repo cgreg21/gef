@@ -1,0 +1,18 @@
+{
+  "name": "gnome-extension-framework",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A TypeScript framework for GNOME Shell 51 extensions.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

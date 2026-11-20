@@ -147,6 +147,17 @@ class ExpressionParser {
         continue;
       }
 
+      if (this.current.value === '=' && minPrecedence <= 0) {
+        this.advance();
+        const value = this.parseExpression(0);
+        if (!value) return left;
+        if (left.kind !== 'identifier' && left.kind !== 'member') {
+          this.report('GTPL2009', 'Invalid assignment target; expected an identifier or member access.', left.span.start, left.span.end);
+        }
+        left = { kind: 'assignment', target: left, value, span: { start: left.span.start, end: value.span.end } };
+        continue;
+      }
+
       if (this.current.value === '?' && minPrecedence <= 0) {
         this.advance();
         const consequent = this.parseExpression(0);

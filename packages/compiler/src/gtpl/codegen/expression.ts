@@ -45,6 +45,8 @@ export function emitGtplExpression(
         return `(${emit(node.left)} ${node.operator} ${emit(node.right)})`;
       case 'conditional':
         return `(${emit(node.test)} ? ${emit(node.consequent)} : ${emit(node.alternate)})`;
+      case 'assignment':
+        return `(${emit(node.target)} = ${emit(node.value)})`;
       case 'array':
         return `[${node.elements.map(emit).join(', ')}]`;
     }

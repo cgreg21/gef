@@ -45,6 +45,18 @@ describe('parseGtplExpression', () => {
     expect(result.expression).toMatchObject({ kind: 'conditional' });
   });
 
+  it('parses right-associative assignments and rejects invalid targets', () => {
+    expect(parseGtplExpression('state = next = $event')).toMatchObject({
+      diagnostics: [],
+      expression: {
+        kind: 'assignment',
+        target: { kind: 'identifier', name: 'state' },
+        value: { kind: 'assignment', target: { kind: 'identifier', name: 'next' } },
+      },
+    });
+    expect(parseGtplExpression('getState() = value').diagnostics.map((item) => item.code)).toContain('GTPL2009');
+  });
+
   it('parses arrays and unary expressions', () => {
     const result = parseGtplExpression('[!busy, -count, true]');
     expect(result.diagnostics).toHaveLength(0);
@@ -214,6 +226,10 @@ describe('parseGtplExpression', () => {
       switch (node.kind) {
         case 'array':
           for (const element of node.elements) assertExpressionSpans(element, source);
+          break;
+        case 'assignment':
+          assertExpressionSpans(node.target, source);
+          assertExpressionSpans(node.value, source);
           break;
         case 'unary':
           assertExpressionSpans(node.argument, source);

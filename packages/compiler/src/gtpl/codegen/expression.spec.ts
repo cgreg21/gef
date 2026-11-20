@@ -33,6 +33,10 @@ describe('emitGtplExpression', () => {
       .toBe('[( !busy), (-count), (enabled ? "yes" : "no")]'.replace('( !busy)', '(!busy)'));
   });
 
+  it('emits assignments', () => {
+    expect(emit('state = $event')).toBe('(state = $event)');
+  });
+
   it('emits a recovered unterminated string as a valid JavaScript literal', () => {
     const result = parseGtplExpression('"unfinished');
     expect(result.diagnostics.map((item) => item.code)).toContain('GTPL2005');

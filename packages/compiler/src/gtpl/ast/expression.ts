@@ -56,6 +56,13 @@ export interface ConditionalExpression {
   readonly span: ExpressionSpan;
 }
 
+export interface AssignmentExpression {
+  readonly kind: 'assignment';
+  readonly target: ExpressionNode;
+  readonly value: ExpressionNode;
+  readonly span: ExpressionSpan;
+}
+
 export interface ArrayExpression {
   readonly kind: 'array';
   readonly elements: readonly ExpressionNode[];
@@ -70,4 +77,5 @@ export type ExpressionNode =
   | UnaryExpression
   | BinaryExpression
   | ConditionalExpression
+  | AssignmentExpression
   | ArrayExpression;

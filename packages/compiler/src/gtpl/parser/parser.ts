@@ -273,11 +273,14 @@ class GtplParser {
       this.offset += keyword.length;
       this.skipWhitespace();
       const conditionStart = this.offset;
-      const rawCondition = this.readParenthesizedContent();
+      const conditionContent = this.readParenthesizedContent();
+      const rawCondition = conditionContent.value.trim();
       const aliasMatch = /^(.*?);\s*as\s+([A-Za-z_$][\w$]*)\s*$/.exec(rawCondition);
-      const condition = aliasMatch?.[1]?.trim() ?? rawCondition;
+      const conditionSource = aliasMatch?.[1] ?? rawCondition;
+      const conditionLeadingWhitespace = conditionContent.value.length - conditionContent.value.trimStart().length;
+      const condition = conditionSource.trim();
       const alias = aliasMatch?.[2];
-      const conditionOffset = conditionStart + 1;
+      const conditionOffset = conditionContent.start + conditionLeadingWhitespace;
       if (rawCondition.includes(';') && !aliasMatch) {
         this.report('GTPL3007', 'Invalid @if alias; expected "condition; as name".', conditionStart, this.offset);
       }
@@ -306,9 +309,9 @@ class GtplParser {
     const start = this.offset;
     this.offset += '@switch'.length;
     this.skipWhitespace();
-    const expressionStart = this.offset;
-    const expression = this.readParenthesizedContent();
-    const expressionOffset = expressionStart + 1;
+    const expressionContent = this.readParenthesizedContent();
+    const expression = expressionContent.value.trim();
+    const expressionOffset = expressionContent.start + expressionContent.value.length - expressionContent.value.trimStart().length;
     const parsedExpression = parseGtplExpression(expression);
     for (const diagnostic of parsedExpression.diagnostics) {
       this.report(diagnostic.code, diagnostic.message, expressionOffset + diagnostic.span.start, expressionOffset + diagnostic.span.end);
@@ -335,10 +338,10 @@ class GtplParser {
         while (this.startsWithDirective('@case')) {
           this.offset += '@case'.length;
           this.skipWhitespace();
-          const valueStart = this.offset;
-          const value = this.readParenthesizedContent();
+          const valueContent = this.readParenthesizedContent();
+          const value = valueContent.value.trim();
           const parsed = parseGtplExpression(value);
-          const valueOffset = valueStart + 1;
+          const valueOffset = valueContent.start + valueContent.value.length - valueContent.value.trimStart().length;
           for (const diagnostic of parsed.diagnostics) {
             this.report(diagnostic.code, diagnostic.message, valueOffset + diagnostic.span.start, valueOffset + diagnostic.span.end);
           }
@@ -364,11 +367,12 @@ class GtplParser {
           let neverExpression: string | undefined;
           let parsedNeverExpression: ExpressionNode | undefined;
           if (this.peek() === '(') {
-            const neverStart = this.offset;
-            neverExpression = this.readParenthesizedContent();
+            const neverContent = this.readParenthesizedContent();
+            neverExpression = neverContent.value.trim();
+            const neverOffset = neverContent.start + neverContent.value.length - neverContent.value.trimStart().length;
             const parsed = parseGtplExpression(neverExpression);
             for (const diagnostic of parsed.diagnostics) {
-              this.report(diagnostic.code, diagnostic.message, neverStart + 1 + diagnostic.span.start, neverStart + 1 + diagnostic.span.end);
+              this.report(diagnostic.code, diagnostic.message, neverOffset + diagnostic.span.start, neverOffset + diagnostic.span.end);
             }
             if (parsed.expression) parsedNeverExpression = parsed.expression;
             this.skipWhitespace();
@@ -468,14 +472,15 @@ class GtplParser {
     this.offset += '@for'.length;
     this.skipWhitespace();
     const headerStart = this.offset;
-    const header = this.readParenthesizedContent();
+    const headerContent = this.readParenthesizedContent();
+    const header = headerContent.value;
     const segments = this.splitTopLevelSegments(header);
     const mainSegment = segments[0]?.value.trim() ?? '';
     const loop = /^(?:let\s+)?([A-Za-z_$][\w$]*)\s+of\s+([\s\S]+)$/.exec(mainSegment);
     if (!loop) this.report('GTPL3001', 'Invalid @for header; expected "item of iterable".', headerStart, this.offset);
     const item = loop?.[1] ?? '$item';
     const collection = loop?.[2] ?? '';
-    const collectionOffset = headerStart + 1 + (segments[0]?.start ?? 0) + mainSegment.indexOf(collection);
+    const collectionOffset = headerContent.start + (segments[0]?.start ?? 0) + (segments[0]?.value.indexOf(collection) ?? 0);
     const parsedCollection = parseGtplExpression(collection);
     for (const diagnostic of parsedCollection.diagnostics) this.report(diagnostic.code, diagnostic.message, collectionOffset + diagnostic.span.start, collectionOffset + diagnostic.span.end);
 
@@ -486,34 +491,34 @@ class GtplParser {
     for (const segment of segments.slice(1)) {
       const value = segment.value.trim();
       if (value.startsWith('track ')) {
-        if (sawTrack) this.report('GTPL3008', 'Only one track expression is allowed in @for.', headerStart + 1 + segment.start, headerStart + 1 + segment.start + segment.value.length);
+        if (sawTrack) this.report('GTPL3008', 'Only one track expression is allowed in @for.', headerContent.start + segment.start, headerContent.start + segment.start + segment.value.length);
         sawTrack = true;
         track = value.slice(6).trim();
-        trackOffset = headerStart + 1 + segment.start + segment.value.indexOf(track);
+        trackOffset = headerContent.start + segment.start + segment.value.indexOf(track);
         continue;
       }
       if (value.startsWith('let ')) {
         for (const declaration of value.slice(4).split(',')) {
           const match = /^\s*([A-Za-z_$][\w$]*)\s*=\s*(\$[A-Za-z]+)\s*$/.exec(declaration);
           if (!match) {
-            this.report('GTPL3009', 'Invalid @for contextual alias; expected "let name = $index".', headerStart + 1 + segment.start, headerStart + 1 + segment.start + segment.value.length);
+            this.report('GTPL3009', 'Invalid @for contextual alias; expected "let name = $index".', headerContent.start + segment.start, headerContent.start + segment.start + segment.value.length);
             continue;
           }
           const name = match[1]!;
           const context = match[2]!;
           if (!['$count', '$index', '$first', '$last', '$even', '$odd'].includes(context)) {
-            this.report('GTPL3010', `Unknown @for contextual variable "${context}".`, headerStart + 1 + segment.start, headerStart + 1 + segment.start + segment.value.length);
+            this.report('GTPL3010', `Unknown @for contextual variable "${context}".`, headerContent.start + segment.start, headerContent.start + segment.start + segment.value.length);
             continue;
           }
           if (aliases.some((alias) => alias.name === name)) {
-            this.report('GTPL3011', `Duplicate @for alias "${name}".`, headerStart + 1 + segment.start, headerStart + 1 + segment.start + segment.value.length);
+            this.report('GTPL3011', `Duplicate @for alias "${name}".`, headerContent.start + segment.start, headerContent.start + segment.start + segment.value.length);
             continue;
           }
           aliases.push({ name, context: context as ForContextAlias['context'] });
         }
         continue;
       }
-      this.report('GTPL3012', 'Unsupported @for header segment; expected "track expression" or "let alias = $index".', headerStart + 1 + segment.start, headerStart + 1 + segment.start + segment.value.length);
+      this.report('GTPL3012', 'Unsupported @for header segment; expected "track expression" or "let alias = $index".', headerContent.start + segment.start, headerContent.start + segment.start + segment.value.length);
     }
     if (!sawTrack) this.report('GTPL3002', '@for requires a track expression.', headerStart, this.offset);
     const parsedTrack = parseGtplExpression(track);
@@ -562,8 +567,11 @@ class GtplParser {
     return segments;
   }
 
-  private readParenthesizedContent(): string {
-    if (this.peek() !== '(') { this.report('GTPL3003', 'Expected "(" after control-flow keyword.', this.offset, this.offset + 1); return ''; }
+  private readParenthesizedContent(): { value: string; start: number } {
+    if (this.peek() !== '(') {
+      this.report('GTPL3003', 'Expected "(" after control-flow keyword.', this.offset, this.offset + 1);
+      return { value: '', start: this.offset };
+    }
     const start = ++this.offset;
     let depth = 1;
     let quote = '';
@@ -583,7 +591,7 @@ class GtplParser {
     const value = this.source.slice(start, this.offset);
     if (this.peek() === ')') this.offset += 1;
     else this.report('GTPL3004', 'Unterminated control-flow condition.', start - 1, this.offset);
-    return value.trim();
+    return { value, start };
   }
 
   private parseBraceBlock(): GtplNode[] {

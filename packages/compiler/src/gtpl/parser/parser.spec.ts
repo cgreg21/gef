@@ -377,6 +377,20 @@ describe('GTPL built-in control flow', () => {
     expect(result.diagnostics).toHaveLength(0);
   });
 
+  it('maps control-flow expression diagnostics past leading whitespace', () => {
+    const ifSource = '@if (  user. ) {}';
+    const ifDiagnostic = parseGtpl(ifSource).diagnostics.find((item) => item.code === 'GTPL2003');
+    expect(ifDiagnostic?.span.start).toBe(ifSource.indexOf('user.') + 5);
+
+    const switchSource = '@switch (  state. ) { @case ("ready") {} }';
+    const switchDiagnostic = parseGtpl(switchSource).diagnostics.find((item) => item.code === 'GTPL2003');
+    expect(switchDiagnostic?.span.start).toBe(switchSource.indexOf('state.') + 6);
+
+    const forSource = '@for (item of  items.; track item.id) {}';
+    const forDiagnostic = parseGtpl(forSource).diagnostics.find((item) => item.code === 'GTPL2003');
+    expect(forDiagnostic?.span.start).toBe(forSource.indexOf('items.') + 6);
+  });
+
   it('reports missing @for track and malformed delimiters', () => {
     const result = parseGtpl('@for (item of items) { <StLabel /> } @if ready { <StBox /> }');
     expect(result.diagnostics.some((item) => item.code === 'GTPL3002')).toBe(true);

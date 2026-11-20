@@ -561,7 +561,10 @@ class GtplParser {
     for (const segment of segments.slice(1)) {
       const value = segment.value.trim();
       if (value.startsWith('track ')) {
-        if (sawTrack) this.reportForHeaderSegment('GTPL3008', 'Only one track expression is allowed in @for.', headerContent.start, segment);
+        if (sawTrack) {
+          this.reportForHeaderSegment('GTPL3008', 'Only one track expression is allowed in @for.', headerContent.start, segment);
+          continue;
+        }
         sawTrack = true;
         track = value.slice(6).trim();
         trackOffset = headerContent.start + segment.start + segment.value.indexOf(track);

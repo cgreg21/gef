@@ -523,6 +523,18 @@ describe('GTPL built-in control flow', () => {
     expect(forDiagnostic?.span.start).toBe(forSource.indexOf('items.') + 6);
   });
 
+
+  it('keeps the first @for track expression when a duplicate is reported', () => {
+    const source = '@for (item of items; track item.id; track item.name) { <StLabel /> }';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('for-block');
+    if (block?.kind !== 'for-block') return;
+    expect(block.track).toBe('item.id');
+    expect(block.parsedTrack).toMatchObject({ kind: 'member', property: 'id' });
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3008')).toBe(true);
+  });
+
   it('reports missing @for track and malformed delimiters', () => {
     const result = parseGtpl('@for (item of items) { <StLabel /> } @if ready { <StBox /> }');
     expect(result.diagnostics.some((item) => item.code === 'GTPL3002')).toBe(true);

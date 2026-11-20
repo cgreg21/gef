@@ -66,13 +66,13 @@ class ExpressionParser {
   }
 
   parse(): ExpressionParseResult {
-    if (this.current.kind === 'eof') {
+    if (this.getCurrentToken().kind === 'eof') {
       this.report('GTPL2001', 'Expression cannot be empty.', 0, 0);
       return { expression: null, diagnostics: this.diagnostics };
     }
 
     const expression = this.parseExpression(0);
-    if (this.current.kind !== 'eof') {
+    if (this.getCurrentToken().kind !== 'eof') {
       this.report('GTPL2002', `Unexpected token "${this.current.value}".`, this.current.start, this.current.end);
     }
     return { expression, diagnostics: this.diagnostics };

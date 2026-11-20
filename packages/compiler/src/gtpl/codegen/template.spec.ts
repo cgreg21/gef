@@ -34,6 +34,20 @@ describe('emitGtplTemplate', () => {
     expect(output).toContain('runtime.switch(ctx.state');
   });
 
+  it('evaluates an aliased if condition once and renders only the selected branch', () => {
+    const output = emit('@if (getValue(); as value) { {{value}} } @else { fallback }', ['getValue']);
+    const render = new Function(`return ${output}`)() as (ctx: unknown, runtime: unknown) => unknown;
+    let calls = 0;
+    const runtime = {
+      fragment: (children: unknown[]) => children,
+      text: (value: string) => value,
+      if: (condition: unknown, yes: (value: unknown) => unknown, no: () => unknown) =>
+        condition ? yes(condition) : no(),
+    };
+    expect(render({ getValue: () => { calls += 1; return 'ready'; } }, runtime)).toEqual(['ready']);
+    expect(calls).toBe(1);
+  });
+
   it('rejects structural shorthand until its dedicated lowering pass exists', () => {
     const parsed = parseGtpl('<label *if="visible">Shown</label>');
     expect(() => emitGtplTemplate(parsed.nodes, { componentMembers: ['visible'] }))

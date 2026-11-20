@@ -177,7 +177,7 @@ class GtplParser {
     const attribute: GtplAttribute = { name, value, kind, span: this.span(start, this.offset), valueSpan };
     if (kind === 'property' || kind === 'event' || kind === 'two-way' || kind === 'structural') {
       // *gefFor has a dedicated microsyntax (let item of items), parsed in a later compiler phase.
-      if (!(kind === 'structural' && name === 'for' && /^\s*let\s+/.test(value))) {
+      if (!(kind === 'structural' && (name === 'for' || name === 'gefFor') && /^\s*let\s+/.test(value))) {
         const parsed = parseGtplExpression(value);
         for (const diagnostic of parsed.diagnostics) {
           this.report(diagnostic.code, diagnostic.message, valueStart + diagnostic.span.start, valueStart + diagnostic.span.end);
@@ -292,6 +292,7 @@ class GtplParser {
     const trackOffset = trackMatch ? headerStart + 1 + header.indexOf(track) : headerStart;
     const parsedTrack = parseGtplExpression(track);
     for (const diagnostic of parsedTrack.diagnostics) this.report(diagnostic.code, diagnostic.message, trackOffset + diagnostic.span.start, trackOffset + diagnostic.span.end);
+    this.skipWhitespace();
     const children = this.parseBraceBlock();
     this.skipWhitespace();
     let empty: GtplNode[] = [];
@@ -330,11 +331,13 @@ class GtplParser {
     if (this.peek() !== '{') { this.report('GTPL3005', 'Expected "{" to start control-flow block.', this.offset, this.offset + 1); return children; }
     this.offset += 1;
     this.blockDepth += 1;
-    while (!this.eof() && this.peek() !== '}') {
+    while (!this.eof()) {
+      this.skipWhitespace();
+      if (this.peek() === '}') break;
       const before = this.offset;
       const node = this.parseNode();
       if (node) children.push(node);
-      if (before === this.offset) this.offset += 1;
+      if (before === this.offset && this.peek() !== '}') this.offset += 1;
     }
     if (this.peek() === '}') this.offset += 1;
     else this.report('GTPL3006', 'Unterminated control-flow block.', this.offset, this.offset);

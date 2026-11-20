@@ -596,8 +596,7 @@ class GtplParser {
   }
 
   private isBlockDirectiveStart(): boolean {
-    return ['@if', '@for', '@switch', '@let'].some((keyword) => this.startsWith(keyword)
-      && !/[A-Za-z0-9_$]/.test(this.source[this.offset + keyword.length] ?? ''));
+    return ['@if', '@for', '@switch', '@let', '@case', '@default', '@empty'].some((keyword) => this.startsWithDirective(keyword));
   }
 
   private parseComment(): void {

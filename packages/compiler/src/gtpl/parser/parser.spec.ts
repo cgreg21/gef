@@ -261,6 +261,17 @@ describe('GTPL built-in control flow', () => {
     expect(result.diagnostics.some((item) => item.code === 'GTPL3005')).toBe(false);
   });
 
+  it('does not consume a later @case after unexpected switch text', () => {
+    const source = '@switch (role) { unexpected text @case ("admin") { <StLabel /> } }';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('switch-block');
+    if (block?.kind !== 'switch-block') return;
+    expect(block.cases).toHaveLength(1);
+    expect(block.cases[0]?.expressions).toEqual(['"admin"']);
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3106')).toBe(true);
+  });
+
   it('keeps the first @default when a duplicate is reported', () => {
     const result = parseGtpl('@switch (role) { @case ("admin") {} @default { <StLabel>first</StLabel> } @default { <StLabel>second</StLabel> } }');
     const block = result.nodes[0];

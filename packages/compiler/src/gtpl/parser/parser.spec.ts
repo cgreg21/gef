@@ -137,6 +137,29 @@ describe('parseGtpl', () => {
     const result = parseGtpl('<!-- never closed');
     expect(result.diagnostics.some((diagnostic) => diagnostic.code === 'GTPL1012')).toBe(true);
   });
+
+  it('recovers an @else branch when the preceding block is missing its closing brace', () => {
+    const result = parseGtpl('@if (ready) { <StLabel /> @else { <StButton /> }');
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('if-block');
+    if (block?.kind !== 'if-block') return;
+    expect(block.branches).toHaveLength(2);
+    expect(block.branches[0]?.children).toMatchObject([{ kind: 'element', name: 'StLabel' }]);
+    expect(block.branches[1]?.children).toMatchObject([{ kind: 'element', name: 'StButton' }]);
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3006')).toBe(true);
+  });
+
+  it('recovers @else after an unclosed element inside an @if branch', () => {
+    const result = parseGtpl('@if (ready) { <StLabel>broken @else { <StButton /> }');
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('if-block');
+    if (block?.kind !== 'if-block') return;
+    expect(block.branches).toHaveLength(2);
+    expect(block.branches[0]?.children[0]).toMatchObject({ kind: 'element', name: 'StLabel' });
+    expect(block.branches[1]?.children[0]).toMatchObject({ kind: 'element', name: 'StButton' });
+    expect(result.diagnostics.some((item) => item.code === 'GTPL1006')).toBe(true);
+  });
+
 });
 
 

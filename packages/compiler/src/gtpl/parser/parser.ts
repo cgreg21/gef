@@ -139,7 +139,7 @@ class GtplParser {
     if (!selfClosing) {
       let closed = false;
       while (!this.eof()) {
-        if (this.blockDepth > 0 && this.peek() === '}') break;
+        if (this.blockDepth > 0 && (this.peek() === '}' || this.isIfBranchStart())) break;
         if (this.startsWith('<!--')) {
           this.parseComment();
           continue;
@@ -354,7 +354,7 @@ class GtplParser {
       const parsed = parseGtplExpression(condition);
       this.reportExpressionDiagnostics(parsed, conditionOffset);
       this.skipWhitespace();
-      const children = this.parseBraceBlock();
+      const children = this.parseBraceBlock(true);
       blockEnd = this.offset;
       branches.push({ condition, ...(alias ? { alias } : {}), ...(parsed.expression ? { parsedCondition: parsed.expression } : {}), span: this.span(branchStart, this.offset), children });
       this.skipWhitespace();
@@ -669,7 +669,7 @@ class GtplParser {
     return { value, start };
   }
 
-  private parseBraceBlock(stopAtSwitchLabel = false): GtplNode[] {
+  private parseBraceBlock(stopAtSwitchLabel = false, stopAtIfBranch = false): GtplNode[] {
     const children: GtplNode[] = [];
     if (this.peek() !== '{') { this.report('GTPL3005', 'Expected "{" to start control-flow block.', this.offset, this.offset + 1); return children; }
     this.offset += 1;
@@ -678,6 +678,7 @@ class GtplParser {
     while (!this.eof()) {
       this.skipWhitespace();
       if (this.peek() === '}') break;
+      if (stopAtIfBranch && this.isIfBranchStart()) break;
       if (this.switchCaseDepth > 0 && (this.startsWithDirective('@case') || this.startsWithDirective('@default'))) break;
       const before = this.offset;
       const node = this.parseNode();
@@ -689,6 +690,10 @@ class GtplParser {
     if (stopAtSwitchLabel) this.switchCaseDepth -= 1;
     this.blockDepth -= 1;
     return children;
+  }
+
+  private isIfBranchStart(): boolean {
+    return this.startsWithDirective('@else');
   }
 
   private isBlockDirectiveStart(): boolean {

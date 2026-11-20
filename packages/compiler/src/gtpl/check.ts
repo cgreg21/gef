@@ -2,6 +2,7 @@ import type { GtplNode } from './ast/types.js';
 import type { Diagnostic } from './diagnostics/diagnostic.js';
 import { analyzeGtpl, type GtplSemanticOptions } from './analysis/semantic.js';
 import { parseGtpl } from './parser/parser.js';
+import { lowerGtplStructuralDirectives } from './lowering/structural.js';
 import {
   validateGtplComponents,
   type GtplComponentDefinition,
@@ -19,19 +20,20 @@ export interface GtplCheckResult {
 }
 
 /**
- * Parses a template, then runs lexical and component-contract validation.
+ * Parses and lowers a template, then runs lexical and component-contract validation.
  * This is a validation pipeline; it does not generate or execute runtime code.
  */
 export function checkGtpl(source: string, options: GtplCheckOptions = {}): GtplCheckResult {
   const parsed = parseGtpl(source);
-  const semantic = analyzeGtpl(parsed.nodes, options);
-  const components = validateGtplComponents(parsed.nodes, {
+  const lowered = lowerGtplStructuralDirectives(parsed.nodes);
+  const semantic = analyzeGtpl(lowered.nodes, options);
+  const components = validateGtplComponents(lowered.nodes, {
     components: options.components ?? [],
     strict: options.strictComponents ?? false,
   });
 
   return {
-    nodes: parsed.nodes,
-    diagnostics: [...parsed.diagnostics, ...semantic.diagnostics, ...components],
+    nodes: lowered.nodes,
+    diagnostics: [...parsed.diagnostics, ...lowered.diagnostics, ...semantic.diagnostics, ...components],
   };
 }

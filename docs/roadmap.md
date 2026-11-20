@@ -18,7 +18,7 @@
 - [ ] Type-check expressions against TypeScript component members.
 - [x] Emit JavaScript source for parsed expression ASTs.\n- [x] Emit initial JavaScript render-function source for GTPL ASTs (runtime contract injected; structural shorthand and two-way bindings remain pending).
 - [x] Provide a combined GTPL parse, semantic and component validation API.
-- [ ] Generate complete JavaScript templates and lower structural shorthand/control flow.
+- [ ] Generate complete JavaScript templates and lower remaining structural directives and two-way bindings.
 - [ ] Switch exhaustiveness checks using TypeScript types.
 
 ## Runtime and renderers

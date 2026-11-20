@@ -31,6 +31,24 @@ describe('checkGtpl', () => {
       .toMatchObject([{ code: 'GTPL4101' }]);
   });
 
+  it('lowers structural directives before semantic analysis', () => {
+    const result = checkGtpl('<StLabel *for="let item of items; track item.id">{{item.name}}</StLabel>', {
+      componentMembers: ['items'],
+    });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.nodes[0]).toMatchObject({
+      kind: 'for-block',
+      item: 'item',
+      children: [{ kind: 'element', name: 'StLabel' }],
+    });
+  });
+
+  it('reports invalid structural directive syntax', () => {
+    const result = checkGtpl('<StLabel *for="let item in items" />');
+    expect(result.diagnostics).toMatchObject([{ code: 'GTPL4203' }]);
+  });
+
   it('validates elements nested in control-flow branches', () => {
     const result = checkGtpl('@if (ready) { <GefButton [unknown]="value" /> }', {
       componentMembers: ['ready', 'value'],

@@ -917,4 +917,41 @@ describe('GTPL built-in control flow', () => {
     expect(result.diagnostics).toHaveLength(0);
   });
 
+
+  it('recovers malformed switch headers and defaults without losing later siblings', () => {
+    const sources = [
+      '@switch role { @case ("admin") {} } <StButton />',
+      '@switch (role { @case ("admin") {} } <StButton />',
+      '@switch (role) { @default never <StLabel /> @case ("admin") {} } <StButton />',
+      '@switch (role) { @default nonsense @case ("admin") {} } <StButton />',
+      '@switch (role) { @case ("admin" {} @case ("editor") {} } <StButton />',
+    ];
+
+    for (const source of sources) {
+      const result = parseGtpl(source);
+      expect(source.slice(result.nodes.at(-1)?.span.start ?? 0, result.nodes.at(-1)?.span.end ?? 0)).toBe('<StButton />');
+      for (const node of result.nodes) {
+        expect(node.span.start).toBeGreaterThanOrEqual(0);
+        expect(node.span.end).toBeLessThanOrEqual(source.length);
+        expect(node.span.end).toBeGreaterThanOrEqual(node.span.start);
+      }
+      for (const diagnostic of result.diagnostics) {
+        expect(diagnostic.span.start).toBeGreaterThanOrEqual(0);
+        expect(diagnostic.span.end).toBeLessThanOrEqual(source.length);
+        expect(diagnostic.span.end).toBeGreaterThanOrEqual(diagnostic.span.start);
+      }
+    }
+  });
+
+  it('does not confuse @case and @default prefixes with longer directive names', () => {
+    const source = '@switch (role) { @casework is text; @defaulted is text; @case ("admin") {} }';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('switch-block');
+    if (block?.kind !== 'switch-block') return;
+    expect(block.cases).toHaveLength(1);
+    expect(block.cases[0]?.expressions).toEqual(['"admin"']);
+    expect(result.diagnostics.some(({ code }) => code === 'GTPL3106')).toBe(true);
+  });
+
 });

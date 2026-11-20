@@ -32,7 +32,9 @@ class FakeActor implements StActor {
     this.emit('destroy');
     this.destroyed = true;
     this.signals.clear();
-    for (const child of this.children) child.destroy();
+    const children = [...this.children];
+    this.children.length = 0;
+    for (const child of children) child.destroy();
   }
 
   set_property(name: string, value: unknown): void {

@@ -88,11 +88,11 @@ class ExpressionParser {
         const optional = this.current.value === '?.';
         this.advance();
 
-        if (optional && this.current.value === '(') {
+        if (optional && this.getCurrentToken().value === '(') {
           left = this.parseCall(left, true);
           continue;
         }
-        if (optional && this.current.value === '[') {
+        if (optional && this.getCurrentToken().value === '[') {
           this.advance();
           const property = this.parseExpression(0);
           const close = this.expect(']');

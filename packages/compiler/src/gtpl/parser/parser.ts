@@ -286,10 +286,11 @@ class GtplParser {
       this.skipWhitespace();
       if (this.startsWith('@else if')) { keyword = '@else if'; continue; }
       if (this.startsWith('@else')) {
+        const elseStart = this.offset;
         this.offset += '@else'.length;
         this.skipWhitespace();
         const elseChildren = this.parseBraceBlock();
-        branches.push({ span: this.span(this.offset, this.offset), children: elseChildren });
+        branches.push({ span: this.span(elseStart, this.offset), children: elseChildren });
       }
       break;
     }

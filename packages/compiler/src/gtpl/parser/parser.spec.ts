@@ -157,6 +157,19 @@ describe('GTPL built-in control flow', () => {
     expect(block.branches[1]?.parsedCondition).toMatchObject({ kind: 'identifier', name: 'loading' });
     expect(block.branches[2]?.condition).toBeUndefined();
   });
+  it('preserves the complete source span of an @else branch', () => {
+    const source = '@if (ready) { <StLabel /> } @else { <StButton /> }';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('if-block');
+    if (block?.kind !== 'if-block') return;
+    const branch = block.branches[1];
+    expect(branch?.span.start).toBe(source.indexOf('@else'));
+    expect(branch?.span.end).toBe(source.length);
+    expect(branch?.span.line).toBe(1);
+    expect(branch?.span.column).toBe(source.indexOf('@else') + 1);
+  });
+
   it('parses @if expression aliases', () => {
     const result = parseGtpl('@if (user.profile; as profile) { <StLabel>{{ profile.name }}</StLabel> }');
     expect(result.diagnostics).toHaveLength(0);

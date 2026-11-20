@@ -209,6 +209,10 @@ class GtplParser {
     }
   }
 
+  private getTrimmedContentOffset(content: { value: string; start: number }): number {
+    return content.start + content.value.length - content.value.trimStart().length;
+  }
+
   private parseText(): TextNode {
     const start = this.offset;
     while (!this.eof() && this.peek() !== '<') {
@@ -288,10 +292,9 @@ class GtplParser {
       const rawCondition = conditionContent.value.trim();
       const aliasMatch = /^(.*?);\s*as\s+([A-Za-z_$][\w$]*)\s*$/.exec(rawCondition);
       const conditionSource = aliasMatch?.[1] ?? rawCondition;
-      const conditionLeadingWhitespace = conditionContent.value.length - conditionContent.value.trimStart().length;
       const condition = conditionSource.trim();
       const alias = aliasMatch?.[2];
-      const conditionOffset = conditionContent.start + conditionLeadingWhitespace;
+      const conditionOffset = this.getTrimmedContentOffset(conditionContent);
       if (rawCondition.includes(';') && !aliasMatch) {
         this.report('GTPL3007', 'Invalid @if alias; expected "condition; as name".', conditionStart, this.offset);
       }
@@ -322,7 +325,7 @@ class GtplParser {
     this.skipWhitespace();
     const expressionContent = this.readParenthesizedContent();
     const expression = expressionContent.value.trim();
-    const expressionOffset = expressionContent.start + expressionContent.value.length - expressionContent.value.trimStart().length;
+    const expressionOffset = this.getTrimmedContentOffset(expressionContent);
     const parsedExpression = parseGtplExpression(expression);
     this.reportExpressionDiagnostics(parsedExpression, expressionOffset);
     this.skipWhitespace();
@@ -350,7 +353,7 @@ class GtplParser {
           const valueContent = this.readParenthesizedContent();
           const value = valueContent.value.trim();
           const parsed = parseGtplExpression(value);
-          const valueOffset = valueContent.start + valueContent.value.length - valueContent.value.trimStart().length;
+          const valueOffset = this.getTrimmedContentOffset(valueContent);
           this.reportExpressionDiagnostics(parsed, valueOffset);
           expressions.push(value);
           if (parsed.expression) parsedExpressions.push(parsed.expression);
@@ -376,7 +379,7 @@ class GtplParser {
           if (this.peek() === '(') {
             const neverContent = this.readParenthesizedContent();
             neverExpression = neverContent.value.trim();
-            const neverOffset = neverContent.start + neverContent.value.length - neverContent.value.trimStart().length;
+            const neverOffset = this.getTrimmedContentOffset(neverContent);
             const parsed = parseGtplExpression(neverExpression);
             this.reportExpressionDiagnostics(parsed, neverOffset);
             if (parsed.expression) parsedNeverExpression = parsed.expression;

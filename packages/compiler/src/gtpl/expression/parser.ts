@@ -72,7 +72,7 @@ class ExpressionParser {
     }
 
     const expression = this.parseExpression(0);
-    if (this.peekToken().kind !== 'eof') {
+    if (this.current.kind !== 'eof') {
       this.report('GTPL2002', `Unexpected token "${this.current.value}".`, this.current.start, this.current.end);
     }
     return { expression, diagnostics: this.diagnostics };
@@ -125,10 +125,10 @@ class ExpressionParser {
         if (18 < minPrecedence) break;
         this.advance();
         const args: ExpressionNode[] = [];
-        while (this.peekToken().kind !== 'eof' && this.peekToken().value !== ')') {
+        while (this.current.kind !== 'eof' && this.current.value !== ')') {
           const argument = this.parseExpression(0);
           if (argument) args.push(argument);
-          if (this.peekToken().value !== ',') break;
+          if (this.current.value !== ',') break;
           this.advance();
         }
         const close = this.expect(')');
@@ -333,10 +333,6 @@ class ExpressionParser {
     }
     this.report('GTPL2007', `Expected "${value}", found "${this.current.value || 'end of input'}".`, this.current.start, this.current.end);
     return null;
-  }
-
-  private peekToken(): Token {
-    return this.current;
   }
 
   private advance(): void {

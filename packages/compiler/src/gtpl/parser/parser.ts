@@ -484,6 +484,16 @@ class GtplParser {
     return this.source.slice(start, this.offset).trim();
   }
 
+  private reportForHeaderSegment(
+    code: string,
+    message: string,
+    headerStart: number,
+    segment: { value: string; start: number },
+  ): void {
+    const start = headerStart + segment.start;
+    this.report(code, message, start, start + segment.value.length);
+  }
+
   private parseForBlock(): GtplNode {
     const start = this.offset;
     this.offset += '@for'.length;
@@ -508,7 +518,7 @@ class GtplParser {
     for (const segment of segments.slice(1)) {
       const value = segment.value.trim();
       if (value.startsWith('track ')) {
-        if (sawTrack) this.report('GTPL3008', 'Only one track expression is allowed in @for.', headerContent.start + segment.start, headerContent.start + segment.start + segment.value.length);
+        if (sawTrack) this.reportForHeaderSegment('GTPL3008', 'Only one track expression is allowed in @for.', headerContent.start, segment);
         sawTrack = true;
         track = value.slice(6).trim();
         trackOffset = headerContent.start + segment.start + segment.value.indexOf(track);
@@ -518,24 +528,24 @@ class GtplParser {
         for (const declaration of value.slice(4).split(',')) {
           const match = /^\s*([A-Za-z_$][\w$]*)\s*=\s*(\$[A-Za-z]+)\s*$/.exec(declaration);
           if (!match) {
-            this.report('GTPL3009', 'Invalid @for contextual alias; expected "let name = $index".', headerContent.start + segment.start, headerContent.start + segment.start + segment.value.length);
+            this.reportForHeaderSegment('GTPL3009', 'Invalid @for contextual alias; expected "let name = $index".', headerContent.start, segment);
             continue;
           }
           const name = match[1]!;
           const context = match[2]!;
           if (!['$count', '$index', '$first', '$last', '$even', '$odd'].includes(context)) {
-            this.report('GTPL3010', `Unknown @for contextual variable "${context}".`, headerContent.start + segment.start, headerContent.start + segment.start + segment.value.length);
+            this.reportForHeaderSegment('GTPL3010', `Unknown @for contextual variable "${context}".`, headerContent.start, segment);
             continue;
           }
           if (aliases.some((alias) => alias.name === name)) {
-            this.report('GTPL3011', `Duplicate @for alias "${name}".`, headerContent.start + segment.start, headerContent.start + segment.start + segment.value.length);
+            this.reportForHeaderSegment('GTPL3011', `Duplicate @for alias "${name}".`, headerContent.start, segment);
             continue;
           }
           aliases.push({ name, context: context as ForContextAlias['context'] });
         }
         continue;
       }
-      this.report('GTPL3012', 'Unsupported @for header segment; expected "track expression" or "let alias = $index".', headerContent.start + segment.start, headerContent.start + segment.start + segment.value.length);
+      this.reportForHeaderSegment('GTPL3012', 'Unsupported @for header segment; expected "track expression" or "let alias = $index".', headerContent.start, segment);
     }
     if (!sawTrack) this.report('GTPL3002', '@for requires a track expression.', headerStart, this.offset);
     const parsedTrack = parseGtplExpression(track);

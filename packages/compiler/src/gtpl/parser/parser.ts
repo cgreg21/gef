@@ -12,8 +12,8 @@ import type {
   SwitchDefaultNode,
   TextNode,
   TextPart,
-} from './ast.js';
-import { parseGtplExpression } from './expression.js';
+} from '../ast/types.js';
+import { parseGtplExpression } from '../expression/parser.js';
 
 class GtplParser {
   private offset = 0;

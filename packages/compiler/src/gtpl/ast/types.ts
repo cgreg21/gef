@@ -1,4 +1,4 @@
-import type { ExpressionNode } from './expression.js';
+import type { ExpressionNode } from '../expression/parser.js';
 
 export interface SourceSpan {
   readonly start: number;

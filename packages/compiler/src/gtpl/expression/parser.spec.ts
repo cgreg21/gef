@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseGtplExpression } from './expression.js';
+import { parseGtplExpression } from './parser.js';
 
 describe('parseGtplExpression', () => {
   it('parses member access and calls', () => {

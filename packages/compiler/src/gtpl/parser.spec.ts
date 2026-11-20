@@ -135,3 +135,46 @@ describe('GTPL expression integration', () => {
     expect(result.diagnostics.filter((item) => item.code.startsWith('GTPL200')).length).toBeGreaterThanOrEqual(3);
   });
 });
+
+
+describe('GTPL built-in control flow', () => {
+  it('parses *if and *for structural attributes on elements', () => {
+    const result = parseGtpl('<StLabel *if="isVisible" /><StRow *for="let item of items" />');
+    expect(result.diagnostics).toHaveLength(0);
+    const first = result.nodes[0], second = result.nodes[1];
+    expect(first?.kind).toBe('element'); expect(second?.kind).toBe('element');
+    if (first?.kind !== 'element' || second?.kind !== 'element') return;
+    expect(first.attributes[0]).toMatchObject({ name: 'if', kind: 'structural', parsedExpression: { kind: 'identifier', name: 'isVisible' } });
+    expect(second.attributes[0]).toMatchObject({ name: 'for', kind: 'structural', value: 'let item of items' });
+  });
+  it('parses @if, @else if and @else branches', () => {
+    const result = parseGtpl('@if (ready) { <StLabel /> } @else if (loading) { <StSpinner /> } @else { <StButton /> }');
+    expect(result.diagnostics).toHaveLength(0);
+    const block = result.nodes[0]; expect(block?.kind).toBe('if-block');
+    if (block?.kind !== 'if-block') return;
+    expect(block.branches).toHaveLength(3);
+    expect(block.branches.map((branch) => branch.children[0]?.kind)).toEqual(['element','element','element']);
+    expect(block.branches[1]?.parsedCondition).toMatchObject({ kind: 'identifier', name: 'loading' });
+    expect(block.branches[2]?.condition).toBeUndefined();
+  });
+  it('parses @for with track and @empty', () => {
+    const result = parseGtpl('@for (device of devices; track device.id) { <StLabel>{{ device.name }}</StLabel> } @empty { <StLabel>No devices</StLabel> }');
+    expect(result.diagnostics).toHaveLength(0);
+    const block = result.nodes[0]; expect(block?.kind).toBe('for-block');
+    if (block?.kind !== 'for-block') return;
+    expect(block).toMatchObject({ item:'device', collection:'devices', track:'device.id', parsedCollection:{kind:'identifier',name:'devices'}, parsedTrack:{kind:'member',property:'id'} });
+    expect(block.children).toHaveLength(1); expect(block.empty).toHaveLength(1);
+  });
+  it('supports nested control-flow blocks', () => {
+    const result = parseGtpl('@if (visible) { @for (item of items; track item.id) { <StLabel /> } }');
+    expect(result.diagnostics).toHaveLength(0);
+    const outer = result.nodes[0]; expect(outer?.kind).toBe('if-block');
+    if (outer?.kind !== 'if-block') return;
+    expect(outer.branches[0]?.children[0]?.kind).toBe('for-block');
+  });
+  it('reports missing @for track and malformed delimiters', () => {
+    const result = parseGtpl('@for (item of items) { <StLabel /> } @if ready { <StBox /> }');
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3002')).toBe(true);
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3003')).toBe(true);
+  });
+});

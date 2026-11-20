@@ -16,6 +16,7 @@ class GtplParser {
   private offset = 0;
   private readonly diagnostics: Diagnostic[] = [];
   private readonly lineStarts: number[] = [0];
+  private blockDepth = 0;
 
   constructor(private readonly source: string) {
     for (let i = 0; i < source.length; i += 1) {
@@ -187,7 +188,7 @@ class GtplParser {
 
   private parseText(): TextNode {
     const start = this.offset;
-    while (!this.eof() && this.peek() !== '<') this.offset += 1;
+    while (!this.eof() && this.peek() !== '<' && !(this.blockDepth > 0 && this.peek() === '}')) this.offset += 1;
     if (this.offset === start) this.offset += 1;
     const end = this.offset;
     const raw = this.source.slice(start, end);
@@ -237,6 +238,106 @@ class GtplParser {
       });
     }
     return { kind: 'text', parts, span: this.span(start, end) };
+  }
+
+
+  private parseIfBlock(): GtplNode {
+    const start = this.offset;
+    const branches: import('./ast.js').IfBranch[] = [];
+    let keyword = '@if';
+    let first = true;
+    while (first || keyword === '@else if') {
+      first = false;
+      this.offset += keyword.length;
+      this.skipWhitespace();
+      const conditionStart = this.offset;
+      const condition = this.readParenthesizedContent();
+      const conditionOffset = conditionStart + 1;
+      const parsed = parseGtplExpression(condition);
+      for (const diagnostic of parsed.diagnostics) this.report(diagnostic.code, diagnostic.message, conditionOffset + diagnostic.span.start, conditionOffset + diagnostic.span.end);
+      const children = this.parseBraceBlock();
+      branches.push({ condition, ...(parsed.expression ? { parsedCondition: parsed.expression } : {}), span: this.span(conditionStart, this.offset), children });
+      this.skipWhitespace();
+      if (this.startsWith('@else if')) { keyword = '@else if'; continue; }
+      if (this.startsWith('@else')) {
+        this.offset += '@else'.length;
+        this.skipWhitespace();
+        const elseChildren = this.parseBraceBlock();
+        branches.push({ span: this.span(this.offset, this.offset), children: elseChildren });
+      }
+      break;
+    }
+    return { kind: 'if-block', branches, span: this.span(start, this.offset) };
+  }
+
+  private parseForBlock(): GtplNode {
+    const start = this.offset;
+    this.offset += '@for'.length;
+    this.skipWhitespace();
+    const headerStart = this.offset;
+    const header = this.readParenthesizedContent();
+    const segments = header.split(';').map((part) => part.trim());
+    const loop = /^(?:let\\s+)?([A-Za-z_$][\\w$]*)\\s+of\\s+([\\s\\S]+)$/.exec(segments[0] ?? '');
+    if (!loop) this.report('GTPL3001', 'Invalid @for header; expected "item of iterable".', headerStart, this.offset);
+    const item = loop?.[1] ?? '$item';
+    const collection = loop?.[2] ?? '';
+    const trackMatch = segments.slice(1).map((part) => /^track\\s+([\\s\\S]+)$/.exec(part)).find(Boolean);
+    if (!trackMatch) this.report('GTPL3002', '@for requires a track expression.', headerStart, this.offset);
+    const collectionOffset = headerStart + 1 + (segments[0]?.indexOf(collection) ?? 0);
+    const parsedCollection = parseGtplExpression(collection);
+    for (const diagnostic of parsedCollection.diagnostics) this.report(diagnostic.code, diagnostic.message, collectionOffset + diagnostic.span.start, collectionOffset + diagnostic.span.end);
+    const track = trackMatch?.[1] ?? '$index';
+    const trackOffset = trackMatch ? headerStart + 1 + header.indexOf(track) : headerStart;
+    const parsedTrack = parseGtplExpression(track);
+    for (const diagnostic of parsedTrack.diagnostics) this.report(diagnostic.code, diagnostic.message, trackOffset + diagnostic.span.start, trackOffset + diagnostic.span.end);
+    const children = this.parseBraceBlock();
+    this.skipWhitespace();
+    let empty: GtplNode[] = [];
+    if (this.startsWith('@empty')) { this.offset += '@empty'.length; this.skipWhitespace(); empty = this.parseBraceBlock(); }
+    return { kind: 'for-block', item, collection, track, children, empty,
+      ...(parsedCollection.expression ? { parsedCollection: parsedCollection.expression } : {}),
+      ...(parsedTrack.expression ? { parsedTrack: parsedTrack.expression } : {}),
+      span: this.span(start, this.offset) };
+  }
+
+  private readParenthesizedContent(): string {
+    if (this.peek() !== '(') { this.report('GTPL3003', 'Expected "(" after control-flow keyword.', this.offset, this.offset + 1); return ''; }
+    const start = ++this.offset;
+    let depth = 1;
+    let quote = '';
+    while (!this.eof() && depth > 0) {
+      const char = this.peek();
+      if (quote) {
+        if (char === '\\\\') this.offset += 2;
+        else { if (char === quote) quote = ''; this.offset += 1; }
+        continue;
+      }
+      if (char === '"' || char === "'") { quote = char; this.offset += 1; continue; }
+      if (char === '(') depth += 1;
+      if (char === ')') depth -= 1;
+      if (depth > 0) this.offset += 1;
+    }
+    const value = this.source.slice(start, this.offset);
+    if (this.peek() === ')') this.offset += 1;
+    else this.report('GTPL3004', 'Unterminated control-flow condition.', start - 1, this.offset);
+    return value.trim();
+  }
+
+  private parseBraceBlock(): GtplNode[] {
+    const children: GtplNode[] = [];
+    if (this.peek() !== '{') { this.report('GTPL3005', 'Expected "{" to start control-flow block.', this.offset, this.offset + 1); return children; }
+    this.offset += 1;
+    this.blockDepth += 1;
+    while (!this.eof() && this.peek() !== '}') {
+      const before = this.offset;
+      const node = this.parseNode();
+      if (node) children.push(node);
+      if (before === this.offset) this.offset += 1;
+    }
+    if (this.peek() === '}') this.offset += 1;
+    else this.report('GTPL3006', 'Unterminated control-flow block.', this.offset, this.offset);
+    this.blockDepth -= 1;
+    return children;
   }
 
   private parseComment(): void {

@@ -56,7 +56,29 @@ export interface ElementNode {
   readonly span: SourceSpan;
 }
 
-export type GtplNode = ElementNode | TextNode;
+export interface IfBranch {
+  readonly condition?: string;
+  readonly parsedCondition?: ExpressionNode;
+  readonly span: SourceSpan;
+  readonly children: readonly GtplNode[];
+}
+export interface IfBlockNode {
+  readonly kind: 'if-block';
+  readonly branches: readonly IfBranch[];
+  readonly span: SourceSpan;
+}
+export interface ForBlockNode {
+  readonly kind: 'for-block';
+  readonly item: string;
+  readonly collection: string;
+  readonly parsedCollection?: ExpressionNode;
+  readonly track: string;
+  readonly parsedTrack?: ExpressionNode;
+  readonly empty: readonly GtplNode[];
+  readonly children: readonly GtplNode[];
+  readonly span: SourceSpan;
+}
+export type GtplNode = ElementNode | TextNode | IfBlockNode | ForBlockNode;
 
 export interface GtplParseResult {
   readonly nodes: readonly GtplNode[];

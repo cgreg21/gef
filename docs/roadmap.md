@@ -17,14 +17,14 @@
 - [x] Produce source-located diagnostics for malformed markup.
 - [x] Add an expression AST and initial expression parser.
 - [x] Connect expression parsing to property, event, two-way, structural bindings, and interpolation nodes (except the dedicated `*gefFor` microsyntax).
-- [ ] Add parser fuzzing and malformed-input corpus.
+- [x] Parse element structural shorthand `*if` / `*for`.\n- [x] Parse block control flow `@if` / `@else if` / `@else` and `@for` / `@empty`.\n- [ ] Add parser fuzzing and malformed-input corpus.
 
 ## Milestone 2 — compiler semantics
 
 - [ ] Component metadata and selector registry.
 - [ ] Renderer metadata for inputs, outputs, and supported properties.
 - [ ] Expression type checking against component class members.
-- [ ] Structural directive lowering.
+- [ ] Structural shorthand lowering and built-in control-flow lowering.
 - [ ] Template type-check blocks and actionable diagnostics.
 
 ## Milestone 3 — runtime and Shell renderer

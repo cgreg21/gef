@@ -58,13 +58,13 @@ The initial expression parser supports:
 
 Object literals, assignments, statements, `new`, arbitrary global access, and JavaScript function/arrow declarations are intentionally not part of the initial grammar. Pipes and local-variable declarations will be specified separately.
 
-The parser produces a typed expression AST and syntax diagnostics. Expression-bearing property, event, two-way, and structural bindings are parsed during GTPL parsing; interpolation expressions are parsed as well. Parsed trees are attached to their AST nodes while original expression text and source spans are preserved. `*gefFor="let item of items"` is recognized as dedicated microsyntax and intentionally deferred to structural-directive parsing. Expression diagnostics are translated to template-file line and column positions. This phase does not type-check identifiers against a component class or renderer metadata; that belongs to semantic analysis.
+The parser produces a typed expression AST and syntax diagnostics. Control flow follows Angular's built-in block model: `@if (...)`, any number of `@else if (...)` branches, one `@else` branch, and `@for (item of iterable; track identity)` with optional `@empty`. The fallback is written `@else { ... }` (without parentheses). Structural shorthand is `*if` and `*for` on elements; `*for` uses the `let item of items` microsyntax. Expression-bearing property, event, two-way, and structural bindings are parsed during GTPL parsing; interpolation expressions are parsed as well. Parsed trees are attached to their AST nodes while original expression text and source spans are preserved. `*gefFor="let item of items"` is recognized as dedicated microsyntax and intentionally deferred to structural-directive parsing. Expression diagnostics are translated to template-file line and column positions. This phase does not type-check identifiers against a component class or renderer metadata; that belongs to semantic analysis.
 
 ## Initial template grammar sketch
 
 ```ebnf
 Template       ::= Node*
-Node           ::= Element | Text | Comment
+Node           ::= Element | Text | Comment | IfBlock | ForBlock\nIfBlock        ::= "@if" "(" Expression ")" "{" Node* "}" ("@else if" "(" Expression ")" "{" Node* "}")* ("@else" "{" Node* "}")?\nForBlock       ::= "@for" "(" Identifier "of" Expression ";" "track" Expression ")" "{" Node* "}" ("@empty" "{" Node* "}")?
 Element        ::= OpenTag Node* CloseTag | SelfClosingTag
 OpenTag        ::= "<" Name Attribute* ">"
 CloseTag       ::= "</" Name ">"
@@ -104,4 +104,4 @@ No template or expression parsing should occur in the installed extension runtim
 
 Implemented: template structure parser, binding-attribute classification, interpolation boundary parsing, expression AST/parser, integration of expression trees into bindings/interpolations, template-positioned expression diagnostics, and syntax/integration tests.
 
-Not yet implemented: connecting expression parsing to every template binding during compilation, expression type checking, component metadata, directive lowering, renderer validation, and JavaScript code generation.
+Not yet implemented: semantic validation of structural shorthand, lowering control-flow nodes to renderer instructions, expression type checking, component metadata, renderer validation, and JavaScript code generation.

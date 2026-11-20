@@ -1,58 +1,28 @@
 # Development roadmap
 
-## Milestone 0 — repository foundation
+## Foundation
+- [x] Repository baseline and GNOME Shell 51 target.
+- [x] Canonical .gtpl templates and initial parser.
+- [ ] Reproducible lockfile, dependency audit, lint and formatting.
 
-- [x] Create repository documentation and package/tooling baseline.
-- [x] Establish GNOME Shell 51 as the first platform target.
-- [x] Define `.gtpl` as the canonical template file extension.
-- [x] Add an initial parser and syntax-level tests.
-- [ ] Establish a reproducible lockfile and dependency audit.
-- [ ] Add linting and formatting checks.
+## GTPL compiler
+- [x] Nested elements, attributes, interpolation and expression AST.
+- [x] Angular-like @if, @for, @switch and @let parsing.
+- [x] Lexical scope and optional component identifier checks.
+- [x] Plain component metadata and input/output binding validation.
+- [ ] Parser fuzzing and malformed-input corpus.
+- [ ] Type-check expressions against TypeScript component members.
+- [ ] Lower structural shorthand and control flow.
+- [ ] Switch exhaustiveness checks using TypeScript types.
 
-## Milestone 1 — GTPL parser
-
-- [x] Parse nested and self-closing elements.
-- [x] Parse static, property, event, two-way, structural, and local-reference attributes.
-- [x] Parse text interpolation boundaries.
-- [x] Produce source-located diagnostics for malformed markup.
-- [x] Add an expression AST and initial expression parser.
-- [x] Connect expression parsing to property, event, two-way, structural bindings, and interpolation nodes (except the dedicated `*gefFor` microsyntax).
-- [x] Parse element structural shorthand `*if` / `*for`.
-- [x] Parse block control flow `@if` / `@else if` / `@else` and `@for` / `@empty`.
-- [x] Parse `@if` condition aliases and `@for` contextual-variable aliases.
-- [x] Parse `@switch` / `@case` / `@default`, grouped cases and exhaustive `never` defaults.
-- [x] Parse `@let` local template declarations.
-- [ ] Add parser fuzzing and malformed-input corpus.
-
-## Milestone 2 — compiler semantics
-
-- [x] Add initial lexical scope analysis for `@let`, `@if`, `@for`, and `@switch`.
-- [x] Add optional strict identifier validation against a supplied component context.
-- [ ] Component metadata and selector registry.
-- [ ] Renderer metadata for inputs, outputs, and supported properties.
-- [ ] Expression type checking against component class members.
-- [ ] Structural shorthand lowering and built-in control-flow lowering.
-- [ ] Template type-check blocks and actionable diagnostics.
-- [ ] Switch exhaustiveness checking using TypeScript type information.
-
-## Milestone 3 — runtime and Shell renderer
-
-- [ ] Resource ownership and deterministic lifecycle cleanup.
+## Runtime and renderers
+- [ ] Resource ownership and deterministic cleanup.
 - [ ] Dependency injection and reactive signals.
-- [ ] GNOME Shell 51 St/Clutter renderer.
-- [ ] Native GJS output and source maps.
-- [ ] GNOME Shell 51 integration test harness.
+- [ ] GNOME Shell 51 St/Clutter renderer and integration tests.
+- [ ] GTK4/libadwaita preferences renderer.
+- [ ] Native GJS code generation and source maps.
 
-## Milestone 4 — styles and preferences
-
-- [ ] SCSS compilation and component style scoping.
-- [ ] St CSS validator for GNOME Shell 51.
-- [ ] GTK CSS validation and GTK4/libadwaita renderer.
-- [ ] Theme loading and development reload support.
-
-## Milestone 5 — developer experience
-
-- [ ] `gef new`, `generate`, `build`, `test`, `validate`, `package`, and `doctor`.
-- [ ] Watch mode and actionable diagnostics.
-- [ ] Inspector and runtime diagnostics.
-- [ ] Example extensions and complete documentation.
+## Styles and developer tools
+- [ ] SCSS compilation and St/GTK-specific CSS validation.
+- [ ] CLI: new, generate, build, test, validate, package and doctor.
+- [ ] Watch mode, diagnostics and examples.

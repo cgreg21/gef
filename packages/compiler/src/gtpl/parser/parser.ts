@@ -449,6 +449,16 @@ class GtplParser {
     return this.source.slice(start, this.offset);
   }
 
+  private advanceQuotedCharacter(quote: string): boolean {
+    if (this.peek() === '\\') {
+      this.offset += 2;
+      return false;
+    }
+    const closesQuote = this.peek() === quote;
+    this.offset += 1;
+    return closesQuote;
+  }
+
   private readUntilSemicolon(): string {
     const start = this.offset;
     let round = 0;
@@ -457,8 +467,7 @@ class GtplParser {
     while (!this.eof()) {
       const char = this.peek();
       if (quote) {
-        if (char === '\\') this.offset += 2;
-        else { if (char === quote) quote = ''; this.offset += 1; }
+        if (this.advanceQuotedCharacter(quote)) quote = '';
         continue;
       }
       if (char === '"' || char === "'") { quote = char; this.offset += 1; continue; }
@@ -586,8 +595,7 @@ class GtplParser {
     while (!this.eof() && depth > 0) {
       const char = this.peek();
       if (quote) {
-        if (char === '\\') this.offset += 2;
-        else { if (char === quote) quote = ''; this.offset += 1; }
+        if (this.advanceQuotedCharacter(quote)) quote = '';
         continue;
       }
       if (char === '"' || char === "'") { quote = char; this.offset += 1; continue; }

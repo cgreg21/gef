@@ -312,6 +312,30 @@ describe('GTPL built-in control flow', () => {
     expect(result.diagnostics.some((item) => item.code === 'GTPL3006')).toBe(false);
   });
 
+
+  it('keeps escaped quotes inside @if conditions', () => {
+    const source = String.raw`@if (isReady("a\\")b")) { <StLabel /> } <StButton />`;
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('if-block');
+    if (block?.kind !== 'if-block') return;
+    expect(block.branches[0]?.children[0]?.kind).toBe('element');
+    expect(result.nodes[1]?.kind).toBe('element');
+    expect(result.diagnostics).toHaveLength(0);
+  });
+
+  it('does not terminate @let at a semicolon inside an escaped string', () => {
+    const source = String.raw`@let value = "a\\\";b"; <StLabel />`;
+    const result = parseGtpl(source);
+    expect(result.nodes[0]).toMatchObject({
+      kind: 'let-declaration',
+      name: 'value',
+      expression: String.raw`"a\\\";b"`,
+    });
+    expect(result.nodes[1]?.kind).toBe('element');
+    expect(result.diagnostics).toHaveLength(0);
+  });
+
   it('reports missing @for track and malformed delimiters', () => {
     const result = parseGtpl('@for (item of items) { <StLabel /> } @if ready { <StBox /> }');
     expect(result.diagnostics.some((item) => item.code === 'GTPL3002')).toBe(true);

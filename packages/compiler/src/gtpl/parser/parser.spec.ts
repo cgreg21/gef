@@ -582,4 +582,23 @@ describe('GTPL built-in control flow', () => {
     expect(result.diagnostics.some((item) => item.code === 'GTPL3002')).toBe(true);
     expect(result.diagnostics.some((item) => item.code === 'GTPL3003')).toBe(true);
   });
+  it('preserves greater-than characters inside quoted attribute values and their source spans', () => {
+    const source = `<StLabel title="left > middle" [tooltip]="format('a > b')" />`;
+    const result = parseGtpl(source);
+    expect(result.diagnostics).toHaveLength(0);
+
+    const element = result.nodes[0];
+    expect(element?.kind).toBe('element');
+    if (element?.kind !== 'element') return;
+
+    expect(element.attributes.map(({ name, value }) => [name, value])).toEqual([
+      ['title', 'left > middle'],
+      ['tooltip', "format('a > b')"],
+    ]);
+    for (const attribute of element.attributes) {
+      expect(source.slice(attribute.valueSpan.start, attribute.valueSpan.end)).toBe(attribute.value);
+    }
+    expect(source.slice(element.span.start, element.span.end)).toBe(source);
+  });
+
 });

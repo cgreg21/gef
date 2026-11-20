@@ -10,8 +10,8 @@ describe('checkGtpl', () => {
 
     expect(result.diagnostics.map((item) => item.code)).toEqual([
       'GTPL2004',
-      'GTPL4102',
       'GTPL4002',
+      'GTPL4102',
     ]);
   });
 

@@ -6,7 +6,7 @@ type Node = { readonly kind: string; readonly value?: unknown; readonly children
 function createHost(): GtplRenderHost<Node> {
   return {
     destroy: () => {},
-    element: (name, attributes, children) => ({ kind: name, value: attributes, children: [children] }),
+    element: (name, attributes, children) => ({ kind: name, value: attributes, children: children ? [children] : [] }),
     text: (value) => ({ kind: 'text', value }),
     fragment: (children) => ({ kind: 'fragment', children }),
     repeat: (state) => ({ kind: 'repeat', value: state.get() }),

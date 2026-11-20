@@ -71,7 +71,7 @@ describe('emitGtplTemplate', () => {
     const render = new Function(`return ${source}`)() as (context: { name: string }, runtime: unknown) => Node;
     const host: GtplRenderHost<Node> = {
       destroy: () => {},
-      element: (kind, value, children) => ({ kind, value, children: [children] }),
+      element: (kind, value, children) => ({ kind, value, children: children ? [children] : [] }),
       text: (value) => ({ kind: 'text', value: typeof value === 'string' ? value : value.get() }),
       fragment: (children) => ({ kind: 'fragment', children }),
       repeat: (state) => ({ kind: 'repeat', value: state.get() }),

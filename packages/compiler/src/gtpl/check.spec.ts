@@ -56,6 +56,18 @@ describe('checkGtpl', () => {
     });
   });
 
+  it('validates two-way binding contracts after lowering', () => {
+    const result = checkGtpl('<GefSlider [(value)]="volume" />', {
+      componentMembers: ['volume'],
+      components: [{ selector: 'GefSlider', inputs: ['value'], outputs: ['valueChange'] }],
+    });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.nodes[0]).toMatchObject({
+      kind: 'element',
+      attributes: [{ kind: 'property' }, { kind: 'event', name: 'valueChange' }],
+    });
+  });
+
   it('reports invalid structural directive syntax', () => {
     const result = checkGtpl('<StLabel *for="let item in items" />');
     expect(result.diagnostics).toMatchObject([{ code: 'GTPL4203' }]);

@@ -152,7 +152,7 @@ class GtplParser {
     }
 
     const children: GtplNode[] = [];
-    if (!selfClosing && openingTagClosed) {
+    if (!selfClosing && (openingTagClosed || this.eof())) {
       let closed = false;
       while (!this.eof()) {
         if (this.blockDepth > 0 && (this.peek() === '}' || this.isIfBranchStart()

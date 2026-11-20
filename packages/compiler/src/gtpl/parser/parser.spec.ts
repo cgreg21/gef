@@ -255,7 +255,9 @@ describe('GTPL built-in control flow', () => {
     expect(block?.kind).toBe('if-block');
     if (block?.kind !== 'if-block') return;
     expect(block.branches).toHaveLength(1);
-    expect(block.branches[0]?.children[1]?.kind).toBe('text');
+    expect(block.branches[0]?.children).toHaveLength(1);
+    expect(result.nodes[1]?.kind).toBe('text');
+    expect(result.nodes[2]?.kind).toBe('element');
     expect(result.diagnostics.some((item) => item.code === 'GTPL3005')).toBe(false);
   });
 

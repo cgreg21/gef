@@ -1,7 +1,17 @@
-export interface ExpressionSpan {
-  readonly start: number;
-  readonly end: number;
-}
+import type { ExpressionNode } from '../ast/expression.js';
+
+export type {
+  ArrayExpression,
+  BinaryExpression,
+  CallExpression,
+  ConditionalExpression,
+  ExpressionNode,
+  ExpressionSpan,
+  IdentifierExpression,
+  LiteralExpression,
+  MemberExpression,
+  UnaryExpression,
+} from '../ast/expression.js';
 
 export interface ExpressionDiagnostic {
   readonly code: string;

@@ -53,6 +53,7 @@ class GtplParser {
   private readonly lineStarts: number[] = [0];
   private blockDepth = 0;
   private switchCaseDepth = 0;
+  private readonly openElements: string[] = [];
 
   constructor(private readonly source: string) {
     for (let i = 0; i < source.length; i += 1) {
@@ -107,6 +108,7 @@ class GtplParser {
       };
     }
 
+    this.openElements.push(name);
     const attributes: GtplAttribute[] = [];
     let selfClosing = false;
     while (!this.eof()) {
@@ -149,6 +151,10 @@ class GtplParser {
             closed = true;
             break;
           }
+          if (closingName && this.openElements.slice(0, -1).includes(closingName)) {
+            this.offset = closingStart;
+            break;
+          }
           this.report(
             'GTPL1005',
             `Expected closing tag "</${name}>", found "${closingName ? `</${closingName}>` : 'malformed closing tag'}".`,
@@ -167,6 +173,7 @@ class GtplParser {
       }
     }
 
+    this.openElements.pop();
     return {
       kind: 'element',
       name,
@@ -783,6 +790,8 @@ class GtplParser {
   }
 
   private span(start: number, end: number): SourceSpan {
+    start = Math.max(0, Math.min(start, this.source.length));
+    end = Math.max(start, Math.min(end, this.source.length));
     let low = 0;
     let high = this.lineStarts.length;
     while (low + 1 < high) {

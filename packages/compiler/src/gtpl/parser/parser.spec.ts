@@ -88,6 +88,31 @@ describe('parseGtpl', () => {
     expect(result.diagnostics.some((item) => item.code === 'GTPL3006')).toBe(false);
   });
 
+  it('recovers an ancestor closing tag after a nested element is left open', () => {
+    const result = parseGtpl('<StBox><StLabel></StBox>');
+    expect(result.nodes).toMatchObject([
+      {
+        kind: 'element',
+        name: 'StBox',
+        children: [{ kind: 'element', name: 'StLabel', children: [] }],
+      },
+    ]);
+    expect(result.diagnostics.map(({ code }) => code)).toEqual(['GTPL1006']);
+    expect(result.diagnostics[0]?.span.start).toBe(8);
+  });
+
+  it('keeps every diagnostic span within the source bounds', () => {
+    const sources = ['@if', '@for (item of items', '<StLabel title="unterminated', '@switch (value)'];
+    for (const source of sources) {
+      const result = parseGtpl(source);
+      for (const diagnostic of result.diagnostics) {
+        expect(diagnostic.span.start).toBeGreaterThanOrEqual(0);
+        expect(diagnostic.span.end).toBeGreaterThanOrEqual(diagnostic.span.start);
+        expect(diagnostic.span.end).toBeLessThanOrEqual(source.length);
+      }
+    }
+  });
+
   it('reports missing closing tags with source locations', () => {
     const result = parseGtpl('<StBox>\n  <StLabel />');
     expect(result.diagnostics).toHaveLength(1);

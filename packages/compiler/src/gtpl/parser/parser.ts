@@ -565,6 +565,7 @@ class GtplParser {
         continue;
       }
       if (char === '"' || char === "'") { quote = char; this.offset += 1; continue; }
+      if (depth === 1 && (char === '{' || char === '}')) break;
       if (char === '(') depth += 1;
       if (char === ')') depth -= 1;
       if (depth > 0) this.offset += 1;

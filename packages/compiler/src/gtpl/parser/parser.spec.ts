@@ -288,6 +288,19 @@ describe('GTPL built-in control flow', () => {
     if (outer?.kind !== 'if-block') return;
     expect(outer.branches[0]?.children[0]?.kind).toBe('for-block');
   });
+  it('recovers a missing control-flow closing parenthesis before the block', () => {
+    const source = '@if (ready { <StLabel /> } <StButton />';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('if-block');
+    if (block?.kind !== 'if-block') return;
+    expect(block.branches[0]?.children).toHaveLength(1);
+    expect(block.branches[0]?.children[0]?.kind).toBe('element');
+    expect(result.nodes[1]?.kind).toBe('element');
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3004')).toBe(true);
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3006')).toBe(false);
+  });
+
   it('reports missing @for track and malformed delimiters', () => {
     const result = parseGtpl('@for (item of items) { <StLabel /> } @if ready { <StBox /> }');
     expect(result.diagnostics.some((item) => item.code === 'GTPL3002')).toBe(true);

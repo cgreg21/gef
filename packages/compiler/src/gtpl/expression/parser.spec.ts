@@ -189,4 +189,72 @@ describe('parseGtplExpression', () => {
     expect(result.expression).toBeNull();
     expect(result.diagnostics[0]?.code).toBe('GTPL2001');
   });
+  it('survives deterministic malformed-expression fuzzing with bounded AST and diagnostic spans', () => {
+    const tokens = [
+      'value', 'items', '0', '42.5', '"text"', "'escaped\\\\'quote'",
+      'true', 'null', '?.', '.', '[', ']', '(', ')', ',', ':', '?',
+      '+', '-', '*', '**', '/', '&&', '||', '??', '!', '===', '<',
+      '{', '}', '@', ';', '\\\\', '',
+    ];
+    let seed = 0x6d2b79f5;
+    const random = (limit: number): number => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed % limit;
+    };
+    const sources = Array.from({ length: 1200 }, () =>
+      Array.from({ length: 1 + random(24) }, () => tokens[random(tokens.length)] ?? '')
+        .join(random(2) ? ' ' : ''),
+    );
+
+    const assertExpressionSpans = (node: import('../ast/expression.js').ExpressionNode | null, source: string): void => {
+      if (!node) return;
+      expect(node.span.start).toBeGreaterThanOrEqual(0);
+      expect(node.span.end).toBeGreaterThanOrEqual(node.span.start);
+      expect(node.span.end).toBeLessThanOrEqual(source.length);
+      switch (node.kind) {
+        case 'array':
+          for (const element of node.elements) assertExpressionSpans(element, source);
+          break;
+        case 'unary':
+          assertExpressionSpans(node.argument, source);
+          break;
+        case 'binary':
+          assertExpressionSpans(node.left, source);
+          assertExpressionSpans(node.right, source);
+          break;
+        case 'conditional':
+          assertExpressionSpans(node.test, source);
+          assertExpressionSpans(node.consequent, source);
+          assertExpressionSpans(node.alternate, source);
+          break;
+        case 'member':
+          assertExpressionSpans(node.object, source);
+          if (typeof node.property !== 'string') assertExpressionSpans(node.property, source);
+          break;
+        case 'call':
+          assertExpressionSpans(node.callee, source);
+          for (const argument of node.arguments) assertExpressionSpans(argument, source);
+          break;
+      }
+    };
+
+    for (const source of sources) {
+      const result = parseGtplExpression(source);
+      assertExpressionSpans(result.expression, source);
+      for (const diagnostic of result.diagnostics) {
+        expect(diagnostic.span.start).toBeGreaterThanOrEqual(0);
+        expect(diagnostic.span.end).toBeGreaterThanOrEqual(diagnostic.span.start);
+        expect(diagnostic.span.end).toBeLessThanOrEqual(source.length);
+      }
+    }
+  });
+
+  it('handles deeply nested expression delimiters without corrupting source spans', () => {
+    const depth = 160;
+    const source = 'format('.repeat(depth) + 'value' + ')'.repeat(depth);
+    const result = parseGtplExpression(source);
+    expect(result.diagnostics).toHaveLength(0);
+    expect(result.expression?.span).toEqual({ start: 0, end: source.length });
+  });
+
 });

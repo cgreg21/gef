@@ -23,6 +23,8 @@ export interface GtplRenderHost<Node> {
   text(value: string | GtplBinding<string>): Node;
   fragment(children: readonly Node[]): Node;
   repeat(items: readonly GtplRepeatItem<Node>[]): Node;
+  conditional<T>(condition: GtplBinding<T>, render: (value: T) => Node, fallback: () => Node): Node;
+  switch(value: GtplBinding<unknown>, cases: readonly GtplSwitchCase<Node>[], renderDefault?: (() => Node) | undefined): Node;
 }
 
 export interface GtplRenderView<Node> {
@@ -43,7 +45,7 @@ export interface GtplRenderRuntime<Node> {
   element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node): Node;
   text(value: string | GtplBinding<string>): Node;
   fragment(children: readonly Node[]): Node;
-  if<T>(condition: T, render: (value: T) => Node, fallback?: () => Node): Node;
+  if<T>(condition: T | GtplBinding<T>, render: (value: T) => Node, fallback?: () => Node): Node;
   for<T>(
     collection: Iterable<T> | null | undefined,
     renderItem: (item: T, index: number, count: number) => Node,
@@ -51,7 +53,7 @@ export interface GtplRenderRuntime<Node> {
     renderEmpty: () => Node,
   ): Node;
   switch(
-    value: unknown,
+    value: unknown | GtplBinding<unknown>,
     cases: readonly GtplSwitchCase<Node>[],
     renderDefault?: (() => Node) | undefined,
   ): Node;
@@ -67,7 +69,12 @@ export function createGtplRenderRuntime<Node>(host: GtplRenderHost<Node>): GtplR
     element: (name, attributes, children) => host.element(name, attributes, children),
     text: (value) => host.text(value),
     fragment: (children) => host.fragment(children),
-    if: (condition, render, fallback) => condition ? render(condition) : fallback?.() ?? host.fragment([]),
+    if: (condition, render, fallback) => {
+      const renderFallback = fallback ?? (() => host.fragment([]));
+      return isGtplBinding(condition)
+        ? host.conditional(condition, render, renderFallback)
+        : condition ? render(condition) : renderFallback();
+    },
     for: (collection, renderItem, trackBy, renderEmpty) => {
       if (collection == null) return renderEmpty();
       const values = Array.from(collection);
@@ -81,10 +88,15 @@ export function createGtplRenderRuntime<Node>(host: GtplRenderHost<Node>): GtplR
       return host.repeat(items);
     },
     switch: (value, cases, renderDefault) => {
-      for (const branch of cases) {
-        if (branch.values.some((candidate) => Object.is(candidate, value))) return branch.render();
-      }
-      return renderDefault?.() ?? host.fragment([]);
+      const render = (current: unknown): Node => {
+        for (const branch of cases) {
+          if (branch.values.some((candidate) => Object.is(candidate, current))) return branch.render();
+        }
+        return renderDefault?.() ?? host.fragment([]);
+      };
+      return isGtplBinding(value)
+        ? host.switch(value, cases, renderDefault)
+        : render(value);
     },
   };
 }

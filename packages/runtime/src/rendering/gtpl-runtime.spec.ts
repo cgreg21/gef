@@ -10,6 +10,12 @@ function createHost(): GtplRenderHost<Node> {
     text: (value) => ({ kind: 'text', value }),
     fragment: (children) => ({ kind: 'fragment', children }),
     repeat: (items) => ({ kind: 'repeat', value: items }),
+    conditional: (condition, render, fallback) => condition.get() ? render(condition.get()) : fallback(),
+    switch: (value, cases, renderDefault) => {
+      const current = value.get();
+      return cases.find((branch) => branch.values.some((candidate) => Object.is(candidate, current)))?.render()
+        ?? renderDefault?.() ?? { kind: 'fragment', children: [] };
+    },
   };
 }
 

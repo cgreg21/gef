@@ -96,7 +96,7 @@ export function emitGtplTemplate(
         const render = branch.alias
           ? `(${branch.alias}) => ${renderNodes(branch.children, new Set([...locals, branch.alias]))}`
           : `() => ${renderNodes(branch.children, locals)}`;
-        fallback = `runtime.if(${condition}, ${render}, () => ${fallback})`;
+        fallback = `runtime.if(runtime.bind(() => ${condition}), ${render}, () => ${fallback})`;
       } else {
         fallback = renderNodes(branch.children, locals);
       }
@@ -122,7 +122,7 @@ export function emitGtplTemplate(
     const fallback = node.defaultCase && !node.defaultCase.exhaustive
       ? `() => ${renderNodes(node.defaultCase.children, locals)}`
       : 'undefined';
-    return `runtime.switch(${expression(node.parsedExpression, locals, options)}, [${cases.join(', ')}], ${fallback})`;
+    return `runtime.switch(runtime.bind(() => ${expression(node.parsedExpression, locals, options)}), [${cases.join(', ')}], ${fallback})`;
   };
 
   const renderNode = (node: GtplNode, locals: ReadonlySet<string>): string => {

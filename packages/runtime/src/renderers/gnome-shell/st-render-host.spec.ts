@@ -108,6 +108,34 @@ describe('createStRenderHost', () => {
     expect(label.properties.text).toBe('second');
   });
 
+  it('updates conditional and switch branches when their signals change', () => {
+    const host = createStRenderHost(createSt());
+    const runtime = createGtplRenderRuntime(host);
+    const ready = signal(false);
+    const conditional = runtime.if(
+      runtime.bind(() => ready.get()),
+      () => host.text('ready'),
+      () => host.text('waiting'),
+    ) as FakeBin;
+    expect((conditional.children[0] as FakeActor).properties.text).toBe('waiting');
+    ready.set(true);
+    expect((conditional.children[0] as FakeActor).properties.text).toBe('ready');
+    host.destroy(conditional);
+    ready.set(false);
+    expect(conditional.children).toHaveLength(0);
+
+    const state = signal('idle');
+    const switched = runtime.switch(
+      runtime.bind(() => state.get()),
+      [{ values: ['ready'], render: () => host.text('ready') }],
+      () => host.text('idle'),
+    ) as FakeBin;
+    expect((switched.children[0] as FakeActor).properties.text).toBe('idle');
+    state.set('ready');
+    expect((switched.children[0] as FakeActor).properties.text).toBe('ready');
+    host.destroy(switched);
+  });
+
   it('supports custom component constructors', () => {
     const host = createStRenderHost(createSt(), { components: { GefCustom: FakeActor } });
     expect(host.element('GefCustom', {}, host.fragment([]))).toBeInstanceOf(FakeActor);

@@ -30,10 +30,10 @@ describe('emitGtplTemplate', () => {
 @for (item of items; track item.id; let i = $index) { <label>{{item.name}} {{i}}</label> } @empty { Empty }
 @switch (state) { @case ("ready") { Ready } @default { Wait } }`, ['heading', 'visible', 'items', 'state']);
     expect(output).toContain('const title = ctx.heading');
-    expect(output).toContain('runtime.if(ctx.visible');
+    expect(output).toContain('runtime.if(runtime.bind(() => ctx.visible)');
     expect(output).toContain('runtime.for(ctx.items');
     expect(output).toContain('return (item.id)');
-    expect(output).toContain('runtime.switch(ctx.state');
+    expect(output).toContain('runtime.switch(runtime.bind(() => ctx.state)');
   });
 
   it('evaluates an aliased if condition once and renders only the selected branch', () => {
@@ -44,8 +44,11 @@ describe('emitGtplTemplate', () => {
       fragment: (children: unknown[]) => children,
       bind: (get: () => unknown) => ({ kind: 'binding', get }),
       text: (value: string | { get: () => unknown }) => typeof value === 'string' ? value : String(value.get()),
+      bind: (get: () => unknown) => ({ kind: 'binding', get }),
       if: (condition: unknown, yes: (value: unknown) => unknown, no: () => unknown) =>
-        condition ? yes(condition) : no(),
+        typeof condition === 'object' && condition !== null && 'get' in condition
+          ? (condition.get as () => unknown)() ? yes((condition.get as () => unknown)()) : no()
+          : condition ? yes(condition) : no(),
     };
     expect(render({ getValue: () => { calls += 1; return 'ready'; } }, runtime)).toEqual([['ready ']]);
     expect(calls).toBe(1);

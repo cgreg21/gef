@@ -116,6 +116,46 @@ export function createStRenderHost(
       resources.add(effect(() => actor.set_property('text', value.get())));
       return actor;
     },
+    conditional(condition, render, fallback) {
+      const actor = new St.Bin({});
+      const resources = new ResourceScope();
+      let current: StActor | undefined;
+      actor.connect('destroy', () => {
+        resources.dispose();
+        current?.destroy();
+      });
+      resources.add(effect(() => {
+        const value = condition.get();
+        const next = value ? render(value) : fallback();
+        if (current) {
+          actor.set_child?.(null);
+          current.destroy();
+        }
+        actor.set_child?.(next);
+        current = next;
+      }));
+      return actor;
+    },
+    switch(value, cases, renderDefault) {
+      const actor = new St.Bin({});
+      const resources = new ResourceScope();
+      let current: StActor | undefined;
+      actor.connect('destroy', () => {
+        resources.dispose();
+        current?.destroy();
+      });
+      resources.add(effect(() => {
+        const selected = cases.find((branch) => branch.values.some((candidate) => Object.is(candidate, value.get())));
+        const next = selected?.render() ?? renderDefault?.() ?? makeContainer([]);
+        if (current) {
+          actor.set_child?.(null);
+          current.destroy();
+        }
+        actor.set_child?.(next);
+        current = next;
+      }));
+      return actor;
+    },
     fragment(children) {
       return makeContainer(children);
     },

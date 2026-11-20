@@ -16,11 +16,6 @@ class FakeActor implements StActor {
     this.children.push(child);
   }
 
-  set_child(child: StActor | null): void {
-    this.children.length = 0;
-    if (child) this.children.push(child);
-  }
-
   connect(name: string, callback: (actor: StActor, ...args: unknown[]) => unknown): number {
     const id = this.nextSignal++;
     this.signals.set(id, { name, callback });
@@ -43,6 +38,13 @@ class FakeActor implements StActor {
   }
 }
 
+class FakeBin extends FakeActor {
+  set_child(child: StActor | null): void {
+    this.children.length = 0;
+    if (child) this.children.push(child);
+  }
+}
+
 function constructor(): StWidgetConstructor {
   return FakeActor;
 }
@@ -52,8 +54,8 @@ function createSt(): StNamespace {
     BoxLayout: constructor(),
     Label: constructor(),
     Icon: constructor(),
-    Button: constructor(),
-    Bin: constructor(),
+    Button: FakeBin,
+    Bin: FakeBin,
     Widget: constructor(),
   };
 }

@@ -74,9 +74,12 @@ describe('emitGtplTemplate', () => {
     };
     const view = mountGtplTemplate({ name: 'GEF' }, render, host);
     expect(view.node).toMatchObject({
-      kind: 'StLabel',
-      value: { class: 'title' },
-      children: [{ kind: 'fragment', children: [{ kind: 'text', value: 'Hello GEF' }] }],
+      kind: 'fragment',
+      children: [{
+        kind: 'StLabel',
+        value: { class: 'title' },
+        children: [{ kind: 'fragment', children: [{ kind: 'text', value: 'Hello GEF' }] }],
+      }],
     });
     view.dispose();
   });

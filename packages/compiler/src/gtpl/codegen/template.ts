@@ -86,15 +86,14 @@ export function emitGtplTemplate(
     for (let index = node.branches.length - 1; index >= 0; index -= 1) {
       const branch = node.branches[index]!;
       const bodyLocals = new Set(locals);
-      let body = renderNodes(branch.children, bodyLocals);
-      if (branch.alias) {
-        const condition = expression(branch.parsedCondition, locals, options);
-        body = `(() => { const ${branch.alias} = ${condition}; return ${renderNodes(branch.children, new Set([...locals, branch.alias]))}; })()`;
-      }
       if (branch.parsedCondition) {
-        fallback = `runtime.if(${expression(branch.parsedCondition, locals, options)}, () => ${body}, () => ${fallback})`;
+        const condition = expression(branch.parsedCondition, locals, options);
+        const render = branch.alias
+          ? `() => { const ${branch.alias} = ${condition}; return ${renderNodes(branch.children, new Set([...locals, branch.alias]))}; }`
+          : `() => ${renderNodes(branch.children, locals)}`;
+        fallback = `runtime.if(${condition}, ${render}, () => ${fallback})`;
       } else {
-        fallback = body;
+        fallback = renderNodes(branch.children, locals);
       }
     }
     return fallback;

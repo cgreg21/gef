@@ -43,6 +43,6 @@ describe('emitGtplTemplate', () => {
   it('qualifies component members but preserves local variables and globals', () => {
     const output = emit('<label>{{name}} {{Math.max(count, 1)}}</label>', ['name', 'count']);
     expect(output).toContain('ctx.name');
-    expect(output).toContain('Math.max(ctx.count, 1)');
+    expect(output).toContain('(Math.max)(ctx.count, 1)');
   });
 });

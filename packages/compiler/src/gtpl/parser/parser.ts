@@ -582,10 +582,6 @@ class GtplParser {
         if (next.closesQuote) quote = '';
         continue;
       }
-      if (char === '\\') index += 1;
-        else if (char === quote) quote = '';
-        continue;
-      }
       if (char === '"' || char === "'") { quote = char; continue; }
       if (char === '(') round += 1;
       else if (char === ')') round = Math.max(0, round - 1);

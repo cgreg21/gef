@@ -116,6 +116,21 @@ describe('parseGtpl', () => {
 
 
 describe('GTPL expression integration', () => {
+  it('does not close interpolations on delimiters inside quoted strings', () => {
+    const source = String.raw`<StLabel>{{ format("}}", 'value') }}</StLabel>`;
+    const result = parseGtpl(source);
+    expect(result.diagnostics).toHaveLength(0);
+    const element = result.nodes[0];
+    expect(element?.kind).toBe('element');
+    if (element?.kind !== 'element') return;
+    const text = element.children[0];
+    expect(text?.kind).toBe('text');
+    if (text?.kind !== 'text') return;
+    expect(text.parts).toMatchObject([
+      { kind: 'interpolation', expression: String.raw`format("}}", 'value')` },
+    ]);
+  });
+
   it('attaches parsed expression trees to interpolations and bindings', () => {
     const result = parseGtpl('<StLabel [visible]="device.connected">{{ device.name }}</StLabel>');
     expect(result.diagnostics).toHaveLength(0);

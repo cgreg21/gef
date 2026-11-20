@@ -248,41 +248,61 @@ class GtplParser {
     const end = this.offset;
     const raw = this.source.slice(start, end);
     const parts: (TextPart | InterpolationPart)[] = [];
-    const pattern = /\{\{([\s\S]*?)\}\}/g;
     let cursor = 0;
-    let match: RegExpExecArray | null;
-    while ((match = pattern.exec(raw)) !== null) {
-      const matchStart = start + match.index;
-      if (match.index > cursor) {
+
+    while (cursor < raw.length) {
+      const open = raw.indexOf('{{', cursor);
+      if (open === -1) break;
+      let close = -1;
+      let quote = '';
+      for (let index = open + 2; index < raw.length; index += 1) {
+        const char = raw[index] ?? '';
+        if (quote) {
+          const next = advanceQuotedCharacter(raw, index, quote);
+          index = next.offset - 1;
+          if (next.closesQuote) quote = '';
+          continue;
+        }
+        if (char === '"' || char === "'") {
+          quote = char;
+          continue;
+        }
+        if (char === '}' && raw[index + 1] === '}') {
+          close = index;
+          break;
+        }
+      }
+      if (close === -1) {
+        this.report('GTPL1011', 'Unterminated interpolation; expected "}}".', start + open, end);
+        break;
+      }
+      if (open > cursor) {
         parts.push({
           kind: 'text',
-          value: raw.slice(cursor, match.index),
-          span: this.span(start + cursor, matchStart),
+          value: raw.slice(cursor, open),
+          span: this.span(start + cursor, start + open),
         });
       }
-      const expression = match[1] ?? '';
+      const expression = raw.slice(open + 2, close);
+      const trimmedExpression = expression.trim();
       const leadingWhitespace = expression.length - expression.trimStart().length;
-      const expressionStart = matchStart + 2 + leadingWhitespace;
-      const expressionEnd = expressionStart + expression.trim().length;
-      if (expression.trim().length === 0) {
-        this.report('GTPL1010', 'Interpolation expression cannot be empty.', matchStart, start + pattern.lastIndex);
+      const expressionStart = start + open + 2 + leadingWhitespace;
+      const expressionEnd = expressionStart + trimmedExpression.length;
+      if (trimmedExpression.length === 0) {
+        this.report('GTPL1010', 'Interpolation expression cannot be empty.', start + open, start + close + 2);
       }
-      const parsed = parseGtplExpression(expression.trim());
+      const parsed = parseGtplExpression(trimmedExpression);
       this.reportExpressionDiagnostics(parsed, expressionStart);
       parts.push({
         kind: 'interpolation',
-        expression: expression.trim(),
-        span: this.span(matchStart, start + pattern.lastIndex),
+        expression: trimmedExpression,
+        span: this.span(start + open, start + close + 2),
         expressionSpan: this.span(expressionStart, expressionEnd),
         ...(parsed.expression ? { parsedExpression: parsed.expression } : {}),
       });
-      cursor = pattern.lastIndex;
+      cursor = close + 2;
     }
 
-    const unclosed = raw.indexOf('{{', cursor);
-    if (unclosed !== -1) {
-      this.report('GTPL1011', 'Unterminated interpolation; expected "}}".', start + unclosed, end);
-    }
     if (cursor < raw.length) {
       parts.push({
         kind: 'text',
@@ -292,7 +312,6 @@ class GtplParser {
     }
     return { kind: 'text', parts, span: this.span(start, end) };
   }
-
 
   private parseIfBlock(): GtplNode {
     const start = this.offset;

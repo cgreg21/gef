@@ -399,7 +399,7 @@ class GtplParser {
     if (cases.length === 0) this.report('GTPL3108', '@switch requires at least one @case.', start, this.offset);
     return { kind: 'switch-block', expression, cases, ...(defaultCase ? { defaultCase } : {}),
       ...(parsedExpression.expression ? { parsedExpression: parsedExpression.expression } : {}),
-      span: this.span(start, blockEnd) };
+      span: this.span(start, this.offset) };
   }
 
   private parseLetDeclaration(): GtplNode {
@@ -532,7 +532,7 @@ class GtplParser {
     return { kind: 'for-block', item, collection, track, aliases, children, empty,
       ...(parsedCollection.expression ? { parsedCollection: parsedCollection.expression } : {}),
       ...(parsedTrack.expression ? { parsedTrack: parsedTrack.expression } : {}),
-      span: this.span(start, this.offset) };
+      span: this.span(start, blockEnd) };
   }
 
   private splitTopLevelSegments(value: string): { value: string; start: number }[] {

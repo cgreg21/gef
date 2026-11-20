@@ -238,7 +238,7 @@ describe('GTPL built-in control flow', () => {
     const block = result.nodes[0];
     expect(block?.kind).toBe('for-block');
     if (block?.kind !== 'for-block') return;
-    expect(block.span.end).toBe(source.indexOf('}') + 1 + source.slice(source.indexOf('}') + 1).indexOf('}') );
+    expect(block.span.end).toBe(source.lastIndexOf('}') + 1);
   });
 
   it('parses @for with track and @empty', () => {

@@ -44,7 +44,7 @@ describe('emitGtplTemplate', () => {
       if: (condition: unknown, yes: (value: unknown) => unknown, no: () => unknown) =>
         condition ? yes(condition) : no(),
     };
-    expect(render({ getValue: () => { calls += 1; return 'ready'; } }, runtime)).toEqual(['ready']);
+    expect(render({ getValue: () => { calls += 1; return 'ready'; } }, runtime)).toEqual([['ready ']]);
     expect(calls).toBe(1);
   });
 

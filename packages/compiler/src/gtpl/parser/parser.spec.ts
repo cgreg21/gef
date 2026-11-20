@@ -326,6 +326,20 @@ describe('GTPL built-in control flow', () => {
     expect(result.diagnostics.some((item) => item.code === 'GTPL3006')).toBe(true);
   });
 
+  it('preserves switch labels after an unclosed nested control-flow block', () => {
+    const source = '@switch (role) { @case ("admin") { @if (ready) { <StLabel /> @case ("editor") { <StButton /> } } }';
+    const result = parseGtpl(source);
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('switch-block');
+    if (block?.kind !== 'switch-block') return;
+    expect(block.cases).toHaveLength(2);
+    expect(block.cases[0]?.expressions).toEqual(['"admin"']);
+    expect(block.cases[0]?.children[0]?.kind).toBe('if-block');
+    expect(block.cases[1]?.expressions).toEqual(['"editor"']);
+    expect(block.cases[1]?.children[0]?.kind).toBe('element');
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3006')).toBe(true);
+  });
+
   it('recovers a missing @default closing brace before a later case', () => {
     const source = '@switch (role) { @case ("admin") {} @default { <StLabel /> @case ("editor") {} }';
     const result = parseGtpl(source);

@@ -22,6 +22,7 @@ class GtplParser {
   private readonly diagnostics: Diagnostic[] = [];
   private readonly lineStarts: number[] = [0];
   private blockDepth = 0;
+  private switchCaseDepth = 0;
 
   constructor(private readonly source: string) {
     for (let i = 0; i < source.length; i += 1) {
@@ -599,10 +600,11 @@ class GtplParser {
     if (this.peek() !== '{') { this.report('GTPL3005', 'Expected "{" to start control-flow block.', this.offset, this.offset + 1); return children; }
     this.offset += 1;
     this.blockDepth += 1;
+    if (stopAtSwitchLabel) this.switchCaseDepth += 1;
     while (!this.eof()) {
       this.skipWhitespace();
       if (this.peek() === '}') break;
-      if (stopAtSwitchLabel && (this.startsWithDirective('@case') || this.startsWithDirective('@default'))) break;
+      if (this.switchCaseDepth > 0 && (this.startsWithDirective('@case') || this.startsWithDirective('@default'))) break;
       const before = this.offset;
       const node = this.parseNode();
       if (node) children.push(node);
@@ -610,6 +612,7 @@ class GtplParser {
     }
     if (this.peek() === '}') this.offset += 1;
     else this.report('GTPL3006', 'Unterminated control-flow block.', this.offset, this.offset);
+    if (stopAtSwitchLabel) this.switchCaseDepth -= 1;
     this.blockDepth -= 1;
     return children;
   }

@@ -59,6 +59,18 @@ describe('parseGtpl', () => {
     expect(result.nodes).toHaveLength(1);
   });
 
+  it('preserves control-flow boundaries after an unclosed element', () => {
+    const result = parseGtpl('@if (ready) { <StLabel>broken } <StButton />');
+    const block = result.nodes[0];
+    expect(block?.kind).toBe('if-block');
+    if (block?.kind !== 'if-block') return;
+    expect(block.branches[0]?.children).toHaveLength(1);
+    expect(block.branches[0]?.children[0]).toMatchObject({ kind: 'element', name: 'StLabel' });
+    expect(result.nodes[1]).toMatchObject({ kind: 'element', name: 'StButton' });
+    expect(result.diagnostics.some((item) => item.code === 'GTPL1006')).toBe(true);
+    expect(result.diagnostics.some((item) => item.code === 'GTPL3006')).toBe(false);
+  });
+
   it('reports missing closing tags with source locations', () => {
     const result = parseGtpl('<StBox>\n  <StLabel />');
     expect(result.diagnostics).toHaveLength(1);

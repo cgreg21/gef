@@ -106,6 +106,7 @@ class GtplParser {
     if (!selfClosing) {
       let closed = false;
       while (!this.eof()) {
+        if (this.blockDepth > 0 && this.peek() === '}') break;
         if (this.startsWith('<!--')) {
           this.parseComment();
           continue;

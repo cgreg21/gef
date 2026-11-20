@@ -3,4 +3,4 @@ export * from './gtpl/components.js';
 export * from './gtpl/expression.js';
 export * from './gtpl/semantic.js';
 export { parseGtpl } from './gtpl/parser.js';
-export * from './component-api.js';
+export * from './components/component-api.js';

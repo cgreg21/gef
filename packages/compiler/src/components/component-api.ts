@@ -1,4 +1,4 @@
-import type { GtplComponentDefinition } from './gtpl/components.js';
+import type { GtplComponentDefinition } from '../gtpl/components.js';
 
 export interface ComponentOptions { readonly selector: string; readonly template: string; readonly styles?: readonly string[]; }
 export interface ComponentMetadata extends GtplComponentDefinition { readonly template: string; readonly styles: readonly string[]; readonly inputs: readonly string[]; readonly outputs: readonly string[]; }

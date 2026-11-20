@@ -3,3 +3,5 @@ export * from './resources/resource-scope.js';
 export * from './rendering/gtpl-runtime.js';
 
 export * from './renderers/gnome-shell/st-render-host.js';
+
+export * from './reactivity/signal.js';

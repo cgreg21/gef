@@ -19,7 +19,7 @@ export interface GtplTemplateOptions {
 function expression(node: ExpressionNode | undefined, locals: ReadonlySet<string>, options: GtplTemplateOptions): string {
   if (!node) throw new Error('Cannot generate GTPL: an expression has no valid AST.');
   return emitGtplExpression(node, {
-    contextIdentifiers: options.componentMembers,
+    ...(options.componentMembers ? { contextIdentifiers: options.componentMembers } : {}),
     localIdentifiers: [...locals, ...(options.globals ?? [])],
   });
 }

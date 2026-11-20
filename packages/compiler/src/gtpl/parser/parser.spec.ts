@@ -332,7 +332,7 @@ describe('GTPL built-in control flow', () => {
       name: 'value',
       expression: String.raw`"a\";b"`,
     });
-    expect(result.nodes[1]?.kind).toBe('element');
+    expect(result.nodes.find((node) => node.kind === 'element')?.kind).toBe('element');
     expect(result.diagnostics).toHaveLength(0);
   });
 

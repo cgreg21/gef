@@ -79,18 +79,24 @@ export function createStRenderHost(
     ...options.components,
   };
   const destroyed = new WeakSet<StActor>();
+  const destroyActor = (actor: StActor): void => {
+    if (destroyed.has(actor)) return;
+    destroyed.add(actor);
+    actor.destroy();
+  };
 
   const makeContainer = (children: readonly StActor[]): StActor => {
     const properties = options.fragmentOrientation === undefined
       ? {}
       : { orientation: options.fragmentOrientation };
     const actor = new St.BoxLayout(properties);
+    actor.connect('destroy', () => destroyed.add(actor));
     try {
       appendChildren(actor, children);
       return actor;
     } catch (error) {
-      for (const child of children) actor.remove_child?.(child);
-      actor.destroy();
+      for (const child of children) destroyActor(child);
+      destroyActor(actor);
       throw error;
     }
   };
@@ -121,7 +127,7 @@ export function createStRenderHost(
 
       const actor = new Constructor(properties);
       const resources = new ResourceScope();
-      actor.connect('destroy', () => resources.dispose());
+      actor.connect('destroy', () => { destroyed.add(actor); resources.dispose(); });
       try {
         for (const [signal, handler] of events) {
           const property = twoWayProperty(signal);
@@ -138,7 +144,7 @@ export function createStRenderHost(
         appendChildren(actor, children ? [children] : []);
         return actor;
       } catch (error) {
-        actor.destroy();
+        destroyActor(actor);
         throw error;
       }
     },
@@ -146,7 +152,7 @@ export function createStRenderHost(
       if (!isGtplBinding(value)) return new St.Label({ text: value });
       const actor = new St.Label({ text: value.get() });
       const resources = new ResourceScope();
-      actor.connect('destroy', () => resources.dispose());
+      actor.connect('destroy', () => { destroyed.add(actor); resources.dispose(); });
       resources.add(effect(() => actor.set_property('text', value.get())));
       return actor;
     },
@@ -155,6 +161,7 @@ export function createStRenderHost(
       const resources = new ResourceScope();
       let current: StActor | undefined;
       actor.connect('destroy', () => {
+        destroyed.add(actor);
         resources.dispose();
       });
       try {
@@ -163,14 +170,14 @@ export function createStRenderHost(
         const next = value ? render(value) : fallback();
         if (current) {
           actor.set_child?.(null);
-          current.destroy();
+          destroyActor(current);
         }
         actor.set_child?.(next);
         current = next;
         }));
         return actor;
       } catch (error) {
-        actor.destroy();
+        destroyActor(actor);
         throw error;
       }
     },
@@ -206,34 +213,37 @@ export function createStRenderHost(
       const resources = new ResourceScope();
       let previousItems: GtplRepeatItem<StActor>[] = [];
       let previousEmpty: StActor | undefined;
-      actor.connect('destroy', () => resources.dispose());
-      resources.add(effect(() => {
+      actor.connect('destroy', () => { destroyed.add(actor); resources.dispose(); });
+      try {
+        resources.add(effect(() => {
         const nextState = state.get();
         const oldByKey = new Map(previousItems.map((item) => [item.key, item]));
         const nextItems = nextState.items.map((item) => {
           const previous = oldByKey.get(item.key);
           if (!previous) return item;
           oldByKey.delete(item.key);
-          item.node.destroy();
+          destroyActor(item.node);
           return { ...item, node: previous.node };
         });
         for (const item of previousItems) actor.remove_child?.(item.node);
         if (previousEmpty) actor.remove_child?.(previousEmpty);
-        for (const previous of oldByKey.values()) previous.node.destroy();
-        previousEmpty?.destroy();
+        for (const previous of oldByKey.values()) destroyActor(previous.node);
+        if (previousEmpty) destroyActor(previousEmpty);
         const nextChildren = nextItems.length
           ? nextItems.map((item) => item.node)
           : nextState.empty ? [nextState.empty] : [];
         for (const child of nextChildren) actor.add_child?.(child);
         previousItems = nextItems;
         previousEmpty = nextState.empty;
-      }));
-      return actor;
+        }));
+        return actor;
+      } catch (error) {
+        destroyActor(actor);
+        throw error;
+      }
     },
     destroy(actor) {
-      if (destroyed.has(actor)) return;
-      destroyed.add(actor);
-      actor.destroy();
+      destroyActor(actor);
     },
   };
 }

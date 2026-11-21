@@ -40,7 +40,8 @@
 - [x] Emit JavaScript render-function source for GTPL ASTs, including `*if`/`*for` lowering and two-way bindings.
 - [x] Provide a combined GTPL parse, semantic and component validation API.
 - [x] Connect supported generated templates to the executable renderer-independent runtime.
-- [ ] Complete source maps with nested-node and expression-level mappings (the initial API maps top-level GTPL nodes).
+- [x] Emit initial Source Map v3 mappings for top-level GTPL nodes and expose them through compiler, component compilation and CLI output.
+- [ ] Complete source maps with nested-node and expression-level mappings.
 - [x] Report unknown identifiers at their exact GTPL expression locations.
 - [x] Track correct template line numbers for LF, CRLF and standalone CR line endings.
 - [x] Exhaustiveness diagnostics for `@default never` over literal-union context properties.

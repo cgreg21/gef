@@ -13,6 +13,11 @@ describe('compileGtplComponent', () => {
     expect(result.metadata.selector).toBe('GefGreeting');
     expect(result.diagnostics).toEqual([]);
     expect(result.renderSource).toContain('ctx.name');
+    expect(result.renderSourceMap).toMatchObject({
+      version: 3,
+      sources: ['GefGreeting.gtpl'],
+      sourcesContent: ['<StLabel>Hello {{name}}</StLabel>'],
+    });
   });
 
   it('returns diagnostics without emitting invalid render source', () => {
@@ -59,6 +64,7 @@ describe('compileGtplComponent', () => {
     expect(result.metadata.templateUrl).toBe('./external.gtpl');
     expect(result.diagnostics).toEqual([]);
     expect(result.renderSource).toContain('ctx.title');
+    expect(result.renderSourceMap?.sources).toEqual(['./external.gtpl']);
   });
 
   it('requires exactly one inline or external component template', () => {

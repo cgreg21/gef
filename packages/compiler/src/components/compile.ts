@@ -1,7 +1,7 @@
 import { checkGtpl } from '../gtpl/check.js';
 import type { GtplNode } from '../gtpl/ast/types.js';
 import type { Diagnostic } from '../gtpl/diagnostics/diagnostic.js';
-import { emitGtplTemplate } from '../gtpl/codegen/template.js';
+import { emitGtplTemplateWithSourceMap, type GtplSourceMap } from '../gtpl/codegen/template.js';
 import type { GtplComponentDefinition } from '../gtpl/validation/components.js';
 import { getComponentMetadata, type ComponentMetadata } from './api.js';
 
@@ -19,6 +19,7 @@ export interface ComponentCompileResult {
   readonly nodes: readonly GtplNode[];
   readonly diagnostics: readonly Diagnostic[];
   readonly renderSource?: string;
+  readonly renderSourceMap?: GtplSourceMap;
 }
 
 /** Validates a decorated component template and emits its render-function source. */
@@ -36,13 +37,21 @@ export function compileGtplComponent(
   if (!metadata.templateUrl && templateSource !== undefined) {
     throw new TypeError(`Component "${metadata.selector}" declares an inline template, not templateUrl.`);
   }
-  const checked = checkGtpl(templateSource ?? metadata.template, options);
+  const source = templateSource ?? metadata.template;
+  const checked = checkGtpl(source, options);
+  if (checked.diagnostics.length > 0) {
+    return { metadata, nodes: checked.nodes, diagnostics: checked.diagnostics };
+  }
+  const generated = emitGtplTemplateWithSourceMap(checked.nodes, {
+    ...options,
+    source: metadata.templateUrl ?? metadata.selector + '.gtpl',
+    sourceContent: source,
+  });
   return {
     metadata,
     nodes: checked.nodes,
     diagnostics: checked.diagnostics,
-    ...(checked.diagnostics.length === 0
-      ? { renderSource: emitGtplTemplate(checked.nodes, options) }
-      : {}),
+    renderSource: generated.code,
+    renderSourceMap: generated.map,
   };
 }

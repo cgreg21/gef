@@ -67,10 +67,18 @@ describe('GEF CLI', () => {
   it('emits a JavaScript render module', async () => {
     const { io, output, writes } = createIO('<StLabel>Hello {{name}}</StLabel>');
     expect(await runCli(['compile', 'view.gtpl', 'view.js'], io)).toBe(0);
-    expect(writes).toHaveLength(1);
-    expect(writes[0]?.path).toContain('view.js');
-    expect(writes[0]?.content).toContain('export default (ctx, runtime) =>');
-    expect(writes[0]?.content).toContain('runtime.bind');
+    expect(writes).toHaveLength(2);
+    const module = writes.find((item) => item.path.endsWith('view.js'))?.content ?? '';
+    const map = writes.find((item) => item.path.endsWith('view.js.map'));
+    expect(module).toContain('export default\\n(ctx, runtime) =>');
+    expect(module).toContain('runtime.bind');
+    expect(module).toContain('sourceMappingURL=view.js.map');
+    expect(JSON.parse(map?.content ?? '{}')).toMatchObject({
+      version: 3,
+      file: 'view.js',
+      sourcesContent: ['<StLabel>Hello {{name}}</StLabel>'],
+    });
+    expect(JSON.parse(map?.content ?? '{}').mappings).toMatch(/^;;.+/);
     expect(output[0]).toContain('Generated:');
   });
 
@@ -78,7 +86,8 @@ describe('GEF CLI', () => {
     const { io, directories, writes } = createIO('<StLabel>Hello</StLabel>');
     expect(await runCli(['compile', 'view.gtpl', 'dist/generated/view.js'], io)).toBe(0);
     expect(directories).toContain(resolve('dist/generated'));
-    expect(writes[0]?.path).toContain('dist/generated/view.js');
+    expect(writes.some((item) => item.path.endsWith('dist/generated/view.js'))).toBe(true);
+    expect(writes.some((item) => item.path.endsWith('dist/generated/view.js.map'))).toBe(true);
   });
 
   it('creates a minimal extension project', async () => {

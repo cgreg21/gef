@@ -293,13 +293,19 @@ export function createGtkRenderHost(
         scope.add(effect(() => {
           const value = condition.get();
           const next = value ? render(value) : fallback();
-          if (current) {
-            removeChild(box, current);
-            disposeWidget(current);
+          try {
+            if (current) {
+              removeChild(box, current);
+              disposeWidget(current);
+            }
+            addChild(box, next);
+            children.set(box, [next]);
+            current = next;
+          } catch (error) {
+            children.set(box, [current, next].filter((child): child is GtkActor => !!child && !disposed.has(child)));
+            if (next !== current) disposeWidget(next);
+            throw error;
           }
-          addChild(box, next);
-          children.set(box, [next]);
-          current = next;
         }));
       });
     },
@@ -309,13 +315,19 @@ export function createGtkRenderHost(
         scope.add(effect(() => {
           const selected = cases.find((branch) => branch.values.some((candidate) => Object.is(candidate, value.get())));
           const next = selected?.render() ?? renderDefault?.() ?? makeBox(Gtk, options);
-          if (current) {
-            removeChild(box, current);
-            disposeWidget(current);
+          try {
+            if (current) {
+              removeChild(box, current);
+              disposeWidget(current);
+            }
+            addChild(box, next);
+            children.set(box, [next]);
+            current = next;
+          } catch (error) {
+            children.set(box, [current, next].filter((child): child is GtkActor => !!child && !disposed.has(child)));
+            if (next !== current) disposeWidget(next);
+            throw error;
           }
-          addChild(box, next);
-          children.set(box, [next]);
-          current = next;
         }));
       });
     },

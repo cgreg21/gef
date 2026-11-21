@@ -14,7 +14,7 @@ my-component/
   my-component.component.spec.ts
 ```
 
-The current `@Component` API accepts an inline `template` string. External `.gtpl` file loading and a `templateUrl` option remain planned; the file layout above describes the intended component organization.
+`@Component` accepts either an inline `template` string or a `templateUrl` pointing to an external `.gtpl` file. The build pipeline resolves external files and supplies their source to `compileGtplComponent`; the installed runtime never loads template files.
 
 ## Node model
 

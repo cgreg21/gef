@@ -43,6 +43,31 @@ describe('compileGtplComponent', () => {
     expect(result.renderSource).toContain('runtime.bind');
   });
 
+  it('compiles an external GTPL template supplied by the build pipeline', () => {
+    @Component({ selector: 'GefExternal', templateUrl: './external.gtpl' })
+    class ExternalComponent {
+      title = 'GEF';
+    }
+
+    expect(() => compileGtplComponent(ExternalComponent, { componentMembers: ['title'] }))
+      .toThrow(/provide the loaded template source/);
+    const result = compileGtplComponent(
+      ExternalComponent,
+      { componentMembers: ['title'] },
+      '<StLabel>{{title}}</StLabel>',
+    );
+    expect(result.metadata.templateUrl).toBe('./external.gtpl');
+    expect(result.diagnostics).toEqual([]);
+    expect(result.renderSource).toContain('ctx.title');
+  });
+
+  it('requires exactly one inline or external component template', () => {
+    expect(() => Component({ selector: 'GefMissing' })(class Missing {})).toThrow(/exactly one/);
+    expect(() => Component({
+      selector: 'GefBoth', template: '<StLabel />', templateUrl: './view.gtpl',
+    })(class Both {})).toThrow(/exactly one/);
+  });
+
   it('requires component metadata', () => {
     expect(() => compileGtplComponent(class Plain {}, { componentMembers: [] }))
       .toThrow(/without @Component/);

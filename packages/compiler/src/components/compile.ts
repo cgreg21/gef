@@ -25,11 +25,18 @@ export interface ComponentCompileResult {
 export function compileGtplComponent(
   type: Function,
   options: ComponentCompileOptions,
+  templateSource?: string,
 ): ComponentCompileResult {
   const metadata = getComponentMetadata(type);
   if (!metadata) throw new TypeError('Cannot compile a class without @Component metadata.');
 
-  const checked = checkGtpl(metadata.template, options);
+  if (metadata.templateUrl && templateSource === undefined) {
+    throw new TypeError(`Component "${metadata.selector}" uses templateUrl; provide the loaded template source.`);
+  }
+  if (!metadata.templateUrl && templateSource !== undefined) {
+    throw new TypeError(`Component "${metadata.selector}" declares an inline template, not templateUrl.`);
+  }
+  const checked = checkGtpl(templateSource ?? metadata.template, options);
   return {
     metadata,
     nodes: checked.nodes,

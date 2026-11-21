@@ -1,5 +1,5 @@
-export interface ComponentOptions { readonly selector: string; readonly template: string; readonly styles?: readonly string[]; }
-export interface ComponentMetadata { readonly selector: string; readonly template: string; readonly styles: readonly string[]; readonly inputs: readonly string[]; readonly outputs: readonly string[]; readonly inputBindings: readonly InputBindingMetadata[]; readonly outputBindings: readonly OutputBindingMetadata[]; }
+export interface ComponentOptions { readonly selector: string; readonly template?: string; readonly templateUrl?: string; readonly styles?: readonly string[]; }
+export interface ComponentMetadata { readonly selector: string; readonly template: string; readonly templateUrl?: string; readonly styles: readonly string[]; readonly inputs: readonly string[]; readonly outputs: readonly string[]; readonly inputBindings: readonly InputBindingMetadata[]; readonly outputBindings: readonly OutputBindingMetadata[]; }
 export interface DirectiveOptions { readonly selector: string; }
 export interface InputBindingMetadata { readonly publicName: string; readonly member: string; }
 export interface OutputBindingMetadata { readonly publicName: string; readonly member: string; }
@@ -78,10 +78,14 @@ function assertUnique(values: readonly string[], kind: string): void {
 export function Component(options: ComponentOptions): ClassDecorator {
   return (target) => {
     if (!options.selector.trim()) throw new TypeError('A component selector cannot be empty.');
-    if (!options.template.trim()) throw new TypeError(`Component "${options.selector}" must declare a template.`);
+    const hasInlineTemplate = typeof options.template === 'string' && options.template.trim().length > 0;
+    const hasTemplateUrl = typeof options.templateUrl === 'string' && options.templateUrl.trim().length > 0;
+    if (hasInlineTemplate === hasTemplateUrl) {
+      throw new TypeError(`Component "${options.selector}" must declare exactly one of template or templateUrl.`);
+    }
     const members = collectMembers(target);
     const inputs = names(members, 'input'); const outputs = names(members, 'output');
-    components.set(target, Object.freeze({ selector: options.selector, template: options.template, styles: Object.freeze([...(options.styles ?? [])]), inputs, outputs, inputBindings: bindings(members, 'input') as readonly InputBindingMetadata[], outputBindings: bindings(members, 'output') as readonly OutputBindingMetadata[] }));
+    components.set(target, Object.freeze({ selector: options.selector, template: options.template ?? '', ...(options.templateUrl ? { templateUrl: options.templateUrl } : {}), styles: Object.freeze([...(options.styles ?? [])]), inputs, outputs, inputBindings: bindings(members, 'input') as readonly InputBindingMetadata[], outputBindings: bindings(members, 'output') as readonly OutputBindingMetadata[] }));
   };
 }
 /** Declares a behavior attached to matching native or component host elements. */

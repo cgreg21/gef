@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import type { GtplNode } from '../ast/types.js';
+import type { GtplNode, SwitchBlockNode } from '../ast/types.js';
 import type { ExpressionNode } from '../ast/expression.js';
 import type { SourceSpan } from '../source/span.js';
 import type { Diagnostic } from '../diagnostics/diagnostic.js';
@@ -122,7 +122,67 @@ export function validateGtplExpressionTypes(
       span: target.span,
     });
   }
+  diagnostics.push(...checkSwitchExhaustiveness(nodes, contextType));
   return diagnostics;
+}
+
+function checkSwitchExhaustiveness(nodes: readonly GtplNode[], contextType: string): Diagnostic[] {
+  const properties = contextLiteralProperties(contextType);
+  const diagnostics: Diagnostic[] = [];
+  const visit = (items: readonly GtplNode[]) => {
+    for (const node of items) {
+      if (node.kind === 'switch-block') {
+        if (node.defaultCase?.exhaustive && node.parsedExpression?.kind === 'identifier') {
+          const domain = properties.get(node.parsedExpression.name);
+          if (domain) {
+            const covered = new Set(node.cases.flatMap((branch) => branch.parsedExpressions
+              .filter((expression) => expression.kind === 'literal')
+              .map((expression) => expression.value)));
+            const missing = domain.filter((value) => !covered.has(value));
+            if (missing.length > 0) {
+              diagnostics.push({
+                code: 'GTPL5002',
+                message: `Non-exhaustive @switch; missing cases: ${missing.map((value) => JSON.stringify(value)).join(', ')}.`,
+                span: node.span,
+              });
+            }
+          }
+        }
+        for (const branch of node.cases) visit(branch.children);
+        if (node.defaultCase) visit(node.defaultCase.children);
+      } else if (node.kind === 'element') visit(node.children);
+      else if (node.kind === 'if-block') for (const branch of node.branches) visit(branch.children);
+      else if (node.kind === 'for-block') { visit(node.children); visit(node.empty); }
+    }
+  };
+  visit(nodes);
+  return diagnostics;
+}
+
+function contextLiteralProperties(contextType: string): Map<string, readonly (string | number | boolean)[]> {
+  const source = ts.createSourceFile('context.ts', `type __GefContext = ${contextType};`, ts.ScriptTarget.Latest, true);
+  const declaration = source.statements[0];
+  const result = new Map<string, readonly (string | number | boolean)[]>();
+  if (!declaration || !ts.isTypeAliasDeclaration(declaration) || !ts.isTypeLiteralNode(declaration.type)) return result;
+
+  for (const member of declaration.type.members) {
+    if (!ts.isPropertySignature(member) || !member.type || !member.name) continue;
+    const name = ts.isIdentifier(member.name) || ts.isStringLiteral(member.name) ? member.name.text : undefined;
+    if (!name) continue;
+    const types = ts.isUnionTypeNode(member.type) ? member.type.types : [member.type];
+    const values: (string | number | boolean)[] = [];
+    for (const type of types) {
+      if (!ts.isLiteralTypeNode(type)) { values.length = 0; break; }
+      const literal = type.literal;
+      if (ts.isStringLiteral(literal)) values.push(literal.text);
+      else if (ts.isNumericLiteral(literal)) values.push(Number(literal.text));
+      else if (literal.kind === ts.SyntaxKind.TrueKeyword) values.push(true);
+      else if (literal.kind === ts.SyntaxKind.FalseKeyword) values.push(false);
+      else { values.length = 0; break; }
+    }
+    if (values.length > 0) result.set(name, values);
+  }
+  return result;
 }
 
 function contextMembers(contextType: string): readonly string[] {

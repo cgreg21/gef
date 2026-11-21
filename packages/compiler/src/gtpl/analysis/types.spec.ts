@@ -24,6 +24,13 @@ describe('validateGtplExpressionTypes', () => {
     expect(diagnostics.map((item) => item.code)).toContain('GTPL5001');
   });
 
+  it('checks exhaustive switches against literal union context members', () => {
+    const missing = check('@switch (state) { @case (\'idle\') { <StLabel /> } @default never; }', "{ state: 'idle' | 'ready' }");
+    expect(missing.map((item) => item.code)).toContain('GTPL5002');
+    const complete = check('@switch (state) { @case (\'idle\') { <StLabel /> } @case (\'ready\') { <StLabel /> } @default never; }', "{ state: 'idle' | 'ready' }");
+    expect(complete).toEqual([]);
+  });
+
   it('keeps loop locals available to expressions', () => {
     expect(check('@for (item of items; track item.id) { <StLabel>{{item.name}}</StLabel> }', '{ items: Array<{ id: number; name: string }> }')).toEqual([]);
   });

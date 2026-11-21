@@ -77,7 +77,10 @@ describe('GEF CLI', () => {
   it('runs the package workflow', async () => {
     const { io, commands } = createIO('');
     expect(await runCli(['package'], io)).toBe(0);
-    expect(commands[0]).toEqual({ command: 'npm', args: ['run', 'package:example'] });
+    expect(commands).toEqual([
+      { command: 'npm', args: ['run', 'build'] },
+      { command: 'npm', args: ['run', 'package:example'] },
+    ]);
   });
 
   it('reports missing files', async () => {

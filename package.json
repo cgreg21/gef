@@ -14,7 +14,7 @@
     "build": "tsc -p tsconfig.build.json",
     "gef": "node dist/cli/src/index.js",
     "package:example": "node scripts/package-extension.mjs",
-    "styles": "node dist/cli/src/index.js styles",
+    "styles": "node dist/cli/src/index.js styles packages/examples/hello-world/stylesheet.scss dist/styles.css",
     "dev:watch": "node scripts/dev-watch.mjs",
     "prepack": "npm run build",
     "test:gnome": "bash scripts/test-gnome-shell-51.sh"

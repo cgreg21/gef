@@ -23,3 +23,6 @@ export * from './platform/gjs.js';
 export * from './directives/directive-registry.js';
 
 export * from './components/component-registry.js';
+
+export * from './renderers/gnome-shell/st-styles.js';
+export * from './renderers/gtk/gtk-styles.js';

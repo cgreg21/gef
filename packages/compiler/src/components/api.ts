@@ -1,9 +1,11 @@
 export interface ComponentOptions { readonly selector: string; readonly template: string; readonly styles?: readonly string[]; }
-export interface ComponentMetadata { readonly selector: string; readonly template: string; readonly styles: readonly string[]; readonly inputs: readonly string[]; readonly outputs: readonly string[]; }
+export interface ComponentMetadata { readonly selector: string; readonly template: string; readonly styles: readonly string[]; readonly inputs: readonly string[]; readonly outputs: readonly string[]; readonly inputBindings: readonly InputBindingMetadata[]; readonly outputBindings: readonly OutputBindingMetadata[]; }
 export interface DirectiveOptions { readonly selector: string; }
+export interface InputBindingMetadata { readonly publicName: string; readonly member: string; }
+export interface OutputBindingMetadata { readonly publicName: string; readonly member: string; }
 export interface HostBindingMetadata { readonly member: string; readonly property: string; }
 export interface HostListenerMetadata { readonly member: string; readonly event: string; readonly args: readonly string[]; }
-export interface DirectiveMetadata { readonly selector: string; readonly inputs: readonly string[]; readonly outputs: readonly string[]; readonly hostBindings: readonly HostBindingMetadata[]; readonly hostListeners: readonly HostListenerMetadata[]; }
+export interface DirectiveMetadata { readonly selector: string; readonly inputs: readonly string[]; readonly outputs: readonly string[]; readonly inputBindings: readonly InputBindingMetadata[]; readonly outputBindings: readonly OutputBindingMetadata[]; readonly hostBindings: readonly HostBindingMetadata[]; readonly hostListeners: readonly HostListenerMetadata[]; }
 export interface PipeOptions { readonly name: string; readonly pure?: boolean; }
 export interface PipeMetadata { readonly name: string; readonly pure: boolean; }
 export interface PipeTransform { transform(value: unknown, ...args: readonly unknown[]): unknown; }
@@ -64,6 +66,11 @@ function names(members: readonly MemberMetadata[], kind: 'input' | 'output'): re
   assertUnique(result, kind);
   return Object.freeze(result);
 }
+function bindings(members: readonly MemberMetadata[], kind: 'input' | 'output'): readonly (InputBindingMetadata | OutputBindingMetadata)[] {
+  return Object.freeze(members
+    .filter((item): item is Extract<MemberMetadata, { kind: 'input' | 'output' }> => item.kind === kind)
+    .map((item) => Object.freeze({ publicName: item.publicName, member: item.member })));
+}
 function assertUnique(values: readonly string[], kind: string): void {
   if (new Set(values).size !== values.length) throw new TypeError(`duplicate ${kind} declaration in GEF metadata.`);
 }
@@ -74,7 +81,7 @@ export function Component(options: ComponentOptions): ClassDecorator {
     if (!options.template.trim()) throw new TypeError(`Component "${options.selector}" must declare a template.`);
     const members = collectMembers(target);
     const inputs = names(members, 'input'); const outputs = names(members, 'output');
-    components.set(target, Object.freeze({ selector: options.selector, template: options.template, styles: Object.freeze([...(options.styles ?? [])]), inputs, outputs }));
+    components.set(target, Object.freeze({ selector: options.selector, template: options.template, styles: Object.freeze([...(options.styles ?? [])]), inputs, outputs, inputBindings: bindings(members, 'input') as readonly InputBindingMetadata[], outputBindings: bindings(members, 'output') as readonly OutputBindingMetadata[] }));
   };
 }
 /** Declares a behavior attached to matching native or component host elements. */
@@ -84,6 +91,8 @@ export function Directive(options: DirectiveOptions): ClassDecorator {
     const members = collectMembers(target);
     directives.set(target, Object.freeze({
       selector: options.selector, inputs: names(members, 'input'), outputs: names(members, 'output'),
+      inputBindings: bindings(members, 'input') as readonly InputBindingMetadata[],
+      outputBindings: bindings(members, 'output') as readonly OutputBindingMetadata[],
       hostBindings: Object.freeze(members.filter((item): item is Extract<MemberMetadata, { kind: 'host-binding' }> => item.kind === 'host-binding').map(({ member, property }) => Object.freeze({ member, property }))),
       hostListeners: Object.freeze(members.filter((item): item is Extract<MemberMetadata, { kind: 'host-listener' }> => item.kind === 'host-listener').map(({ member, event, args }) => Object.freeze({ member, event, args }))),
     }));

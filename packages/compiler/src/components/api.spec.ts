@@ -13,6 +13,8 @@ describe('component declaration API', () => {
     expect(getComponentMetadata(ButtonComponent)).toEqual({
       selector: 'GefButton', template: '<button>{{ label }}</button>',
       styles: ['button { color: white; }'], inputs: ['label', 'isDisabled'], outputs: ['clicked'],
+      inputBindings: [{ publicName: 'label', member: 'label' }, { publicName: 'isDisabled', member: 'disabled' }],
+      outputBindings: [{ publicName: 'clicked', member: 'clicked' }],
     });
   });
   it('returns no metadata for an undecorated class', () => { expect(getComponentMetadata(class Plain {})).toBeUndefined(); });
@@ -39,6 +41,7 @@ describe('directive and pipe declarations', () => {
   it('collects directive inputs and host bindings/listeners', () => {
     expect(getDirectiveMetadata(TooltipDirective)).toEqual({
       selector: '[gefTooltip]', inputs: ['text'], outputs: [],
+      inputBindings: [{ publicName: 'text', member: 'text' }], outputBindings: [],
       hostBindings: [{ member: 'accessibleName', property: 'accessible-name' }],
       hostListeners: [{ member: 'onPress', event: 'button-press', args: ['$event'] }],
     });

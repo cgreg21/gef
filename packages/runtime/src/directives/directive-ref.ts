@@ -69,7 +69,6 @@ export function mountDirective<Instance extends object, Node>(
       const value = read();
       if (isReadonlySignal(value)) {
         resources.add(effect(() => host.setProperty(node, binding.property, value.get())));
-        resources.add(() => value.dispose?.());
       } else if (typeof value === 'function') {
         resources.add(effect(() => host.setProperty(node, binding.property, (value as () => unknown).call(instance))));
       } else {

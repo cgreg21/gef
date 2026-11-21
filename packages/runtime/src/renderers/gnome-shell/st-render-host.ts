@@ -76,6 +76,11 @@ export function createStRenderHost(
   };
 
   return {
+    setProperty: (actor, property, value) => actor.set_property(propertyName(property), value),
+    listen: (actor, event, handler) => {
+      const id = actor.connect(event, (_source, ...args) => handler(...args));
+      return () => actor.disconnect(id);
+    },
     element(name, attributes, children) {
       const Constructor = constructors[name];
       if (!Constructor) throw new Error(`Unknown GNOME Shell component "${name}". Register a St widget constructor.`);

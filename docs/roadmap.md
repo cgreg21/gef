@@ -40,5 +40,6 @@
 ## Styles and developer tools
 - [ ] SCSS compilation and St/GTK-specific CSS validation.
 - [x] CLI `check` and `compile` commands.
-- [ ] CLI `new`, `generate`, `test`, `package` and `doctor` commands.
+- [x] CLI `new` and `doctor` commands.
+- [ ] CLI `generate`, `test`, `package` and watch mode.
 - [ ] Watch mode, diagnostics and examples.

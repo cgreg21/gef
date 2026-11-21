@@ -8,6 +8,7 @@ function createIO(source: string) {
   const io: CliIO = {
     readFile: async () => source,
     writeFile: async (path, content) => { writes.push({ path, content }); },
+    mkdir: async () => {},
     stdout: (message) => output.push(message),
     stderr: (message) => errors.push(message),
   };
@@ -43,6 +44,13 @@ describe('GEF CLI', () => {
     expect(writes[0]?.content).toContain('export default (ctx, runtime) =>');
     expect(writes[0]?.content).toContain('runtime.bind');
     expect(output[0]).toContain('Generated:');
+  });
+
+  it('creates a minimal extension project', async () => {
+    const { io, output, writes } = createIO('');
+    expect(await runCli(['new', 'hello-world', 'out'], io)).toBe(0);
+    expect(writes.map((item) => item.path)).toEqual(expect.arrayContaining([expect.stringContaining('metadata.json'), expect.stringContaining('extension.js')]));
+    expect(output[0]).toContain('Created extension project');
   });
 
   it('reports file read and write errors', async () => {

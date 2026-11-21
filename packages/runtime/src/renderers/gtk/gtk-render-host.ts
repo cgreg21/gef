@@ -120,6 +120,11 @@ export function createGtkRenderHost(
   };
 
   return {
+    setProperty: (actor, property, value) => actor.set_property(propertyName(property), value),
+    listen: (actor, event, handler) => {
+      const id = actor.connect(event, (_source, ...args) => handler(...args));
+      return () => actor.disconnect(id);
+    },
     element(name, attributes, child) {
       const Constructor = constructors[name];
       if (!Constructor) throw new Error(`Unknown GTK component "${name}". Register a Gtk or Adw widget constructor.`);

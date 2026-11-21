@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createGtkRenderHost, type GtkActor, type GtkNamespace, type GtkWidgetConstructor } from './gtk-render-host.js';
 import { createGtplRenderRuntime } from '../../rendering/gtpl-runtime.js';
 import { signal } from '../../reactivity/signal.js';
+import { ComponentRegistry } from '../../components/component-registry.js';
 import { DirectiveRegistry } from '../../directives/directive-registry.js';
 import { Injector } from '../../di/injector.js';
 import { EventEmitter } from '../../../../shared/src/events/event-emitter.js';
@@ -311,6 +312,34 @@ describe('createGtkRenderHost', () => {
     widget.emit('notify::active');
     expect(values).toEqual([true]);
     host.destroy(widget);
+  });
+
+  it('mounts registered components with reactive inputs and disposes their outputs', () => {
+    const host = createGtkRenderHost(createGtk());
+    const changed = new EventEmitter<string>();
+    const label = signal('initial');
+    const registry = new ComponentRegistry<GtkActor>().register('GefSettingsRow', {
+      create: () => ({ label: 'default', changed }),
+      inputs: [{ publicName: 'label', member: 'label' }],
+      outputs: [{ publicName: 'changed', member: 'changed' }],
+      render: (instance, runtime) => runtime.element('GtkLabel', { label: instance.label }, undefined),
+    });
+    const received: string[] = [];
+    const runtime = createGtplRenderRuntime(host, undefined, undefined, new Injector(), registry);
+    const row = runtime.element('GefSettingsRow', {
+      label: runtime.bind(() => label.get()),
+      changed: (value: string) => received.push(value),
+    }, undefined) as FakeWidget;
+
+    expect(row.properties.label).toBe('initial');
+    label.set('updated');
+    expect(row.properties.label).toBe('updated');
+    changed.emit('first');
+    host.destroy(row);
+    changed.emit('after-destroy');
+    label.set('ignored');
+    expect(row.properties.label).toBe('updated');
+    expect(received).toEqual(['first']);
   });
 
   it('rejects unknown widget selectors', () => {

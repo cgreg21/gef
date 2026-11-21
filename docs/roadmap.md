@@ -43,6 +43,7 @@
 - [x] Explicit hierarchical dependency injector with scoped disposal.
 - [x] Component instance/view lifecycle with child injector scopes, bound inputs/outputs and reverse-order teardown.
 - [x] Runtime regression coverage for reactive input updates and stopping updates after component destruction.
+- [x] GTK renderer coverage for registered component mounting, reactive inputs and output teardown.
 - [x] Nested component selector registry and generated-template mounting.
 - [x] Explicit directive instance mounting with host bindings, host listeners and deterministic cleanup.
 - [x] Selector-matched directive instantiation, input/output binding and host behavior in generated templates.

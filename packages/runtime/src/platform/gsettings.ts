@@ -26,5 +26,5 @@ export function bindGSettingsBoolean(settings: GSettingsBooleanSource, key: stri
   const dispose = () => { stopEffect(); disconnect(); };
   scope?.add(dispose);
   Object.defineProperty(value, 'dispose', { value: dispose, enumerable: false });
-  return value;
+  return value as Signal<boolean> & { dispose(): void };
 }

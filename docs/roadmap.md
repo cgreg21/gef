@@ -10,6 +10,13 @@
 - [ ] Provide an EGO pre-submission validation command and a readable review report.
 - [ ] Add GNOME Shell 51 packaging and lifecycle fixtures that exercise the final ZIP contents.
 
+## npm publication and CLI distribution
+- [ ] Confirm the public npm package name and publish the first stable release.
+- [ ] Publish package metadata, compiler/runtime ESM exports and the `gef` executable.
+- [ ] Verify clean installation and `npx --package gnome-extension-framework gef` from a temporary project.
+- [ ] Add a tagged GitHub release workflow with npm trusted publishing (OIDC) or a protected publish token; never store credentials in source.
+- [ ] Document versioning, changelog and release rollback procedure.
+
 ## Foundation
 - [x] Repository baseline and GNOME Shell 51 target.
 - [x] Canonical .gtpl templates and initial parser.

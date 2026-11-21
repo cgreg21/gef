@@ -18,7 +18,8 @@
     "dev:watch": "node scripts/dev-watch.mjs",
     "prepack": "npm run build",
     "test:gnome": "npm run build && npm run package:example && bash scripts/test-gnome-shell-51.sh",
-    "test:gtk": "npm run build && npm run package:example && node dist/cli/src/index.js compile tests/gtk4/two-way.gtpl dist/two-way.js && GTK_A11Y=none xvfb-run -a gjs -m tests/gtk4/smoke.js"
+    "test:gtk": "npm run build && npm run package:example && node dist/cli/src/index.js compile tests/gtk4/two-way.gtpl dist/two-way.js && GTK_A11Y=none xvfb-run -a gjs -m tests/gtk4/smoke.js",
+    "prepublishOnly": "npm run check"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
@@ -49,5 +50,26 @@
   },
   "dependencies": {
     "typescript": "^5.9.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cgreg21/gef.git"
+  },
+  "homepage": "https://github.com/cgreg21/gef#readme",
+  "bugs": {
+    "url": "https://github.com/cgreg21/gef/issues"
+  },
+  "keywords": [
+    "gnome",
+    "gnome-shell",
+    "gnome-shell-extension",
+    "gjs",
+    "gtk4",
+    "libadwaita",
+    "framework",
+    "cli"
+  ],
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -319,7 +319,14 @@ describe('createGtkRenderHost', () => {
     const changed = new EventEmitter<string>();
     const label = signal('initial');
     const registry = new ComponentRegistry<GtkActor>().register('GefSettingsRow', {
-      create: () => ({ label: 'default', changed }),
+      create: () => {
+        const value = signal('default');
+        return {
+          get label() { return value.get(); },
+          set label(next: string) { value.set(next); },
+          changed,
+        };
+      },
       inputs: [{ publicName: 'label', member: 'label' }],
       outputs: [{ publicName: 'changed', member: 'changed' }],
       render: (instance, runtime) => runtime.element('GtkLabel', { label: runtime.bind(() => instance.label) }, undefined),

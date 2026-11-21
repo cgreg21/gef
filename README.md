@@ -43,6 +43,17 @@ node dist/cli/src/index.js ego-check dist/extension
 
 Run `gef --help` to see each command and its description on separate lines; a CLI regression test checks that `doctor` and `ego-check` remain distinct entries. `gef generate component UserCard src/components` creates a decorated component with a working `@Input()` property and a GTPL interpolation that displays it. The `ego-check` command checks staged metadata, stable Shell versions, declared GSettings schema presence and ID, forbidden development files and basic Shell/preferences import boundaries. The package workflow runs this validator automatically after staging. It is a useful local guard, not a substitute for EGO review. The `new` command creates a working panel-indicator example, with minimal GJS type declarations, direct generated types and explicit `enable()`/`disable()` resource cleanup. Generated Node.js packaging code uses static imports and a straightforward synchronous pack command. Generated source includes the GNOME guidance notice for AI-assisted code; remove it only if you understand and can maintain the JavaScript before considering EGO publication. The `compile` command creates missing parent directories for its JavaScript output path, including nested relative paths. CSS compatibility errors include source excerpts and caret markers.
 
+## npm and npx
+
+After publication on npm, install GEF in an extension project with `npm install --save-dev gnome-extension-framework`, or run the CLI without a global installation:
+
+```sh
+npx --yes --package gnome-extension-framework gef --help
+npx --yes --package gnome-extension-framework gef new my-extension
+```
+
+The published package exposes the `gef` executable and the compiler/runtime ESM entry points. Publishing is performed from a tagged release after CI and the package-content checks pass; no npm token is stored in the repository.
+
 ## Packages
 
 - `gnome-extension-framework`: compiler declarations and GTPL tooling

@@ -18,6 +18,8 @@ npm install
 npm run check
 npm run build
 npm run package:example
+# Native GTK4/libadwaita smoke test (also runs in CI):
+npm run test:gtk
 # On a host with GNOME Shell 51, GJS, dbus-run-session and Xvfb:
 npm run test:gnome
 ```
@@ -52,9 +54,10 @@ The runtime package has no Node.js or TypeScript imports. Decorator metadata is 
 Implemented foundations include the GTPL parser and structural lowering,
 expression and template code generation, optional TypeScript expression type checking, component contract validation,
 selector-matched runtime directives and components, component input/output lifecycles and DI, reactive
-signals, pure pipe caching, resource scopes, St and GTK host adapters, GLib
-source and GObject signal cleanup, an initial CSS compatibility checker, and
-a basic extension staging pipeline.
+signals, pure pipe caching, resource scopes, expanded St/GTK4/libadwaita widget hosts, GLib
+source and GObject signal cleanup, reactive boolean/integer/string/string-array GSettings bindings,
+source-context CLI diagnostics, native GTK4/libadwaita smoke tests, an initial CSS compatibility checker,
+and a schema-aware extension staging pipeline.
 
 This is an active framework under development, not yet a production-complete
 replacement for GNOME's native extension APIs. See [the architecture](docs/architecture.md)

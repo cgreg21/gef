@@ -33,6 +33,7 @@ export function bindGSettingsValue<T>(
   read: (key: string) => T,
   write: (key: string, value: T) => void,
   scope?: ResourceScope,
+  equals: (left: T, right: T) => boolean = Object.is,
 ): Signal<T> & { dispose(): void } {
   if (!/^[a-z][a-z0-9-]*$/.test(key)) throw new TypeError(`Invalid GSettings key "${key}".`);
   const value = new Signal(read(key));
@@ -45,7 +46,7 @@ export function bindGSettingsValue<T>(
   };
   const stopEffect = effect(() => {
     const next = value.get();
-    if (!Object.is(read(key), next)) write(key, next);
+    if (!equals(read(key), next)) write(key, next);
   });
   const dispose = () => { stopEffect(); disconnect(); };
   scope?.add(dispose);
@@ -66,5 +67,7 @@ export function bindGSettingsString(settings: GSettingsStringSource, key: string
 }
 
 export function bindGSettingsStrv(settings: GSettingsStrvSource, key: string, scope?: ResourceScope) {
-  return bindGSettingsValue(settings, key, (name) => settings.get_strv(name), (name, value) => settings.set_strv(name, value), scope);
+  const equalStrings = (left: string[], right: string[]) =>
+    left.length === right.length && left.every((value, index) => value === right[index]);
+  return bindGSettingsValue(settings, key, (name) => settings.get_strv(name), (name, value) => settings.set_strv(name, value), scope, equalStrings);
 }

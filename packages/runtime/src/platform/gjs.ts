@@ -82,3 +82,86 @@ export function connectGObjectSignal(
   scope?.add(disconnect);
   return disconnect;
 }
+
+export interface GioDBusConnection {
+  signal_subscribe(
+    sender: string | null,
+    interfaceName: string,
+    member: string,
+    objectPath: string | null,
+    arg0: string | null,
+    flags: number,
+    callback: (...args: unknown[]) => void,
+  ): number;
+  signal_unsubscribe(subscriptionId: number): void;
+}
+
+export interface DBusSignalOptions {
+  readonly sender?: string | null;
+  readonly interfaceName: string;
+  readonly member: string;
+  readonly objectPath?: string | null;
+  readonly arg0?: string | null;
+  readonly flags?: number;
+}
+
+/** Subscribes to a D-Bus signal and optionally binds it to a resource scope. */
+export function subscribeDBusSignal(
+  connection: GioDBusConnection,
+  options: DBusSignalOptions,
+  callback: (...args: unknown[]) => void,
+  scope?: ResourceScope,
+): () => void {
+  const subscriptionId = connection.signal_subscribe(
+    options.sender ?? null,
+    options.interfaceName,
+    options.member,
+    options.objectPath ?? null,
+    options.arg0 ?? null,
+    options.flags ?? 0,
+    callback,
+  );
+  let active = true;
+  const unsubscribe = () => {
+    if (!active) return;
+    active = false;
+    connection.signal_unsubscribe(subscriptionId);
+  };
+  scope?.add(unsubscribe);
+  return unsubscribe;
+}
+
+export interface ClutterAnimationActor {
+  ease(options: Readonly<Record<string, unknown>>): void;
+  remove_transition(name: string): void;
+}
+
+export interface ClutterAnimationOptions {
+  readonly property: string;
+  readonly value: unknown;
+  readonly duration: number;
+  readonly mode?: unknown;
+  readonly onComplete?: () => void;
+}
+
+/** Starts a native Clutter actor transition and owns cancellation in a scope. */
+export function animateClutterActor(
+  actor: ClutterAnimationActor,
+  options: ClutterAnimationOptions,
+  scope?: ResourceScope,
+): () => void {
+  actor.ease({
+    [options.property]: options.value,
+    duration: Math.max(0, options.duration),
+    ...(options.mode === undefined ? {} : { mode: options.mode }),
+    ...(options.onComplete ? { onComplete: options.onComplete } : {}),
+  });
+  let active = true;
+  const cancel = () => {
+    if (!active) return;
+    active = false;
+    actor.remove_transition(options.property);
+  };
+  scope?.add(cancel);
+  return cancel;
+}

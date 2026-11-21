@@ -173,7 +173,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         errors.push('extension.js: expected a default-exported extension class.');
       }
       for (const hook of ['enable', 'disable']) {
-        if (!new RegExp('\\b' + hook + '\\s*\\(\\s*\\)\\s*\\{').test(shellSource)) {
+        if (!new RegExp('\\b' + hook + '\s*\\(\s*\\)\s*\\{').test(shellSource)) {
           errors.push('extension.js: extension class must implement ' + hook + '().');
         }
       }
@@ -187,10 +187,10 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         visited.add(file);
         const source = javascriptSources.get(file);
         if (source === undefined) continue;
-        for (const match of source.matchAll(/^\\s*(?:import|export)\\s+(?:[\\s\\S]*?\\s+from\\s+)?['"]([^'"]+)['"]/gm)) {
+        for (const match of source.matchAll(/^\s*(?:import|export)\s+(?:[\s\S]*?\s+from\s+)?['"]([^'"]+)['"]/gm)) {
           const specifier = match[1]!;
           if (forbidden.test(specifier)) {
-            const relative = file.slice(directory.length + 1).replaceAll('\\\\', '/');
+            const relative = file.slice(directory.length + 1).replaceAll('\\', '/');
             errors.push(`${relative}: ${message}`);
           }
           if (specifier.startsWith('./') || specifier.startsWith('../')) {
@@ -206,7 +206,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     for (const file of inspectImports('extension.js', /^gi:\/\/(?:Gtk|Gdk|Adw)(?:[/?]|$)/, 'Shell dependency imports GTK or libadwaita.')) reachableJavaScript.add(file);
     for (const file of javascriptSources.keys()) {
       if (!reachableJavaScript.has(file)) {
-        errors.push(`JavaScript file is not imported by either extension entry point: ${file.slice(directory.length + 1).replaceAll('\\\\', '/')}`);
+        errors.push(`JavaScript file is not imported by either extension entry point: ${file.slice(directory.length + 1).replaceAll('\\', '/')}`);
       }
     }
     if (errors.length) {

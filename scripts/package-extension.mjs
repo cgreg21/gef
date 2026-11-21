@@ -5,59 +5,47 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const output = resolve(root, 'dist/extension');
-const runtimeSource = resolve(root, 'dist/runtime/src');
-const exampleSource = resolve(root, 'dist/examples/hello-world/extension.js');
-const metadataSource = resolve(root, 'packages/examples/hello-world/metadata.json');
-const templateSource = resolve(root, 'packages/examples/hello-world/template.gtpl');
-const cliSource = resolve(root, 'dist/cli/src/index.js');
-const generatedTemplate = resolve(root, 'dist/examples/hello-world/template.js');
-const preferencesSource = resolve(root, 'dist/examples/preferences/prefs.js');
-const preferencesTemplate = resolve(root, 'packages/examples/preferences/template.gtpl');
-const generatedPreferencesTemplate = resolve(root, 'dist/examples/preferences/template.js');
-const stylesheetSource = resolve(root, 'packages/examples/hello-world/stylesheet.scss');
-const preferencesSource = resolve(root, 'dist/examples/preferences/prefs.js');
-const preferencesTemplate = resolve(root, 'packages/examples/preferences/template.gtpl');
-const generatedPreferencesTemplate = resolve(root, 'dist/examples/preferences/template.js');
-const stylesheetSource = resolve(root, 'packages/examples/hello-world/stylesheet.scss');
+const cli = resolve(root, 'dist/cli/src/index.js');
+const runtime = resolve(root, 'dist/runtime/src');
+const shared = resolve(root, 'dist/shared/src');
 
-const compilation = spawnSync(process.execPath, [cliSource, 'compile', templateSource, generatedTemplate], {
-  cwd: root,
-  stdio: 'inherit',
-});
-if (compilation.status !== 0) throw new Error('Unable to compile the hello-world GTPL template.');
-const preferencesCompilation = spawnSync(process.execPath, [cliSource, 'compile', preferencesTemplate, generatedPreferencesTemplate], { cwd: root, stdio: 'inherit' });
-if (preferencesCompilation.status !== 0) throw new Error('Unable to compile the preferences GTPL template.');
-const preferencesCompilation = spawnSync(process.execPath, [cliSource, 'compile', preferencesTemplate, generatedPreferencesTemplate], { cwd: root, stdio: 'inherit' });
-if (preferencesCompilation.status !== 0) throw new Error('Unable to compile the preferences GTPL template.');
+const shellTemplate = resolve(root, 'packages/examples/hello-world/template.gtpl');
+const preferencesTemplate = resolve(root, 'packages/examples/preferences/template.gtpl');
+const shellGenerated = resolve(root, 'dist/examples/hello-world/template.js');
+const preferencesGenerated = resolve(root, 'dist/examples/preferences/template.js');
+const shellStyles = resolve(root, 'packages/examples/hello-world/stylesheet.scss');
+const metadata = resolve(root, 'packages/examples/hello-world/metadata.json');
+const shellEntry = resolve(root, 'dist/examples/hello-world/extension.js');
+const preferencesEntry = resolve(root, 'dist/examples/preferences/prefs.js');
+
+function run(command, args, label) {
+  const result = spawnSync(command, args, { cwd: root, stdio: 'inherit' });
+  if (result.status !== 0) throw new Error(label);
+}
+
+run(process.execPath, [cli, 'compile', shellTemplate, shellGenerated], 'Unable to compile the Shell GTPL template.');
+run(process.execPath, [cli, 'compile', preferencesTemplate, preferencesGenerated], 'Unable to compile the preferences GTPL template.');
 
 await rm(output, { recursive: true, force: true });
 await mkdir(resolve(output, 'lib'), { recursive: true });
-const styles = spawnSync('npx', ['sass', '--no-source-map', stylesheetSource, resolve(output, 'stylesheet.css')], { cwd: root, stdio: 'inherit' });
-if (styles.status !== 0) throw new Error('Unable to compile the hello-world stylesheet.');
-const styles = spawnSync('npx', ['sass', '--no-source-map', stylesheetSource, resolve(output, 'stylesheet.css')], { cwd: root, stdio: 'inherit' });
-if (styles.status !== 0) throw new Error('Unable to compile the hello-world stylesheet.');
-await cp(runtimeSource, resolve(output, 'lib/runtime'), { recursive: true });
+run('npx', ['sass', '--no-source-map', shellStyles, resolve(output, 'stylesheet.css')], 'Unable to compile the Shell stylesheet.');
 
-const extension = await readFile(exampleSource, 'utf8');
+await cp(runtime, resolve(output, 'lib/runtime'), { recursive: true });
+await cp(shared, resolve(output, 'shared/src'), { recursive: true });
+await cp(shellGenerated, resolve(output, 'template.js'));
+await cp(preferencesGenerated, resolve(output, 'preferences-template.js'));
+await cp(metadata, resolve(output, 'metadata.json'));
+
 const runtimeImport = '../../runtime/src/index.js';
-if (!extension.includes(runtimeImport)) {
-  throw new Error('The compiled example runtime import did not match the expected source path.');
-}
-await writeFile(
-  resolve(output, 'extension.js'),
-  extension.replace(runtimeImport, './lib/runtime/index.js'),
-  'utf8',
-);
-await cp(generatedTemplate, resolve(output, 'template.js'));
-await cp(generatedPreferencesTemplate, resolve(output, 'preferences-template.js'));
-const preferences = await readFile(preferencesSource, 'utf8');
-const preferencesRuntimeImport = '../../runtime/src/index.js';
-if (!preferences.includes(preferencesRuntimeImport)) throw new Error('The compiled preferences runtime import did not match the expected source path.');
-await writeFile(resolve(output, 'prefs.js'), preferences.replace(preferencesRuntimeImport, './lib/runtime/index.js'), 'utf8');
-await cp(generatedPreferencesTemplate, resolve(output, 'preferences-template.js'));
-const preferences = await readFile(preferencesSource, 'utf8');
-const preferencesRuntimeImport = '../../runtime/src/index.js';
-if (!preferences.includes(preferencesRuntimeImport)) throw new Error('The compiled preferences runtime import did not match the expected source path.');
-await writeFile(resolve(output, 'prefs.js'), preferences.replace(preferencesRuntimeImport, './lib/runtime/index.js'), 'utf8');
-await cp(metadataSource, resolve(output, 'metadata.json'));
-process.stdout.write(`Staged GNOME Shell extension: ${output}\n`);
+const shell = await readFile(shellEntry, 'utf8');
+if (!shell.includes(runtimeImport)) throw new Error('Unexpected Shell runtime import in compiled example.');
+await writeFile(resolve(output, 'extension.js'), shell.replace(runtimeImport, './lib/runtime/index.js'), 'utf8');
+
+let preferences = await readFile(preferencesEntry, 'utf8');
+if (!preferences.includes(runtimeImport)) throw new Error('Unexpected preferences runtime import in compiled example.');
+preferences = preferences.replace(runtimeImport, './lib/runtime/index.js');
+if (!preferences.includes('./template.js')) throw new Error('Unexpected preferences template import in compiled example.');
+preferences = preferences.replace('./template.js', './preferences-template.js');
+await writeFile(resolve(output, 'prefs.js'), preferences, 'utf8');
+
+process.stdout.write(`Staged GNOME Shell extension and GTK preferences: ${output}\n`);

@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -48,4 +48,29 @@ if (!preferences.includes('./template.js')) throw new Error('Unexpected preferen
 preferences = preferences.replace('./template.js', './preferences-template.js');
 await writeFile(resolve(output, 'prefs.js'), preferences, 'utf8');
 
-process.stdout.write(`Staged GNOME Shell extension and GTK preferences: ${output}\n`);
+async function listFiles(directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const nested = await Promise.all(entries.map((entry) => {
+    const path = resolve(directory, entry.name);
+    return entry.isDirectory() ? listFiles(path) : [path];
+  }));
+  return nested.flat();
+}
+
+for (const file of await listFiles(output)) {
+  if (!file.endsWith('.js')) continue;
+  const source = await readFile(file, 'utf8');
+  const imports = source.matchAll(/(?:from\\s*|import\\s*)['"]([^'"]+)['"]/g);
+  for (const match of imports) {
+    const specifier = match[1] ?? '';
+    if (!specifier.startsWith('.')) continue;
+    const target = resolve(dirname(file), specifier);
+    try {
+      await access(target);
+    } catch {
+      throw new Error(`Unresolved staged ESM import "${specifier}" in ${file}.`);
+    }
+  }
+}
+
+process.stdout.write(`Staged and verified GNOME Shell extension and GTK preferences: ${output}\\n`);

@@ -17,7 +17,7 @@ describe('validateStCss', () => {
   });
 
   it('reports exact declaration offsets after comments and whitespace', () => {
-    const source = '/* leading comment */\\n.panel {\\n  display: flex;\\n}';
+    const source = '/* leading comment */\n.panel {\n  display: flex;\n}';
     const diagnostic = validateStCss(source)[0];
     expect(diagnostic).toMatchObject({
       code: 'GEFCSS1003',

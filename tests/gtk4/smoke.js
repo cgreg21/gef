@@ -50,10 +50,31 @@ const schema = schemaSource.lookup('org.gnome.shell.extensions.gef-hello-world',
 if (!schema) throw new Error('Compiled GSettings schema was not staged.');
 const settings = Gio.Settings.new_full(schema, null, null);
 const enabled = bindGSettingsBoolean(settings, 'enabled');
+const preferences = host.element(
+  'AdwPreferencesPage',
+  {},
+  host.element(
+    'AdwPreferencesGroup',
+    {},
+    host.element('AdwSwitchRow', {
+      title: 'Enable GEF',
+      active: { kind: 'binding', get: () => enabled.get() },
+      activeChange: (value) => enabled.set(value),
+    }, undefined),
+  ),
+);
+const group = preferences.get_first_child();
+const switchRow = group.get_first_child();
+
 settings.set_boolean('enabled', false);
-if (enabled.get() !== false) throw new Error('GSettings changes did not update the reactive signal.');
-enabled.set(true);
-if (!settings.get_boolean('enabled')) throw new Error('Reactive signal writes did not persist to GSettings.');
+if (enabled.get() !== false || switchRow.get_active()) {
+  throw new Error('GSettings changes did not update the preferences switch.');
+}
+switchRow.set_active(true);
+if (!settings.get_boolean('enabled')) {
+  throw new Error('Preferences switch changes did not persist to GSettings.');
+}
+host.destroy(preferences);
 enabled.dispose();
 
 print('GEF GTK4/libadwaita and GSettings runtime smoke tests passed.');

@@ -5,6 +5,7 @@ import { ComponentRegistry } from '../components/component-registry.js';
 import { EventEmitter } from '../../../shared/src/events/event-emitter.js';
 import { Injector } from '../di/injector.js';
 import { vi } from 'vitest';
+import { PipeRegistry } from '../pipes/pipe-registry.js';
 
 type Node = { readonly kind: string; readonly value?: unknown; readonly children?: readonly Node[] };
 
@@ -32,16 +33,11 @@ describe('createGtplRenderRuntime', () => {
   });
 
   it('runs registered template pipes', () => {
-    const runtime = createGtplRenderRuntime(createHost());
-    const pipes = new (class {
-      transform(name: string, value: unknown): unknown {
-        return name === 'upper' ? String(value).toUpperCase() : value;
-      }
-    })();
-    const withPipes = createGtplRenderRuntime(createHost(), {
-      transform: (name, value, ...args) => pipes.transform(name, value, ...args),
+    const pipes = new PipeRegistry().register('upper', {
+      transform: (value) => String(value).toUpperCase(),
     });
-    expect(withPipes.pipe('upper', 'gef')).toBe('GEF');
+    const runtime = createGtplRenderRuntime(createHost(), pipes);
+    expect(runtime.pipe('upper', 'gef')).toBe('GEF');
     expect(runtime.text('static')).toEqual({ kind: 'text', value: 'static' });
   });
 

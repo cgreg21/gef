@@ -14,7 +14,7 @@ export class DirectiveRegistry<Node> {
     if (this.#entries.some((entry) => entry.selector === selector)) {
       throw new TypeError(`Duplicate directive selector "${selector}".`);
     }
-    this.#entries.push({ selector, definition: definition as DirectiveDefinition<object, Node> });
+    this.#entries.push({ selector, definition: definition as unknown as DirectiveDefinition<object, Node> });
     return this;
   }
 

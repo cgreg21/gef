@@ -8,7 +8,7 @@ export class ComponentRegistry<Node> {
     if (this.#entries.some((entry) => entry.selector === selector)) {
       throw new TypeError(`Duplicate component selector "${selector}".`);
     }
-    this.#entries.push({ selector, definition: definition as ComponentDefinition<object, Node> });
+    this.#entries.push({ selector, definition: definition as unknown as ComponentDefinition<object, Node> });
     return this;
   }
 

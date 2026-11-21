@@ -69,7 +69,8 @@ describe('GJS platform helpers', () => {
     expect(connection.signal_subscribe).toHaveBeenCalledWith(
       null, 'org.example.Service', 'Changed', null, null, 0, expect.any(Function),
     );
-    expect(connection.signal_unsubscribe).toHaveBeenCalledOnceWith(12);
+    expect(connection.signal_unsubscribe).toHaveBeenCalledWith(12);
+    expect(connection.signal_unsubscribe).toHaveBeenCalledTimes(1);
   });
 
   it('cancels Clutter transitions when their scope is disposed', () => {
@@ -78,7 +79,8 @@ describe('GJS platform helpers', () => {
     animateClutterActor(actor, { property: 'opacity', value: 0, duration: 120 }, scope);
     expect(actor.ease).toHaveBeenCalledWith({ opacity: 0, duration: 120 });
     scope.dispose();
-    expect(actor.remove_transition).toHaveBeenCalledOnceWith('opacity');
+    expect(actor.remove_transition).toHaveBeenCalledWith('opacity');
+    expect(actor.remove_transition).toHaveBeenCalledTimes(1);
   });
 
   it('connects a GObject signal and disconnects it once with its scope', () => {
@@ -88,6 +90,7 @@ describe('GJS platform helpers', () => {
     scope.dispose();
     disconnect();
     expect(source.connect).toHaveBeenCalledWith('notify::visible', expect.any(Function));
-    expect(source.disconnect).toHaveBeenCalledOnceWith(7);
+    expect(source.disconnect).toHaveBeenCalledWith(7);
+    expect(source.disconnect).toHaveBeenCalledTimes(1);
   });
 });

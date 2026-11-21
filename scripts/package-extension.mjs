@@ -79,4 +79,6 @@ for (const file of await listFiles(output)) {
   }
 }
 
+run(process.execPath, [cli, 'ego-check', output], 'EGO package validation failed.');
+
 process.stdout.write(`Staged and verified GNOME Shell extension and GTK preferences: ${output}\n`);

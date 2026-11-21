@@ -260,7 +260,7 @@ function createMappings(mappings: readonly NodeMapping[]): string {
   let previousGeneratedColumn = 0;
   let previousSourceLine = 0;
   let previousSourceColumn = 0;
-  return mappings.map((mapping) => {
+  return [...mappings].sort((left, right) => left.generatedColumn - right.generatedColumn).map((mapping) => {
     const segment = [
       encodeVlq(mapping.generatedColumn - previousGeneratedColumn),
       encodeVlq(0),

@@ -95,6 +95,15 @@ describe('GEF CLI', () => {
     expect(errors.join('\n')).toContain('GEFCSS1003');
   });
 
+  it('prints source context and a caret for stylesheet diagnostics', async () => {
+    const source = '.panel {\\n  display: flex;\\n}';
+    const { io, errors } = createIO(source);
+    expect(await runCli(['styles', 'panel.scss'], io)).toBe(1);
+    expect(errors.join('\\n')).toContain('panel.css:2:3: GEFCSS1003');
+    expect(errors.join('\\n')).toContain('|   display: flex;');
+    expect(errors.join('\\n')).toContain('^');
+  });
+
   it('checks compiler and native GNOME prerequisites', async () => {
     const base = createIO('');
     const io: CliIO = {

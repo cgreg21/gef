@@ -16,6 +16,18 @@ describe('validateStCss', () => {
     expect(diagnostics.map((item) => item.code)).toEqual(['GEFCSS1003', 'GEFCSS1004', 'GEFCSS1005']);
   });
 
+  it('reports exact declaration offsets after comments and whitespace', () => {
+    const source = '/* leading comment */\\n.panel {\\n  display: flex;\\n}';
+    const diagnostic = validateStCss(source)[0];
+    expect(diagnostic).toMatchObject({
+      code: 'GEFCSS1003',
+      line: 3,
+      column: 3,
+      start: source.indexOf('display'),
+      end: source.indexOf(';'),
+    });
+  });
+
   it('ignores unsupported-looking text inside comments and strings', () => {
     expect(validateStCss('.panel { content: "display: flex"; /* display: grid; */ }')).toEqual([]);
   });

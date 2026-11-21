@@ -57,7 +57,13 @@ Generated render modules receive the runtime and native renderer from the extens
 
 function reportCssDiagnostics(source: string, input: string, io: CliIO): number {
   const diagnostics = validateStCss(source);
-  for (const item of diagnostics) io.stderr(`${input}:${item.line}:${item.column}: ${item.code}: ${item.message}`);
+  for (const item of diagnostics) {
+    io.stderr(formatDiagnostic(source, input, {
+      code: item.code,
+      message: item.message,
+      span: { start: item.start, end: item.end, line: item.line, column: item.column },
+    }));
+  }
   return diagnostics.length;
 }
 

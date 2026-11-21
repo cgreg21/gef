@@ -1,24 +1,27 @@
 #!/usr/bin/env node
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { checkGtpl, emitGtplTemplate } from '../../compiler/src/index.js';
+import { checkGtpl, emitGtplTemplate, validateStCss } from '../../compiler/src/index.js';
 
 export interface CliIO {
   readFile(path: string): Promise<string>;
   writeFile(path: string, content: string): Promise<void>;
-  mkdir?(path: string): Promise<void>;
-  run?(command: string, args: readonly string[]): { status: number | null; output: string };
+  mkdir(path: string): Promise<void>;
+  run(command: string, args: readonly string[]): { status: number | null; output: string };
   stdout(message: string): void;
   stderr(message: string): void;
 }
 
 const defaultIO: CliIO = {
   readFile: (path) => readFile(path, 'utf8'),
-  writeFile: async (path, content) => { await writeFile(path, content, 'utf8'); },
-  mkdir: async (path) => { await (await import('node:fs/promises')).mkdir(path, { recursive: true }); },
-  run: (command, args) => { const result = spawnSync(command, [...args], { encoding: 'utf8' }); return { status: result.status, output: `${result.stdout ?? ''}${result.stderr ?? ''}` }; },
+  writeFile: (path, content) => writeFile(path, content, 'utf8'),
+  mkdir: async (path) => mkdir(path, { recursive: true }).then(() => undefined),
+  run: (command, args) => {
+    const result = spawnSync(command, [...args], { encoding: 'utf8' });
+    return { status: result.status, output: `${result.stdout ?? ''}${result.stderr ?? ''}` };
+  },
   stdout: (message) => process.stdout.write(`${message}\n`),
   stderr: (message) => process.stderr.write(`${message}\n`),
 };
@@ -28,48 +31,93 @@ const usage = `GEF - GNOME Extension Framework
 Usage:
   gef check <template.gtpl>
   gef compile <template.gtpl> [output.js]
+  gef styles <input.scss> [output.css]
   gef new <extension-name> [directory]
+  gef generate component <Name> [directory]
+  gef test
+  gef package
   gef doctor
   gef --help
 
 Commands:
-  check    Parse, lower and validate a GTPL template.
-  compile  Validate a template and emit a JavaScript render function.
-  new      Create a minimal GNOME Shell 51 extension project.
-  doctor   Check the local Node.js and project build prerequisites.\n  styles   Compile SCSS and validate basic GNOME St CSS compatibility.
+  check      Parse, lower and validate a GTPL template.
+  compile    Emit a JavaScript render-function module.
+  styles     Compile SCSS and validate GNOME theme CSS compatibility.
+  new        Create a minimal GNOME Shell 51 extension project.
+  generate   Generate a component class and GTPL template.
+  test       Run the repository test suite.
+  package    Build and stage the GNOME Shell example.
+  doctor     Check local Node.js and Sass prerequisites.
 
-Generated modules export a default (context, runtime) => node function.
-The runtime and native renderer are provided by the consuming extension.`;
+Generated render modules receive the runtime and native renderer from the extension.`;
 
-export async function runCli(
-  args: readonly string[] = process.argv.slice(2),
-  io: CliIO = defaultIO,
-): Promise<number> {
+function reportCssDiagnostics(source: string, input: string, io: CliIO): number {
+  const diagnostics = validateStCss(source);
+  for (const item of diagnostics) io.stderr(`${input}:${item.line}:${item.column}: ${item.code}: ${item.message}`);
+  return diagnostics.length;
+}
+
+export async function runCli(args: readonly string[] = process.argv.slice(2), io: CliIO = defaultIO): Promise<number> {
   const [command, inputArg, outputArg] = args;
   if (!command || command === '--help' || command === '-h') {
     io.stdout(usage);
     return 0;
   }
+
   if (command === 'doctor') {
-    io.stdout(`Node.js: ${process.versions.node}\nPlatform: ${process.platform}\nArchitecture: ${process.arch}`);
-    return Number(process.versions.node.split('.')[0]) >= 22 ? 0 : 1;
+    const nodeMajor = Number(process.versions.node.split('.')[0]);
+    const sass = io.run('npx', ['sass', '--version']);
+    io.stdout(`Node.js: ${process.versions.node}\nSass: ${sass.status === 0 ? sass.output.trim() : 'not installed'}`);
+    return nodeMajor >= 22 && sass.status === 0 ? 0 : 1;
   }
-  if (command === 'styles') {\n    if (!inputArg || inputArg.startsWith('-')) { io.stderr('Missing SCSS input path.'); return 2; }\n    const input = resolve(inputArg);\n    const output = resolve(outputArg ?? input.replace(/\\.scss$/i, '.css'));\n    const result = io.run?.('npx', ['sass', '--no-source-map', input, output]);\n    if (!result || result.status !== 0) { io.stderr(result?.output || 'Sass compiler is unavailable. Install project dependencies.'); return 1; }\n    io.stdout(`Compiled stylesheet: ${output}`);\n    return 0;\n  }\n  if (command === 'new') {
+
+  if (command === 'test' || command === 'package') {
+    const script = command === 'test' ? 'test' : 'package:example';
+    const result = io.run('npm', ['run', script]);
+    if (result.output) io.stdout(result.output.trimEnd());
+    return result.status === 0 ? 0 : 1;
+  }
+
+  if (command === 'styles') {
+    if (!inputArg || inputArg.startsWith('-')) {
+      io.stderr('Missing SCSS input path.');
+      return 2;
+    }
+    const input = resolve(inputArg);
+    const output = resolve(outputArg ?? input.replace(/\.scss$/i, '.css'));
+    const result = io.run('npx', ['sass', '--no-source-map', input, output]);
+    if (result.status !== 0) {
+      io.stderr(result.output || 'Sass compiler failed. Install project dependencies.');
+      return 1;
+    }
+    try {
+      const css = await io.readFile(output);
+      const count = reportCssDiagnostics(css, output, io);
+      if (count > 0) return 1;
+    } catch (error) {
+      io.stderr(`Unable to read compiled stylesheet: ${error instanceof Error ? error.message : String(error)}`);
+      return 2;
+    }
+    io.stdout(`Compiled and validated stylesheet: ${output}`);
+    return 0;
+  }
+
+  if (command === 'new') {
     const name = inputArg;
     if (!name || !/^[a-z][a-z0-9-]*$/.test(name)) {
       io.stderr('Extension name must use lowercase letters, digits and hyphens.');
       return 2;
     }
     const directory = resolve(outputArg ?? name);
-    const uuid = `${name}@example.com`;
+    const className = name.split('-').map((part) => part[0]!.toUpperCase() + part.slice(1)).join('');
     const files: Readonly<Record<string, string>> = {
-      'metadata.json': JSON.stringify({ uuid, name, description: `A GEF extension: ${name}`, 'shell-version': ['51'], version: 1 }, null, 2) + '\\n',
-      'extension.js': `import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';\\n\\nexport default class ${name.split('-').map((part) => part[0]!.toUpperCase() + part.slice(1)).join('')}Extension extends Extension {\\n  enable() {}\\n  disable() {}\\n}\\n`,
-      'README.md': `# ${name}\\n\\nA GNOME Shell 51 extension generated by GEF.\\n\\nBuild with \`npm run build\`.\\n`,
+      'metadata.json': JSON.stringify({ uuid: `${name}@example.com`, name, description: `A GEF extension: ${name}`, 'shell-version': ['51'], version: 1 }, null, 2) + '\n',
+      'extension.ts': `import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';\n\nexport default class ${className}Extension extends Extension {\n  enable(): void {}\n  disable(): void {}\n}\n`,
+      'README.md': `# ${name}\n\nA GNOME Shell 51 extension generated by GEF.\n\nBuild with \`npm run build\`.\n`,
     };
     try {
-      await io.mkdir?.(directory);
-      for (const [path, content] of Object.entries(files)) await io.writeFile(resolve(directory, path), content);
+      await io.mkdir(directory);
+      for (const [path, source] of Object.entries(files)) await io.writeFile(resolve(directory, path), source);
     } catch (error) {
       io.stderr(`Unable to generate project: ${error instanceof Error ? error.message : String(error)}`);
       return 2;
@@ -77,6 +125,26 @@ export async function runCli(
     io.stdout(`Created extension project: ${directory}`);
     return 0;
   }
+
+  if (command === 'generate') {
+    if (inputArg !== 'component' || !outputArg || !/^[A-Z][A-Za-z0-9]*$/.test(outputArg)) {
+      io.stderr('Usage: gef generate component <PascalCaseName> [directory]');
+      return 2;
+    }
+    const name = outputArg;
+    const directory = resolve(args[3] ?? '.');
+    try {
+      await io.mkdir(directory);
+      await io.writeFile(resolve(directory, `${name}.ts`), `import { Component } from 'gnome-extension-framework';\n\n@Component({ selector: '${name}', template: './${name}.gtpl' })\nexport class ${name} {}\n`);
+      await io.writeFile(resolve(directory, `${name}.gtpl`), `<StBox>\n  <StLabel>${name}</StLabel>\n</StBox>\n`);
+    } catch (error) {
+      io.stderr(`Unable to generate component: ${error instanceof Error ? error.message : String(error)}`);
+      return 2;
+    }
+    io.stdout(`Generated component ${name} in ${directory}`);
+    return 0;
+  }
+
   if (command !== 'check' && command !== 'compile') {
     io.stderr(`Unknown command "${command}".\n\n${usage}`);
     return 2;
@@ -100,7 +168,6 @@ export async function runCli(
     io.stderr(`${input}:${diagnostic.span.line}:${diagnostic.span.column}: ${diagnostic.code}: ${diagnostic.message}`);
   }
   if (result.diagnostics.length > 0) return 1;
-
   if (command === 'check') {
     io.stdout(`GTPL validation passed: ${input}`);
     return 0;

@@ -87,10 +87,6 @@ export function mountDirective<Instance extends object, Node>(
       outputs[output.publicName] = emitter;
       resources.add(() => emitter.clear());
     }
-    if (isDirectiveLifecycle(instance)) {
-      if (typeof instance.onDestroy === 'function') resources.add(() => instance.onDestroy?.());
-      if (typeof instance.onInit === 'function') instance.onInit();
-    }
     for (const input of definition.inputs ?? []) {
       if (!(input.publicName in inputs)) continue;
       const value = inputs[input.publicName];
@@ -99,6 +95,11 @@ export function mountDirective<Instance extends object, Node>(
       } else {
         (instance as Record<string, unknown>)[input.member] = value;
       }
+    }
+
+    if (isDirectiveLifecycle(instance)) {
+      if (typeof instance.onDestroy === 'function') resources.add(() => instance.onDestroy?.());
+      if (typeof instance.onInit === 'function') instance.onInit();
     }
 
     for (const binding of definition.hostBindings ?? []) {

@@ -26,6 +26,21 @@ describe('mountDirective', () => {
     expect(registry.match('StButton', { gefTooltip: true })).toHaveLength(1);
   });
 
+  it('assigns directive inputs before initialization and runs destroy hooks', () => {
+    const calls: string[] = [];
+    const ref = mountDirective({
+      create: () => ({
+        value: 'default',
+        onInit() { calls.push(`init:${this.value}`); },
+        onDestroy() { calls.push('destroy'); },
+      }),
+      inputs: [{ publicName: 'value', member: 'value' }],
+    }, new Injector(), { setProperty: vi.fn(), listen: () => () => {} }, {}, { value: 'provided' });
+    expect(calls).toEqual(['init:provided']);
+    ref.destroy();
+    expect(calls).toEqual(['init:provided', 'destroy']);
+  });
+
   it('exposes directive outputs and clears them on destroy', () => {
     const output = new EventEmitter<string>();
     const ref = mountDirective({

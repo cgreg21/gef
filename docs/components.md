@@ -30,12 +30,10 @@ its render function. Register the runtime-safe metadata with that generated
 function:
 
 ```ts
-import { getComponentMetadata } from 'gnome-extension-framework';
 import { ComponentRegistry, type StActor } from 'gnome-extension-framework/runtime';
 import counterRender from './counter-render.js';
 
-const metadata = getComponentMetadata(CounterComponent)!;
-const components = new ComponentRegistry<StActor>().registerMetadata(metadata, {
+const components = new ComponentRegistry<StActor>().registerType(CounterComponent, {
   create: () => new CounterComponent(),
   render: counterRender,
 });
@@ -50,7 +48,6 @@ instances, child injectors and views share one deterministic lifetime.
 ```ts
 import {
   Directive, Input, HostBinding, HostListener,
-  getDirectiveMetadata,
 } from 'gnome-extension-framework/runtime';
 import { DirectiveRegistry, type StActor } from 'gnome-extension-framework/runtime';
 
@@ -61,8 +58,8 @@ class TooltipDirective {
   @HostListener('button-press', ['$event']) activate(event: unknown): void {}
 }
 
-const directives = new DirectiveRegistry<StActor>().registerMetadata(
-  getDirectiveMetadata(TooltipDirective)!,
+const directives = new DirectiveRegistry<StActor>().registerType(
+  TooltipDirective,
   { create: () => new TooltipDirective() },
 );
 ```
@@ -73,10 +70,10 @@ native actor's destruction lifecycle.
 
 ## Pipes
 
-Register a pipe instance with its decorator metadata:
+Register a pipe class with its decorator metadata and an explicit factory:
 
 ```ts
-import { Pipe, getPipeMetadata } from 'gnome-extension-framework/runtime';
+import { Pipe } from 'gnome-extension-framework/runtime';
 import { PipeRegistry } from 'gnome-extension-framework/runtime';
 
 @Pipe({ name: 'uppercase' })
@@ -86,9 +83,9 @@ class UppercasePipe {
   }
 }
 
-const pipes = new PipeRegistry().registerMetadata(
-  getPipeMetadata(UppercasePipe)!,
-  new UppercasePipe(),
+const pipes = new PipeRegistry().registerType(
+  UppercasePipe,
+  () => new UppercasePipe(),
 );
 ```
 

@@ -1,19 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { runCli, type CliIO } from './index.js';
 
-function createIO(source: string) {
+function createIO(source: string, commandStatus = 0) {
   const output: string[] = [];
   const errors: string[] = [];
   const writes: Array<{ path: string; content: string }> = [];
+  const commands: Array<{ command: string; args: readonly string[] }> = [];
   const io: CliIO = {
     readFile: async () => source,
     writeFile: async (path, content) => { writes.push({ path, content }); },
     mkdir: async () => {},
-    run: () => ({ status: 0, output: '' }),
+    run: (command, args) => { commands.push({ command, args }); return { status: commandStatus, output: '' }; },
     stdout: (message) => output.push(message),
     stderr: (message) => errors.push(message),
   };
-  return { io, output, errors, writes };
+  return { io, output, errors, writes, commands };
 }
 
 describe('GEF CLI', () => {
@@ -30,7 +31,7 @@ describe('GEF CLI', () => {
     expect(errors).toHaveLength(0);
   });
 
-  it('reports compiler diagnostics and returns a failure code', async () => {
+  it('reports compiler diagnostics and does not emit invalid templates', async () => {
     const { io, errors, writes } = createIO('<StLabel *for="let item in items" />');
     expect(await runCli(['compile', 'view.gtpl'], io)).toBe(1);
     expect(errors.join('\n')).toContain('GTPL4203');
@@ -50,20 +51,39 @@ describe('GEF CLI', () => {
   it('creates a minimal extension project', async () => {
     const { io, output, writes } = createIO('');
     expect(await runCli(['new', 'hello-world', 'out'], io)).toBe(0);
-    expect(writes.map((item) => item.path)).toEqual(expect.arrayContaining([expect.stringContaining('metadata.json'), expect.stringContaining('extension.js')]));
+    expect(writes.map((item) => item.path)).toEqual(expect.arrayContaining([expect.stringContaining('metadata.json'), expect.stringContaining('extension.ts')]));
     expect(output[0]).toContain('Created extension project');
   });
 
-  it('reports file read and write errors', async () => {
-    const readFailure: CliIO = {
-      readFile: async () => { throw new Error('missing'); },
-      writeFile: async () => {},
-      stdout: () => {},
-      stderr: () => {},
-    };
-    const messages: string[] = [];
-    const io = { ...readFailure, stderr: (message: string) => messages.push(message) };
+  it('generates a component class and template', async () => {
+    const { io, writes } = createIO('');
+    expect(await runCli(['generate', 'component', 'UserCard', 'src/components'], io)).toBe(0);
+    expect(writes.map((item) => item.path)).toEqual(expect.arrayContaining([expect.stringContaining('UserCard.ts'), expect.stringContaining('UserCard.gtpl')]));
+  });
+
+  it('compiles and validates SCSS output', async () => {
+    const { io, output, commands } = createIO('.panel { padding: 4px; }');
+    expect(await runCli(['styles', 'panel.scss', 'panel.css'], io)).toBe(0);
+    expect(commands[0]).toMatchObject({ command: 'npx', args: ['sass', '--no-source-map', expect.stringContaining('panel.scss'), expect.stringContaining('panel.css')] });
+    expect(output[0]).toContain('Compiled and validated');
+  });
+
+  it('fails style compilation when browser-only layout is present', async () => {
+    const { io, errors } = createIO('.panel { display: grid; }');
+    expect(await runCli(['styles', 'panel.scss'], io)).toBe(1);
+    expect(errors.join('\n')).toContain('GEFCSS1003');
+  });
+
+  it('runs the package workflow', async () => {
+    const { io, commands } = createIO('');
+    expect(await runCli(['package'], io)).toBe(0);
+    expect(commands[0]).toEqual({ command: 'npm', args: ['run', 'package:example'] });
+  });
+
+  it('reports missing files', async () => {
+    const base = createIO('');
+    const io: CliIO = { ...base.io, readFile: async () => { throw new Error('missing'); } };
     expect(await runCli(['check', 'missing.gtpl'], io)).toBe(2);
-    expect(messages.join()).toContain('Unable to read');
+    expect(base.errors.join()).toContain('Unable to read');
   });
 });

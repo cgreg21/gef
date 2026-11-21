@@ -39,8 +39,10 @@
 - [ ] Native GJS code generation and source maps.
 
 ## Styles and developer tools
-- [x] SCSS compilation through the Sass CLI.\n- [ ] St/GTK-specific CSS validation and style scoping.
+- [x] SCSS compilation through the Sass CLI.\n- [x] Initial GNOME theme CSS validation for unsupported browser layout declarations and block balance.
+- [ ] Complete St/GTK-specific CSS validation and style scoping.
 - [x] CLI `check` and `compile` commands.
 - [x] CLI `new` and `doctor` commands.
-- [ ] CLI `generate`, `test`, `package` and watch mode.
+- [x] CLI `generate component`, `test`, `package` and `styles` commands.
+- [ ] Watch mode and integrated GNOME test runner.
 - [ ] Watch mode, diagnostics and examples.

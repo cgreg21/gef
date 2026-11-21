@@ -67,6 +67,32 @@ describe('GSettings reactive binding', () => {
     items.dispose();
   });
 
+  it('compares string-array settings by value when reads return new arrays', () => {
+    let stored = ['one'];
+    let changed: (() => void) | undefined;
+    const set = vi.fn((_key: string, next: string[]) => {
+      stored = [...next];
+      changed?.();
+    });
+    const settings = {
+      connect: vi.fn((_signal: string, callback: () => void) => { changed = callback; return 1; }),
+      disconnect: vi.fn(),
+      get_strv: vi.fn(() => [...stored]),
+      set_strv: set,
+    };
+    const value = bindGSettingsStrv(settings, 'items');
+
+    stored = ['external'];
+    changed?.();
+    expect(value.get()).toEqual(['external']);
+    expect(set).not.toHaveBeenCalled();
+
+    value.set(['local']);
+    expect(stored).toEqual(['local']);
+    expect(set).toHaveBeenCalledTimes(1);
+    value.dispose();
+  });
+
   it('rejects invalid key names', () => {
     expect(() => bindGSettingsBoolean(createSettings(false), 'Not A Key')).toThrow(/Invalid GSettings key/);
   });

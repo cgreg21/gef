@@ -12,6 +12,14 @@ describe('ComponentRegistry', () => {
     expect(registry.match('StButton', {})).toBeUndefined();
   });
 
+  it('registers a decorated component metadata contract', () => {
+    const registry = new ComponentRegistry<object>();
+    registry.registerMetadata({ selector: 'GefLabel', inputBindings: [{ publicName: 'text', member: 'label' }], outputBindings: [] }, {
+      create: () => ({ label: '' }), render: (instance, runtime) => runtime.text(instance.label),
+    });
+    expect(registry.match('GefLabel', {})).toBeDefined();
+  });
+
   it('supports attribute selectors and rejects duplicates', () => {
     const registry = new ComponentRegistry<object>()
       .register('[gefCard]', { create: () => ({}), render: () => ({}) });

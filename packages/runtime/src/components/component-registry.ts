@@ -1,4 +1,4 @@
-import type { ComponentDefinition } from './component-ref.js';
+import type { ComponentDefinition, ComponentInput, ComponentOutput } from './component-ref.js';
 
 export class ComponentRegistry<Node> {
   readonly #entries: Array<{ selector: string; definition: ComponentDefinition<object, Node> }> = [];
@@ -10,6 +10,13 @@ export class ComponentRegistry<Node> {
     }
     this.#entries.push({ selector, definition: definition as ComponentDefinition<object, Node> });
     return this;
+  }
+
+  registerMetadata<Instance>(
+    metadata: { readonly selector: string; readonly inputBindings: readonly ComponentInput[]; readonly outputBindings: readonly ComponentOutput[] },
+    definition: Omit<ComponentDefinition<Instance, Node>, 'inputs' | 'outputs'>,
+  ): this {
+    return this.register(metadata.selector, { ...definition, inputs: metadata.inputBindings, outputs: metadata.outputBindings });
   }
 
   match(element: string, attributes: Readonly<Record<string, unknown>>): ComponentDefinition<object, Node> | undefined {

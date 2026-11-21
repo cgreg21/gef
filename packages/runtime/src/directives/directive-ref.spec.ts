@@ -13,6 +13,17 @@ describe('mountDirective', () => {
     expect(registry.match('StButton', { disabled: true, class: 'primary' })).toHaveLength(3);
     expect(registry.match('StLabel', {})).toHaveLength(0);
   });
+  it('registers decorated directive metadata contracts', () => {
+    const registry = new DirectiveRegistry<object>();
+    registry.registerMetadata({
+      selector: '[gefTooltip]',
+      inputBindings: [{ publicName: 'text', member: 'text' }],
+      hostBindings: [{ member: 'label', property: 'accessible-name' }],
+      hostListeners: [{ member: 'activate', event: 'clicked', args: ['$event'] }],
+    }, { create: () => ({ text: '', label: '', activate: () => {} }) });
+    expect(registry.match('StButton', { gefTooltip: true })).toHaveLength(1);
+  });
+
   it('applies inputs and host bindings, then disposes subscriptions', () => {
     const value = signal('ready');
     const setProperty = vi.fn();

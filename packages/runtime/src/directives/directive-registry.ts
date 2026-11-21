@@ -1,4 +1,4 @@
-import type { DirectiveDefinition } from './directive-ref.js';
+import type { DirectiveDefinition, DirectiveInput, DirectiveHostBinding, DirectiveHostListener } from './directive-ref.js';
 
 export interface MatchedDirective<Node> {
   readonly definition: DirectiveDefinition<object, Node>;
@@ -16,6 +16,23 @@ export class DirectiveRegistry<Node> {
     }
     this.#entries.push({ selector, definition: definition as DirectiveDefinition<object, Node> });
     return this;
+  }
+
+  registerMetadata<Instance extends object>(
+    metadata: {
+      readonly selector: string;
+      readonly inputBindings: readonly DirectiveInput[];
+      readonly hostBindings: readonly DirectiveHostBinding[];
+      readonly hostListeners: readonly DirectiveHostListener[];
+    },
+    definition: Omit<DirectiveDefinition<Instance, Node>, 'inputs' | 'hostBindings' | 'hostListeners'>,
+  ): this {
+    return this.register(metadata.selector, {
+      ...definition,
+      inputs: metadata.inputBindings,
+      hostBindings: metadata.hostBindings,
+      hostListeners: metadata.hostListeners,
+    });
   }
 
   match(element: string, attributes: Readonly<Record<string, unknown>>): readonly MatchedDirective<Node>[] {

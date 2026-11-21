@@ -32,6 +32,18 @@ describe('Injector', () => {
     expect(parent.get(TOKEN)).toBe('parent');
   });
 
+  it('destroys child injector scopes with their parent', () => {
+    const TOKEN = new InjectionToken<object>('child');
+    const disposed: string[] = [];
+    const parent = new Injector();
+    const child = parent.createChild([{ provide: TOKEN, useValue: {}, dispose: () => disposed.push('child') }]);
+    child.get(TOKEN);
+    parent.destroy();
+    expect(disposed).toEqual(['child']);
+    expect(() => child.get(TOKEN)).toThrow(/destroyed injector/);
+    expect(() => parent.createChild()).toThrow(/destroyed injector/);
+  });
+
   it('reports missing providers and dependency cycles', () => {
     const Missing = new InjectionToken('missing');
     expect(() => new Injector().get(Missing)).toThrow('No provider');

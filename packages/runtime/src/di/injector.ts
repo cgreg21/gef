@@ -76,6 +76,7 @@ export class Injector {
   }
 
   createChild(providers: readonly Provider[] = []): Injector {
+    if (this.#destroyed) throw new Error('Cannot create a child from a destroyed injector.');
     return new Injector(providers, this);
   }
 

@@ -70,7 +70,7 @@ describe('GEF CLI', () => {
     expect(writes).toHaveLength(2);
     const module = writes.find((item) => item.path.endsWith('view.js'))?.content ?? '';
     const map = writes.find((item) => item.path.endsWith('view.js.map'));
-    expect(module).toContain('export default\\n(ctx, runtime) =>');
+    expect(module).toContain('export default\n(ctx, runtime) =>');
     expect(module).toContain('runtime.bind');
     expect(module).toContain('sourceMappingURL=view.js.map');
     expect(JSON.parse(map?.content ?? '{}')).toMatchObject({

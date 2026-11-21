@@ -76,8 +76,7 @@ function notifySignal(property: string): string {
 function readProperty(actor: GtkActor, property: string): unknown {
   const target = actor as unknown as Record<string, unknown>;
   if (property in target) return target[property];
-  const name = propertyName(property);
-  return target[name] ?? actor.get_property?.(name);
+  return target[propertyName(property)];
 }
 
 function propertyName(name: string): string {

@@ -84,7 +84,9 @@ export function createGtplRenderRuntime<Node>(
   directives: DirectiveRegistry<Node> = new DirectiveRegistry<Node>(),
   injector: Injector = new Injector(),
   components: ComponentRegistry<Node> = new ComponentRegistry<Node>(),
+  createdNodes?: Node[],
 ): GtplRenderRuntime<Node> {
+  const track = (node: Node): Node => { createdNodes?.push(node); return node; };
   return {
     pipe: (name, value, ...args) => pipes.transform(name, value, ...args),
     bind: (get) => ({ kind: 'binding', get }),
@@ -104,7 +106,7 @@ export function createGtplRenderRuntime<Node>(
           throw new Error('The renderer host does not support component lifecycle cleanup.');
         }
         host.onDestroy(ref.view.node, () => ref.destroy());
-        return ref.view.node;
+        return track(ref.view.node);
       }
       const node = host.element(name, attributes, children);
       const matches = directives.match(name, attributes);
@@ -192,10 +194,14 @@ export function mountGtplTemplate<Context, Node>(
   components?: ComponentRegistry<Node>,
 ): GtplRenderView<Node> {
   const ownedInjector = injector ?? new Injector();
+  const createdNodes: Node[] = [];
   let node: Node;
   try {
-    node = render(context, createGtplRenderRuntime(host, pipes, directives, ownedInjector, components));
+    node = render(context, createGtplRenderRuntime(host, pipes, directives, ownedInjector, components, createdNodes));
   } catch (error) {
+    for (const created of createdNodes) {
+      try { host.destroy(created); } catch { /* Preserve the render failure. */ }
+    }
     if (!injector) {
       try { ownedInjector.destroy(); } catch { /* Preserve the render failure. */ }
     }

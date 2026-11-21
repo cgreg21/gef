@@ -51,8 +51,8 @@ describe('emitGtplTemplate', () => {
     const parsed = parseGtpl(source);
     expect(parsed.diagnostics).toEqual([]);
     const generated = emitGtplTemplateWithSourceMap(parsed.nodes, { source: 'view.gtpl' });
-    // Element, interpolation text, property expression and interpolation expression.
-    expect(generated.map.mappings.split(',')).toHaveLength(4);
+    // Element, text node, three binding AST nodes and two interpolation AST nodes.
+    expect(generated.map.mappings.split(',')).toHaveLength(7);
     expect(generated.code).not.toContain('__GEF_MAP_');
   });
 

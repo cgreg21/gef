@@ -322,7 +322,7 @@ describe('createGtkRenderHost', () => {
       create: () => ({ label: 'default', changed }),
       inputs: [{ publicName: 'label', member: 'label' }],
       outputs: [{ publicName: 'changed', member: 'changed' }],
-      render: (instance, runtime) => runtime.element('GtkLabel', { label: instance.label }, undefined),
+      render: (instance, runtime) => runtime.element('GtkLabel', { label: runtime.bind(() => instance.label) }, undefined),
     });
     const received: string[] = [];
     const runtime = createGtplRenderRuntime(host, undefined, undefined, new Injector(), registry);

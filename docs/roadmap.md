@@ -18,7 +18,7 @@
 - [x] Deterministic parser fuzz corpus and malformed-input regression tests.
 - [x] Optional TypeScript expression checking against component context type literals.
 - [x] Emit JavaScript source for parsed expression ASTs.
-- [x] Emit initial JavaScript render-function source for GTPL ASTs (runtime contract injected; structural shorthand and two-way bindings remain pending).
+- [x] Emit JavaScript render-function source for GTPL ASTs, including `*if`/`*for` lowering and two-way bindings.
 - [x] Provide a combined GTPL parse, semantic and component validation API.
 - [x] Connect supported generated templates to the executable renderer-independent runtime.
 - [ ] Complete source maps, diagnostics mapping and remaining template constructs.
@@ -31,9 +31,11 @@
 - [x] Synchronous signal, computed and effect primitives.
 - [x] Reactive `@if`, `@switch` and keyed `@for` updates in the St host.
 - [x] Explicit hierarchical dependency injector with scoped disposal.
-- [x] Component instance/view lifecycle with child injector scopes and reverse-order teardown.
+- [x] Component instance/view lifecycle with child injector scopes, bound inputs/outputs and reverse-order teardown.
+- [x] Nested component selector registry and generated-template mounting.
 - [x] Explicit directive instance mounting with host bindings, host listeners and deterministic cleanup.
-- [x] Selector-matched directive instantiation, input binding and host behavior in generated templates.
+- [x] Selector-matched directive instantiation, input/output binding and host behavior in generated templates.
+- [x] Runtime pipe registry with pure-transform caching and decorator metadata registration.
 - [x] GLib timeout/idle scheduling, GObject signal lifecycle, D-Bus subscriptions and Clutter transition cleanup.
 - [x] GNOME Shell 51 St actor smoke harness on a virtual X11 display (requires a host with Shell 51 installed).
 - [x] Initial GTK4/libadwaita host adapter with reactive bindings and keyed loops.
@@ -46,7 +48,7 @@
 - [x] SCSS compilation through the Sass CLI.
 - [x] Initial GNOME theme CSS validation for unsupported browser layout declarations and block balance.
 - [ ] Complete St/GTK-specific CSS validation and style scoping.
-- [x] CLI `check` and `compile` commands.
+- [x] CLI `check`, `compile` and `build` commands.
 - [x] CLI `new` and `doctor` commands.
 - [x] CLI `generate component`, `test`, `package` and `styles` commands.
 - [x] Native filesystem watch mode and GNOME Shell 51 virtual-display smoke test harness.

@@ -32,4 +32,18 @@ if (label.get_text() !== 'GEF GNOME Shell 51 smoke test') {
 }
 host.destroy(label);
 
+for (const [selector, constructorName] of [
+  ['StEntry', 'Entry'],
+  ['StScrollView', 'ScrollView'],
+  ['StFrame', 'Frame'],
+  ['StSwitch', 'Switch'],
+  ['StSlider', 'Slider'],
+  ['StSpinner', 'Spinner'],
+  ['StProgressBar', 'ProgressBar'],
+  ['StCheckBox', 'CheckBox'],
+  ['StComboBox', 'ComboBox'],
+]) {
+  if (St[constructorName]) host.destroy(host.element(selector, {}, undefined));
+}
+
 print('GEF runtime and GNOME Shell 51 St actor smoke tests passed.');

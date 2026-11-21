@@ -155,6 +155,24 @@ describe('GEF CLI', () => {
     expect(base.errors.join('\n')).toContain('development-only file: src.ts');
   });
 
+  it('rejects duplicate Shell versions and invalid optional metadata versions', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json'],
+      readFile: async () => JSON.stringify({
+        uuid: 'demo@example.com',
+        name: 'Demo',
+        description: 'A demo',
+        'shell-version': ['51', '51'],
+        version: '1',
+      }),
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
+    expect(base.errors.join('\\n')).toContain('shell-version must not contain duplicate');
+    expect(base.errors.join('\\n')).toContain('version must be a positive integer');
+  });
+
   it('rejects malformed extension UUIDs and a missing Shell entry point', async () => {
     const base = createIO('');
     const io: CliIO = {

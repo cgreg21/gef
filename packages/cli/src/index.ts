@@ -120,6 +120,12 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     if (!Array.isArray(metadata['shell-version']) || metadata['shell-version'].length === 0 || metadata['shell-version'].some((version) => typeof version !== 'string' || !/^\d+(?:\.\d+)*$/.test(version))) {
       errors.push('metadata.json: shell-version must contain stable numeric GNOME Shell versions.');
     }
+    if (Array.isArray(metadata['shell-version']) && new Set(metadata['shell-version']).size !== metadata['shell-version'].length) {
+      errors.push('metadata.json: shell-version must not contain duplicate GNOME Shell versions.');
+    }
+    if (metadata.version !== undefined && (!Number.isInteger(metadata.version) || (metadata.version as number) < 1)) {
+      errors.push('metadata.json: version must be a positive integer when provided.');
+    }
     const schemaId = metadata['settings-schema'];
     if (schemaId !== undefined) {
       if (typeof schemaId !== 'string' || !schemaId.trim()) {

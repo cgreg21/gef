@@ -46,7 +46,7 @@ with GNOME reviewers.
   `name`, `description` and `shell-version` fields.
 - Validate UUID syntax with non-empty, well-formed domain labels.
 - Require the root `extension.js` Shell entry point in every staged extension.
-- Include only stable GNOME Shell versions in release metadata.
+- Include only unique, stable GNOME Shell versions in release metadata. If `version` is present, it must be a positive integer.
 - Include `settings-schema` when the extension uses its own GSettings schema, and ensure the packaged XML or compiled schema matches the declared ID.
 - The local validator checks the declared schema against staged `.gschema.xml` files, or accepts a compiled schema when source XML is not shipped.
 - Include required runtime JavaScript, schemas, translations and assets only.

@@ -236,34 +236,50 @@ export function createGtkRenderHost(
       let previousEmpty: GtkActor | undefined;
       try {
         scope.add(effect(() => {
-        const nextState = state.get();
-        const retained = new Set(previousItems.map((item) => item.node));
-        if (previousEmpty) retained.add(previousEmpty);
-        try {
-          const oldByKey = new Map(previousItems.map((item) => [item.key, item]));
-          const nextItems = nextState.items.map((item) => {
-            const previous = oldByKey.get(item.key);
-            if (!previous) return item;
-            oldByKey.delete(item.key);
-            disposeWidget(item.node);
-            return { ...item, node: previous.node };
-          });
-          for (const item of previousItems) removeChild(box, item.node);
-          if (previousEmpty) removeChild(box, previousEmpty);
-          for (const previous of oldByKey.values()) disposeWidget(previous.node);
-          if (previousEmpty) disposeWidget(previousEmpty);
-          const nextChildren = nextItems.length ? nextItems.map((item) => item.node) : nextState.empty ? [nextState.empty] : [];
-          for (const child of nextChildren) addChild(box, child);
-          children.set(box, nextChildren);
-          previousItems = nextItems;
-          previousEmpty = nextState.empty;
-        } catch (error) {
-          const nextChildren = [...nextState.items.map((item) => item.node), ...(nextState.empty ? [nextState.empty] : [])];
-          children.set(box, [...new Set([...previousItems.map((item) => item.node), ...(previousEmpty ? [previousEmpty] : []), ...nextChildren])]
-            .filter((child) => !disposed.has(child)));
-          for (const child of nextChildren) if (!retained.has(child)) disposeWidget(child);
-          throw error;
-        }
+          const nextState = state.get();
+          const retained = new Set(previousItems.map((item) => item.node));
+          if (previousEmpty) retained.add(previousEmpty);
+
+          try {
+            const oldByKey = new Map(previousItems.map((item) => [item.key, item]));
+            const nextItems = nextState.items.map((item) => {
+              const previous = oldByKey.get(item.key);
+              if (!previous) return item;
+              oldByKey.delete(item.key);
+              disposeWidget(item.node);
+              return { ...item, node: previous.node };
+            });
+
+            for (const item of previousItems) removeChild(box, item.node);
+            if (previousEmpty) removeChild(box, previousEmpty);
+            for (const previous of oldByKey.values()) disposeWidget(previous.node);
+            if (previousEmpty) disposeWidget(previousEmpty);
+
+            const nextChildren = nextItems.length
+              ? nextItems.map((item) => item.node)
+              : nextState.empty ? [nextState.empty] : [];
+            for (const child of nextChildren) addChild(box, child);
+
+            children.set(box, nextChildren);
+            previousItems = nextItems;
+            previousEmpty = nextState.empty;
+          } catch (error) {
+            const nextChildren = [
+              ...nextState.items.map((item) => item.node),
+              ...(nextState.empty ? [nextState.empty] : []),
+            ];
+            children.set(box, [
+              ...new Set([
+                ...previousItems.map((item) => item.node),
+                ...(previousEmpty ? [previousEmpty] : []),
+                ...nextChildren,
+              ]),
+            ].filter((child) => !disposed.has(child)));
+            for (const child of nextChildren) {
+              if (!retained.has(child)) disposeWidget(child);
+            }
+            throw error;
+          }
         }));
         return box;
       } catch (error) {

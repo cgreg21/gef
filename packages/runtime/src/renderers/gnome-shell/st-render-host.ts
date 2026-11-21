@@ -22,6 +22,15 @@ export interface StNamespace {
   readonly Button: StWidgetConstructor;
   readonly Bin: StWidgetConstructor;
   readonly Widget: StWidgetConstructor;
+  readonly Entry?: StWidgetConstructor;
+  readonly ScrollView?: StWidgetConstructor;
+  readonly Frame?: StWidgetConstructor;
+  readonly Switch?: StWidgetConstructor;
+  readonly Slider?: StWidgetConstructor;
+  readonly Spinner?: StWidgetConstructor;
+  readonly ProgressBar?: StWidgetConstructor;
+  readonly CheckBox?: StWidgetConstructor;
+  readonly ComboBox?: StWidgetConstructor;
 }
 
 export interface StRenderHostOptions {
@@ -76,6 +85,15 @@ export function createStRenderHost(
     StButton: St.Button,
     StBin: St.Bin,
     StWidget: St.Widget,
+    ...(St.Entry ? { StEntry: St.Entry } : {}),
+    ...(St.ScrollView ? { StScrollView: St.ScrollView } : {}),
+    ...(St.Frame ? { StFrame: St.Frame } : {}),
+    ...(St.Switch ? { StSwitch: St.Switch } : {}),
+    ...(St.Slider ? { StSlider: St.Slider } : {}),
+    ...(St.Spinner ? { StSpinner: St.Spinner } : {}),
+    ...(St.ProgressBar ? { StProgressBar: St.ProgressBar } : {}),
+    ...(St.CheckBox ? { StCheckBox: St.CheckBox } : {}),
+    ...(St.ComboBox ? { StComboBox: St.ComboBox } : {}),
     ...options.components,
   };
   const destroyed = new WeakSet<StActor>();

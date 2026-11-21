@@ -28,12 +28,34 @@ export interface GtkNamespace {
   readonly Image: GtkWidgetConstructor;
   readonly ScrolledWindow: GtkWidgetConstructor;
   readonly Switch?: GtkWidgetConstructor;
+  readonly CheckButton?: GtkWidgetConstructor;
+  readonly DropDown?: GtkWidgetConstructor;
+  readonly SpinButton?: GtkWidgetConstructor;
+  readonly ProgressBar?: GtkWidgetConstructor;
+  readonly Separator?: GtkWidgetConstructor;
+  readonly ListBox?: GtkWidgetConstructor;
+  readonly ListBoxRow?: GtkWidgetConstructor;
+  readonly Grid?: GtkWidgetConstructor;
+  readonly Stack?: GtkWidgetConstructor;
+  readonly Revealer?: GtkWidgetConstructor;
+  readonly TextView?: GtkWidgetConstructor;
+  readonly PasswordEntry?: GtkWidgetConstructor;
+  readonly SearchEntry?: GtkWidgetConstructor;
 }
 
 export interface AdwNamespace {
   readonly PreferencesPage?: GtkWidgetConstructor;
   readonly PreferencesGroup?: GtkWidgetConstructor;
   readonly ActionRow?: GtkWidgetConstructor;
+  readonly SwitchRow?: GtkWidgetConstructor;
+  readonly EntryRow?: GtkWidgetConstructor;
+  readonly PasswordEntryRow?: GtkWidgetConstructor;
+  readonly ExpanderRow?: GtkWidgetConstructor;
+  readonly ComboRow?: GtkWidgetConstructor;
+  readonly SpinRow?: GtkWidgetConstructor;
+  readonly Banner?: GtkWidgetConstructor;
+  readonly HeaderBar?: GtkWidgetConstructor;
+  readonly ToolbarView?: GtkWidgetConstructor;
 }
 
 export interface GtkRenderHostOptions {
@@ -105,9 +127,31 @@ export function createGtkRenderHost(
     GtkImage: Gtk.Image,
     GtkScrolledWindow: Gtk.ScrolledWindow,
     ...(Gtk.Switch ? { GtkSwitch: Gtk.Switch } : {}),
+    ...(Gtk.CheckButton ? { GtkCheckButton: Gtk.CheckButton } : {}),
+    ...(Gtk.DropDown ? { GtkDropDown: Gtk.DropDown } : {}),
+    ...(Gtk.SpinButton ? { GtkSpinButton: Gtk.SpinButton } : {}),
+    ...(Gtk.ProgressBar ? { GtkProgressBar: Gtk.ProgressBar } : {}),
+    ...(Gtk.Separator ? { GtkSeparator: Gtk.Separator } : {}),
+    ...(Gtk.ListBox ? { GtkListBox: Gtk.ListBox } : {}),
+    ...(Gtk.ListBoxRow ? { GtkListBoxRow: Gtk.ListBoxRow } : {}),
+    ...(Gtk.Grid ? { GtkGrid: Gtk.Grid } : {}),
+    ...(Gtk.Stack ? { GtkStack: Gtk.Stack } : {}),
+    ...(Gtk.Revealer ? { GtkRevealer: Gtk.Revealer } : {}),
+    ...(Gtk.TextView ? { GtkTextView: Gtk.TextView } : {}),
+    ...(Gtk.PasswordEntry ? { GtkPasswordEntry: Gtk.PasswordEntry } : {}),
+    ...(Gtk.SearchEntry ? { GtkSearchEntry: Gtk.SearchEntry } : {}),
     ...(options.adw?.PreferencesPage ? { AdwPreferencesPage: options.adw.PreferencesPage } : {}),
     ...(options.adw?.PreferencesGroup ? { AdwPreferencesGroup: options.adw.PreferencesGroup } : {}),
     ...(options.adw?.ActionRow ? { AdwActionRow: options.adw.ActionRow } : {}),
+    ...(options.adw?.SwitchRow ? { AdwSwitchRow: options.adw.SwitchRow } : {}),
+    ...(options.adw?.EntryRow ? { AdwEntryRow: options.adw.EntryRow } : {}),
+    ...(options.adw?.PasswordEntryRow ? { AdwPasswordEntryRow: options.adw.PasswordEntryRow } : {}),
+    ...(options.adw?.ExpanderRow ? { AdwExpanderRow: options.adw.ExpanderRow } : {}),
+    ...(options.adw?.ComboRow ? { AdwComboRow: options.adw.ComboRow } : {}),
+    ...(options.adw?.SpinRow ? { AdwSpinRow: options.adw.SpinRow } : {}),
+    ...(options.adw?.Banner ? { AdwBanner: options.adw.Banner } : {}),
+    ...(options.adw?.HeaderBar ? { AdwHeaderBar: options.adw.HeaderBar } : {}),
+    ...(options.adw?.ToolbarView ? { AdwToolbarView: options.adw.ToolbarView } : {}),
     ...options.components,
   };
   const resources = new WeakMap<GtkActor, ResourceScope>();

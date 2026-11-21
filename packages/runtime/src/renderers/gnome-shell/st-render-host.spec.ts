@@ -79,6 +79,15 @@ function createSt(): StNamespace {
     Button: FakeBin,
     Bin: FakeBin,
     Widget: constructor(),
+    Entry: constructor(),
+    ScrollView: constructor(),
+    Frame: constructor(),
+    Switch: constructor(),
+    Slider: constructor(),
+    Spinner: constructor(),
+    ProgressBar: constructor(),
+    CheckBox: constructor(),
+    ComboBox: constructor(),
   };
 }
 
@@ -89,6 +98,13 @@ describe('createStRenderHost', () => {
     const actor = host.element('StLabel', { styleClass: 'title' }, child) as FakeActor;
     expect(actor.properties).toEqual({ style_class: 'title' });
     expect(actor.children).toEqual([child]);
+  });
+
+  it('registers the common GNOME Shell St widget constructors', () => {
+    const host = createStRenderHost(createSt());
+    for (const name of ['StEntry', 'StScrollView', 'StFrame', 'StSwitch', 'StSlider', 'StSpinner', 'StProgressBar', 'StCheckBox', 'StComboBox']) {
+      expect(host.element(name, {}, undefined)).toBeInstanceOf(FakeActor);
+    }
   });
 
   it('does not add synthetic empty containers to leaf widgets', () => {

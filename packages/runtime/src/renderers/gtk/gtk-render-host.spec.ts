@@ -72,10 +72,35 @@ function createGtk(): GtkNamespace {
     Image: constructor(),
     ScrolledWindow: FakeSingleChild,
     Switch: FakeWidget,
+    CheckButton: FakeWidget,
+    DropDown: FakeWidget,
+    SpinButton: FakeWidget,
+    ProgressBar: FakeWidget,
+    Separator: FakeWidget,
+    ListBox: FakeWidget,
+    ListBoxRow: FakeWidget,
+    Grid: FakeWidget,
+    Stack: FakeWidget,
+    Revealer: FakeWidget,
+    TextView: FakeWidget,
+    PasswordEntry: FakeWidget,
+    SearchEntry: FakeWidget,
   };
 }
 
 describe('createGtkRenderHost', () => {
+  it('registers common GTK4 widgets and optional libadwaita widgets', () => {
+    const host = createGtkRenderHost(createGtk(), {
+      adw: { PreferencesPage: FakeWidget, PreferencesGroup: FakeWidget, ActionRow: FakeWidget,
+        SwitchRow: FakeWidget, EntryRow: FakeWidget, PasswordEntryRow: FakeWidget,
+        ExpanderRow: FakeWidget, ComboRow: FakeWidget, SpinRow: FakeWidget,
+        Banner: FakeWidget, HeaderBar: FakeWidget, ToolbarView: FakeWidget },
+    });
+    for (const name of ['GtkCheckButton', 'GtkDropDown', 'GtkSpinButton', 'GtkProgressBar', 'GtkSeparator', 'GtkListBox', 'GtkListBoxRow', 'GtkGrid', 'GtkStack', 'GtkRevealer', 'GtkTextView', 'GtkPasswordEntry', 'GtkSearchEntry', 'AdwSwitchRow', 'AdwEntryRow', 'AdwPasswordEntryRow', 'AdwExpanderRow', 'AdwComboRow', 'AdwSpinRow', 'AdwBanner', 'AdwHeaderBar', 'AdwToolbarView']) {
+      expect(host.element(name, {}, undefined)).toBeInstanceOf(FakeWidget);
+    }
+  });
+
   it('creates GTK widgets with normalized properties and optional children', () => {
     const host = createGtkRenderHost(createGtk());
     const label = host.element('GtkLabel', { label: 'Hello' }, undefined) as FakeWidget;

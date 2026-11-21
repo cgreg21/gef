@@ -15,8 +15,8 @@
 - [ ] Publish package metadata, compiler/runtime ESM exports and the `gef` executable.
 - [x] Add CI coverage for clean tarball installation, compiler/runtime ESM imports and CLI execution through `npx`.
 - [ ] Verify the first published version from the public npm registry.
-- [x] Add a GitHub Release workflow with npm trusted publishing (OIDC); never store credentials in source.
-- [x] Document versioning, changelog and release recovery procedure.
+- [x] Add a GitHub Release workflow with npm trusted publishing (OIDC), including an exact release-tag/package-version guard; never store credentials in source.
+- [x] Document the one-time manual npm package bootstrap, versioning, changelog and release recovery procedure.
 - [ ] Configure the npm package trusted publisher and complete the first public release.
 
 ## Foundation

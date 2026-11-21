@@ -52,7 +52,7 @@ npx --yes --package gnome-extension-framework gef --help
 npx --yes --package gnome-extension-framework gef new my-extension
 ```
 
-The published package exposes the `gef` executable and the compiler/runtime ESM entry points. CI builds the package, installs the generated tarball into a clean temporary project, checks both ESM entry points and invokes the CLI through `npx`. Publishing is performed from a GitHub Release after these checks pass, using npm trusted publishing (OIDC) with a current npm CLI; no npm token is stored in the repository. See [npm release setup](docs/npm-release.md).
+The published package exposes the `gef` executable and the compiler/runtime ESM entry points. CI builds the package, installs the generated tarball into a clean temporary project, checks both ESM entry points and invokes the CLI through `npx`. Publishing is performed from a GitHub Release after these checks pass, using npm trusted publishing (OIDC) with a current npm CLI; the release tag must match the package version. The first npm publication must bootstrap the package manually before its trusted publisher can be configured. No npm token is stored in the repository. See [npm release setup](docs/npm-release.md).
 
 ## Packages
 
@@ -67,7 +67,9 @@ The runtime package has no Node.js or TypeScript imports. Decorator metadata is 
 
 Implemented foundations include the GTPL parser and structural lowering,
 expression and template code generation, optional TypeScript expression type checking, component contract validation,
-selector-matched runtime directives and components, component input/output lifecycles and DI (including reactive input teardown tests and GTK component reactive input binding, mounting and disposal coverage), reactive
+selector-matched runtime directives and components, component input/output
+lifecycles and DI (including reactive input teardown tests and GTK component
+reactive input binding, mounting and disposal coverage), reactive
 signals, pure pipe caching, resource scopes, expanded St/GTK4/libadwaita widget hosts, GLib
 source and GObject signal cleanup, reactive boolean/integer/string/string-array GSettings bindings,
 source-context CLI diagnostics, native GTK4/libadwaita smoke tests, an initial CSS compatibility checker,

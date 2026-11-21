@@ -136,6 +136,31 @@ describe('GEF CLI', () => {
     expect(base.errors.join('\n')).toContain('preferences code must not import Shell-only libraries');
   });
 
+  it('rejects a declared settings schema that is not packaged', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org.example.demo' })
+        : '',
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
+    expect(base.errors.join('\\n')).toContain('no GSettings schema is packaged');
+  });
+
+  it('accepts a matching packaged settings schema', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/schemas/org.example.demo.gschema.xml'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org.example.demo' })
+        : '<schemalist><schema id="org.example.demo" path="/org/example/demo/"></schema></schemalist>',
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
+  });
+
   it('accepts a clean staged extension', async () => {
     const base = createIO('');
     const io: CliIO = {

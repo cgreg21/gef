@@ -43,7 +43,8 @@ with GNOME reviewers.
   `name`, `description` and `shell-version` fields.
 - Validate UUID syntax and ensure it matches the extension directory/package.
 - Include only stable GNOME Shell versions in release metadata.
-- Include `settings-schema` when the extension uses its own GSettings schema.
+- Include `settings-schema` when the extension uses its own GSettings schema, and ensure the packaged XML or compiled schema matches the declared ID.
+- The local validator checks the declared schema against staged `.gschema.xml` files, or accepts a compiled schema when source XML is not shipped.
 - Include required runtime JavaScript, schemas, translations and assets only.
 - Exclude build scripts, development dependencies, source maps not intended
   for distribution, tests, caches and unused files from the EGO archive.

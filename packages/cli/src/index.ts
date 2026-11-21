@@ -118,6 +118,28 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     if (!Array.isArray(metadata['shell-version']) || metadata['shell-version'].length === 0 || metadata['shell-version'].some((version) => typeof version !== 'string' || !/^\d+(?:\.\d+)*$/.test(version))) {
       errors.push('metadata.json: shell-version must contain stable numeric GNOME Shell versions.');
     }
+    const schemaId = metadata['settings-schema'];
+    if (schemaId !== undefined) {
+      if (typeof schemaId !== 'string' || !schemaId.trim()) {
+        errors.push('metadata.json: settings-schema must be a non-empty schema ID.');
+      } else {
+        const schemaFiles = files.filter((file) => file.includes('/schemas/') && file.endsWith('.gschema.xml'));
+        if (schemaFiles.length === 0 && !files.some((file) => file.endsWith('/schemas/gschemas.compiled'))) {
+          errors.push('metadata.json: settings-schema is set but no GSettings schema is packaged.');
+        } else if (schemaFiles.length > 0) {
+          let found = false;
+          for (const file of schemaFiles) {
+            try {
+              const source = await io.readFile(file);
+              if (source.includes(`id="${schemaId}"`) || source.includes(`id='${schemaId}'`)) found = true;
+            } catch {
+              errors.push(`Unable to read GSettings schema: ${file.slice(directory.length + 1)}`);
+            }
+          }
+          if (!found) errors.push(`metadata.json: settings-schema "${schemaId}" does not match a packaged GSettings schema.`);
+        }
+      }
+    }
     for (const file of files) {
       const relative = file.slice(directory.length + 1).replaceAll('\\', '/');
       if (/(^|\/)(node_modules|tests?|scripts|\.git)(\/|$)/.test(relative) || /\.(?:ts|map|md|lock)$/.test(relative) || /(^|\/)package\.json$/.test(relative)) {

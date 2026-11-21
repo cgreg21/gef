@@ -40,7 +40,7 @@ node dist/cli/src/index.js package
 node dist/cli/src/index.js doctor
 ```
 
-The `compile` command creates missing parent directories for its JavaScript output.
+The `compile` command creates missing parent directories for its JavaScript output path, including nested relative paths.
 
 ## Packages
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { resolve } from 'node:path';
 import { runCli, type CliIO } from './index.js';
 
 function createIO(source: string, commandStatus = 0) {

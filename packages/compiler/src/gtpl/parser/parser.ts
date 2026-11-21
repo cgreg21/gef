@@ -69,7 +69,12 @@ class GtplParser {
 
   constructor(private readonly source: string) {
     for (let i = 0; i < source.length; i += 1) {
-      if (source[i] === '\n') this.lineStarts.push(i + 1);
+      if (source[i] === '\r') {
+        if (source[i + 1] === '\n') i += 1;
+        this.lineStarts.push(i + 1);
+      } else if (source[i] === '\n') {
+        this.lineStarts.push(i + 1);
+      }
     }
   }
 

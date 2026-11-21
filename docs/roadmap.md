@@ -42,6 +42,7 @@
 - [x] Connect supported generated templates to the executable renderer-independent runtime.
 - [ ] Complete source maps and remaining template constructs.
 - [x] Report unknown identifiers at their exact GTPL expression locations.
+- [x] Track correct template line numbers for LF, CRLF and standalone CR line endings.
 - [x] Exhaustiveness diagnostics for `@default never` over literal-union context properties.
 
 ## Runtime and renderers

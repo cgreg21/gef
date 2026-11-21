@@ -45,7 +45,7 @@ export class Injector {
       }
       this.#providers.set(provider.provide, provider);
     }
-    parent?.#children.add(this);
+    if (parent) parent.#children.add(this);
   }
 
   get<T>(token: Token<T>): T {
@@ -95,7 +95,7 @@ export class Injector {
       if (!hasError) { firstError = error; hasError = true; }
     }
     this.#instances.clear();
-    this.parent?.#children.delete(this);
+    if (this.parent) this.parent.#children.delete(this);
     if (hasError) throw firstError;
   }
 

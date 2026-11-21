@@ -83,9 +83,9 @@ export function validateGtplExpressionTypes(
     .map((name) => `const ${name}: any = undefined;`)
     .join(' ');
   const context = `type __GefContext = ${contextType};\ndeclare const runtime: { pipe(name: string, value: unknown, ...args: unknown[]): unknown };\n`;
-  const lines = expressions.map(({ expression }) => {
+  const lines = expressions.map(({ expression }, index) => {
     const emitted = emitGtplExpression(expression, { contextIdentifiers: contextMembers(contextType), localIdentifiers: [...locals] });
-    return `const __gefCheck = (ctx: __GefContext) => { ${declarations} return ${emitted}; };`;
+    return `const __gefCheck${index} = (ctx: __GefContext) => { ${declarations} return ${emitted}; };`;
   });
   const fileName = '/__gef_template_typecheck__.ts';
   const source = context + lines.join('\n');

@@ -19,4 +19,4 @@ describe('loadGtkStylesheet', () => {
     expect(Gtk.StyleContext.add_provider_for_display).toHaveBeenCalledWith({}, expect.any(Object), 600);
     expect(Gtk.StyleContext.remove_provider_for_display).toHaveBeenCalledOnce();
   });
-}
+});

@@ -110,5 +110,6 @@ function isEventEmitter(value: unknown): value is EventEmitter<unknown> {
 
 function isComponentLifecycle(value: unknown): value is ComponentLifecycle {
   return typeof value === 'object' && value !== null
-    && ('onInit' in value || 'onDestroy' in value);
+    && (('onInit' in value && typeof value.onInit === 'function')
+      || ('onDestroy' in value && typeof value.onDestroy === 'function'));
 }

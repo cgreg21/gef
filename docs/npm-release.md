@@ -23,8 +23,7 @@ npm access token.
    `https://github.com/cgreg21/gef.git`, matching `package.json`.
 
 npm trusted publishing requires npm CLI 11.5.1+ and Node.js 22.14.0+.
-The release workflow uses Node.js 24, GitHub-hosted runners and
-`id-token: write`. npm generates provenance automatically for a public
+The release workflow uses Node.js 24, upgrades npm to `^11.5.1` before publishing, runs on GitHub-hosted runners and grants `id-token: write`. npm generates provenance automatically for a public
 package published from this public GitHub repository through OIDC.
 
 ## Release procedure

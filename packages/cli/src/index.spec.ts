@@ -180,6 +180,34 @@ describe('GEF CLI', () => {
     expect(base.errors.join('\n')).toContain('preferences code must not import Shell-only libraries');
   });
 
+  it('rejects Shell imports in transitive preferences dependencies', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/prefs.js', '/tmp/demo/lib/prefs-helper.js'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : path.endsWith('prefs.js') ? "import './lib/prefs-helper.js';"
+          : path.endsWith('prefs-helper.js') ? "import St from 'gi://St';" : '',
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
+    expect(base.errors.join('\\n')).toContain('preferences dependency imports a Shell-only library');
+  });
+
+  it('rejects GTK imports in transitive Shell dependencies', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/lib/shell-helper.js'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : path.endsWith('extension.js') ? "import './lib/shell-helper.js';"
+          : "import Gtk from 'gi://Gtk?version=4.0';",
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
+    expect(base.errors.join('\\n')).toContain('Shell dependency imports GTK or libadwaita');
+  });
+
   it('rejects a declared settings schema that is not packaged', async () => {
     const base = createIO('');
     const io: CliIO = {

@@ -3,7 +3,7 @@
 ## EGO publication compliance
 - [x] Require the staged `extension.js` entry point and reject malformed UUID domain labels.
 - [ ] Emit readable, consistently formatted JavaScript without minification or obfuscation.
-- [ ] Keep Shell and preferences entry points and dependencies process-isolated.
+- [x] Check Shell and preferences entry points and their complete static JavaScript dependency graphs for process-specific GI imports.
 - [ ] Generate lifecycle-safe extensions: no dynamic GNOME objects or signal connections before `enable()`; clean all created resources in `disable()`.
 - [ ] Validate required `metadata.json` fields, UUID format, stable `shell-version` values and optional settings schema metadata.
 - [ ] Bundle only required runtime files; exclude build tools, scripts, development files and unused assets.

@@ -142,6 +142,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         }
       }
     }
+    const javascriptSources = new Map<string, string>();
     for (const file of files) {
       const relative = file.slice(directory.length + 1).replaceAll('\\', '/');
       if (/(^|\/)(node_modules|tests?|scripts|\.git)(\/|$)/.test(relative) || /\.(?:ts|map|md|lock)$/.test(relative) || /(^|\/)package\.json$/.test(relative)) {
@@ -150,6 +151,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
       if (file.endsWith('.js')) {
         let source: string;
         try { source = await io.readFile(file); } catch { errors.push(`Unable to read JavaScript file: ${relative}`); continue; }
+        javascriptSources.set(file, source);
         if (relative === 'prefs.js' && /(?:gi:\/\/|from\s*['"])(?:St|Clutter|Meta|Shell)(?:['"/]|$)/.test(source)) {
           errors.push('prefs.js: preferences code must not import Shell-only libraries.');
         }
@@ -158,6 +160,30 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         }
       }
     }
+    const inspectImports = (entry: string, forbidden: RegExp, message: string): void => {
+      const pending = [resolve(directory, entry)];
+      const visited = new Set<string>();
+      while (pending.length > 0) {
+        const file = pending.pop()!;
+        if (visited.has(file)) continue;
+        visited.add(file);
+        const source = javascriptSources.get(file);
+        if (source === undefined) continue;
+        for (const match of source.matchAll(/^\s*(?:import|export)\s+(?:[\s\S]*?\s+from\s+)?['"]([^'"]+)['"]/gm)) {
+          const specifier = match[1]!;
+          if (forbidden.test(specifier)) {
+            const relative = file.slice(directory.length + 1).replaceAll('\\', '/');
+            errors.push(`${relative}: ${message}`);
+          }
+          if (specifier.startsWith('./') || specifier.startsWith('../')) {
+            const dependency = resolve(dirname(file), specifier);
+            if (files.includes(dependency) && dependency.endsWith('.js')) pending.push(dependency);
+          }
+        }
+      }
+    };
+    inspectImports('prefs.js', /^gi:\/\/(?:St|Clutter|Meta|Shell)(?:[/?]|$)/, 'preferences dependency imports a Shell-only library.');
+    inspectImports('extension.js', /^gi:\/\/(?:Gtk|Gdk|Adw)(?:[/?]|$)/, 'Shell dependency imports GTK or libadwaita.');
     if (errors.length) {
       errors.forEach((error) => io.stderr(error));
       return 1;

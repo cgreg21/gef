@@ -34,7 +34,7 @@ with GNOME reviewers.
 
 ## Process isolation
 
-- Keep Shell code and preferences code in separate entry points and modules.
+- Keep Shell code and preferences code in separate entry points and modules. The CLI follows static local imports from each entry point and checks the full JavaScript dependency graph.
 - Never import `St`, `Clutter`, `Meta` or `Shell` from preferences.
 - Never import `Gtk`, `Gdk` or `Adw` from Shell-only modules.
 - Shared modules must not import libraries belonging to either process.

@@ -21,3 +21,5 @@ export * from './directives/directive-ref.js';
 export * from './platform/gjs.js';
 
 export * from './directives/directive-registry.js';
+
+export * from './components/component-registry.js';

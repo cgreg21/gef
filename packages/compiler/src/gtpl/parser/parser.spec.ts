@@ -3,7 +3,7 @@ import { parseGtpl } from './parser.js';
 
 describe('parseGtpl', () => {
   it('tracks source lines with LF, CRLF and standalone CR endings', () => {
-    const result = parseGtpl('<StLabel />\\r\\n<StButton />\\r<StIcon />');
+    const result = parseGtpl('<StLabel />\r\n<StButton />\r<StIcon />');
     expect(result.diagnostics).toHaveLength(0);
     expect(result.nodes.map((node) => node.span.line)).toEqual([1, 2, 3]);
   });
@@ -236,8 +236,8 @@ describe('parseGtpl', () => {
         expect(diagnostic.span.end).toBeGreaterThanOrEqual(diagnostic.span.start);
         expect(diagnostic.span.end).toBeLessThanOrEqual(source.length);
         const prefix = source.slice(0, diagnostic.span.start);
-        expect(diagnostic.span.line).toBe(prefix.split('\\n').length);
-        expect(diagnostic.span.column).toBe(prefix.length - prefix.lastIndexOf('\\n'));
+        expect(diagnostic.span.line).toBe(prefix.split('\n').length);
+        expect(diagnostic.span.column).toBe(prefix.length - prefix.lastIndexOf('\n'));
       }
     }
   });
@@ -270,7 +270,7 @@ describe('parseGtpl', () => {
     };
     const sources = Array.from({ length: 400 }, () =>
       Array.from({ length: 1 + random(28) }, () => tokens[random(tokens.length)] ?? '')
-        .join(random(2) ? ' ' : '\\n'),
+        .join(random(2) ? ' ' : '\n'),
     );
 
     const assertSpans = (nodes: readonly import('../ast/types.js').GtplNode[], source: string): void => {

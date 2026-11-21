@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { InjectionToken, Injector } from '../di/injector.js';
 import { mountComponent } from './component-ref.js';
 import { EventEmitter } from '../../../shared/src/events/event-emitter.js';
+import { signal } from '../reactivity/signal.js';
 import type { GtplRenderHost } from '../rendering/gtpl-runtime.js';
 
 type Node = { readonly kind: string; readonly value?: unknown; readonly children?: readonly Node[] };
@@ -61,6 +62,33 @@ describe('mountComponent', () => {
     expect(component.outputs.changed).toBe(output);
     component.destroy();
     expect(() => output.emit('closed')).not.toThrow();
+    parent.destroy();
+  });
+
+  it('updates bound inputs reactively and stops them when the component is destroyed', () => {
+    const value = signal('first');
+    const lifecycle: string[] = [];
+    const parent = new Injector();
+    const component = mountComponent({
+      create: () => ({
+        label: 'initial',
+        onInit() { lifecycle.push(`init:${this.label}`); },
+        onDestroy() { lifecycle.push(`destroy:${this.label}`); },
+      }),
+      inputs: [{ publicName: 'label', member: 'label' }],
+      render: (instance, runtime) => runtime.text(instance.label),
+    }, parent, createHost(), {
+      label: { kind: 'binding', get: () => value.get() },
+    });
+
+    expect(component.instance.label).toBe('first');
+    value.set('second');
+    expect(component.instance.label).toBe('second');
+
+    component.destroy();
+    value.set('third');
+    expect(component.instance.label).toBe('second');
+    expect(lifecycle).toEqual(['init:first', 'destroy:second']);
     parent.destroy();
   });
 

@@ -39,7 +39,7 @@ const components = new ComponentRegistry<StActor>().registerType(CounterComponen
 });
 ```
 
-Input bindings are assigned before `onInit`; output subscriptions are
+Input bindings are assigned before `onInit` and reactive bindings stop updating when the component is destroyed; output subscriptions are
 disconnected and emitters cleared when the component is destroyed. Component
 instances, child injectors and views share one deterministic lifetime.
 

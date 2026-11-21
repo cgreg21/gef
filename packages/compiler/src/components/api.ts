@@ -51,7 +51,13 @@ export function HostListener(event: string, args: readonly string[] = []): Metho
 }
 
 function collectMembers(target: Function): readonly MemberMetadata[] {
-  return membersByPrototype.get(target.prototype) ?? [];
+  const prototypes: object[] = [];
+  let prototype = target.prototype as object | null;
+  while (prototype && prototype !== Object.prototype) {
+    prototypes.unshift(prototype);
+    prototype = Object.getPrototypeOf(prototype) as object | null;
+  }
+  return prototypes.flatMap((item) => membersByPrototype.get(item) ?? []);
 }
 function names(members: readonly MemberMetadata[], kind: 'input' | 'output'): readonly string[] {
   const result = members.filter((item): item is Extract<MemberMetadata, { kind: 'input' | 'output' }> => item.kind === kind).map((item) => item.publicName);

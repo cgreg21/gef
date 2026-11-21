@@ -59,7 +59,7 @@ describe('GTPL semantic scopes', () => {
   });
 
   it('points unknown identifiers to their exact source locations', () => {
-    const source = '<StLabel>\\n{{ first + missing }}\\n</StLabel>';
+    const source = ['<StLabel>', '{{ first + missing }}', '</StLabel>'].join(String.fromCharCode(10));
     const parsed = parseGtpl(source);
     const semantic = analyzeGtpl(parsed.nodes, { componentMembers: ['first'], source });
     const diagnostic = semantic.diagnostics.find((item) => item.code === 'GTPL4002');

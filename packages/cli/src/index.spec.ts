@@ -177,8 +177,8 @@ describe('GEF CLI', () => {
         : 'export default class Demo {}',
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
-    expect(base.errors.join('\n')).toContain('extension class must implement enable()');
-    expect(base.errors.join('\n')).toContain('extension class must implement disable()');
+    expect(base.errors.join('\\n')).toContain('extension class must implement enable()');
+    expect(base.errors.join('\\n')).toContain('extension class must implement disable()');
   });
 
   it('rejects Shell imports from preferences code', async () => {
@@ -243,11 +243,6 @@ describe('GEF CLI', () => {
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org.example.demo' })
         : path.endsWith('.gschema.xml') ? '<schemalist><schema id="org.example.demo" path="/org/example/demo/"></schema></schemalist>' : 'export default class Demo { enable() {} disable() {} }',
-    };
-    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
-  });
-
-e() {} }',
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
   });

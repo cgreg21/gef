@@ -17,11 +17,12 @@
 - [x] Organize compiler implementation by domain subdirectories with focused package entry points.
 - [x] Deterministic parser fuzz corpus and malformed-input regression tests.
 - [x] Optional TypeScript expression checking against component context type literals.
-- [x] Emit JavaScript source for parsed expression ASTs.\n- [x] Emit initial JavaScript render-function source for GTPL ASTs (runtime contract injected; structural shorthand and two-way bindings remain pending).
+- [x] Emit JavaScript source for parsed expression ASTs.
+- [x] Emit initial JavaScript render-function source for GTPL ASTs (runtime contract injected; structural shorthand and two-way bindings remain pending).
 - [x] Provide a combined GTPL parse, semantic and component validation API.
 - [x] Connect supported generated templates to the executable renderer-independent runtime.
 - [ ] Complete source maps, diagnostics mapping and remaining template constructs.
-- [ ] Switch exhaustiveness checks using TypeScript types.
+- [x] Exhaustiveness diagnostics for `@default never` over literal-union context properties.
 
 ## Runtime and renderers
 - [x] Initial resource scope with reverse-order, idempotent cleanup.
@@ -33,7 +34,8 @@
 - [x] Component instance/view lifecycle with child injector scopes and reverse-order teardown.
 - [x] Explicit directive instance mounting with host bindings, host listeners and deterministic cleanup.
 - [x] Selector-matched directive instantiation, input binding and host behavior in generated templates.
-- [x] GLib timeout/idle scheduling, GObject signal lifecycle, D-Bus subscriptions and Clutter transition cleanup.\n- [ ] GNOME Shell 51 St/Clutter integration tests.
+- [x] GLib timeout/idle scheduling, GObject signal lifecycle, D-Bus subscriptions and Clutter transition cleanup.
+- [x] GNOME Shell 51 St actor smoke harness on a virtual X11 display (requires a host with Shell 51 installed).
 - [x] Initial GTK4/libadwaita host adapter with reactive bindings and keyed loops.
 - [x] GTK4/libadwaita preferences example entry point and template compilation.
 - [x] Scoped GTK stylesheet provider and GNOME Shell extension stylesheet lifecycle helpers.
@@ -41,11 +43,12 @@
 - [ ] Native GJS code generation and source maps.
 
 ## Styles and developer tools
-- [x] SCSS compilation through the Sass CLI.\n- [x] Initial GNOME theme CSS validation for unsupported browser layout declarations and block balance.
+- [x] SCSS compilation through the Sass CLI.
+- [x] Initial GNOME theme CSS validation for unsupported browser layout declarations and block balance.
 - [ ] Complete St/GTK-specific CSS validation and style scoping.
 - [x] CLI `check` and `compile` commands.
 - [x] CLI `new` and `doctor` commands.
 - [x] CLI `generate component`, `test`, `package` and `styles` commands.
 - [x] Native filesystem watch mode and GNOME Shell 51 virtual-display smoke test harness.
 - [ ] Full automated GNOME Shell 51 and GTK4 integration suite.
-- [ ] Watch mode, diagnostics and examples.
+- [ ] Rich CLI diagnostics, additional examples and full integration coverage.

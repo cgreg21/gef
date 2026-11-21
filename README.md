@@ -45,7 +45,7 @@ node dist/cli/src/index.js doctor
   reactivity, GJS lifecycle helpers, St and GTK render hosts, scoped native stylesheet providers
 - `gef`: project and build CLI
 
-The runtime package has no Node.js imports. Node and Sass are build-time tools.
+The runtime package has no Node.js or TypeScript imports. Decorator metadata is shared with the compiler through a small runtime-safe module; Node, TypeScript and Sass are build-time tools.
 
 ## Current scope
 

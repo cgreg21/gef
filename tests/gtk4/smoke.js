@@ -8,6 +8,7 @@ import {
   signal,
 } from '../../dist/runtime/src/index.js';
 import renderTwoWay from '../../dist/two-way.js';
+import renderPreferences from '../../dist/examples/preferences/template.js';
 
 Gtk.init();
 Adw.init();
@@ -67,6 +68,29 @@ if (!settings.get_boolean('enabled')) {
   throw new Error('Preferences switch changes did not persist to GSettings.');
 }
 host.destroy(preferences);
+
+const preferencesContext = Object.defineProperty({}, 'enabled', {
+  enumerable: true,
+  get: () => enabled.get(),
+  set: (value) => enabled.set(Boolean(value)),
+});
+const preferencesHost = createGtkRenderHost(Gtk, { adw: Adw, orientation: Gtk.Orientation.VERTICAL, spacing: 12 });
+const preferencesView = mountGtplTemplate(preferencesContext, renderPreferences, preferencesHost);
+function findSwitch(widget) {
+  if (widget instanceof Gtk.Switch) return widget;
+  for (let child = widget.get_first_child?.(); child; child = child.get_next_sibling?.()) {
+    const match = findSwitch(child);
+    if (match) return match;
+  }
+  return undefined;
+}
+const preferenceSwitch = findSwitch(preferencesView.node);
+if (!preferenceSwitch) throw new Error('The compiled preferences template did not create its GTK switch.');
+settings.set_boolean('enabled', false);
+if (preferenceSwitch.active) throw new Error('GSettings did not update the compiled preferences template.');
+preferenceSwitch.set_active(true);
+if (!settings.get_boolean('enabled')) throw new Error('The compiled preferences template did not persist the switch change.');
+preferencesView.dispose();
 enabled.dispose();
 
 print('GEF GTK4/libadwaita and GSettings runtime smoke tests passed.');

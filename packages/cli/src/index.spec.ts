@@ -61,6 +61,7 @@ describe('GEF CLI', () => {
     const { io, writes } = createIO('');
     expect(await runCli(['generate', 'component', 'UserCard', 'src/components'], io)).toBe(0);
     expect(writes.map((item) => item.path)).toEqual(expect.arrayContaining([expect.stringContaining('UserCard.ts'), expect.stringContaining('UserCard.gtpl')]));
+    expect(writes.find((item) => item.path.endsWith('UserCard.ts'))?.content).toContain('\\n  <StLabel>UserCard</StLabel>\\n');
   });
 
   it('compiles and validates SCSS output', async () => {

@@ -3,6 +3,7 @@
 ## Foundation
 - [x] Repository baseline and GNOME Shell 51 target.
 - [x] Canonical .gtpl templates and initial parser.
+- [x] Public ESM package entry points and package contents metadata.
 - [ ] Reproducible lockfile, dependency audit, lint and formatting.
 
 ## GTPL compiler

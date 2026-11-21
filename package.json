@@ -1,7 +1,7 @@
 {
   "name": "gnome-extension-framework",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "description": "A TypeScript framework for GNOME Shell 51 extensions.",
   "type": "module",
   "engines": {
@@ -15,7 +15,8 @@
     "gef": "node dist/cli/src/index.js",
     "package:example": "node scripts/package-extension.mjs",
     "styles": "node dist/cli/src/index.js styles",
-    "dev:watch": "node scripts/dev-watch.mjs"
+    "dev:watch": "node scripts/dev-watch.mjs",
+    "prepack": "npm run build"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
@@ -25,5 +26,24 @@
   },
   "bin": {
     "gef": "dist/cli/src/index.js"
+  },
+  "main": "./dist/compiler/src/index.js",
+  "types": "./dist/compiler/src/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/compiler/src/index.d.ts",
+      "import": "./dist/compiler/src/index.js"
+    },
+    "./compiler": {
+      "types": "./dist/compiler/src/index.d.ts",
+      "import": "./dist/compiler/src/index.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime/src/index.d.ts",
+      "import": "./dist/runtime/src/index.js"
+    }
   }
 }

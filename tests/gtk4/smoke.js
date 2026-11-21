@@ -11,14 +11,12 @@ Adw.init();
 
 const state = signal('GEF GTK4 smoke test');
 const host = createGtkRenderHost(Gtk, { adw: Adw, orientation: Gtk.Orientation.VERTICAL, spacing: 4 });
-const render = (_context, runtime) => runtime.element('AdwPreferencesPage', {}, runtime.element(
-  'AdwPreferencesGroup',
-  { title: 'GEF runtime' },
+const view = mountGtplTemplate({}, (_context, runtime) => runtime.element(
+  'GtkBox',
+  {},
   runtime.element('GtkLabel', { label: runtime.bind(() => state.get()) }, undefined),
-));
-const view = mountGtplTemplate({}, render, host);
-const group = view.node.get_first_child();
-const label = group.get_first_child();
+), host);
+const label = view.node.get_first_child();
 if (label.get_label() !== 'GEF GTK4 smoke test') {
   throw new Error('GTK4 host did not create the expected native label.');
 }
@@ -27,4 +25,9 @@ if (label.get_label() !== 'GEF reactive GTK4 update') {
   throw new Error('GTK4 reactive property binding did not update.');
 }
 view.dispose();
+
+const preferencesPage = host.element('AdwPreferencesPage', {}, undefined);
+if (!preferencesPage) throw new Error('libadwaita preferences page was not created.');
+host.destroy(preferencesPage);
+
 print('GEF GTK4/libadwaita runtime smoke tests passed.');

@@ -115,21 +115,21 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     for (const field of ['name', 'description'] as const) {
       if (typeof metadata[field] !== 'string' || !metadata[field].trim()) errors.push(`metadata.json: missing required ${field}.`);
     }
-    if (!Array.isArray(metadata['shell-version']) || metadata['shell-version'].length === 0 || metadata['shell-version'].some((version) => typeof version !== 'string' || !/^\\d+(?:\\.\\d+)*$/.test(version))) {
+    if (!Array.isArray(metadata['shell-version']) || metadata['shell-version'].length === 0 || metadata['shell-version'].some((version) => typeof version !== 'string' || !/^\d+(?:\.\d+)*$/.test(version))) {
       errors.push('metadata.json: shell-version must contain stable numeric GNOME Shell versions.');
     }
     for (const file of files) {
-      const relative = file.slice(directory.length + 1).replaceAll('\\\\', '/');
-      if (/(^|\\/)(node_modules|tests?|scripts|\.git)(\\/|$)/.test(relative) || /\\.(?:ts|map|md|lock)$/.test(relative) || /(^|\\/)package\\.json$/.test(relative)) {
+      const relative = file.slice(directory.length + 1).replaceAll('\\', '/');
+      if (/(^|\/)(node_modules|tests?|scripts|\.git)(\/|$)/.test(relative) || /\.(?:ts|map|md|lock)$/.test(relative) || /(^|\/)package\.json$/.test(relative)) {
         errors.push(`Package contains development-only file: ${relative}`);
       }
       if (file.endsWith('.js')) {
         let source: string;
         try { source = await io.readFile(file); } catch { errors.push(`Unable to read JavaScript file: ${relative}`); continue; }
-        if (relative === 'prefs.js' && /(?:gi:\/\/|from\\s*['"])(?:St|Clutter|Meta|Shell)(?:['"/]|$)/.test(source)) {
+        if (relative === 'prefs.js' && /(?:gi:\/\/|from\s*['"])(?:St|Clutter|Meta|Shell)(?:['"/]|$)/.test(source)) {
           errors.push('prefs.js: preferences code must not import Shell-only libraries.');
         }
-        if (relative === 'extension.js' && /(?:gi:\/\/|from\\s*['"])(?:Gtk|Gdk|Adw)(?:['"/]|$)/.test(source)) {
+        if (relative === 'extension.js' && /(?:gi:\/\/|from\s*['"])(?:Gtk|Gdk|Adw)(?:['"/]|$)/.test(source)) {
           errors.push('extension.js: Shell code must not import GTK or libadwaita.');
         }
       }

@@ -120,7 +120,7 @@ describe('GEF CLI', () => {
         : 'export default class Demo {}',
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
-    expect(base.errors.join('\\n')).toContain('development-only file: src.ts');
+    expect(base.errors.join('\n')).toContain('development-only file: src.ts');
   });
 
   it('rejects Shell imports from preferences code', async () => {
@@ -133,7 +133,7 @@ describe('GEF CLI', () => {
         : "import St from 'gi://St';",
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
-    expect(base.errors.join('\\n')).toContain('preferences code must not import Shell-only libraries');
+    expect(base.errors.join('\n')).toContain('preferences code must not import Shell-only libraries');
   });
 
   it('accepts a clean staged extension', async () => {

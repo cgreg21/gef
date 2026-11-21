@@ -98,8 +98,7 @@ export function createGtkRenderHost(
 
   const own = (actor: GtkActor, scope: ResourceScope): void => {
     resources.set(actor, scope);
-    const id = actor.connect('destroy', () => scope.dispose());
-    scope.add(() => actor.disconnect(id));
+    // GTK4 widgets do not expose GTK3's destroy signal; explicit view disposal owns cleanup.
   };
 
   const disposeWidget = (actor: GtkActor): void => {
@@ -127,7 +126,11 @@ export function createGtkRenderHost(
       const id = actor.connect(event, (_source, ...args) => handler(...args));
       return () => actor.disconnect(id);
     },
-    onDestroy: (actor, callback) => { actor.connect('destroy', callback); },
+    onDestroy: (actor, callback) => {
+      const scope = resources.get(actor);
+      if (!scope) throw new Error('Cannot attach lifecycle cleanup to an unmanaged GTK widget.');
+      scope.add(callback);
+    },
     element(name, attributes, child) {
       const Constructor = constructors[name];
       if (!Constructor) throw new Error(`Unknown GTK component "${name}". Register a Gtk or Adw widget constructor.`);

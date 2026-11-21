@@ -12,7 +12,11 @@ import renderPreferences from './template.js';
 export default class GefPreferences extends ExtensionPreferences {
   private disposeView: (() => void) | undefined;
 
-  override fillPreferencesWindow(window: { add(widget: unknown): void }): void {
+  override fillPreferencesWindow(window: {
+    add(widget: unknown): void;
+    connect(signal: string, callback: () => boolean): number;
+    disconnect(id: number): void;
+  }): void {
     this.disposeView?.();
     const host = createGtkRenderHost(Gtk as unknown as GtkNamespace, {
       adw: Adw as unknown as AdwNamespace,
@@ -21,6 +25,14 @@ export default class GefPreferences extends ExtensionPreferences {
     });
     const view = mountGtplTemplate({}, renderPreferences, host);
     window.add(view.node);
-    this.disposeView = () => view.dispose();
+    const closeHandler = window.connect('close-request', () => {
+      view.dispose();
+      this.disposeView = undefined;
+      return false;
+    });
+    this.disposeView = () => {
+      window.disconnect(closeHandler);
+      view.dispose();
+    };
   }
 }

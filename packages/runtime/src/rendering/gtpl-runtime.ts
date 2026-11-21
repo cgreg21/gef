@@ -113,12 +113,17 @@ export function createGtplRenderRuntime<Node>(
         host.destroy(node);
         throw new Error('The renderer host does not support directive host bindings and listeners.');
       }
-      for (const match of matches) {
-        const ref = mountDirective(match.definition, injector, {
+      try {
+        for (const match of matches) {
+          const ref = mountDirective(match.definition, injector, {
           setProperty: host.setProperty.bind(host),
           listen: host.listen.bind(host),
-        }, node, match.inputs);
-        host.onDestroy(node, () => ref.destroy());
+          }, node, match.inputs);
+          host.onDestroy(node, () => ref.destroy());
+        }
+      } catch (error) {
+        host.destroy(node);
+        throw error;
       }
       return node;
     },
@@ -180,7 +185,15 @@ export function mountGtplTemplate<Context, Node>(
   components?: ComponentRegistry<Node>,
 ): GtplRenderView<Node> {
   const ownedInjector = injector ?? new Injector();
-  const node = render(context, createGtplRenderRuntime(host, pipes, directives, ownedInjector, components));
+  let node: Node;
+  try {
+    node = render(context, createGtplRenderRuntime(host, pipes, directives, ownedInjector, components));
+  } catch (error) {
+    if (!injector) {
+      try { ownedInjector.destroy(); } catch { /* Preserve the render failure. */ }
+    }
+    throw error;
+  }
   const resources = new ResourceScope();
   if (!injector) resources.add(() => ownedInjector.destroy());
   resources.add(() => host.destroy(node));

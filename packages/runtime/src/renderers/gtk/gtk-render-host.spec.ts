@@ -16,6 +16,8 @@ class FakeWidget implements GtkActor {
   constructor(properties: Record<string, unknown> = {}) { this.properties = properties; }
   append(child: GtkActor): void { this.attach(child); }
   add(child: GtkActor): void { this.attach(child); }
+  add_suffix(child: GtkActor): void { this.attach(child); }
+  remove_suffix(child: GtkActor): void { this.remove(child); }
   remove(child: GtkActor): void {
     const index = this.children.indexOf(child);
     if (index !== -1) this.children.splice(index, 1);
@@ -58,6 +60,7 @@ function createGtk(): GtkNamespace {
     Entry: constructor(),
     Image: constructor(),
     ScrolledWindow: FakeSingleChild,
+    Switch: FakeWidget,
   };
 }
 
@@ -154,10 +157,15 @@ describe('createGtkRenderHost', () => {
 
   it('supports registered libadwaita and custom widget constructors', () => {
     const host = createGtkRenderHost(createGtk(), {
-      adw: { PreferencesPage: FakeWidget },
+      adw: { PreferencesPage: FakeWidget, PreferencesGroup: FakeWidget, ActionRow: FakeWidget },
       components: { CustomRow: FakeWidget },
     });
-    expect(host.element('AdwPreferencesPage', {}, undefined)).toBeInstanceOf(FakeWidget);
+    const page = host.element('AdwPreferencesPage', {}, undefined) as FakeWidget;
+    const group = host.element('AdwPreferencesGroup', {}, undefined);
+    const row = host.element('AdwActionRow', {}, host.element('GtkSwitch', { active: true }, undefined));
+    expect(page).toBeInstanceOf(FakeWidget);
+    expect(group).toBeInstanceOf(FakeWidget);
+    expect((row as FakeWidget).children).toHaveLength(1);
     expect(host.element('CustomRow', {}, undefined)).toBeInstanceOf(FakeWidget);
   });
 

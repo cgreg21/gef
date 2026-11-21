@@ -36,6 +36,7 @@ Usage:
   gef generate component <Name> [directory]
   gef test
   gef package
+  gef watch
   gef doctor
   gef --help
 
@@ -47,6 +48,7 @@ Commands:
   generate   Generate a component class and GTPL template.
   test       Run the repository test suite.
   package    Build and stage the GNOME Shell example.
+  watch      Rebuild and restage examples when source files change.
   doctor     Check local Node.js and Sass prerequisites.
 
 Generated render modules receive the runtime and native renderer from the extension.`;
@@ -87,7 +89,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
       return 2;
     }
     const input = resolve(inputArg);
-    const output = resolve(outputArg ?? input.replace(/\.scss$/i, '.css'));
+    const output = resolve(outputArg ?? (input.replace(/\.scss$/i, '') + '.css'));
     const result = io.run('npx', ['sass', '--no-source-map', input, output]);
     if (result.status !== 0) {
       io.stderr(result.output || 'Sass compiler failed. Install project dependencies.');
@@ -138,7 +140,8 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     const directory = resolve(args[3] ?? '.');
     try {
       await io.mkdir(directory);
-      await io.writeFile(resolve(directory, `${name}.ts`), `import { Component } from 'gnome-extension-framework';\n\n@Component({ selector: '${name}', template: './${name}.gtpl' })\nexport class ${name} {}\n`);
+      const template = `<StBox>\\n  <StLabel>${name}</StLabel>\\n</StBox>`;
+      await io.writeFile(resolve(directory, `${name}.ts`), `import { Component } from 'gnome-extension-framework';\n\n@Component({ selector: '${name}', template: ${JSON.stringify(template)} })\nexport class ${name} {}\n`);
       await io.writeFile(resolve(directory, `${name}.gtpl`), `<StBox>\n  <StLabel>${name}</StLabel>\n</StBox>\n`);
     } catch (error) {
       io.stderr(`Unable to generate component: ${error instanceof Error ? error.message : String(error)}`);

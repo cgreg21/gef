@@ -5,6 +5,8 @@ import { ResourceScope } from '../../resources/resource-scope.js';
 export interface GtkActor {
   append?(child: GtkActor): void;
   add?(child: GtkActor): void;
+  add_suffix?(child: GtkActor): void;
+  remove_suffix?(child: GtkActor): void;
   remove?(child: GtkActor): void;
   set_child?(child: GtkActor | null): void;
   set_property(name: string, value: unknown): void;
@@ -57,12 +59,14 @@ function classNames(value: unknown): string[] {
 function addChild(parent: GtkActor, child: GtkActor): void {
   if (typeof parent.set_child === 'function') parent.set_child(child);
   else if (typeof parent.append === 'function') parent.append(child);
+  else if (typeof parent.add_suffix === 'function') parent.add_suffix(child);
   else if (typeof parent.add === 'function') parent.add(child);
   else throw new Error('This GTK widget cannot contain child widgets.');
 }
 
 function removeChild(parent: GtkActor, child: GtkActor): void {
   if (typeof parent.remove === 'function') parent.remove(child);
+  else if (typeof parent.remove_suffix === 'function') parent.remove_suffix(child);
   else if (typeof parent.set_child === 'function') parent.set_child(null);
   else throw new Error('This GTK container cannot remove its child widget.');
 }

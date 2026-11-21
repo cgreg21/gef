@@ -3,5 +3,6 @@
   "name": "GEF Hello World",
   "description": "Minimal GNOME Shell 51 extension built with GEF runtime modules.",
   "shell-version": ["51"],
+  "settings-schema": "org.gnome.shell.extensions.gef-hello-world",
   "version": 1
 }

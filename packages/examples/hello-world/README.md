@@ -9,9 +9,15 @@ npm run build
 npm run package:example
 ```
 
-The packaging step compiles both GTPL templates, compiles the SCSS stylesheet with Sass, and stages the Shell entry point, GTK4/libadwaita preferences entry point and runtime modules. The staged extension is written to `dist/extension/`. Copy that directory into
-the GNOME Shell extensions directory for a local integration test.
+The packaging step compiles both GTPL templates and the Shell stylesheet,
+stages runtime ESM modules, the GSettings schema and metadata, and verifies
+relative imports. The staged extension is written to `dist/extension/`.
 
-The package script preserves ESM modules and rewrites only the example's
-runtime import to the staged `lib/runtime/` directory. It is a minimal staging
-step, not a general-purpose GJS bundler.
+Compile the schema after installation with:
+
+```sh
+glib-compile-schemas dist/extension/schemas
+```
+
+The preferences example binds its switch bidirectionally to the `enabled`
+GSettings key through the runtime adapter.

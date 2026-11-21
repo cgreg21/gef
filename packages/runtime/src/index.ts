@@ -28,3 +28,5 @@ export * from './renderers/gnome-shell/st-styles.js';
 export * from './renderers/gtk/gtk-styles.js';
 
 export * from '../../shared/src/components/metadata.js';
+
+export * from './platform/gsettings.js';

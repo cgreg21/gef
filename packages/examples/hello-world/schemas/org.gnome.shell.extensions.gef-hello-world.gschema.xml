@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.gef-hello-world" path="/org/gnome/shell/extensions/gef-hello-world/">
+    <key name="enabled" type="b">
+      <default>true</default>
+      <summary>Enable the GEF panel indicator</summary>
+      <description>Controls whether the example indicator is shown.</description>
+    </key>
+  </schema>
+</schemalist>

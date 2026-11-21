@@ -7,6 +7,7 @@ import {
   mountGtplTemplate,
   signal,
 } from '../../dist/runtime/src/index.js';
+import renderTwoWay from '../../dist/two-way.js';
 
 Gtk.init();
 Adw.init();

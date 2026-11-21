@@ -18,7 +18,7 @@
     "dev:watch": "node scripts/dev-watch.mjs",
     "prepack": "npm run build",
     "test:gnome": "npm run build && npm run package:example && bash scripts/test-gnome-shell-51.sh",
-    "test:gtk": "npm run build && GTK_A11Y=none xvfb-run -a gjs -m tests/gtk4/smoke.js"
+    "test:gtk": "npm run build && node dist/cli/src/index.js compile tests/gtk4/two-way.gtpl dist/two-way.js && GTK_A11Y=none xvfb-run -a gjs -m tests/gtk4/smoke.js"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

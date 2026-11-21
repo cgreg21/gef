@@ -1,6 +1,7 @@
 # Development roadmap
 
 ## EGO publication compliance
+- [x] Require the staged `extension.js` entry point and reject malformed UUID domain labels.
 - [ ] Emit readable, consistently formatted JavaScript without minification or obfuscation.
 - [ ] Keep Shell and preferences entry points and dependencies process-isolated.
 - [ ] Generate lifecycle-safe extensions: no dynamic GNOME objects or signal connections before `enable()`; clean all created resources in `disable()`.

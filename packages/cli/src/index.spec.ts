@@ -155,6 +155,18 @@ describe('GEF CLI', () => {
     expect(base.errors.join('\n')).toContain('development-only file: src.ts');
   });
 
+  it('rejects malformed extension UUIDs and a missing Shell entry point', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json'],
+      readFile: async () => JSON.stringify({ uuid: 'demo@@example..com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] }),
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
+    expect(base.errors.join('\\n')).toContain('invalid or missing uuid');
+    expect(base.errors.join('\\n')).toContain('missing the required extension.js entry point');
+  });
+
   it('rejects Shell imports from preferences code', async () => {
     const base = createIO('');
     const io: CliIO = {

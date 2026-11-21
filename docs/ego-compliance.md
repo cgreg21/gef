@@ -43,7 +43,8 @@ with GNOME reviewers.
 
 - Validate `metadata.json` as JSON and validate the required `uuid`,
   `name`, `description` and `shell-version` fields.
-- Validate UUID syntax and ensure it matches the extension directory/package.
+- Validate UUID syntax with non-empty, well-formed domain labels.
+- Require the root `extension.js` Shell entry point in every staged extension.
 - Include only stable GNOME Shell versions in release metadata.
 - Include `settings-schema` when the extension uses its own GSettings schema, and ensure the packaged XML or compiled schema matches the declared ID.
 - The local validator checks the declared schema against staged `.gschema.xml` files, or accepts a compiled schema when source XML is not shipped.

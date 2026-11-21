@@ -112,7 +112,8 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
       return 2;
     }
     const errors: string[] = [];
-    if (typeof metadata.uuid !== 'string' || !/^[a-z0-9-]+@[a-z0-9.-]+$/.test(metadata.uuid)) errors.push('metadata.json: invalid or missing uuid.');
+    if (typeof metadata.uuid !== 'string' || !/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)(?:\\.(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?))*$/.test(metadata.uuid)) errors.push('metadata.json: invalid or missing uuid.');
+    if (!files.includes(resolve(directory, 'extension.js'))) errors.push('Package is missing the required extension.js entry point.');
     for (const field of ['name', 'description'] as const) {
       if (typeof metadata[field] !== 'string' || !metadata[field].trim()) errors.push(`metadata.json: missing required ${field}.`);
     }

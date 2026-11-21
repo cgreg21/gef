@@ -173,7 +173,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         errors.push('extension.js: expected a default-exported extension class.');
       }
       for (const hook of ['enable', 'disable']) {
-        if (!new RegExp('\\b' + hook + '\s*\\(\s*\\)\s*\\{').test(shellSource)) {
+        if (!new RegExp('\\b' + hook + '\\s*\\(\\s*\\)\\s*\\{').test(shellSource)) {
           errors.push('extension.js: extension class must implement ' + hook + '().');
         }
       }

@@ -17,3 +17,5 @@ export * from '../../shared/src/events/event-emitter.js';
 export * from './pipes/pipe-registry.js';
 
 export * from './directives/directive-ref.js';
+
+export * from './platform/gjs.js';

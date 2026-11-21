@@ -26,3 +26,5 @@ export * from './components/component-registry.js';
 
 export * from './renderers/gnome-shell/st-styles.js';
 export * from './renderers/gtk/gtk-styles.js';
+
+export * from '../../shared/src/components/metadata.js';

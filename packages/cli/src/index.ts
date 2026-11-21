@@ -157,7 +157,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     try {
       await io.mkdir(directory);
       const template = `<StBox>\\n  <StLabel>${name}</StLabel>\\n</StBox>`;
-      await io.writeFile(resolve(directory, `${name}.ts`), `import { Component } from 'gnome-extension-framework';\n\n@Component({ selector: '${name}', template: ${JSON.stringify(template)} })\nexport class ${name} {}\n`);
+      await io.writeFile(resolve(directory, `${name}.ts`), `import { Component } from 'gnome-extension-framework/runtime';\n\n@Component({ selector: '${name}', template: ${JSON.stringify(template)} })\nexport class ${name} {}\n`);
       await io.writeFile(resolve(directory, `${name}.gtpl`), `<StBox>\n  <StLabel>${name}</StLabel>\n</StBox>\n`);
     } catch (error) {
       io.stderr(`Unable to generate component: ${error instanceof Error ? error.message : String(error)}`);

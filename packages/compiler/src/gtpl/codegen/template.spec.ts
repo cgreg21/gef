@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { emitGtplTemplate } from './template.js';
+import { emitGtplTemplate, emitGtplTemplateWithSourceMap } from './template.js';
 import { parseGtpl } from '../parser/parser.js';
 import { lowerGtplStructuralDirectives } from '../lowering/structural.js';
 import { mountGtplTemplate, type GtplRenderHost } from '../../../../runtime/src/index.js';
@@ -11,6 +11,27 @@ function emit(source: string, componentMembers: string[] = []): string {
 }
 
 describe('emitGtplTemplate', () => {
+  it('emits a v3 source map for top-level template nodes', () => {
+    const source = '<StLabel />\n<StButton />';
+    const parsed = parseGtpl(source);
+    expect(parsed.diagnostics).toEqual([]);
+    const generated = emitGtplTemplateWithSourceMap(parsed.nodes, {
+      source: 'view.gtpl',
+      sourceContent: source,
+      file: 'view.js',
+    });
+    expect(generated.code).toBe(emitGtplTemplate(parsed.nodes));
+    expect(generated.map).toMatchObject({
+      version: 3,
+      file: 'view.js',
+      sources: ['view.gtpl'],
+      sourcesContent: [source],
+      names: [],
+    });
+    expect(generated.map.mappings.split(',')).toHaveLength(2);
+    expect(generated.map.mappings).not.toBe('');
+  });
+
   it('ignores formatting whitespace between native child widgets', () => {
     const parsed = parseGtpl(`<AdwPreferencesPage>
   <AdwPreferencesGroup>

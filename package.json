@@ -16,7 +16,8 @@
     "package:example": "node scripts/package-extension.mjs",
     "styles": "node dist/cli/src/index.js styles",
     "dev:watch": "node scripts/dev-watch.mjs",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "test:gnome": "bash scripts/test-gnome-shell-51.sh"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

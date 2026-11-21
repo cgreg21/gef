@@ -30,8 +30,7 @@ describe('GEF CLI', () => {
   it('prints doctor and ego-check as separate help commands', async () => {
     const { io, output } = createIO('');
     expect(await runCli(['--help'], io)).toBe(0);
-    expect(output[0]).toContain('  doctor\n  ego-check');
-    expect(output[0]).not.toContain('prerequisites.\\n  ego-check');
+    expect(output[0]).toMatch(/^\\s+doctor\\s+Check local Node\\.js and Sass prerequisites\\.\\n\\s+ego-check\\s+Validate a staged extension against basic EGO requirements\\./m);
   });
 
   it('validates a GTPL file', async () => {

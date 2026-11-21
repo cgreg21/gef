@@ -52,7 +52,10 @@ export function emitGtplTemplate(
       rendered.push(renderNode(node, locals));
     }
 
-    return `(() => { ${statements.join(' ')} return runtime.fragment([${rendered.join(', ')}]); })()`;
+    const content = rendered.length === 0
+      ? 'runtime.fragment([])'
+      : rendered.length === 1 ? rendered[0]! : `runtime.fragment([${rendered.join(', ')}])`;
+    return statements.length === 0 ? content : `(() => { ${statements.join(' ')} return ${content}; })()`;
   };
 
   const renderText = (node: TextNode, locals: ReadonlySet<string>): string => {

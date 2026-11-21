@@ -50,7 +50,7 @@ describe('emitGtplTemplate', () => {
         return value ? yes(value) : no();
       },
     };
-    expect(render({ getValue: () => { calls += 1; return 'ready'; } }, runtime)).toEqual([['ready ']]);
+    expect(render({ getValue: () => { calls += 1; return 'ready'; } }, runtime)).toBe('ready ');
     expect(calls).toBe(1);
   });
 
@@ -84,12 +84,9 @@ describe('emitGtplTemplate', () => {
     };
     const view = mountGtplTemplate({ name: 'GEF' }, render, host);
     expect(view.node).toMatchObject({
-      kind: 'fragment',
-      children: [{
-        kind: 'StLabel',
-        value: { class: 'title' },
-        children: [{ kind: 'fragment', children: [{ kind: 'text', value: 'Hello GEF' }] }],
-      }],
+      kind: 'StLabel',
+      value: { class: 'title' },
+      children: [{ kind: 'text', value: 'Hello GEF' }],
     });
     view.dispose();
   });

@@ -27,6 +27,13 @@ describe('GEF CLI', () => {
     expect(output[0]).toContain('gef check');
   });
 
+  it('prints doctor and ego-check as separate help commands', async () => {
+    const { io, output } = createIO('');
+    expect(await runCli(['--help'], io)).toBe(0);
+    expect(output[0]).toContain('  doctor\n  ego-check');
+    expect(output[0]).not.toContain('prerequisites.\\n  ego-check');
+  });
+
   it('validates a GTPL file', async () => {
     const { io, output, errors } = createIO('<StLabel>Hello</StLabel>');
     expect(await runCli(['check', 'view.gtpl'], io)).toBe(0);

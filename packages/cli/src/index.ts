@@ -60,7 +60,8 @@ Commands:
   test       Run the current project test suite.
   package    Build and stage the GNOME Shell example.
   watch      Rebuild and restage examples when source files change.
-  doctor     Check local Node.js and Sass prerequisites.\n  ego-check  Validate a staged extension against basic EGO requirements.
+  doctor     Check local Node.js and Sass prerequisites.
+  ego-check  Validate a staged extension against basic EGO requirements.
 
 Generated render modules receive the runtime and native renderer from the extension.`;
 

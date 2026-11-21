@@ -1,5 +1,8 @@
 import { PipeRegistry } from '../pipes/pipe-registry.js';
 import { ResourceScope } from '../resources/resource-scope.js';
+import { Injector } from '../di/injector.js';
+import { mountDirective } from '../directives/directive-ref.js';
+import { DirectiveRegistry } from '../directives/directive-registry.js';
 
 export interface GtplRepeatItem<Node> {
   readonly key: unknown;
@@ -27,6 +30,7 @@ export interface GtplRenderHost<Node> {
   destroy(node: Node): void;
   setProperty?(node: Node, property: string, value: unknown): void;
   listen?(node: Node, event: string, handler: (...args: unknown[]) => unknown): () => void;
+  onDestroy?(node: Node, callback: () => void): void;
   element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node | undefined): Node;
   text(value: string | GtplBinding<string>): Node;
   fragment(children: readonly Node[]): Node;
@@ -72,11 +76,32 @@ export interface GtplRenderRuntime<Node> {
  * Creates the renderer-independent runtime used by generated GTPL functions.
  * A platform host owns native widget creation and keyed-list reconciliation.
  */
-export function createGtplRenderRuntime<Node>(host: GtplRenderHost<Node>, pipes: PipeRegistry = new PipeRegistry()): GtplRenderRuntime<Node> {
+export function createGtplRenderRuntime<Node>(
+  host: GtplRenderHost<Node>,
+  pipes: PipeRegistry = new PipeRegistry(),
+  directives: DirectiveRegistry<Node> = new DirectiveRegistry<Node>(),
+  injector: Injector = new Injector(),
+): GtplRenderRuntime<Node> {
   return {
     pipe: (name, value, ...args) => pipes.transform(name, value, ...args),
     bind: (get) => ({ kind: 'binding', get }),
-    element: (name, attributes, children) => host.element(name, attributes, children),
+    element: (name, attributes, children) => {
+      const node = host.element(name, attributes, children);
+      const matches = directives.match(name, attributes);
+      if (matches.length === 0) return node;
+      if (!host.setProperty || !host.listen || !host.onDestroy) {
+        host.destroy(node);
+        throw new Error('The renderer host does not support directive host bindings and listeners.');
+      }
+      for (const match of matches) {
+        const ref = mountDirective(match.definition, injector, {
+          setProperty: host.setProperty.bind(host),
+          listen: host.listen.bind(host),
+        }, node, match.inputs);
+        host.onDestroy(node, () => ref.destroy());
+      }
+      return node;
+    },
     text: (value) => host.text(value),
     fragment: (children) => host.fragment(children),
     if: (condition, render, fallback) => {
@@ -130,9 +155,13 @@ export function mountGtplTemplate<Context, Node>(
   render: GtplRenderFunction<Context, Node>,
   host: GtplRenderHost<Node>,
   pipes?: PipeRegistry,
+  directives?: DirectiveRegistry<Node>,
+  injector?: Injector,
 ): GtplRenderView<Node> {
-  const node = render(context, createGtplRenderRuntime(host, pipes));
+  const ownedInjector = injector ?? new Injector();
+  const node = render(context, createGtplRenderRuntime(host, pipes, directives, ownedInjector));
   const resources = new ResourceScope();
+  if (!injector) resources.add(() => ownedInjector.destroy());
   resources.add(() => host.destroy(node));
   return { node, dispose: () => resources.dispose() };
 }

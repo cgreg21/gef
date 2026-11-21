@@ -19,3 +19,5 @@ export * from './pipes/pipe-registry.js';
 export * from './directives/directive-ref.js';
 
 export * from './platform/gjs.js';
+
+export * from './directives/directive-registry.js';

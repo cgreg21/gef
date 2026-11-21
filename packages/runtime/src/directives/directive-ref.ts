@@ -18,7 +18,13 @@ export interface DirectiveHostListener {
   readonly args?: readonly string[];
 }
 
+export interface DirectiveInput {
+  readonly publicName: string;
+  readonly member: string;
+}
+
 export interface DirectiveDefinition<Instance, Node> {
+  readonly inputs?: readonly DirectiveInput[];
   readonly create: (injector: Injector) => Instance;
   readonly hostBindings?: readonly DirectiveHostBinding[];
   readonly hostListeners?: readonly DirectiveHostListener[];
@@ -60,8 +66,14 @@ export function mountDirective<Instance extends object, Node>(
   try {
     const instance = definition.create(injector);
     if (definition.dispose) resources.add(() => definition.dispose?.(instance));
-    for (const [name, value] of Object.entries(inputs)) {
-      (instance as Record<string, unknown>)[name] = value;
+    for (const input of definition.inputs ?? []) {
+      if (!(input.publicName in inputs)) continue;
+      const value = inputs[input.publicName];
+      if (isBinding(value)) {
+        resources.add(effect(() => { (instance as Record<string, unknown>)[input.member] = value.get(); }));
+      } else {
+        (instance as Record<string, unknown>)[input.member] = value;
+      }
     }
 
     for (const binding of definition.hostBindings ?? []) {
@@ -91,6 +103,11 @@ export function mountDirective<Instance extends object, Node>(
     try { resources.dispose(); } catch { /* Keep construction failure primary. */ }
     throw error;
   }
+}
+
+function isBinding(value: unknown): value is { get(): unknown } {
+  return typeof value === 'object' && value !== null && 'kind' in value
+    && value.kind === 'binding' && 'get' in value && typeof value.get === 'function';
 }
 
 function isReadonlySignal(value: unknown): value is ReadonlySignal<unknown> & { dispose?: () => void } {

@@ -2,6 +2,7 @@ import { Injector, type Provider } from '../di/injector.js';
 import { mountGtplTemplate, type GtplRenderFunction, type GtplRenderHost, type GtplRenderView } from '../rendering/gtpl-runtime.js';
 import { ResourceScope } from '../resources/resource-scope.js';
 import type { PipeRegistry } from '../pipes/pipe-registry.js';
+import type { DirectiveRegistry } from '../directives/directive-registry.js';
 
 export interface ComponentLifecycle {
   onInit?(): void;
@@ -13,6 +14,7 @@ export interface ComponentDefinition<Instance, Node> {
   readonly render: GtplRenderFunction<Instance, Node>;
   readonly providers?: readonly Provider[];
   readonly pipes?: PipeRegistry;
+  readonly directives?: DirectiveRegistry<Node>;
   readonly dispose?: (instance: Instance) => void;
 }
 
@@ -43,7 +45,7 @@ export function mountComponent<Instance, Node>(
       resources.add(() => instance.onDestroy?.());
       instance.onInit?.();
     }
-    const view = mountGtplTemplate(instance, definition.render, host, definition.pipes);
+    const view = mountGtplTemplate(instance, definition.render, host, definition.pipes, definition.directives, injector);
     resources.add(() => view.dispose());
     return {
       instance,

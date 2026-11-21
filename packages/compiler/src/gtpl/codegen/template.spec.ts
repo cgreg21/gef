@@ -40,7 +40,19 @@ describe('emitGtplTemplate', () => {
     const parsed = parseGtpl(source);
     expect(parsed.diagnostics).toEqual([]);
     const generated = emitGtplTemplateWithSourceMap(parsed.nodes, { source: 'view.gtpl' });
-    expect(generated.map.mappings.split(',')).toHaveLength(3);
+    expect(generated.map.mappings.split(',')).toHaveLength(4);
+    expect(generated.code).not.toContain('__GEF_MAP_');
+    expect(generated.map.mappings).not.toBe('');
+  });
+
+
+  it('maps interpolation and expression-bound attribute source positions', () => {
+    const source = '<StLabel [visible]="ready && enabled">{{user.name}}</StLabel>';
+    const parsed = parseGtpl(source);
+    expect(parsed.diagnostics).toEqual([]);
+    const generated = emitGtplTemplateWithSourceMap(parsed.nodes, { source: 'view.gtpl' });
+    // Element, interpolation text, property expression and interpolation expression.
+    expect(generated.map.mappings.split(',')).toHaveLength(4);
     expect(generated.code).not.toContain('__GEF_MAP_');
   });
 

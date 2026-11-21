@@ -93,17 +93,27 @@ function isWhitespaceOnlyText(node: GtplNode): boolean {
     && node.parts.every((part) => part.kind === 'text' && /^\s*$/.test(part.value));
 }
 
-function expression(node: ExpressionNode | undefined, locals: ReadonlySet<string>, options: GtplTemplateOptions): string {
+function expression(
+  node: ExpressionNode | undefined,
+  locals: ReadonlySet<string>,
+  options: GtplTemplateOptions,
+  mappings?: NodeMapping[],
+  sourcePosition?: { line: number; column: number },
+): string {
   if (!node) throw new Error('Cannot generate GTPL: an expression has no valid AST.');
   const identifiers = new Set<string>();
   collectIdentifiers(node, identifiers);
   const globals = new Set([...BUILTIN_GLOBALS, ...(options.globals ?? [])]);
   const contextIdentifiers = options.componentMembers
     ?? [...identifiers].filter((name) => !locals.has(name) && !globals.has(name));
-  return emitGtplExpression(node, {
+  const code = emitGtplExpression(node, {
     contextIdentifiers,
     localIdentifiers: [...locals, ...globals],
   });
+  if (!mappings || !sourcePosition) return code;
+  const marker = mappings.length;
+  mappings.push({ generatedColumn: 0, sourceLine: sourcePosition.line - 1, sourceColumn: sourcePosition.column - 1 });
+  return `__GEF_MAP_${marker}__${code}`;
 }
 
 /**
@@ -150,7 +160,7 @@ function emitGtplTemplateInternal(
   const renderText = (node: TextNode, locals: ReadonlySet<string>): string => {
     const value = node.parts.map((part) => part.kind === 'text'
       ? JSON.stringify(part.value)
-      : `String(${expression(part.parsedExpression, locals, options)} ?? '')`);
+      : `String(${expression(part.parsedExpression, locals, options, nodeMappings, part.expressionSpan)} ?? '')`);
     if (value.length === 0) return 'runtime.text("")';
     const text = value.length === 1 ? value[0] : value.join(' + ');
     return node.parts.some((part) => part.kind === 'interpolation')
@@ -169,7 +179,10 @@ function emitGtplTemplateInternal(
         value = JSON.stringify(attribute.value);
       } else {
         const attributeLocals = attribute.kind === 'event' ? new Set([...locals, '$event']) : locals;
-        const emitted = expression(attribute.parsedExpression, attributeLocals, options);
+        const emitted = expression(attribute.parsedExpression, attributeLocals, options, nodeMappings, {
+          line: attribute.valueSpan.line,
+          column: attribute.valueSpan.column + (attribute.parsedExpression?.span.start ?? 0),
+        });
         value = attribute.kind === 'event'
           ? `($event) => ${emitted}`
           : attribute.kind === 'property' ? `runtime.bind(() => ${emitted})` : emitted;

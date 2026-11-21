@@ -69,7 +69,7 @@ function formatDiagnostic(source: string, input: string, diagnostic: { code: str
   return [
     `${input}:${diagnostic.span.line}:${diagnostic.span.column}: ${diagnostic.code}: ${diagnostic.message}`,
     `${String(diagnostic.span.line).padStart(width)} | ${line}`,
-    `${' '.repeat(width)} | ${' '.repeat(Math.max(0, diagnostic.span.column - 1)}${'^'.repeat(markerLength)}`,
+    `${' '.repeat(width)} | ${' '.repeat(Math.max(0, diagnostic.span.column - 1))}${'^'.repeat(markerLength)}`,
   ].join('\n');
 }
 

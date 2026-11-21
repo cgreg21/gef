@@ -4,6 +4,7 @@ import { createGtplRenderRuntime } from '../../rendering/gtpl-runtime.js';
 import { signal } from '../../reactivity/signal.js';
 import { DirectiveRegistry } from '../../directives/directive-registry.js';
 import { Injector } from '../../di/injector.js';
+import { EventEmitter } from '../../../../shared/src/events/event-emitter.js';
 
 class FakeWidget implements GtkActor {
   readonly properties: Record<string, unknown>;
@@ -172,17 +173,23 @@ describe('createGtkRenderHost', () => {
   it('mounts selector-matched directives and disposes host listeners with GTK view teardown', () => {
     const host = createGtkRenderHost(createGtk());
     const activated: unknown[] = [];
+    const changed = new EventEmitter<string>();
+    const outputs: string[] = [];
     const directives = new DirectiveRegistry<GtkActor>().register('[gefAction]', {
-      create: () => ({ accessibleName: 'Action', activate: (event: unknown) => activated.push(event) }),
+      create: () => ({ accessibleName: 'Action', activate: (event: unknown) => activated.push(event), changed }),
       hostBindings: [{ member: 'accessibleName', property: 'accessible-name' }],
       hostListeners: [{ member: 'activate', event: 'clicked' }],
+      outputs: [{ publicName: 'changed', member: 'changed' }],
     });
     const runtime = createGtplRenderRuntime(host, undefined, directives, new Injector());
-    const button = runtime.element('GtkButton', { gefAction: true }, undefined) as FakeWidget;
+    const button = runtime.element('GtkButton', { gefAction: true, changed: (value: string) => outputs.push(value) }, undefined) as FakeWidget;
     expect(button.properties.accessible_name).toBe('Action');
     button.emit('clicked', 'go');
     expect(activated).toEqual(['go']);
+    changed.emit('first');
     host.destroy(button);
+    changed.emit('second');
+    expect(outputs).toEqual(['first']);
     expect(button.signals.size).toBe(0);
   });
 

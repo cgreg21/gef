@@ -33,9 +33,11 @@ describe('mountDirective', () => {
       outputs: [{ publicName: 'changed', member: 'output' }],
     }, new Injector(), { setProperty: vi.fn(), listen: () => () => {} }, {});
     expect(ref.outputs.changed).toBe(output);
+    const listener = vi.fn();
+    output.subscribe(listener);
     ref.destroy();
-    expect(output.subscribe(vi.fn())).toBeDefined();
     output.emit('cleared');
+    expect(listener).not.toHaveBeenCalled();
   });
 
   it('applies inputs and host bindings, then disposes subscriptions', () => {

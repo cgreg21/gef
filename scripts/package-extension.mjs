@@ -60,7 +60,7 @@ async function listFiles(directory) {
 for (const file of await listFiles(output)) {
   if (!file.endsWith('.js')) continue;
   const source = await readFile(file, 'utf8');
-  const imports = source.matchAll(/(?:from\\s*|import\\s*)['"]([^'"]+)['"]/g);
+  const imports = source.matchAll(/(?:from\s*|import\s*)['"]([^'"]+)['"]/g);
   for (const match of imports) {
     const specifier = match[1] ?? '';
     if (!specifier.startsWith('.')) continue;
@@ -73,4 +73,4 @@ for (const file of await listFiles(output)) {
   }
 }
 
-process.stdout.write(`Staged and verified GNOME Shell extension and GTK preferences: ${output}\\n`);
+process.stdout.write(`Staged and verified GNOME Shell extension and GTK preferences: ${output}\n`);

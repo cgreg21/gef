@@ -64,7 +64,7 @@ function collectIdentifiers(node: ExpressionNode, names: Set<string>): void {
 
 function isWhitespaceOnlyText(node: GtplNode): boolean {
   return node.kind === 'text'
-    && node.parts.every((part) => part.kind === 'text' && /^\\s*$/.test(part.value));
+    && node.parts.every((part) => part.kind === 'text' && /^\s*$/.test(part.value));
 }
 
 function expression(node: ExpressionNode | undefined, locals: ReadonlySet<string>, options: GtplTemplateOptions): string {

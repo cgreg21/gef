@@ -63,7 +63,8 @@
 - [ ] Complete St/GTK-specific CSS validation and style scoping.
 - [x] CLI `check`, `compile` and `build` commands.
 - [x] CLI `new` and `doctor` commands.
-- [x] CLI `generate component`, `test`, `package` and `styles` commands.
+- [x] CLI `generate component` creates a decorated, input-driven component and matching GTPL template.
+- [x] CLI `test`, `package` and `styles` commands.
 - [x] Native filesystem watch mode and GNOME Shell 51 virtual-display smoke test harness.
 - [ ] Full automated GNOME Shell 51 and GTK4 integration suite.
 - [x] Source excerpts and caret markers in GTPL CLI diagnostics.

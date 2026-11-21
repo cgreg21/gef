@@ -43,6 +43,10 @@ Input bindings are assigned before `onInit`; output subscriptions are
 disconnected and emitters cleared when the component is destroyed. Component
 instances, child injectors and views share one deterministic lifetime.
 
+## Generate a component
+
+`gef generate component UserCard src/components` creates a TypeScript class with `@Component` metadata, a `@Input() title` property, and an external GTPL template that interpolates `title`. The generated pair is a starting point: compile the template with the component member list, then register the generated render function with `ComponentRegistry`.
+
 ## Directive
 
 ```ts

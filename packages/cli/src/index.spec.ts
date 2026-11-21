@@ -95,8 +95,12 @@ describe('GEF CLI', () => {
     const { io, writes } = createIO('');
     expect(await runCli(['generate', 'component', 'UserCard', 'src/components'], io)).toBe(0);
     expect(writes.map((item) => item.path)).toEqual(expect.arrayContaining([expect.stringContaining('UserCard.ts'), expect.stringContaining('UserCard.gtpl')]));
-    expect(writes.find((item) => item.path.endsWith('UserCard.ts'))?.content).toContain("templateUrl: './UserCard.gtpl'");
-    expect(writes.find((item) => item.path.endsWith('UserCard.gtpl'))?.content).toContain('<StLabel>UserCard</StLabel>');
+    const component = writes.find((item) => item.path.endsWith('UserCard.ts'))?.content ?? '';
+    const template = writes.find((item) => item.path.endsWith('UserCard.gtpl'))?.content ?? '';
+    expect(component).toContain("import { Component, Input } from 'gnome-extension-framework/runtime'");
+    expect(component).toContain("templateUrl: './UserCard.gtpl'");
+    expect(component).toContain("@Input() title = 'UserCard'");
+    expect(template).toContain('<StLabel>{{ title }}</StLabel>');
   });
 
   it('compiles and validates SCSS output', async () => {

@@ -54,9 +54,10 @@ class FakeSingleChild extends FakeWidget {
 }
 
 class FailingBox extends FakeWidget {
-  static fail = false;
+  static remaining = -1;
   override append(child: GtkActor): void {
-    if (FailingBox.fail) throw new Error('attachment failed');
+    if (FailingBox.remaining === 0) throw new Error('attachment failed');
+    if (FailingBox.remaining > 0) FailingBox.remaining -= 1;
     super.append(child);
   }
 }
@@ -180,7 +181,7 @@ describe('createGtkRenderHost', () => {
   });
 
   it('cleans up new repeat children when GTK attachment fails', () => {
-    FailingBox.fail = false;
+    FailingBox.remaining = -1;
     const Gtk = { ...createGtk(), Box: FailingBox };
     const host = createGtkRenderHost(Gtk);
     const previous = host.element('GtkButton', { clicked: () => undefined }, undefined) as FakeWidget;
@@ -188,12 +189,12 @@ describe('createGtkRenderHost', () => {
     const list = host.repeat({ kind: 'binding', get: () => state.get() }) as FakeWidget;
     const first = host.element('GtkButton', { clicked: () => undefined }, undefined) as FakeWidget;
     const second = host.element('GtkButton', { clicked: () => undefined }, undefined) as FakeWidget;
-    FailingBox.fail = true;
+    FailingBox.remaining = 1;
     expect(() => state.set({ items: [
       { key: 'first', index: 0, node: first },
       { key: 'second', index: 1, node: second },
     ] })).toThrow('attachment failed');
-    FailingBox.fail = false;
+    FailingBox.remaining = -1;
     expect(first.signals.size).toBe(0);
     expect(second.signals.size).toBe(0);
     host.destroy(list);

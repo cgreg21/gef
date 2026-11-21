@@ -1,3 +1,4 @@
+import { Component, Input } from '../../../shared/src/components/metadata.js';
 import { describe, expect, it } from 'vitest';
 import { ComponentRegistry } from './component-registry.js';
 
@@ -18,6 +19,19 @@ describe('ComponentRegistry', () => {
       create: () => ({ label: '' }), render: (instance, runtime) => runtime.text(instance.label),
     });
     expect(registry.match('GefLabel', {})).toBeDefined();
+  });
+
+  it('registers a decorated component class directly', () => {
+    @Component({ selector: 'GefDecoratedLabel', template: '<StLabel />' })
+    class DecoratedLabel {
+      @Input('title') label = '';
+    }
+    const registry = new ComponentRegistry<object>().registerType(DecoratedLabel, {
+      create: () => new DecoratedLabel(),
+      render: (instance, runtime) => runtime.text(instance.label),
+    });
+    expect(registry.match('GefDecoratedLabel', {})).toBeDefined();
+    expect(registry.match('GefDecoratedLabel', {} )?.inputs).toEqual([{ publicName: 'title', member: 'label' }]);
   });
 
   it('supports attribute selectors and rejects duplicates', () => {

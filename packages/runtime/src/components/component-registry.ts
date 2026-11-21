@@ -1,3 +1,4 @@
+import { getComponentMetadata } from '../../../shared/src/components/metadata.js';
 import type { ComponentDefinition, ComponentInput, ComponentOutput } from './component-ref.js';
 
 export class ComponentRegistry<Node> {
@@ -10,6 +11,15 @@ export class ComponentRegistry<Node> {
     }
     this.#entries.push({ selector, definition: definition as unknown as ComponentDefinition<object, Node> });
     return this;
+  }
+
+  registerType<Instance>(
+    type: Function,
+    definition: Omit<ComponentDefinition<Instance, Node>, 'inputs' | 'outputs'>,
+  ): this {
+    const metadata = getComponentMetadata(type);
+    if (!metadata) throw new TypeError('Cannot register a component without @Component metadata.');
+    return this.registerMetadata(metadata, definition);
   }
 
   registerMetadata<Instance>(

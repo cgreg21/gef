@@ -1,3 +1,4 @@
+import { Directive, HostBinding, HostListener, Input } from '../../../shared/src/components/metadata.js';
 import { describe, expect, it, vi } from 'vitest';
 import { Injector } from '../di/injector.js';
 import { signal } from '../reactivity/signal.js';
@@ -24,6 +25,23 @@ describe('mountDirective', () => {
       outputBindings: [{ publicName: 'activated', member: 'activated' }],
     }, { create: () => ({ text: '', label: '', activated: new EventEmitter<void>(), activate: () => {} }) });
     expect(registry.match('StButton', { gefTooltip: true })).toHaveLength(1);
+  });
+
+  it('registers a decorated directive class directly', () => {
+    @Directive({ selector: '[gefTooltip]' })
+    class TooltipDirective {
+      @Input('text') content = '';
+      @HostBinding('accessible-name') label = '';
+      @HostListener('clicked', ['$event']) activate(_event: unknown): void {}
+    }
+    const registry = new DirectiveRegistry<object>().registerType(TooltipDirective, {
+      create: () => new TooltipDirective(),
+    });
+    const matches = registry.match('StButton', { gefTooltip: true });
+    expect(matches).toHaveLength(1);
+    expect(matches[0]?.definition.hostBindings).toEqual([{ member: 'label', property: 'accessible-name' }]);
+    expect(matches[0]?.definition.hostListeners).toEqual([{ member: 'activate', event: 'clicked', args: ['$event'] }]);
+    expect(matches[0]?.inputs).toEqual({ gefTooltip: true });
   });
 
   it('assigns directive inputs before initialization and runs destroy hooks', () => {

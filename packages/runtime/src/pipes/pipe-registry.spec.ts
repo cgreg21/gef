@@ -1,3 +1,4 @@
+import { Pipe } from '../../../shared/src/components/metadata.js';
 import { describe, expect, it, vi } from 'vitest';
 import { PipeRegistry } from './pipe-registry.js';
 
@@ -16,6 +17,15 @@ describe('PipeRegistry', () => {
     const pipes = new PipeRegistry().registerMetadata({ name: 'uppercase', pure: true }, { transform });
     expect(pipes.transform('uppercase', 'gef')).toBe('GEF');
     expect(pipes.has('uppercase')).toBe(true);
+  });
+
+  it('registers a decorated pipe class directly', () => {
+    @Pipe({ name: 'uppercase' })
+    class UppercasePipe {
+      transform(value: unknown): string { return String(value).toUpperCase(); }
+    }
+    const pipes = new PipeRegistry().registerType(UppercasePipe, () => new UppercasePipe());
+    expect(pipes.transform('uppercase', 'gef')).toBe('GEF');
   });
 
   it('does not cache impure pipes', () => {

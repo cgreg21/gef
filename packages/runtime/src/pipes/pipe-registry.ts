@@ -1,3 +1,4 @@
+import { getPipeMetadata } from '../../../shared/src/components/metadata.js';
 export interface RuntimePipe {
   transform(value: unknown, ...args: unknown[]): unknown;
 }
@@ -27,6 +28,12 @@ export class PipeRegistry {
       lastResult: undefined,
     });
     return this;
+  }
+
+  registerType(type: Function, create: () => RuntimePipe): this {
+    const metadata = getPipeMetadata(type);
+    if (!metadata) throw new TypeError('Cannot register a pipe without @Pipe metadata.');
+    return this.registerMetadata(metadata, create());
   }
 
   registerMetadata(metadata: { readonly name: string; readonly pure: boolean }, pipe: RuntimePipe): this {

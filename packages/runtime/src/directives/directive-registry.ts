@@ -1,3 +1,4 @@
+import { getDirectiveMetadata } from '../../../shared/src/components/metadata.js';
 import type { DirectiveDefinition, DirectiveInput, DirectiveOutput, DirectiveHostBinding, DirectiveHostListener } from './directive-ref.js';
 
 export interface MatchedDirective<Node> {
@@ -16,6 +17,15 @@ export class DirectiveRegistry<Node> {
     }
     this.#entries.push({ selector, definition: definition as unknown as DirectiveDefinition<object, Node> });
     return this;
+  }
+
+  registerType<Instance extends object>(
+    type: Function,
+    definition: Omit<DirectiveDefinition<Instance, Node>, 'inputs' | 'outputs' | 'hostBindings' | 'hostListeners'>,
+  ): this {
+    const metadata = getDirectiveMetadata(type);
+    if (!metadata) throw new TypeError('Cannot register a directive without @Directive metadata.');
+    return this.registerMetadata(metadata, definition);
   }
 
   registerMetadata<Instance extends object>(

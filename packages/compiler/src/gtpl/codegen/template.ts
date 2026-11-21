@@ -241,3 +241,63 @@ function emitGtplTemplateInternal(
     return '';
   });
   return { code: result, nodeMappings };
+}
+
+function encodeVlq(value: number): string {
+  const signed = value < 0 ? (-value << 1) | 1 : value << 1;
+  let remaining = signed;
+  let encoded = '';
+  do {
+    let digit = remaining & 31;
+    remaining >>>= 5;
+    if (remaining > 0) digit |= 32;
+    encoded += 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'[digit]!;
+  } while (remaining > 0);
+  return encoded;
+}
+
+function createMappings(mappings: readonly NodeMapping[]): string {
+  let previousGeneratedColumn = 0;
+  let previousSourceLine = 0;
+  let previousSourceColumn = 0;
+  return mappings.map((mapping) => {
+    const segment = [
+      encodeVlq(mapping.generatedColumn - previousGeneratedColumn),
+      encodeVlq(0),
+      encodeVlq(mapping.sourceLine - previousSourceLine),
+      encodeVlq(mapping.sourceColumn - previousSourceColumn),
+    ].join('');
+    previousGeneratedColumn = mapping.generatedColumn;
+    previousSourceLine = mapping.sourceLine;
+    previousSourceColumn = mapping.sourceColumn;
+    return segment;
+  }).join(',');
+}
+
+/** Emits a render function and source mappings for every rendered GTPL node. */
+export function emitGtplTemplateWithSourceMap(
+  nodes: readonly GtplNode[],
+  options: GtplSourceMapOptions,
+): GtplTemplateWithSourceMap {
+  const { source, sourceContent, file, ...templateOptions } = options;
+  const generated = emitGtplTemplateInternal(nodes, templateOptions);
+  return {
+    code: generated.code,
+    map: {
+      version: 3,
+      ...(file ? { file } : {}),
+      sources: [source],
+      ...(sourceContent === undefined ? {} : { sourcesContent: [sourceContent] }),
+      names: [],
+      mappings: createMappings(generated.nodeMappings),
+    },
+  };
+}
+
+/** Emits a render function without source-map metadata. */
+export function emitGtplTemplate(
+  nodes: readonly GtplNode[],
+  options: GtplTemplateOptions = {},
+): string {
+  return emitGtplTemplateInternal(nodes, options).code;
+}

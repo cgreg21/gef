@@ -153,7 +153,6 @@ export function createStRenderHost(
       let current: StActor | undefined;
       actor.connect('destroy', () => {
         resources.dispose();
-        current?.destroy();
       });
       resources.add(effect(() => {
         const selected = cases.find((branch) => branch.values.some((candidate) => Object.is(candidate, value.get())));

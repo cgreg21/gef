@@ -11,6 +11,7 @@ class FakeActor implements StActor {
   readonly children: StActor[] = [];
   readonly signals = new Map<number, { name: string; callback: (actor: StActor, ...args: unknown[]) => unknown }>();
   destroyed = false;
+  destroyCount = 0;
   private nextSignal = 1;
 
   constructor(properties: Record<string, unknown> = {}) {
@@ -37,6 +38,7 @@ class FakeActor implements StActor {
   }
 
   destroy(): void {
+    this.destroyCount += 1;
     this.emit('destroy');
     this.destroyed = true;
     this.signals.clear();
@@ -152,7 +154,9 @@ describe('createStRenderHost', () => {
     expect((switched.children[0] as FakeActor).properties.text).toBe('idle');
     state.set('ready');
     expect((switched.children[0] as FakeActor).properties.text).toBe('ready');
+    const selected = switched.children[0] as FakeActor;
     host.destroy(switched);
+    expect(selected.destroyCount).toBe(1);
   });
 
   it('reconciles repeated items by key when a collection signal changes', () => {

@@ -7,7 +7,7 @@
 - [x] Require the default-exported Shell extension class to implement `enable()` and `disable()`.
 - [ ] Generate lifecycle-safe extensions: no dynamic GNOME objects or signal connections before `enable()`; clean all created resources in `disable()`.
 - [x] Validate unique stable `shell-version` values and positive integer optional metadata `version`.\n- [ ] Complete validation of required `metadata.json` fields, UUID format and optional settings schema metadata.
-- [ ] Bundle only required runtime files; exclude build tools, scripts, development files and unused assets.
+- [x] Reject JavaScript modules not reachable from either extension entry point.\n- [ ] Bundle only required runtime files; exclude build tools, scripts, development files and unused assets.
 - [ ] Check generated code for unsupported APIs, excessive logging, unnecessary subprocesses and review-hostile output.
 - [ ] Provide an EGO pre-submission validation command and a readable review report.
 - [ ] Add GNOME Shell 51 packaging and lifecycle fixtures that exercise the final ZIP contents.

@@ -173,6 +173,19 @@ describe('GEF CLI', () => {
     expect(base.errors.join('\\n')).toContain('version must be a positive integer');
   });
 
+  it('rejects JavaScript files that are not reachable from either entry point', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/orphan.js'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : 'export default class Demo { enable() {} disable() {} }',
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
+    expect(base.errors.join('\\n')).toContain('not imported by either extension entry point: orphan.js');
+  });
+
   it('rejects malformed extension UUIDs and a missing Shell entry point', async () => {
     const base = createIO('');
     const io: CliIO = {

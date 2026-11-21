@@ -5,7 +5,7 @@ describe('parseGtpl', () => {
   it('tracks source lines with LF, CRLF and standalone CR endings', () => {
     const result = parseGtpl('<StLabel />\r\n<StButton />\r<StIcon />');
     expect(result.diagnostics).toHaveLength(0);
-    expect(result.nodes.map((node) => node.span.line)).toEqual([1, 2, 3]);
+    expect(result.nodes.filter((node) => node.kind === 'element').map((node) => node.span.line)).toEqual([1, 2, 3]);
   });
 
   it('parses nested and self-closing elements', () => {

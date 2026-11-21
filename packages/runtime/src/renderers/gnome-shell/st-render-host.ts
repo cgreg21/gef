@@ -48,8 +48,10 @@ function notifySignal(property: string): string {
 }
 
 function readProperty(actor: StActor, property: string): unknown {
+  const target = actor as unknown as Record<string, unknown>;
+  if (property in target) return target[property];
   const name = propertyName(property);
-  return actor.get_property?.(name) ?? (actor as unknown as Record<string, unknown>)[name];
+  return target[name] ?? actor.get_property?.(name);
 }
 
 function propertyName(name: string): string {

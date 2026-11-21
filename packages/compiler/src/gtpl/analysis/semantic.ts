@@ -16,6 +16,8 @@ export interface GtplSemanticOptions {
   readonly componentMembers?: readonly string[];
   /** Names supplied by the framework and always visible in expressions. */
   readonly globals?: readonly string[];
+  /** Original template source, used to report identifier-level locations. */
+  readonly source?: string;
 }
 
 export interface GtplSemanticResult {
@@ -55,12 +57,14 @@ class GtplSemanticAnalyzer {
   private readonly diagnostics: Diagnostic[] = [];
   private readonly componentMembers: ReadonlySet<string> | null;
   private readonly globals: ReadonlySet<string>;
+  private readonly source: string | undefined;
 
   constructor(options: GtplSemanticOptions) {
     this.componentMembers = options.componentMembers
       ? new Set(options.componentMembers)
       : null;
     this.globals = new Set(options.globals ?? []);
+    this.source = options.source;
   }
 
   analyze(nodes: readonly GtplNode[]): GtplSemanticResult {
@@ -95,7 +99,7 @@ class GtplSemanticAnalyzer {
   private visitText(node: TextNode, scope: Scope): void {
     for (const part of node.parts) {
       if (part.kind === 'interpolation' && part.parsedExpression) {
-        this.checkExpression(part.parsedExpression, scope, part.expressionSpan);
+        this.checkExpression(part.parsedExpression, scope, part.expressionSpan, true);
       }
     }
   }
@@ -105,7 +109,7 @@ class GtplSemanticAnalyzer {
       if (!attribute.parsedExpression) continue;
       const attributeScope = attribute.kind === 'event' ? new Scope(scope) : scope;
       if (attribute.kind === 'event') this.declare(attributeScope, { name: '$event', kind: 'let', span: attribute.valueSpan });
-      this.checkExpression(attribute.parsedExpression, attributeScope, attribute.valueSpan);
+      this.checkExpression(attribute.parsedExpression, attributeScope, attribute.valueSpan, true);
     }
     for (const child of node.children) this.visit(child, scope);
   }
@@ -172,7 +176,12 @@ class GtplSemanticAnalyzer {
     }
   }
 
-  private checkExpression(expression: ExpressionNode, scope: Scope, sourceSpan: SourceSpan): void {
+  private checkExpression(
+    expression: ExpressionNode,
+    scope: Scope,
+    sourceSpan: SourceSpan,
+    preciseSpan = false,
+  ): void {
     switch (expression.kind) {
       case 'literal':
         return;
@@ -184,44 +193,60 @@ class GtplSemanticAnalyzer {
           this.report(
             'GTPL4002',
             `Unknown template identifier "${expression.name}". Add it to the component context or declare it in the template.`,
-            sourceSpan,
+            preciseSpan ? this.identifierSpan(sourceSpan, expression.span.start, expression.span.end) : sourceSpan,
           );
         }
         return;
       case 'member':
-        this.checkExpression(expression.object, scope, sourceSpan);
+        this.checkExpression(expression.object, scope, sourceSpan, preciseSpan);
         if (expression.computed && typeof expression.property !== 'string') {
-          this.checkExpression(expression.property, scope, sourceSpan);
+          this.checkExpression(expression.property, scope, sourceSpan, preciseSpan);
         }
         return;
       case 'call':
-        this.checkExpression(expression.callee, scope, sourceSpan);
-        for (const argument of expression.arguments) this.checkExpression(argument, scope, sourceSpan);
+        this.checkExpression(expression.callee, scope, sourceSpan, preciseSpan);
+        for (const argument of expression.arguments) this.checkExpression(argument, scope, sourceSpan, preciseSpan);
         return;
       case 'unary':
-        this.checkExpression(expression.argument, scope, sourceSpan);
+        this.checkExpression(expression.argument, scope, sourceSpan, preciseSpan);
         return;
       case 'binary':
-        this.checkExpression(expression.left, scope, sourceSpan);
-        this.checkExpression(expression.right, scope, sourceSpan);
+        this.checkExpression(expression.left, scope, sourceSpan, preciseSpan);
+        this.checkExpression(expression.right, scope, sourceSpan, preciseSpan);
         return;
       case 'conditional':
-        this.checkExpression(expression.test, scope, sourceSpan);
-        this.checkExpression(expression.consequent, scope, sourceSpan);
-        this.checkExpression(expression.alternate, scope, sourceSpan);
+        this.checkExpression(expression.test, scope, sourceSpan, preciseSpan);
+        this.checkExpression(expression.consequent, scope, sourceSpan, preciseSpan);
+        this.checkExpression(expression.alternate, scope, sourceSpan, preciseSpan);
         return;
       case 'assignment':
-        this.checkExpression(expression.target, scope, sourceSpan);
-        this.checkExpression(expression.value, scope, sourceSpan);
+        this.checkExpression(expression.target, scope, sourceSpan, preciseSpan);
+        this.checkExpression(expression.value, scope, sourceSpan, preciseSpan);
         return;
       case 'pipe':
-        this.checkExpression(expression.expression, scope, sourceSpan);
-        for (const argument of expression.arguments) this.checkExpression(argument, scope, sourceSpan);
+        this.checkExpression(expression.expression, scope, sourceSpan, preciseSpan);
+        for (const argument of expression.arguments) this.checkExpression(argument, scope, sourceSpan, preciseSpan);
         return;
       case 'array':
         for (const element of expression.elements) this.checkExpression(element, scope, sourceSpan);
         return;
     }
+  }
+
+  private identifierSpan(base: SourceSpan, start: number, end: number): SourceSpan {
+    const absoluteStart = base.start + start;
+    const absoluteEnd = base.start + end;
+    if (!this.source) return { ...base, start: absoluteStart, end: absoluteEnd };
+
+    const prefix = this.source.slice(base.start, absoluteStart);
+    const lineBreaks = prefix.match(/\\n/g)?.length ?? 0;
+    const lastLineBreak = prefix.lastIndexOf('\\n');
+    return {
+      start: absoluteStart,
+      end: absoluteEnd,
+      line: base.line + lineBreaks,
+      column: lastLineBreak === -1 ? base.column + prefix.length : prefix.length - lastLineBreak,
+    };
   }
 
   private declare(scope: Scope, entry: SymbolEntry): void {

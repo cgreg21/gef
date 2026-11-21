@@ -40,7 +40,8 @@
 - [x] Emit JavaScript render-function source for GTPL ASTs, including `*if`/`*for` lowering and two-way bindings.
 - [x] Provide a combined GTPL parse, semantic and component validation API.
 - [x] Connect supported generated templates to the executable renderer-independent runtime.
-- [ ] Complete source maps, diagnostics mapping and remaining template constructs.
+- [ ] Complete source maps and remaining template constructs.
+- [x] Report unknown identifiers at their exact GTPL expression locations.
 - [x] Exhaustiveness diagnostics for `@default never` over literal-union context properties.
 
 ## Runtime and renderers

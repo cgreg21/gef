@@ -29,7 +29,7 @@ export interface GtplCheckResult {
 export function checkGtpl(source: string, options: GtplCheckOptions = {}): GtplCheckResult {
   const parsed = parseGtpl(source);
   const lowered = lowerGtplStructuralDirectives(parsed.nodes);
-  const semantic = analyzeGtpl(lowered.nodes, options);
+  const semantic = analyzeGtpl(lowered.nodes, { ...options, source });
   const components = validateGtplComponents(lowered.nodes, {
     components: options.components ?? [],
     strict: options.strictComponents ?? false,

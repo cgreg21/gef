@@ -53,6 +53,14 @@ class FakeSingleChild extends FakeWidget {
   }
 }
 
+class FailingBox extends FakeWidget {
+  static fail = false;
+  override append(child: GtkActor): void {
+    if (FailingBox.fail) throw new Error('attachment failed');
+    super.append(child);
+  }
+}
+
 function constructor(): GtkWidgetConstructor { return FakeWidget; }
 function createGtk(): GtkNamespace {
   return {
@@ -154,6 +162,40 @@ describe('createGtkRenderHost', () => {
     values.set(['b', 'c']);
     expect(list.children[0]).toBe(originalB);
     expect(list.children.map((child) => (child as FakeWidget).properties.label)).toEqual(['b', 'c']);
+    host.destroy(list);
+  });
+
+  it('disposes repeat children with their GTK container', () => {
+    const host = createGtkRenderHost(createGtk());
+    const child = host.element('GtkButton', { clicked: () => undefined }, undefined) as FakeWidget;
+    const list = host.repeat({
+      kind: 'binding',
+      get: () => ({ items: [{ key: 'one', index: 0, node: child }] }),
+    }) as FakeWidget;
+    expect(child.parent).toBe(list);
+    expect(child.signals.size).toBe(1);
+    host.destroy(list);
+    expect(child.parent).toBeNull();
+    expect(child.signals.size).toBe(0);
+  });
+
+  it('cleans up new repeat children when GTK attachment fails', () => {
+    FailingBox.fail = false;
+    const Gtk = { ...createGtk(), Box: FailingBox };
+    const host = createGtkRenderHost(Gtk);
+    const previous = host.element('GtkButton', { clicked: () => undefined }, undefined) as FakeWidget;
+    const state = signal({ items: [{ key: 'previous', index: 0, node: previous }] });
+    const list = host.repeat({ kind: 'binding', get: () => state.get() }) as FakeWidget;
+    const first = host.element('GtkButton', { clicked: () => undefined }, undefined) as FakeWidget;
+    const second = host.element('GtkButton', { clicked: () => undefined }, undefined) as FakeWidget;
+    FailingBox.fail = true;
+    expect(() => state.set({ items: [
+      { key: 'first', index: 0, node: first },
+      { key: 'second', index: 1, node: second },
+    ] })).toThrow('attachment failed');
+    FailingBox.fail = false;
+    expect(first.signals.size).toBe(0);
+    expect(second.signals.size).toBe(0);
     host.destroy(list);
   });
 

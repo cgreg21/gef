@@ -61,6 +61,8 @@ source and GObject signal cleanup, reactive boolean/integer/string/string-array 
 source-context CLI diagnostics, native GTK4/libadwaita smoke tests, an initial CSS compatibility checker,
 and a schema-aware extension staging pipeline.
 
+GEF targets extensions.gnome.org (EGO) review requirements: generated JavaScript must remain readable and reviewable, extension lifecycle work must happen in `enable()` and be cleaned in `disable()`, preferences and Shell code must stay process-isolated, and packages must contain only required runtime files. See [EGO compliance](docs/ego-compliance.md) for the compiler and packaging requirements.
+
 This is an active framework under development, not yet a production-complete
-replacement for GNOME's native extension APIs. See [the architecture](docs/architecture.md)
+replacement for GNOME's native extension APIs. EGO approval cannot be guaranteed by tooling. See [the architecture](docs/architecture.md)
 and [the roadmap](docs/roadmap.md) for the remaining work.

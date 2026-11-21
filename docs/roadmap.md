@@ -1,5 +1,15 @@
 # Development roadmap
 
+## EGO publication compliance
+- [ ] Emit readable, consistently formatted JavaScript without minification or obfuscation.
+- [ ] Keep Shell and preferences entry points and dependencies process-isolated.
+- [ ] Generate lifecycle-safe extensions: no dynamic GNOME objects or signal connections before `enable()`; clean all created resources in `disable()`.
+- [ ] Validate required `metadata.json` fields, UUID format, stable `shell-version` values and optional settings schema metadata.
+- [ ] Bundle only required runtime files; exclude build tools, scripts, development files and unused assets.
+- [ ] Check generated code for unsupported APIs, excessive logging, unnecessary subprocesses and review-hostile output.
+- [ ] Provide an EGO pre-submission validation command and a readable review report.
+- [ ] Add GNOME Shell 51 packaging and lifecycle fixtures that exercise the final ZIP contents.
+
 ## Foundation
 - [x] Repository baseline and GNOME Shell 51 target.
 - [x] Canonical .gtpl templates and initial parser.

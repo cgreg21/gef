@@ -200,6 +200,35 @@ describe('createGtkRenderHost', () => {
     host.destroy(list);
   });
 
+  it('cleans up GTK conditional and switch nodes when attachment fails', () => {
+    const host = createGtkRenderHost({ ...createGtk(), Box: FailingBox });
+    const condition = signal(false);
+    const conditional = host.conditional(
+      { kind: 'binding', get: () => condition.get() },
+      () => host.element('GtkButton', { clicked: () => undefined }, undefined) as FakeWidget,
+      () => host.text('fallback'),
+    ) as FakeWidget;
+    const conditionalNode = conditional.children[0] as FakeWidget;
+    FailingBox.remaining = 0;
+    expect(() => condition.set(true)).toThrow('attachment failed');
+    FailingBox.remaining = -1;
+    expect(conditionalNode.signals.size).toBe(0);
+    host.destroy(conditional);
+
+    const selected = signal('fallback');
+    const switched = host.switch(
+      { kind: 'binding', get: () => selected.get() },
+      [{ values: ['button'], render: () => host.element('GtkButton', { clicked: () => undefined }, undefined) as FakeWidget }],
+      () => host.text('fallback'),
+    ) as FakeWidget;
+    const switchNode = switched.children[0] as FakeWidget;
+    FailingBox.remaining = 0;
+    expect(() => selected.set('button')).toThrow('attachment failed');
+    FailingBox.remaining = -1;
+    expect(switchNode.signals.size).toBe(0);
+    host.destroy(switched);
+  });
+
   it('supports registered libadwaita and custom widget constructors', () => {
     const host = createGtkRenderHost(createGtk(), {
       adw: { PreferencesPage: FakeWidget, PreferencesGroup: FakeWidget, ActionRow: FakeWidget },

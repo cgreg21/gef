@@ -127,6 +127,7 @@ export function createGtkRenderHost(
       const id = actor.connect(event, (_source, ...args) => handler(...args));
       return () => actor.disconnect(id);
     },
+    onDestroy: (actor, callback) => { actor.connect('destroy', callback); },
     element(name, attributes, child) {
       const Constructor = constructors[name];
       if (!Constructor) throw new Error(`Unknown GTK component "${name}". Register a Gtk or Adw widget constructor.`);

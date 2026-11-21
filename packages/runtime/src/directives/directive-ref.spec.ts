@@ -2,8 +2,17 @@ import { describe, expect, it, vi } from 'vitest';
 import { Injector } from '../di/injector.js';
 import { signal } from '../reactivity/signal.js';
 import { mountDirective } from './directive-ref.js';
+import { DirectiveRegistry } from './directive-registry.js';
 
 describe('mountDirective', () => {
+  it('matches element, attribute and class selectors', () => {
+    const registry = new DirectiveRegistry<object>()
+      .register('StButton', { create: () => ({}) })
+      .register('[disabled]', { create: () => ({}) })
+      .register('.primary', { create: () => ({}) });
+    expect(registry.match('StButton', { disabled: true, class: 'primary' })).toHaveLength(3);
+    expect(registry.match('StLabel', {})).toHaveLength(0);
+  });
   it('applies inputs and host bindings, then disposes subscriptions', () => {
     const value = signal('ready');
     const setProperty = vi.fn();

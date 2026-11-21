@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createGtplRenderRuntime, mountGtplTemplate, type GtplRenderHost } from './gtpl-runtime.js';
+import { DirectiveRegistry } from '../directives/directive-registry.js';
+import { Injector } from '../di/injector.js';
+import { vi } from 'vitest';
 
 type Node = { readonly kind: string; readonly value?: unknown; readonly children?: readonly Node[] };
 
@@ -38,6 +41,32 @@ describe('createGtplRenderRuntime', () => {
     });
     expect(withPipes.pipe('upper', 'gef')).toBe('GEF');
     expect(runtime.text('static')).toEqual({ kind: 'text', value: 'static' });
+  });
+
+  it('matches directives and owns their host behavior until actor destruction', () => {
+    const setProperty = vi.fn();
+    const listen = vi.fn(() => vi.fn());
+    const destroyCallbacks: Array<() => void> = [];
+    const host = {
+      ...createHost(),
+      setProperty,
+      listen,
+      onDestroy: (_node: Node, callback: () => void) => destroyCallbacks.push(callback),
+    };
+    const clicked = vi.fn();
+    const registry = new DirectiveRegistry<Node>().register('StButton', {
+      create: () => ({ active: false, clicked }),
+      inputs: [{ publicName: 'active', member: 'active' }],
+      hostBindings: [{ member: 'active', property: 'reactive' }],
+      hostListeners: [{ member: 'clicked', event: 'clicked' }],
+    });
+    const runtime = createGtplRenderRuntime(host, undefined, registry, new Injector());
+    const node = runtime.element('StButton', { active: true }, undefined);
+    expect(node.kind).toBe('StButton');
+    expect(setProperty).toHaveBeenCalledWith(node, 'reactive', true);
+    expect(listen).toHaveBeenCalledOnce();
+    destroyCallbacks.forEach((callback) => callback());
+    expect(listen.mock.results[0]?.value).toHaveBeenCalledOnce();
   });
 
   it('creates explicit binding values for reactive hosts', () => {

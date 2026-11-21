@@ -5,16 +5,17 @@ function createIO(source: string, commandStatus = 0) {
   const output: string[] = [];
   const errors: string[] = [];
   const writes: Array<{ path: string; content: string }> = [];
+  const directories: string[] = [];
   const commands: Array<{ command: string; args: readonly string[] }> = [];
   const io: CliIO = {
     readFile: async () => source,
     writeFile: async (path, content) => { writes.push({ path, content }); },
-    mkdir: async () => {},
+    mkdir: async (path) => { directories.push(path); },
     run: (command, args) => { commands.push({ command, args }); return { status: commandStatus, output: '' }; },
     stdout: (message) => output.push(message),
     stderr: (message) => errors.push(message),
   };
-  return { io, output, errors, writes, commands };
+  return { io, output, errors, writes, commands, directories };
 }
 
 describe('GEF CLI', () => {
@@ -49,9 +50,10 @@ describe('GEF CLI', () => {
   });
 
   it('creates a minimal extension project', async () => {
-    const { io, output, writes } = createIO('');
+    const { io, output, writes, directories } = createIO('');
     expect(await runCli(['new', 'hello-world', 'out'], io)).toBe(0);
-    expect(writes.map((item) => item.path)).toEqual(expect.arrayContaining([expect.stringContaining('metadata.json'), expect.stringContaining('extension.ts'), expect.stringContaining('package.json'), expect.stringContaining('tsconfig.json')]));
+    expect(writes.map((item) => item.path)).toEqual(expect.arrayContaining([expect.stringContaining('metadata.json'), expect.stringContaining('extension.ts'), expect.stringContaining('package.json'), expect.stringContaining('tsconfig.json'), expect.stringContaining('scripts/package.mjs')]));
+    expect(directories).toEqual(expect.arrayContaining([expect.stringContaining('out/scripts')]));
     expect(output[0]).toContain('Created extension project');
   });
 

@@ -139,6 +139,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     };
     try {
       await io.mkdir(directory);
+      await io.mkdir(resolve(directory, 'scripts'));
       for (const [path, source] of Object.entries(files)) await io.writeFile(resolve(directory, path), source);
     } catch (error) {
       io.stderr(`Unable to generate project: ${error instanceof Error ? error.message : String(error)}`);

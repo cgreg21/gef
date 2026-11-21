@@ -16,7 +16,7 @@
 - [x] Component input/output binding validation.
 - [x] Organize compiler implementation by domain subdirectories with focused package entry points.
 - [x] Deterministic parser fuzz corpus and malformed-input regression tests.
-- [ ] Type-check expressions against TypeScript component members.
+- [x] Optional TypeScript expression checking against component context type literals.
 - [x] Emit JavaScript source for parsed expression ASTs.\n- [x] Emit initial JavaScript render-function source for GTPL ASTs (runtime contract injected; structural shorthand and two-way bindings remain pending).
 - [x] Provide a combined GTPL parse, semantic and component validation API.
 - [x] Connect supported generated templates to the executable renderer-independent runtime.

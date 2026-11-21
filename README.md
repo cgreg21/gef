@@ -50,7 +50,7 @@ The runtime package has no Node.js imports. Node and Sass are build-time tools.
 ## Current scope
 
 Implemented foundations include the GTPL parser and structural lowering,
-expression and template code generation, component contract validation,
+expression and template code generation, optional TypeScript expression type checking, component contract validation,
 selector-matched runtime directives and components, component input/output lifecycles and DI, reactive
 signals, pure pipe caching, resource scopes, St and GTK host adapters, GLib
 source and GObject signal cleanup, an initial CSS compatibility checker, and

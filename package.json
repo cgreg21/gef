@@ -21,7 +21,6 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
-    "typescript": "^5.9.3",
     "vitest": "^3.2.4",
     "sass": "^1.89.2"
   },
@@ -46,5 +45,8 @@
       "types": "./dist/runtime/src/index.d.ts",
       "import": "./dist/runtime/src/index.js"
     }
+  },
+  "dependencies": {
+    "typescript": "^5.9.3"
   }
 }

@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { createStRenderHost, type StActor, type StNamespace, type StWidgetConstructor } from './st-render-host.js';
 import { createGtplRenderRuntime } from '../../rendering/gtpl-runtime.js';
 import { signal } from '../../reactivity/signal.js';
+import { ComponentRegistry } from '../../components/component-registry.js';
+import { EventEmitter } from '../../../../shared/src/events/event-emitter.js';
+import { Injector } from '../../di/injector.js';
 
 class FakeActor implements StActor {
   readonly properties: Record<string, unknown>;
@@ -174,6 +177,26 @@ describe('createStRenderHost', () => {
   it('supports custom component constructors', () => {
     const host = createStRenderHost(createSt(), { components: { GefCustom: FakeActor } });
     expect(host.element('GefCustom', {}, host.fragment([]))).toBeInstanceOf(FakeActor);
+  });
+
+  it('mounts registered components and cleans their outputs when the St actor is destroyed', () => {
+    const host = createStRenderHost(createSt());
+    const changed = new EventEmitter<string>();
+    const registry = new ComponentRegistry<StActor>().register('GefButton', {
+      create: () => ({ label: 'initial', changed }),
+      inputs: [{ publicName: 'label', member: 'label' }],
+      outputs: [{ publicName: 'pressed', member: 'changed' }],
+      render: (instance, runtime) => runtime.element('StLabel', { text: instance.label }, undefined),
+    });
+    const received: string[] = [];
+    const runtime = createGtplRenderRuntime(host, undefined, undefined, new Injector(), registry);
+    const actor = runtime.element('GefButton', { label: 'ready', pressed: (value: string) => received.push(value) }, undefined) as FakeActor;
+    expect(actor.properties.text).toBe('ready');
+    changed.emit('first');
+    host.destroy(actor);
+    changed.emit('second');
+    expect(received).toEqual(['first']);
+    expect(actor.destroyed).toBe(true);
   });
 
   it('rejects unknown selectors', () => {

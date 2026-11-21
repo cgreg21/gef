@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { createGtkRenderHost, type GtkActor, type GtkNamespace, type GtkWidgetConstructor } from './gtk-render-host.js';
 import { createGtplRenderRuntime } from '../../rendering/gtpl-runtime.js';
 import { signal } from '../../reactivity/signal.js';
+import { DirectiveRegistry } from '../../directives/directive-registry.js';
+import { Injector } from '../../di/injector.js';
 
 class FakeWidget implements GtkActor {
   readonly properties: Record<string, unknown>;
@@ -157,6 +159,23 @@ describe('createGtkRenderHost', () => {
     });
     expect(host.element('AdwPreferencesPage', {}, undefined)).toBeInstanceOf(FakeWidget);
     expect(host.element('CustomRow', {}, undefined)).toBeInstanceOf(FakeWidget);
+  });
+
+  it('mounts selector-matched directives and disposes host listeners with GTK view teardown', () => {
+    const host = createGtkRenderHost(createGtk());
+    const activated: unknown[] = [];
+    const directives = new DirectiveRegistry<GtkActor>().register('[gefAction]', {
+      create: () => ({ accessibleName: 'Action', activate: (event: unknown) => activated.push(event) }),
+      hostBindings: [{ member: 'accessibleName', property: 'accessible-name' }],
+      hostListeners: [{ member: 'activate', event: 'clicked' }],
+    });
+    const runtime = createGtplRenderRuntime(host, undefined, directives, new Injector());
+    const button = runtime.element('GtkButton', { gefAction: true }, undefined) as FakeWidget;
+    expect(button.properties.accessible_name).toBe('Action');
+    button.emit('clicked', 'go');
+    expect(activated).toEqual(['go']);
+    host.destroy(button);
+    expect(button.signals.size).toBe(0);
   });
 
   it('rejects unknown widget selectors', () => {

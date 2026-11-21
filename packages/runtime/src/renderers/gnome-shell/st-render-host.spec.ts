@@ -227,6 +227,34 @@ describe('createStRenderHost', () => {
     expect(repeat.children.map((child) => (child as FakeActor).properties.text)).toEqual(['a', 'b']);
   });
 
+
+  it('destroys newly rendered repeat nodes when attaching a batch fails', () => {
+    class FailingBox extends FakeActor {
+      override add_child(_child: StActor): void {
+        throw new Error('attachment failed');
+      }
+    }
+    const St = { ...createSt(), BoxLayout: FailingBox };
+    const host = createStRenderHost(St);
+    const first = host.text('first') as FakeActor;
+    const second = host.text('second') as FakeActor;
+
+    expect(() => host.repeat({
+      kind: 'binding',
+      get: () => ({
+        items: [
+          { key: 'first', index: 0, node: first },
+          { key: 'second', index: 1, node: second },
+        ],
+      }),
+    })).toThrow('attachment failed');
+
+    expect(first.destroyed).toBe(true);
+    expect(second.destroyed).toBe(true);
+    expect(first.destroyCount).toBe(1);
+    expect(second.destroyCount).toBe(1);
+  });
+
   it('destroys a root and its child actors idempotently', () => {
     const host = createStRenderHost(createSt());
     const child = host.text('child') as FakeActor;

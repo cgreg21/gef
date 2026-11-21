@@ -10,6 +10,7 @@ export interface GtkActor {
   remove?(child: GtkActor): void;
   set_child?(child: GtkActor | null): void;
   set_property(name: string, value: unknown): void;
+  get_property?(name: string): unknown;
   connect(signal: string, callback: (actor: GtkActor, ...args: unknown[]) => unknown): number;
   disconnect(id: number): void;
   get_parent?(): GtkActor | null;
@@ -40,6 +41,19 @@ export interface GtkRenderHostOptions {
   readonly adw?: AdwNamespace;
   readonly orientation?: unknown;
   readonly spacing?: number;
+}
+
+function twoWayProperty(event: string): string | undefined {
+  return event.endsWith('Change') && event.length > 6 ? event.slice(0, -6) : undefined;
+}
+
+function notifySignal(property: string): string {
+  return `notify::${property.replace(/([A-Z])/g, '-$1').replace(/_/g, '-').toLowerCase()}`;
+}
+
+function readProperty(actor: GtkActor, property: string): unknown {
+  const name = propertyName(property);
+  return actor.get_property?.(name) ?? (actor as unknown as Record<string, unknown>)[name];
 }
 
 function propertyName(name: string): string {
@@ -158,7 +172,9 @@ export function createGtkRenderHost(
       try {
         for (const name of classes) actor.add_css_class?.(name);
         for (const [signal, handler] of events) {
-          const id = actor.connect(signal, (_source, ...args) => handler(args.length <= 1 ? args[0] : args));
+          const property = twoWayProperty(signal);
+          const id = actor.connect(property ? notifySignal(property) : signal, (_source, ...args) =>
+            property ? handler(readProperty(actor, property)) : handler(args.length <= 1 ? args[0] : args));
           scope.add(() => actor.disconnect(id));
         }
         for (const [property, binding] of bindings) {

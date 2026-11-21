@@ -25,6 +25,7 @@ class FakeWidget implements GtkActor {
     (child as FakeWidget).parent = null;
   }
   set_property(name: string, value: unknown): void { this.properties[name] = value; }
+  get_property(name: string): unknown { return this.properties[name]; }
   connect(name: string, callback: (actor: GtkActor, ...args: unknown[]) => unknown): number {
     const id = this.nextSignal++;
     this.signals.set(id, { name, callback });
@@ -191,6 +192,19 @@ describe('createGtkRenderHost', () => {
     changed.emit('second');
     expect(outputs).toEqual(['first']);
     expect(button.signals.size).toBe(0);
+  });
+
+  it('maps two-way property changes to GTK notify signals and current values', () => {
+    const host = createGtkRenderHost(createGtk());
+    const values: unknown[] = [];
+    const widget = host.element('GtkSwitch', {
+      active: { kind: 'binding', get: () => false },
+      activeChange: (value: unknown) => values.push(value),
+    }, undefined) as FakeWidget;
+    widget.properties.active = true;
+    widget.emit('notify::active');
+    expect(values).toEqual([true]);
+    host.destroy(widget);
   });
 
   it('rejects unknown widget selectors', () => {

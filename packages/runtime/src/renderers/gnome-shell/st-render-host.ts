@@ -7,6 +7,7 @@ export interface StActor {
   remove_child?(child: StActor): void;
   set_child?(child: StActor | null): void;
   set_property(name: string, value: unknown): void;
+  get_property?(name: string): unknown;
   connect(signal: string, callback: (actor: StActor, ...args: unknown[]) => unknown): number;
   disconnect(id: number): void;
   destroy(): void;
@@ -27,6 +28,19 @@ export interface StRenderHostOptions {
   readonly components?: Readonly<Record<string, StWidgetConstructor>>;
   /** Optional Clutter.Orientation value for fragment and repeat containers. */
   readonly fragmentOrientation?: unknown;
+}
+
+function twoWayProperty(event: string): string | undefined {
+  return event.endsWith('Change') && event.length > 6 ? event.slice(0, -6) : undefined;
+}
+
+function notifySignal(property: string): string {
+  return `notify::${property.replace(/([A-Z])/g, '-$1').replace(/_/g, '-').toLowerCase()}`;
+}
+
+function readProperty(actor: StActor, property: string): unknown {
+  const name = propertyName(property);
+  return actor.get_property?.(name) ?? (actor as unknown as Record<string, unknown>)[name];
 }
 
 function propertyName(name: string): string {
@@ -104,7 +118,9 @@ export function createStRenderHost(
       actor.connect('destroy', () => resources.dispose());
       try {
         for (const [signal, handler] of events) {
-          const id = actor.connect(signal, (_source, ...args) => {
+          const property = twoWayProperty(signal);
+          const id = actor.connect(property ? notifySignal(property) : signal, (_source, ...args) => {
+            if (property) return handler(readProperty(actor, property));
             const event = args.length <= 1 ? args[0] : args;
             return handler(event);
           });

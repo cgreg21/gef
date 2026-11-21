@@ -37,7 +37,7 @@ export interface GtplTemplateWithSourceMap {
 }
 
 interface NodeMapping {
-  readonly generatedColumn: number;
+  generatedColumn: number;
   readonly sourceLine: number;
   readonly sourceColumn: number;
 }

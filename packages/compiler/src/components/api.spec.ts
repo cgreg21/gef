@@ -17,6 +17,22 @@ describe('component declaration API', () => {
       outputBindings: [{ publicName: 'clicked', member: 'clicked' }],
     });
   });
+  it('inherits input and output metadata from base component classes', () => {
+    class BaseComponent {
+      @Input() title = '';
+      @Output() readonly closed = new EventEmitter<void>();
+    }
+    @Component({ selector: 'GefChild', template: '<StLabel />' })
+    class ChildComponent extends BaseComponent {
+      @Input('display-name') displayName = '';
+    }
+    expect(getComponentMetadata(ChildComponent)?.inputs).toEqual(['title', 'display-name']);
+    expect(getComponentMetadata(ChildComponent)?.outputs).toEqual(['closed']);
+    expect(getComponentMetadata(ChildComponent)?.inputBindings).toEqual([
+      { publicName: 'title', member: 'title' },
+      { publicName: 'display-name', member: 'displayName' },
+    ]);
+  });
   it('returns no metadata for an undecorated class', () => { expect(getComponentMetadata(class Plain {})).toBeUndefined(); });
   it('rejects empty selectors and templates', () => {
     expect(() => Component({ selector: '', template: 'x' })(class Invalid {})).toThrow(/selector/);

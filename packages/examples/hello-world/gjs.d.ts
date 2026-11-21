@@ -16,6 +16,8 @@ declare module 'resource:///org/gnome/shell/extensions/extension.js' {
   export class Extension {
     enable(): void;
     disable(): void;
+    loadStylesheet(): void;
+    unloadStylesheet(): void;
   }
 }
 

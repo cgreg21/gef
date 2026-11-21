@@ -59,7 +59,7 @@ const group = host.element('AdwPreferencesGroup', {}, switchRow);
 const preferences = host.element('AdwPreferencesPage', {}, group);
 
 settings.set_boolean('enabled', false);
-if (enabled.get() !== false || switchRow.get_active()) {
+if (enabled.get() !== false || switchRow.active) {
   throw new Error('GSettings changes did not update the preferences switch.');
 }
 switchRow.set_active(true);

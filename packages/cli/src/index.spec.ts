@@ -86,6 +86,34 @@ describe('GEF CLI', () => {
     expect(errors.join('\n')).toContain('GEFCSS1003');
   });
 
+  it('checks compiler and native GNOME prerequisites', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      run: (command, args) => {
+        const output = command === 'gnome-shell' ? 'GNOME Shell 51.2'
+          : command === 'npx' ? '1.89.0'
+          : command === 'gjs' ? 'gjs 1.86.0'
+          : command === 'pkg-config' ? (args[0] === '--modversion' ? '4.0.0' : '')
+          : '2.80.0';
+        return { status: 0, output };
+      },
+    };
+    expect(await runCli(['doctor'], io)).toBe(0);
+    expect(base.output[0]).toContain('GNOME Shell 51: GNOME Shell 51.2');
+    expect(base.output[0]).toContain('GSettings schema compiler');
+  });
+
+  it('fails doctor when a required native tool is missing', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      run: (command) => ({ status: command === 'gnome-shell' ? 1 : 0, output: '' }),
+    };
+    expect(await runCli(['doctor'], io)).toBe(1);
+    expect(base.output[0]).toContain('MISSING  GNOME Shell 51');
+  });
+
   it('runs the build command', async () => {
     const { io, commands } = createIO('');
     expect(await runCli(['build'], io)).toBe(0);

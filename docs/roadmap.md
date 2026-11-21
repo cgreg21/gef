@@ -54,4 +54,6 @@
 - [x] CLI `generate component`, `test`, `package` and `styles` commands.
 - [x] Native filesystem watch mode and GNOME Shell 51 virtual-display smoke test harness.
 - [ ] Full automated GNOME Shell 51 and GTK4 integration suite.
-- [ ] Rich CLI diagnostics, additional examples and full integration coverage.
+- [x] Source excerpts and caret markers in GTPL CLI diagnostics.
+- [x] CLI doctor checks Node.js, Sass, GJS, GNOME Shell 51, GTK4, libadwaita and GSettings tools.
+- [ ] Additional examples and full integration coverage.

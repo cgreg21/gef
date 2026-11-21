@@ -17,7 +17,8 @@
     "styles": "node dist/cli/src/index.js styles packages/examples/hello-world/stylesheet.scss dist/styles.css",
     "dev:watch": "node scripts/dev-watch.mjs",
     "prepack": "npm run build",
-    "test:gnome": "npm run build && npm run package:example && bash scripts/test-gnome-shell-51.sh"
+    "test:gnome": "npm run build && npm run package:example && bash scripts/test-gnome-shell-51.sh",
+    "test:gtk": "npm run build && xvfb-run -a gjs -m tests/gtk4/smoke.js"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

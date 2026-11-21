@@ -36,5 +36,9 @@ jobs:
         run: npm run build
       - name: Package GNOME Shell example
         run: npm run package:example
+      - name: Install GTK4 integration dependencies
+        run: sudo apt-get update && sudo apt-get install -y gjs gir1.2-gtk-4.0 gir1.2-adw-1 xvfb
+      - name: GTK4 and libadwaita runtime smoke test
+        run: npm run test:gtk
       - name: Verify npm package contents
         run: npm pack --dry-run --ignore-scripts

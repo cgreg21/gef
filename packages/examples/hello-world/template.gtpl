@@ -1,3 +1,3 @@
 <StButton class="gef-hello-world">
-  <StLabel>GEF</StLabel>
+  <StLabel>{{enabled.get() ? 'GEF' : 'GEF off'}}</StLabel>
 </StButton>

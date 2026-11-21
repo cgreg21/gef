@@ -15,6 +15,7 @@ const shellGenerated = resolve(root, 'dist/examples/hello-world/template.js');
 const preferencesGenerated = resolve(root, 'dist/examples/preferences/template.js');
 const shellStyles = resolve(root, 'packages/examples/hello-world/stylesheet.scss');
 const metadata = resolve(root, 'packages/examples/hello-world/metadata.json');
+const schemas = resolve(root, 'packages/examples/hello-world/schemas');
 const shellEntry = resolve(root, 'dist/examples/hello-world/extension.js');
 const preferencesEntry = resolve(root, 'dist/examples/preferences/prefs.js');
 
@@ -35,6 +36,7 @@ await cp(shared, resolve(output, 'shared/src'), { recursive: true });
 await cp(shellGenerated, resolve(output, 'template.js'));
 await cp(preferencesGenerated, resolve(output, 'preferences-template.js'));
 await cp(metadata, resolve(output, 'metadata.json'));
+await cp(schemas, resolve(output, 'schemas'), { recursive: true });
 
 const runtimeImport = '../../runtime/src/index.js';
 const shell = await readFile(shellEntry, 'utf8');

@@ -37,6 +37,7 @@ await cp(shellGenerated, resolve(output, 'template.js'));
 await cp(preferencesGenerated, resolve(output, 'preferences-template.js'));
 await cp(metadata, resolve(output, 'metadata.json'));
 await cp(schemas, resolve(output, 'schemas'), { recursive: true });
+run('glib-compile-schemas', ['--strict', resolve(output, 'schemas')], 'Unable to compile the GSettings schema.');
 
 const runtimeImport = '../../runtime/src/index.js';
 const shell = await readFile(shellEntry, 'utf8');

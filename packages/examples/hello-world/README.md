@@ -13,11 +13,7 @@ The packaging step compiles both GTPL templates and the Shell stylesheet,
 stages runtime ESM modules, the GSettings schema and metadata, and verifies
 relative imports. The staged extension is written to `dist/extension/`.
 
-Compile the schema after installation with:
-
-```sh
-glib-compile-schemas dist/extension/schemas
-```
+The packaging step compiles the GSettings schema into `gschemas.compiled`.
 
 The preferences example binds its switch bidirectionally to the `enabled`
 GSettings key through the runtime adapter.

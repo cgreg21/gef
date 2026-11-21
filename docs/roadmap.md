@@ -40,6 +40,7 @@
 - [x] GNOME Shell 51 St actor smoke harness on a virtual X11 display (requires a host with Shell 51 installed).
 - [x] Initial GTK4/libadwaita host adapter with reactive bindings and keyed loops.
 - [x] GTK4/libadwaita preferences example entry point, template compilation and reactive GSettings-backed controls.
+- [x] Compile and stage the extension GSettings schema during packaging.
 - [x] Scoped GTK stylesheet provider and GNOME Shell extension stylesheet lifecycle helpers.
 - [ ] GTK4/libadwaita preferences integration tests and complete renderer coverage.
 - [ ] Native GJS code generation and source maps.

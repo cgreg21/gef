@@ -40,7 +40,7 @@ node dist/cli/src/index.js package
 node dist/cli/src/index.js doctor
 ```
 
-The `new` command creates a working panel-indicator example with explicit `enable()`/`disable()` resource cleanup. Generated source includes the GNOME guidance notice for AI-assisted code; remove it only if you understand and can maintain the JavaScript before considering EGO publication. The `compile` command creates missing parent directories for its JavaScript output path, including nested relative paths. CSS compatibility errors include source excerpts and caret markers.
+The `new` command creates a working panel-indicator example, with minimal GJS type declarations and explicit `enable()`/`disable()` resource cleanup. Generated source includes the GNOME guidance notice for AI-assisted code; remove it only if you understand and can maintain the JavaScript before considering EGO publication. The `compile` command creates missing parent directories for its JavaScript output path, including nested relative paths. CSS compatibility errors include source excerpts and caret markers.
 
 ## Packages
 

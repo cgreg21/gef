@@ -38,7 +38,7 @@
 - [ ] Native GJS code generation and source maps.
 
 ## Styles and developer tools
-- [ ] SCSS compilation and St/GTK-specific CSS validation.
+- [x] SCSS compilation through the Sass CLI.\n- [ ] St/GTK-specific CSS validation and style scoping.
 - [x] CLI `check` and `compile` commands.
 - [x] CLI `new` and `doctor` commands.
 - [ ] CLI `generate`, `test`, `package` and watch mode.

@@ -2,12 +2,14 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import { checkGtpl, emitGtplTemplate } from '../../compiler/src/index.js';
 
 export interface CliIO {
   readFile(path: string): Promise<string>;
   writeFile(path: string, content: string): Promise<void>;
   mkdir?(path: string): Promise<void>;
+  run?(command: string, args: readonly string[]): { status: number | null; output: string };
   stdout(message: string): void;
   stderr(message: string): void;
 }
@@ -16,6 +18,7 @@ const defaultIO: CliIO = {
   readFile: (path) => readFile(path, 'utf8'),
   writeFile: async (path, content) => { await writeFile(path, content, 'utf8'); },
   mkdir: async (path) => { await (await import('node:fs/promises')).mkdir(path, { recursive: true }); },
+  run: (command, args) => { const result = spawnSync(command, [...args], { encoding: 'utf8' }); return { status: result.status, output: `${result.stdout ?? ''}${result.stderr ?? ''}` }; },
   stdout: (message) => process.stdout.write(`${message}\n`),
   stderr: (message) => process.stderr.write(`${message}\n`),
 };
@@ -33,7 +36,7 @@ Commands:
   check    Parse, lower and validate a GTPL template.
   compile  Validate a template and emit a JavaScript render function.
   new      Create a minimal GNOME Shell 51 extension project.
-  doctor   Check the local Node.js and project build prerequisites.
+  doctor   Check the local Node.js and project build prerequisites.\n  styles   Compile SCSS and validate basic GNOME St CSS compatibility.
 
 Generated modules export a default (context, runtime) => node function.
 The runtime and native renderer are provided by the consuming extension.`;
@@ -51,7 +54,7 @@ export async function runCli(
     io.stdout(`Node.js: ${process.versions.node}\nPlatform: ${process.platform}\nArchitecture: ${process.arch}`);
     return Number(process.versions.node.split('.')[0]) >= 22 ? 0 : 1;
   }
-  if (command === 'new') {
+  if (command === 'styles') {\n    if (!inputArg || inputArg.startsWith('-')) { io.stderr('Missing SCSS input path.'); return 2; }\n    const input = resolve(inputArg);\n    const output = resolve(outputArg ?? input.replace(/\\.scss$/i, '.css'));\n    const result = io.run?.('npx', ['sass', '--no-source-map', input, output]);\n    if (!result || result.status !== 0) { io.stderr(result?.output || 'Sass compiler is unavailable. Install project dependencies.'); return 1; }\n    io.stdout(`Compiled stylesheet: ${output}`);\n    return 0;\n  }\n  if (command === 'new') {
     const name = inputArg;
     if (!name || !/^[a-z][a-z0-9-]*$/.test(name)) {
       io.stderr('Extension name must use lowercase letters, digits and hyphens.');

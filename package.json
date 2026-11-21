@@ -13,12 +13,14 @@
     "check": "npm run typecheck && npm test",
     "build": "tsc -p tsconfig.build.json",
     "gef": "node dist/cli/src/index.js",
-    "package:example": "node scripts/package-extension.mjs"
+    "package:example": "node scripts/package-extension.mjs",
+    "styles": "node dist/cli/src/index.js styles"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "sass": "^1.89.2"
   },
   "bin": {
     "gef": "dist/cli/src/index.js"

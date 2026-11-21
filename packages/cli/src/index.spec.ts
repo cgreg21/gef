@@ -9,6 +9,7 @@ function createIO(source: string) {
     readFile: async () => source,
     writeFile: async (path, content) => { writes.push({ path, content }); },
     mkdir: async () => {},
+    run: () => ({ status: 0, output: '' }),
     stdout: (message) => output.push(message),
     stderr: (message) => errors.push(message),
   };

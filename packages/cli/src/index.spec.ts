@@ -51,7 +51,7 @@ describe('GEF CLI', () => {
   it('creates a minimal extension project', async () => {
     const { io, output, writes } = createIO('');
     expect(await runCli(['new', 'hello-world', 'out'], io)).toBe(0);
-    expect(writes.map((item) => item.path)).toEqual(expect.arrayContaining([expect.stringContaining('metadata.json'), expect.stringContaining('extension.ts')]));
+    expect(writes.map((item) => item.path)).toEqual(expect.arrayContaining([expect.stringContaining('metadata.json'), expect.stringContaining('extension.ts'), expect.stringContaining('package.json'), expect.stringContaining('tsconfig.json')]));
     expect(output[0]).toContain('Created extension project');
   });
 
@@ -72,6 +72,12 @@ describe('GEF CLI', () => {
     const { io, errors } = createIO('.panel { display: grid; }');
     expect(await runCli(['styles', 'panel.scss'], io)).toBe(1);
     expect(errors.join('\n')).toContain('GEFCSS1003');
+  });
+
+  it('runs the build command', async () => {
+    const { io, commands } = createIO('');
+    expect(await runCli(['build'], io)).toBe(0);
+    expect(commands[0]).toEqual({ command: 'npm', args: ['run', 'build'] });
   });
 
   it('runs the package workflow', async () => {

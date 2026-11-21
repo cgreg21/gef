@@ -14,7 +14,8 @@
     "build": "tsc -p tsconfig.build.json",
     "gef": "node dist/cli/src/index.js",
     "package:example": "node scripts/package-extension.mjs",
-    "styles": "node dist/cli/src/index.js styles"
+    "styles": "node dist/cli/src/index.js styles",
+    "dev:watch": "node scripts/dev-watch.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

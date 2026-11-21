@@ -71,11 +71,14 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     return nodeMajor >= 22 && sass.status === 0 ? 0 : 1;
   }
 
-  if (command === 'test' || command === 'package') {
-    const script = command === 'test' ? 'test' : 'package:example';
-    const result = io.run('npm', ['run', script]);
-    if (result.output) io.stdout(result.output.trimEnd());
-    return result.status === 0 ? 0 : 1;
+  if (command === 'test' || command === 'package' || command === 'watch') {
+    const scripts = command === 'test' ? [['test']] : command === 'package' ? [['build'], ['package:example']] : [['dev:watch']];
+    for (const [script] of scripts) {
+      const result = io.run('npm', ['run', script!]);
+      if (result.output) io.stdout(result.output.trimEnd());
+      if (result.status !== 0) return 1;
+    }
+    return 0;
   }
 
   if (command === 'styles') {

@@ -149,7 +149,11 @@ export function createStRenderHost(
       }
     },
     text(value) {
-      if (!isGtplBinding(value)) return new St.Label({ text: value });
+      if (!isGtplBinding(value)) {
+        const actor = new St.Label({ text: value });
+        actor.connect('destroy', () => destroyed.add(actor));
+        return actor;
+      }
       const actor = new St.Label({ text: value.get() });
       const resources = new ResourceScope();
       actor.connect('destroy', () => { destroyed.add(actor); resources.dispose(); });
@@ -186,6 +190,7 @@ export function createStRenderHost(
       const resources = new ResourceScope();
       let current: StActor | undefined;
       actor.connect('destroy', () => {
+        destroyed.add(actor);
         resources.dispose();
       });
       try {
@@ -194,14 +199,14 @@ export function createStRenderHost(
         const next = selected?.render() ?? renderDefault?.() ?? makeContainer([]);
         if (current) {
           actor.set_child?.(null);
-          current.destroy();
+          destroyActor(current);
         }
         actor.set_child?.(next);
         current = next;
         }));
         return actor;
       } catch (error) {
-        actor.destroy();
+        destroyActor(actor);
         throw error;
       }
     },

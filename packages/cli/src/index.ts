@@ -78,7 +78,7 @@ function reportCssDiagnostics(source: string, input: string, io: CliIO): number 
 }
 
 function formatDiagnostic(source: string, input: string, diagnostic: { code: string; message: string; span: { line: number; column: number; start: number; end: number } }): string {
-  const lines = source.split(/\r?\n/);
+  const lines = source.split(/\r\n|\r|\n/);
   const line = lines[diagnostic.span.line - 1] ?? '';
   const width = String(diagnostic.span.line).length;
   const markerLength = Math.max(1, Math.min(diagnostic.span.end - diagnostic.span.start, Math.max(1, line.length - diagnostic.span.column + 1)));

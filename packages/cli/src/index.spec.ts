@@ -56,6 +56,14 @@ describe('GEF CLI', () => {
     expect(errors.join('\n')).toContain('^');
   });
 
+  it('prints the correct source line for standalone CR line endings', async () => {
+    const source = '<StLabel />\r<StLabel *for="let item in items" />';
+    const { io, errors } = createIO(source);
+    expect(await runCli(['check', 'view.gtpl'], io)).toBe(1);
+    expect(errors.join('\n')).toContain('view.gtpl:2:');
+    expect(errors.join('\n')).toContain('| <StLabel *for="let item in items" />');
+  });
+
   it('emits a JavaScript render module', async () => {
     const { io, output, writes } = createIO('<StLabel>Hello {{name}}</StLabel>');
     expect(await runCli(['compile', 'view.gtpl', 'view.js'], io)).toBe(0);

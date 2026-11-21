@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Typecheck and tests
+    name: Typecheck, tests and package
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -36,9 +36,23 @@ jobs:
         run: npm run build
       - name: Package GNOME Shell example
         run: npm run package:example
+      - name: Verify npm package contents
+        run: npm pack --dry-run --ignore-scripts
+
+  gtk-integration:
+    name: GTK4 and libadwaita integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
       - name: Install GTK4 integration dependencies
         run: sudo apt-get update && sudo apt-get install -y gjs gir1.2-gtk-4.0 gir1.2-adw-1 libglib2.0-bin xvfb
       - name: GTK4 and libadwaita runtime smoke test
         run: npm run test:gtk
-      - name: Verify npm package contents
-        run: npm pack --dry-run --ignore-scripts

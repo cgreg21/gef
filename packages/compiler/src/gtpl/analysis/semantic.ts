@@ -239,8 +239,9 @@ class GtplSemanticAnalyzer {
     if (!this.source) return { ...base, start: absoluteStart, end: absoluteEnd };
 
     const prefix = this.source.slice(base.start, absoluteStart);
-    const lineBreaks = prefix.match(/\\n/g)?.length ?? 0;
-    const lastLineBreak = prefix.lastIndexOf('\\n');
+    const newline = String.fromCharCode(10);
+    const lineBreaks = prefix.split(newline).length - 1;
+    const lastLineBreak = prefix.lastIndexOf(newline);
     return {
       start: absoluteStart,
       end: absoluteEnd,

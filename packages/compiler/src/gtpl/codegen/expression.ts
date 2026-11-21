@@ -17,41 +17,60 @@ export function emitGtplExpression(
   expression: ExpressionNode,
   options: GtplExpressionOptions = {},
 ): string {
+  return emitInternal(expression, options);
+}
+
+export function emitGtplExpressionWithMarkers(
+  expression: ExpressionNode,
+  options: GtplExpressionOptions,
+  markNode: (node: ExpressionNode) => string,
+): string {
+  return emitInternal(expression, options, markNode);
+}
+
+function emitInternal(
+  expression: ExpressionNode,
+  options: GtplExpressionOptions,
+  markNode?: (node: ExpressionNode) => string,
+): string {
   const context = new Set(options.contextIdentifiers ?? []);
   const locals = new Set(options.localIdentifiers ?? []);
   const emit = (node: ExpressionNode): string => {
+    const marker = markNode?.(node) ?? '';
+    let code: string;
     switch (node.kind) {
       case 'literal':
-        return JSON.stringify(node.value);
+        code = JSON.stringify(node.value); break;
       case 'identifier':
-        return context.has(node.name) && !locals.has(node.name) ? `ctx.${node.name}` : node.name;
+        code = context.has(node.name) && !locals.has(node.name) ? `ctx.${node.name}` : node.name; break;
       case 'member': {
         const object = emit(node.object);
         if (node.computed) {
           const property = typeof node.property === 'string' ? JSON.stringify(node.property) : emit(node.property);
-          return node.optional ? `(${object}?.[${property}])` : `(${object}[${property}])`;
+          code = node.optional ? `(${object}?.[${property}])` : `(${object}[${property}])`; break;
         }
         const property = String(node.property);
-        return node.optional ? `(${object}?.${property})` : `(${object}.${property})`;
+        code = node.optional ? `(${object}?.${property})` : `(${object}.${property})`; break;
       }
       case 'call': {
         const callee = emit(node.callee);
         const optional = node.optional ? '?.' : '';
-        return `(${callee}${optional}(${node.arguments.map(emit).join(', ')}))`;
+        code = `(${callee}${optional}(${node.arguments.map(emit).join(', ')}))`; break;
       }
       case 'unary':
-        return `(${node.operator}${emit(node.argument)})`;
+        code = `(${node.operator}${emit(node.argument)})`; break;
       case 'binary':
-        return `(${emit(node.left)} ${node.operator} ${emit(node.right)})`;
+        code = `(${emit(node.left)} ${node.operator} ${emit(node.right)})`; break;
       case 'conditional':
-        return `(${emit(node.test)} ? ${emit(node.consequent)} : ${emit(node.alternate)})`;
+        code = `(${emit(node.test)} ? ${emit(node.consequent)} : ${emit(node.alternate)})`; break;
       case 'assignment':
-        return `(${emit(node.target)} = ${emit(node.value)})`;
+        code = `(${emit(node.target)} = ${emit(node.value)})`; break;
       case 'pipe':
-        return `runtime.pipe(${JSON.stringify(node.name)}, ${emit(node.expression)}${node.arguments.length ? `, ${node.arguments.map(emit).join(', ')}` : ''})`;
+        code = `runtime.pipe(${JSON.stringify(node.name)}, ${emit(node.expression)}${node.arguments.length ? `, ${node.arguments.map(emit).join(', ')}` : ''})`; break;
       case 'array':
-        return `[${node.elements.map(emit).join(', ')}]`;
+        code = `[${node.elements.map(emit).join(', ')}]`; break;
     }
+    return marker + code!;
   };
   return emit(expression);
 }

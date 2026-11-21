@@ -67,6 +67,15 @@ describe('emitGtplTemplate', () => {
     expect(generated.code).not.toContain('__GEF_MAP_');
   });
 
+  it('maps nested expression AST nodes independently', () => {
+    const source = '<StLabel [visible]="ready && user.isActive(name)">{{user.profile.name}}</StLabel>';
+    const parsed = parseGtpl(source);
+    expect(parsed.diagnostics).toEqual([]);
+    const generated = emitGtplTemplateWithSourceMap(parsed.nodes, { source: 'view.gtpl' });
+    expect(generated.map.mappings.split(',').length).toBeGreaterThan(10);
+    expect(generated.code).not.toContain('__GEF_MAP_');
+  });
+
   it('ignores formatting whitespace between native child widgets', () => {
     const parsed = parseGtpl(`<AdwPreferencesPage>
   <AdwPreferencesGroup>

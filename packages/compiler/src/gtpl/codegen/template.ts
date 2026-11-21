@@ -7,7 +7,7 @@ import type {
   TextNode,
 } from '../ast/types.js';
 import type { ExpressionNode } from '../ast/expression.js';
-import { emitGtplExpression } from './expression.js';
+import { emitGtplExpressionWithMarkers } from './expression.js';
 
 export interface GtplTemplateOptions {
   /** Component fields referenced by expressions; emitted as ctx.field. */
@@ -99,6 +99,7 @@ function expression(
   options: GtplTemplateOptions,
   mappings?: NodeMapping[],
   sourcePosition?: { line: number; column: number },
+  sourceExpression?: string,
 ): string {
   if (!node) throw new Error('Cannot generate GTPL: an expression has no valid AST.');
   const identifiers = new Set<string>();
@@ -106,14 +107,19 @@ function expression(
   const globals = new Set([...BUILTIN_GLOBALS, ...(options.globals ?? [])]);
   const contextIdentifiers = options.componentMembers
     ?? [...identifiers].filter((name) => !locals.has(name) && !globals.has(name));
-  const code = emitGtplExpression(node, {
-    contextIdentifiers,
-    localIdentifiers: [...locals, ...globals],
+  const expressionOptions = { contextIdentifiers, localIdentifiers: [...locals, ...globals] };
+  if (!mappings || !sourcePosition || sourceExpression === undefined) {
+    return emitGtplExpressionWithMarkers(node, expressionOptions, () => '');
+  }
+  return emitGtplExpressionWithMarkers(node, expressionOptions, (part) => {
+    const marker = mappings.length;
+    const prefix = sourceExpression.slice(0, part.span.start);
+    const lines = prefix.split(/\r\n|\r|\n/);
+    const line = sourcePosition.line + lines.length - 1;
+    const column = lines.length === 1 ? sourcePosition.column + prefix.length : lines[lines.length - 1]!.length + 1;
+    mappings.push({ generatedColumn: 0, sourceLine: line - 1, sourceColumn: column - 1 });
+    return `__GEF_MAP_${marker}__`;
   });
-  if (!mappings || !sourcePosition) return code;
-  const marker = mappings.length;
-  mappings.push({ generatedColumn: 0, sourceLine: sourcePosition.line - 1, sourceColumn: sourcePosition.column - 1 });
-  return `__GEF_MAP_${marker}__${code}`;
 }
 
 /**
@@ -141,7 +147,7 @@ function emitGtplTemplateInternal(
 
     for (const node of nodes) {
       if (node.kind === 'let-declaration') {
-        const value = expression(node.parsedExpression, locals, options, nodeMappings, node.expressionSpan);
+        const value = expression(node.parsedExpression, locals, options, nodeMappings, node.expressionSpan, node.expression);
         statements.push(`const ${node.name} = ${value};`);
         locals.add(node.name);
         continue;
@@ -160,7 +166,7 @@ function emitGtplTemplateInternal(
   const renderText = (node: TextNode, locals: ReadonlySet<string>): string => {
     const value = node.parts.map((part) => part.kind === 'text'
       ? JSON.stringify(part.value)
-      : `String(${expression(part.parsedExpression, locals, options, nodeMappings, part.expressionSpan)} ?? '')`);
+      : `String(${expression(part.parsedExpression, locals, options, nodeMappings, part.expressionSpan, part.expression)} ?? '')`);
     if (value.length === 0) return 'runtime.text("")';
     const text = value.length === 1 ? value[0] : value.join(' + ');
     return node.parts.some((part) => part.kind === 'interpolation')
@@ -181,8 +187,8 @@ function emitGtplTemplateInternal(
         const attributeLocals = attribute.kind === 'event' ? new Set([...locals, '$event']) : locals;
         const emitted = expression(attribute.parsedExpression, attributeLocals, options, nodeMappings, {
           line: attribute.valueSpan.line,
-          column: attribute.valueSpan.column + (attribute.parsedExpression?.span.start ?? 0),
-        });
+          column: attribute.valueSpan.column,
+        }, attribute.value);
         value = attribute.kind === 'event'
           ? `($event) => ${emitted}`
           : attribute.kind === 'property' ? `runtime.bind(() => ${emitted})` : emitted;
@@ -198,7 +204,7 @@ function emitGtplTemplateInternal(
     for (let index = node.branches.length - 1; index >= 0; index -= 1) {
       const branch = node.branches[index]!;
       if (branch.parsedCondition) {
-        const condition = expression(branch.parsedCondition, locals, options, nodeMappings, branch.conditionSpan);
+        const condition = expression(branch.parsedCondition, locals, options, nodeMappings, branch.conditionSpan, branch.condition);
         const render = branch.alias
           ? `(${branch.alias}) => ${renderNodes(branch.children, new Set([...locals, branch.alias]))}`
           : `() => ${renderNodes(branch.children, locals)}`;
@@ -215,20 +221,20 @@ function emitGtplTemplateInternal(
     const aliases = node.aliases.map((alias) => `const ${alias.name} = ${alias.context};`).join(' ');
     const body = renderNodes(node.children, loopLocals);
     const empty = renderNodes(node.empty, locals);
-    const collection = expression(node.parsedCollection, locals, options, nodeMappings, node.collectionSpan);
-    const track = expression(node.parsedTrack, loopLocals, options, nodeMappings, node.trackSpan);
+    const collection = expression(node.parsedCollection, locals, options, nodeMappings, node.collectionSpan, node.collection);
+    const track = expression(node.parsedTrack, loopLocals, options, nodeMappings, node.trackSpan, node.track);
     return `runtime.for(runtime.bind(() => ${collection}), (${node.item}, $index, $count) => { const $first = $index === 0; const $last = $index === $count - 1; const $even = $index % 2 === 0; const $odd = !$even; ${aliases} return ${body}; }, (${node.item}, $index, $count) => { const $first = $index === 0; const $last = $index === $count - 1; const $even = $index % 2 === 0; const $odd = !$even; ${aliases} return ${track}; }, () => ${empty})`;
   };
 
   const renderSwitch = (node: SwitchBlockNode, locals: ReadonlySet<string>): string => {
     const cases = node.cases.map((branch) => {
-      const values = branch.parsedExpressions.map((item, index) => expression(item, locals, options, nodeMappings, branch.expressionSpans[index]));
+      const values = branch.parsedExpressions.map((item, index) => expression(item, locals, options, nodeMappings, branch.expressionSpans[index], branch.expressions[index]));
       return `{ values: [${values.join(', ')}], render: () => ${renderNodes(branch.children, locals)} }`;
     });
     const fallback = node.defaultCase && !node.defaultCase.exhaustive
       ? `() => ${renderNodes(node.defaultCase.children, locals)}`
       : 'undefined';
-    return `runtime.switch(runtime.bind(() => ${expression(node.parsedExpression, locals, options, nodeMappings, node.expressionSpan)}), [${cases.join(', ')}], ${fallback})`;
+    return `runtime.switch(runtime.bind(() => ${expression(node.parsedExpression, locals, options, nodeMappings, node.expressionSpan, node.expression)}), [${cases.join(', ')}], ${fallback})`;
   };
 
   const renderNode = (node: GtplNode, locals: ReadonlySet<string>): string => {

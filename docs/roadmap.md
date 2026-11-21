@@ -41,8 +41,8 @@
 - [x] Provide a combined GTPL parse, semantic and component validation API.
 - [x] Connect supported generated templates to the executable renderer-independent runtime.
 - [x] Emit Source Map v3 mappings for all rendered GTPL nodes, including nested elements and text nodes, and expose them through compiler, component compilation and CLI output.
-- [ ] Complete source maps with expression-level mappings for control-flow expressions, `@let`, and nested expression AST nodes.
-- [x] Map interpolation expressions and expression-bound attribute values to their GTPL source positions.
+- [ ] Complete source maps with nested expression AST node mappings.
+- [x] Map interpolation, expression-bound attribute, `@if`, `@for`, `@switch`, and `@let` expressions to their GTPL source positions.
 - [x] Report unknown identifiers at their exact GTPL expression locations.
 - [x] Track correct template line numbers for LF, CRLF and standalone CR line endings.
 - [x] Exhaustiveness diagnostics for `@default never` over literal-union context properties.

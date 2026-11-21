@@ -56,6 +56,17 @@ describe('emitGtplTemplate', () => {
     expect(generated.code).not.toContain('__GEF_MAP_');
   });
 
+
+  it('maps expressions in control-flow blocks to their source positions', () => {
+    const source = '@let title = heading;\\n@if (visible) { {{title}} }\\n@for (item of items; track item.id) { {{item.name}} }\\n@switch (state) { @case ("ready") { Ready } }';
+    const parsed = parseGtpl(source);
+    expect(parsed.diagnostics).toEqual([]);
+    const generated = emitGtplTemplateWithSourceMap(parsed.nodes, { source: 'view.gtpl' });
+    // Four block expressions, two interpolations, and their rendered template nodes.
+    expect(generated.map.mappings.split(',').length).toBeGreaterThanOrEqual(10);
+    expect(generated.code).not.toContain('__GEF_MAP_');
+  });
+
   it('ignores formatting whitespace between native child widgets', () => {
     const parsed = parseGtpl(`<AdwPreferencesPage>
   <AdwPreferencesGroup>

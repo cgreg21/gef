@@ -52,6 +52,7 @@ export interface IfBranch {
   readonly condition?: string;
   readonly alias?: string;
   readonly parsedCondition?: ExpressionNode;
+  readonly conditionSpan?: SourceSpan;
   readonly span: SourceSpan;
   readonly children: readonly GtplNode[];
 }
@@ -69,8 +70,10 @@ export interface ForBlockNode {
   readonly item: string;
   readonly collection: string;
   readonly parsedCollection?: ExpressionNode;
+  readonly collectionSpan?: SourceSpan;
   readonly track: string;
   readonly parsedTrack?: ExpressionNode;
+  readonly trackSpan?: SourceSpan;
   readonly aliases: readonly ForContextAlias[];
   readonly empty: readonly GtplNode[];
   readonly children: readonly GtplNode[];
@@ -79,6 +82,7 @@ export interface ForBlockNode {
 export interface SwitchCaseNode {
   readonly expressions: readonly string[];
   readonly parsedExpressions: readonly ExpressionNode[];
+  readonly expressionSpans: readonly SourceSpan[];
   readonly span: SourceSpan;
   readonly children: readonly GtplNode[];
 }
@@ -93,6 +97,7 @@ export interface SwitchBlockNode {
   readonly kind: 'switch-block';
   readonly expression: string;
   readonly parsedExpression?: ExpressionNode;
+  readonly expressionSpan?: SourceSpan;
   readonly cases: readonly SwitchCaseNode[];
   readonly defaultCase?: SwitchDefaultNode;
   readonly span: SourceSpan;
@@ -102,6 +107,7 @@ export interface LetDeclarationNode {
   readonly name: string;
   readonly expression: string;
   readonly parsedExpression?: ExpressionNode;
+  readonly expressionSpan?: SourceSpan;
   readonly span: SourceSpan;
 }
 export type GtplNode = ElementNode | TextNode | IfBlockNode | ForBlockNode | SwitchBlockNode | LetDeclarationNode;

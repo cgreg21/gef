@@ -382,7 +382,7 @@ class GtplParser {
       this.skipWhitespace();
       const children = this.parseBraceBlock(false, true);
       blockEnd = this.offset;
-      branches.push({ condition, ...(alias ? { alias } : {}), ...(parsed.expression ? { parsedCondition: parsed.expression } : {}), span: this.span(branchStart, this.offset), children });
+      branches.push({ condition, ...(alias ? { alias } : {}), ...(parsed.expression ? { parsedCondition: parsed.expression, conditionSpan: this.span(conditionOffset, conditionOffset + condition.length) } : {}), span: this.span(branchStart, this.offset), children });
       this.skipWhitespace();
       if (this.startsWithDirective('@else if')) { keyword = '@else if'; continue; }
       if (this.startsWithDirective('@else')) {
@@ -411,7 +411,7 @@ class GtplParser {
     if (this.peek() !== '{') {
       this.report('GTPL3101', 'Expected "{" after @switch expression.', this.offset, this.offset + 1);
       return { kind: 'switch-block', expression, cases: [], span: this.span(start, this.offset),
-        ...(parsedExpression.expression ? { parsedExpression: parsedExpression.expression } : {}) };
+        ...(parsedExpression.expression ? { parsedExpression: parsedExpression.expression, expressionSpan: this.span(expressionOffset, expressionOffset + expression.length) } : {}) };
     }
     this.offset += 1;
     this.blockDepth += 1;
@@ -426,6 +426,7 @@ class GtplParser {
         const caseStart = this.offset;
         const expressions: string[] = [];
         const parsedExpressions: ExpressionNode[] = [];
+        const expressionSpans: SourceSpan[] = [];
         while (this.startsWithDirective('@case')) {
           this.offset += '@case'.length;
           this.skipWhitespace();
@@ -436,7 +437,10 @@ class GtplParser {
           const valueOffset = this.getTrimmedContentOffset(valueContent);
           this.reportExpressionDiagnostics(parsed, valueOffset);
           expressions.push(value);
-          if (parsed.expression) parsedExpressions.push(parsed.expression);
+          if (parsed.expression) {
+            parsedExpressions.push(parsed.expression);
+            expressionSpans.push(this.span(valueOffset, valueOffset + value.length));
+          }
           else this.report('GTPL3103', 'Invalid @case expression.', valueContent.start - 1, this.offset);
           this.skipWhitespace();
           if (!hasOpeningParen) {
@@ -448,7 +452,7 @@ class GtplParser {
           }
         }
         const children = this.parseBraceBlock(true);
-        cases.push({ expressions, parsedExpressions, span: this.span(caseStart, this.offset), children });
+        cases.push({ expressions, parsedExpressions, expressionSpans, span: this.span(caseStart, this.offset), children });
         continue;
       }
       if (this.startsWithDirective('@default')) {
@@ -497,7 +501,7 @@ class GtplParser {
     this.blockDepth -= 1;
     if (cases.length === 0) this.report('GTPL3108', '@switch requires at least one @case.', start, this.offset);
     return { kind: 'switch-block', expression, cases, ...(defaultCase ? { defaultCase } : {}),
-      ...(parsedExpression.expression ? { parsedExpression: parsedExpression.expression } : {}),
+      ...(parsedExpression.expression ? { parsedExpression: parsedExpression.expression, expressionSpan: this.span(expressionOffset, expressionOffset + expression.length) } : {}),
       span: this.span(start, this.offset) };
   }
 
@@ -522,7 +526,7 @@ class GtplParser {
     const parsed = parseGtplExpression(expression);
     this.reportExpressionDiagnostics(parsed, expressionStart);
     return { kind: 'let-declaration', name, expression,
-      ...(parsed.expression ? { parsedExpression: parsed.expression } : {}),
+      ...(parsed.expression ? { parsedExpression: parsed.expression, expressionSpan: this.span(expressionStart, expressionStart + expression.length) } : {}),
       span: this.span(start, this.offset) };
   }
 
@@ -661,8 +665,8 @@ class GtplParser {
       this.skipWhitespace();
     }
     return { kind: 'for-block', item, collection, track, aliases, children, empty,
-      ...(parsedCollection.expression ? { parsedCollection: parsedCollection.expression } : {}),
-      ...(parsedTrack.expression ? { parsedTrack: parsedTrack.expression } : {}),
+      ...(parsedCollection.expression ? { parsedCollection: parsedCollection.expression, collectionSpan: this.span(collectionOffset, collectionOffset + collection.length) } : {}),
+      ...(parsedTrack.expression ? { parsedTrack: parsedTrack.expression, trackSpan: this.span(trackOffset, trackOffset + track.length) } : {}),
       span: this.span(start, blockEnd) };
   }
 

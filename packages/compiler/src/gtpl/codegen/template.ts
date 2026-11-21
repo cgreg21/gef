@@ -141,7 +141,7 @@ function emitGtplTemplateInternal(
 
     for (const node of nodes) {
       if (node.kind === 'let-declaration') {
-        const value = expression(node.parsedExpression, locals, options);
+        const value = expression(node.parsedExpression, locals, options, nodeMappings, node.expressionSpan);
         statements.push(`const ${node.name} = ${value};`);
         locals.add(node.name);
         continue;
@@ -198,7 +198,7 @@ function emitGtplTemplateInternal(
     for (let index = node.branches.length - 1; index >= 0; index -= 1) {
       const branch = node.branches[index]!;
       if (branch.parsedCondition) {
-        const condition = expression(branch.parsedCondition, locals, options);
+        const condition = expression(branch.parsedCondition, locals, options, nodeMappings, branch.conditionSpan);
         const render = branch.alias
           ? `(${branch.alias}) => ${renderNodes(branch.children, new Set([...locals, branch.alias]))}`
           : `() => ${renderNodes(branch.children, locals)}`;
@@ -215,20 +215,20 @@ function emitGtplTemplateInternal(
     const aliases = node.aliases.map((alias) => `const ${alias.name} = ${alias.context};`).join(' ');
     const body = renderNodes(node.children, loopLocals);
     const empty = renderNodes(node.empty, locals);
-    const collection = expression(node.parsedCollection, locals, options);
-    const track = expression(node.parsedTrack, loopLocals, options);
+    const collection = expression(node.parsedCollection, locals, options, nodeMappings, node.collectionSpan);
+    const track = expression(node.parsedTrack, loopLocals, options, nodeMappings, node.trackSpan);
     return `runtime.for(runtime.bind(() => ${collection}), (${node.item}, $index, $count) => { const $first = $index === 0; const $last = $index === $count - 1; const $even = $index % 2 === 0; const $odd = !$even; ${aliases} return ${body}; }, (${node.item}, $index, $count) => { const $first = $index === 0; const $last = $index === $count - 1; const $even = $index % 2 === 0; const $odd = !$even; ${aliases} return ${track}; }, () => ${empty})`;
   };
 
   const renderSwitch = (node: SwitchBlockNode, locals: ReadonlySet<string>): string => {
     const cases = node.cases.map((branch) => {
-      const values = branch.parsedExpressions.map((item) => expression(item, locals, options));
+      const values = branch.parsedExpressions.map((item, index) => expression(item, locals, options, nodeMappings, branch.expressionSpans[index]));
       return `{ values: [${values.join(', ')}], render: () => ${renderNodes(branch.children, locals)} }`;
     });
     const fallback = node.defaultCase && !node.defaultCase.exhaustive
       ? `() => ${renderNodes(node.defaultCase.children, locals)}`
       : 'undefined';
-    return `runtime.switch(runtime.bind(() => ${expression(node.parsedExpression, locals, options)}), [${cases.join(', ')}], ${fallback})`;
+    return `runtime.switch(runtime.bind(() => ${expression(node.parsedExpression, locals, options, nodeMappings, node.expressionSpan)}), [${cases.join(', ')}], ${fallback})`;
   };
 
   const renderNode = (node: GtplNode, locals: ReadonlySet<string>): string => {

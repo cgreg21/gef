@@ -9,7 +9,7 @@ npm run build
 npm run package:example
 ```
 
-The packaging step compiles `template.gtpl` with the `gef compile` CLI, then stages the generated template beside the extension entry point. The staged extension is written to `dist/extension/`. Copy that directory into
+The packaging step compiles both GTPL templates, compiles the SCSS stylesheet with Sass, and stages the Shell entry point, GTK4/libadwaita preferences entry point and runtime modules. The staged extension is written to `dist/extension/`. Copy that directory into
 the GNOME Shell extensions directory for a local integration test.
 
 The package script preserves ESM modules and rewrites only the example's

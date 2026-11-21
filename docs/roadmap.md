@@ -34,6 +34,7 @@
 - [ ] Automatic selector matching and directive instantiation from templates.
 - [x] GLib timeout/idle scheduling and GObject signal lifecycle helpers.\n- [ ] GNOME Shell 51 St/Clutter integration tests.
 - [x] Initial GTK4/libadwaita host adapter with reactive bindings and keyed loops.
+- [x] GTK4/libadwaita preferences example entry point and template compilation.
 - [ ] GTK4/libadwaita preferences integration tests and complete renderer coverage.
 - [ ] Native GJS code generation and source maps.
 

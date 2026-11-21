@@ -49,6 +49,7 @@
 - [x] Initial GNOME Shell St host adapter with reactive property/text bindings and signal cleanup.
 - [x] Synchronous signal, computed and effect primitives.
 - [x] Reactive `@if`, `@switch` and keyed `@for` updates in the St host.
+- [x] Clean up partially rendered repeat components on failure and release initial-render tracking after mount.
 - [x] Explicit hierarchical dependency injector with scoped disposal.
 - [x] Component instance/view lifecycle with child injector scopes, bound inputs/outputs and reverse-order teardown.
 - [x] Runtime regression coverage for reactive input updates and stopping updates after component destruction.

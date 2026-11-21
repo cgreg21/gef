@@ -85,8 +85,13 @@ export function createGtplRenderRuntime<Node>(
   injector: Injector = new Injector(),
   components: ComponentRegistry<Node> = new ComponentRegistry<Node>(),
   createdNodes?: Node[],
+  onNodeCreated?: (node: Node) => void,
 ): GtplRenderRuntime<Node> {
-  const track = (node: Node): Node => { createdNodes?.push(node); return node; };
+  const track = (node: Node): Node => {
+    createdNodes?.push(node);
+    onNodeCreated?.(node);
+    return node;
+  };
   return {
     pipe: (name, value, ...args) => pipes.transform(name, value, ...args),
     bind: (get) => ({ kind: 'binding', get }),
@@ -194,12 +199,17 @@ export function mountGtplTemplate<Context, Node>(
   components?: ComponentRegistry<Node>,
 ): GtplRenderView<Node> {
   const ownedInjector = injector ?? new Injector();
-  const createdNodes: Node[] = [];
+  let createdNodes: Node[] | undefined = [];
   let node: Node;
   try {
-    node = render(context, createGtplRenderRuntime(host, pipes, directives, ownedInjector, components, createdNodes));
+    node = render(context, createGtplRenderRuntime(
+      host, pipes, directives, ownedInjector, components, undefined,
+      (created) => createdNodes?.push(created),
+    ));
   } catch (error) {
-    for (const created of createdNodes) {
+    const failedNodes = createdNodes ?? [];
+    createdNodes = undefined;
+    for (const created of failedNodes) {
       try { host.destroy(created); } catch { /* Preserve the render failure. */ }
     }
     if (!injector) {
@@ -207,6 +217,8 @@ export function mountGtplTemplate<Context, Node>(
     }
     throw error;
   }
+  // Only initial rendering needs rollback tracking; dynamic updates are host-owned.
+  createdNodes = undefined;
   const resources = new ResourceScope();
   if (!injector) resources.add(() => ownedInjector.destroy());
   resources.add(() => host.destroy(node));

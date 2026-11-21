@@ -140,6 +140,34 @@ describe('createGtplRenderRuntime', () => {
     expect(destroyed).toEqual([{ kind: 'item', value: 'same' }]);
   });
 
+  it('destroys components rendered before a repeat batch fails track-key validation', () => {
+    const destroyedCallbacks = new Map<Node, Array<() => void>>();
+    const host: GtplRenderHost<Node> = {
+      ...createHost(),
+      destroy: (node) => { destroyedCallbacks.get(node)?.forEach((callback) => callback()); },
+      onDestroy: (node, callback) => {
+        const callbacks = destroyedCallbacks.get(node) ?? [];
+        callbacks.push(callback);
+        destroyedCallbacks.set(node, callbacks);
+      },
+    };
+    const onDestroy = vi.fn();
+    const components = new ComponentRegistry<Node>().register('GefRow', {
+      create: () => ({ onDestroy }),
+      render: () => ({ kind: 'row' }),
+    });
+    const runtime = createGtplRenderRuntime(host, undefined, undefined, new Injector(), components);
+
+    expect(() => runtime.for(
+      ['first', 'second'],
+      () => runtime.element('GefRow', {}, undefined),
+      () => 'duplicate',
+      () => ({ kind: 'empty' }),
+    )).toThrow('Duplicate GTPL @for track key.');
+    expect(onDestroy).toHaveBeenCalledOnce();
+    expect(destroyedCallbacks.size).toBe(1);
+  });
+
   it('uses the empty branch for null and empty iterables', () => {
     const runtime = createGtplRenderRuntime(createHost());
     const empty = () => ({ kind: 'empty' });

@@ -12,6 +12,7 @@ function createIO(source: string, commandStatus = 0) {
     readFile: async () => source,
     writeFile: async (path, content) => { writes.push({ path, content }); },
     mkdir: async (path) => { directories.push(path); },
+    listFiles: async () => [],
     run: (command, args) => { commands.push({ command, args }); return { status: commandStatus, output: '' }; },
     stdout: (message) => output.push(message),
     stderr: (message) => errors.push(message),
@@ -107,6 +108,45 @@ describe('GEF CLI', () => {
     expect(errors.join('\n')).toContain('panel.css:2:3: GEFCSS1003');
     expect(errors.join('\n')).toContain('|   display: flex;');
     expect(errors.join('\n')).toContain('^');
+  });
+
+  it('validates staged extension metadata and rejects development files', async () => {
+    const base = createIO(JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] }));
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/src.ts'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : 'export default class Demo {}',
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
+    expect(base.errors.join('\\n')).toContain('development-only file: src.ts');
+  });
+
+  it('rejects Shell imports from preferences code', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/prefs.js'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : "import St from 'gi://St';",
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
+    expect(base.errors.join('\\n')).toContain('preferences code must not import Shell-only libraries');
+  });
+
+  it('accepts a clean staged extension', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/stylesheet.css'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : '',
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
+    expect(base.output[0]).toContain('EGO checks passed');
   });
 
   it('checks compiler and native GNOME prerequisites', async () => {

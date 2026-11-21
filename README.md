@@ -37,10 +37,10 @@ node dist/cli/src/index.js new my-extension
 node dist/cli/src/index.js generate component UserCard src/components
 node dist/cli/src/index.js test
 node dist/cli/src/index.js package
-node dist/cli/src/index.js doctor
+node dist/cli/src/index.js doctor\nnode dist/cli/src/index.js ego-check dist/extension
 ```
 
-The `new` command creates a working panel-indicator example, with minimal GJS type declarations and explicit `enable()`/`disable()` resource cleanup. Generated source includes the GNOME guidance notice for AI-assisted code; remove it only if you understand and can maintain the JavaScript before considering EGO publication. The `compile` command creates missing parent directories for its JavaScript output path, including nested relative paths. CSS compatibility errors include source excerpts and caret markers.
+The `ego-check` command checks staged metadata, stable Shell versions, forbidden development files and basic Shell/preferences import boundaries. It is a useful local guard, not a substitute for EGO review. The `new` command creates a working panel-indicator example, with minimal GJS type declarations and explicit `enable()`/`disable()` resource cleanup. Generated source includes the GNOME guidance notice for AI-assisted code; remove it only if you understand and can maintain the JavaScript before considering EGO publication. The `compile` command creates missing parent directories for its JavaScript output path, including nested relative paths. CSS compatibility errors include source excerpts and caret markers.
 
 ## Packages
 

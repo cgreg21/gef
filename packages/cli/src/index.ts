@@ -9,6 +9,7 @@ export interface CliIO {
   readFile(path: string): Promise<string>;
   writeFile(path: string, content: string): Promise<void>;
   mkdir(path: string): Promise<void>;
+  listFiles(path: string): Promise<string[]>;
   run(command: string, args: readonly string[]): { status: number | null; output: string };
   stdout(message: string): void;
   stderr(message: string): void;
@@ -18,6 +19,14 @@ const defaultIO: CliIO = {
   readFile: (path) => readFile(path, 'utf8'),
   writeFile: (path, content) => writeFile(path, content, 'utf8'),
   mkdir: async (path) => mkdir(path, { recursive: true }).then(() => undefined),
+  listFiles: async (directory) => {
+    const entries = await readdir(directory, { withFileTypes: true });
+    const nested = await Promise.all(entries.map((entry) => {
+      const path = resolve(directory, entry.name);
+      return entry.isDirectory() ? defaultIO.listFiles(path) : [path];
+    }));
+    return nested.flat();
+  },
   run: (command, args) => {
     const result = spawnSync(command, [...args], { encoding: 'utf8' });
     return { status: result.status, output: `${result.stdout ?? ''}${result.stderr ?? ''}` };
@@ -51,7 +60,7 @@ Commands:
   test       Run the current project test suite.
   package    Build and stage the GNOME Shell example.
   watch      Rebuild and restage examples when source files change.
-  doctor     Check local Node.js and Sass prerequisites.
+  doctor     Check local Node.js and Sass prerequisites.\n  ego-check  Validate a staged extension against basic EGO requirements.
 
 Generated render modules receive the runtime and native renderer from the extension.`;
 
@@ -83,6 +92,53 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
   const [command, inputArg, outputArg] = args;
   if (!command || command === '--help' || command === '-h') {
     io.stdout(usage);
+    return 0;
+  }
+
+  if (command === 'ego-check') {
+    if (!inputArg || inputArg.startsWith('-')) {
+      io.stderr('Missing staged extension directory.');
+      return 2;
+    }
+    const directory = resolve(inputArg);
+    let metadata: Record<string, unknown>;
+    let files: string[];
+    try {
+      metadata = JSON.parse(await io.readFile(resolve(directory, 'metadata.json'))) as Record<string, unknown>;
+      files = await io.listFiles(directory);
+    } catch (error) {
+      io.stderr(`Unable to inspect staged extension: ${error instanceof Error ? error.message : String(error)}`);
+      return 2;
+    }
+    const errors: string[] = [];
+    if (typeof metadata.uuid !== 'string' || !/^[a-z0-9-]+@[a-z0-9.-]+$/.test(metadata.uuid)) errors.push('metadata.json: invalid or missing uuid.');
+    for (const field of ['name', 'description'] as const) {
+      if (typeof metadata[field] !== 'string' || !metadata[field].trim()) errors.push(`metadata.json: missing required ${field}.`);
+    }
+    if (!Array.isArray(metadata['shell-version']) || metadata['shell-version'].length === 0 || metadata['shell-version'].some((version) => typeof version !== 'string' || !/^\\d+(?:\\.\\d+)*$/.test(version))) {
+      errors.push('metadata.json: shell-version must contain stable numeric GNOME Shell versions.');
+    }
+    for (const file of files) {
+      const relative = file.slice(directory.length + 1).replaceAll('\\\\', '/');
+      if (/(^|\\/)(node_modules|tests?|scripts|\.git)(\\/|$)/.test(relative) || /\\.(?:ts|map|md|lock)$/.test(relative) || /(^|\\/)package\\.json$/.test(relative)) {
+        errors.push(`Package contains development-only file: ${relative}`);
+      }
+      if (file.endsWith('.js')) {
+        let source: string;
+        try { source = await io.readFile(file); } catch { errors.push(`Unable to read JavaScript file: ${relative}`); continue; }
+        if (relative === 'prefs.js' && /(?:gi:\/\/|from\\s*['"])(?:St|Clutter|Meta|Shell)(?:['"/]|$)/.test(source)) {
+          errors.push('prefs.js: preferences code must not import Shell-only libraries.');
+        }
+        if (relative === 'extension.js' && /(?:gi:\/\/|from\\s*['"])(?:Gtk|Gdk|Adw)(?:['"/]|$)/.test(source)) {
+          errors.push('extension.js: Shell code must not import GTK or libadwaita.');
+        }
+      }
+    }
+    if (errors.length) {
+      errors.forEach((error) => io.stderr(error));
+      return 1;
+    }
+    io.stdout(`EGO checks passed: ${directory}`);
     return 0;
   }
 

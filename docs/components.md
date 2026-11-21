@@ -1,14 +1,15 @@
 # Components, directives and pipes
 
-GEF declarations are TypeScript decorators that produce immutable metadata.
-The runtime stays reflection-free: pass the metadata into an explicit registry.
+GEF decorators are runtime-safe declarations that produce immutable metadata.
+The compiler and GJS runtime share the same metadata module; no TypeScript
+compiler or reflection is needed in the installed extension.
 
 ## Component
 
+Declare the component in TypeScript:
+
 ```ts
-import { Component, Input, Output } from 'gnome-extension-framework/runtime';
-import { getComponentMetadata } from 'gnome-extension-framework';
-import { EventEmitter } from 'gnome-extension-framework/runtime';
+import { Component, Input, Output, EventEmitter } from 'gnome-extension-framework/runtime';
 
 @Component({
   selector: 'GefCounter',
@@ -24,10 +25,15 @@ export class CounterComponent {
 }
 ```
 
-Compile the component template with `compileGtplComponent`, then register its
-metadata with a generated render function:
+At build time, validate the template with `compileGtplComponent` and generate
+its render function. Register the runtime-safe metadata with that generated
+function:
 
 ```ts
+import { getComponentMetadata } from 'gnome-extension-framework';
+import { ComponentRegistry, type StActor } from 'gnome-extension-framework/runtime';
+import counterRender from './counter-render.js';
+
 const metadata = getComponentMetadata(CounterComponent)!;
 const components = new ComponentRegistry<StActor>().registerMetadata(metadata, {
   create: () => new CounterComponent(),
@@ -42,7 +48,11 @@ instances, child injectors and views share one deterministic lifetime.
 ## Directive
 
 ```ts
-import { Directive, Input, HostBinding, HostListener, getDirectiveMetadata } from 'gnome-extension-framework';
+import {
+  Directive, Input, HostBinding, HostListener,
+  getDirectiveMetadata,
+} from 'gnome-extension-framework/runtime';
+import { DirectiveRegistry, type StActor } from 'gnome-extension-framework/runtime';
 
 @Directive({ selector: '[gefTooltip]' })
 class TooltipDirective {
@@ -58,15 +68,28 @@ const directives = new DirectiveRegistry<StActor>().registerMetadata(
 ```
 
 The initial selector matcher supports element names, attribute presence/value
-and class selectors. Host property writes and event listeners are owned by the
+and class selectors. Host properties, listeners and outputs are owned by the
 native actor's destruction lifecycle.
 
 ## Pipes
 
-Register pipe instances explicitly:
+Register a pipe instance with its decorator metadata:
 
 ```ts
-const pipes = new PipeRegistry().register('uppercase', new UppercasePipe());
+import { Pipe, getPipeMetadata } from 'gnome-extension-framework/runtime';
+import { PipeRegistry } from 'gnome-extension-framework/runtime';
+
+@Pipe({ name: 'uppercase' })
+class UppercasePipe {
+  transform(value: unknown): string {
+    return String(value).toUpperCase();
+  }
+}
+
+const pipes = new PipeRegistry().registerMetadata(
+  getPipeMetadata(UppercasePipe)!,
+  new UppercasePipe(),
+);
 ```
 
 Pure pipes cache the last result by input and argument identity. Set

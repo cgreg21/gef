@@ -16,11 +16,62 @@ export interface GtplTemplateOptions {
   readonly globals?: readonly string[];
 }
 
+const BUILTIN_GLOBALS = new Set([
+  'Array', 'BigInt', 'Boolean', 'Date', 'Infinity', 'Intl', 'JSON',
+  'Math', 'NaN', 'Number', 'Object', 'String', 'undefined',
+  'isFinite', 'isNaN', 'parseFloat', 'parseInt', 'ctx',
+]);
+
+function collectIdentifiers(node: ExpressionNode, names: Set<string>): void {
+  switch (node.kind) {
+    case 'literal':
+      return;
+    case 'identifier':
+      names.add(node.name);
+      return;
+    case 'member':
+      collectIdentifiers(node.object, names);
+      if (node.computed && typeof node.property !== 'string') collectIdentifiers(node.property, names);
+      return;
+    case 'call':
+      collectIdentifiers(node.callee, names);
+      for (const argument of node.arguments) collectIdentifiers(argument, names);
+      return;
+    case 'unary':
+      collectIdentifiers(node.argument, names);
+      return;
+    case 'binary':
+      collectIdentifiers(node.left, names);
+      collectIdentifiers(node.right, names);
+      return;
+    case 'conditional':
+      collectIdentifiers(node.test, names);
+      collectIdentifiers(node.consequent, names);
+      collectIdentifiers(node.alternate, names);
+      return;
+    case 'assignment':
+      collectIdentifiers(node.target, names);
+      collectIdentifiers(node.value, names);
+      return;
+    case 'pipe':
+      collectIdentifiers(node.expression, names);
+      for (const argument of node.arguments) collectIdentifiers(argument, names);
+      return;
+    case 'array':
+      for (const element of node.elements) collectIdentifiers(element, names);
+  }
+}
+
 function expression(node: ExpressionNode | undefined, locals: ReadonlySet<string>, options: GtplTemplateOptions): string {
   if (!node) throw new Error('Cannot generate GTPL: an expression has no valid AST.');
+  const identifiers = new Set<string>();
+  collectIdentifiers(node, identifiers);
+  const globals = new Set([...BUILTIN_GLOBALS, ...(options.globals ?? [])]);
+  const contextIdentifiers = options.componentMembers
+    ?? [...identifiers].filter((name) => !locals.has(name) && !globals.has(name));
   return emitGtplExpression(node, {
-    ...(options.componentMembers ? { contextIdentifiers: options.componentMembers } : {}),
-    localIdentifiers: [...locals, ...(options.globals ?? [])],
+    contextIdentifiers,
+    localIdentifiers: [...locals, ...globals],
   });
 }
 

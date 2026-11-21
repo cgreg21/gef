@@ -29,6 +29,14 @@ if (label.get_label() !== 'GEF reactive GTK4 update') {
 }
 view.dispose();
 
+for (const name of [
+  'GtkCheckButton', 'GtkDropDown', 'GtkSpinButton', 'GtkProgressBar',
+  'GtkSeparator', 'GtkListBox', 'GtkListBoxRow', 'GtkGrid', 'GtkStack',
+  'GtkRevealer', 'GtkTextView', 'GtkPasswordEntry', 'GtkSearchEntry',
+]) {
+  host.destroy(host.element(name, {}, undefined));
+}
+
 const preferencesPage = host.element('AdwPreferencesPage', {}, undefined);
 if (!preferencesPage) throw new Error('libadwaita preferences page was not created.');
 host.destroy(preferencesPage);

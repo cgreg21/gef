@@ -24,6 +24,17 @@ describe('emitGtplTemplate', () => {
     expect(source).toContain('runtime.element("AdwActionRow"');
   });
 
+  it('preserves whitespace that belongs to text content', () => {
+    const output = emit('<StLabel>\\n  Hello\\n</StLabel>');
+    expect(output).toContain('\\\\n  Hello\\\\n');
+  });
+
+  it('preserves whitespace around inline child widgets', () => {
+    const output = emit('<StLabel>Before\\n  <StIcon />\\nAfter</StLabel>');
+    expect(output).toContain('\\\\n  ');
+    expect(output).toContain('\\\\nAfter');
+  });
+
   it('treats free template identifiers as context members by default', () => {
     const parsed = parseGtpl('<StLabel>{{name}}</StLabel>');
     expect(parsed.diagnostics).toEqual([]);

@@ -97,8 +97,10 @@ export function emitGtplTemplate(
     const locals = new Set(parentLocals);
     const statements: string[] = [];
     const rendered: string[] = [];
-    const hasContent = items.some((node) => !isWhitespaceOnlyText(node));
-    const nodes = hasContent ? items.filter((node) => !isWhitespaceOnlyText(node)) : items;
+    const contentNodes = items.filter((node) => !isWhitespaceOnlyText(node));
+    const isElementContainer = contentNodes.length > 0
+      && contentNodes.every((node) => node.kind === 'element');
+    const nodes = isElementContainer ? contentNodes : items;
 
     for (const node of nodes) {
       if (node.kind === 'let-declaration') {

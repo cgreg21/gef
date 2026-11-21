@@ -66,7 +66,7 @@ The runtime package has no Node.js or TypeScript imports. Decorator metadata is 
 ## Current scope
 
 Implemented foundations include the GTPL parser and structural lowering,
-expression and template code generation, optional TypeScript expression type checking, component contract validation,
+expression and template code generation with preserved meaningful text whitespace, optional TypeScript expression type checking, component contract validation,
 selector-matched runtime directives and components, component input/output
 lifecycles and DI (including reactive input teardown tests and GTK component
 reactive input binding, mounting and disposal coverage), repeat-item failure cleanup,

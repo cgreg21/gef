@@ -65,6 +65,7 @@ describe('mountDirective', () => {
     const setProperty = vi.fn();
     const ref = mountDirective({
       create: () => ({ active: false }),
+      inputs: [{ publicName: 'active', member: 'active' }],
       hostBindings: [{ member: 'active', property: 'active' }],
     }, new Injector(), { setProperty, listen: () => () => {} }, {}, { active: true });
     expect(setProperty).toHaveBeenCalledWith({}, 'active', true);

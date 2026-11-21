@@ -50,8 +50,11 @@ class FakeActor implements StActor {
   }
 
   emit(name: string, ...args: unknown[]): unknown {
-    const signal = [...this.signals.values()].find((entry) => entry.name === name);
-    return signal?.callback(this, ...args);
+    let result: unknown;
+    for (const signal of [...this.signals.values()]) {
+      if (signal.name === name) result = signal.callback(this, ...args);
+    }
+    return result;
   }
 }
 

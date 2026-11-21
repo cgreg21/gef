@@ -42,7 +42,7 @@ export function validateStCss(source: string): readonly StCssDiagnostic[] {
   });
 
   const withoutComments = source.replace(/\/\*[\s\S]*?\*\//g, '');
-  const declaration = /(?:^|[;{])\s*([a-z-]+\s*:\s*[^;{}]+);?/gim;
+  const declaration = /(?:^|[;{])\s*([a-z-]+\s*:\s*[^;{}]+)/gim;
   for (const match of withoutComments.matchAll(declaration)) {
     const value = match[1]?.trim() ?? '';
     const rule = UNSUPPORTED.find((candidate) => candidate.pattern.test(value));

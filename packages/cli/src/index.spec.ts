@@ -167,6 +167,20 @@ describe('GEF CLI', () => {
     expect(base.errors.join('\\n')).toContain('missing the required extension.js entry point');
   });
 
+  it('rejects a Shell entry point without lifecycle hooks', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : 'export default class Demo {}',
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
+    expect(base.errors.join('\n')).toContain('extension class must implement enable()');
+    expect(base.errors.join('\n')).toContain('extension class must implement disable()');
+  });
+
   it('rejects Shell imports from preferences code', async () => {
     const base = createIO('');
     const io: CliIO = {
@@ -228,7 +242,12 @@ describe('GEF CLI', () => {
       listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/schemas/org.example.demo.gschema.xml'],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org.example.demo' })
-        : '<schemalist><schema id="org.example.demo" path="/org/example/demo/"></schema></schemalist>',
+        : path.endsWith('.gschema.xml') ? '<schemalist><schema id="org.example.demo" path="/org/example/demo/"></schema></schemalist>' : 'export default class Demo { enable() {} disable() {} }',
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
+  });
+
+e() {} }',
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
   });
@@ -240,7 +259,7 @@ describe('GEF CLI', () => {
       listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/stylesheet.css'],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
-        : '',
+        : 'export default class Demo { enable() {} disable() {} }',
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
     expect(base.output[0]).toContain('EGO checks passed');

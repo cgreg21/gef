@@ -160,6 +160,18 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         }
       }
     }
+    const shellEntry = resolve(directory, 'extension.js');
+    const shellSource = javascriptSources.get(shellEntry);
+    if (shellSource !== undefined) {
+      if (!/export\s+default\s+class\b/.test(shellSource)) {
+        errors.push('extension.js: expected a default-exported extension class.');
+      }
+      for (const hook of ['enable', 'disable']) {
+        if (!new RegExp('\\b' + hook + '\\s*\\(\\s*\\)\\s*\\{').test(shellSource)) {
+          errors.push('extension.js: extension class must implement ' + hook + '().');
+        }
+      }
+    }
     const inspectImports = (entry: string, forbidden: RegExp, message: string): void => {
       const pending = [resolve(directory, entry)];
       const visited = new Set<string>();

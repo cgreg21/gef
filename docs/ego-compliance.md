@@ -26,6 +26,7 @@ with GNOME reviewers.
 
 - Module evaluation and the extension constructor must not create dynamic
   GObjects, connect signals, install timers, or modify GNOME Shell.
+- Require the Shell entry point to default-export an extension class with `enable()` and `disable()` methods.
 - Create runtime objects and connect signals in `enable()`.
 - Destroy created objects, disconnect signals and remove sources in
   `disable()`.

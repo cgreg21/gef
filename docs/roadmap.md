@@ -31,7 +31,7 @@
 - [x] Explicit hierarchical dependency injector with scoped disposal.
 - [x] Component instance/view lifecycle with child injector scopes and reverse-order teardown.
 - [x] Explicit directive instance mounting with host bindings, host listeners and deterministic cleanup.
-- [ ] Automatic selector matching and directive instantiation from templates.
+- [x] Selector-matched directive instantiation, input binding and host behavior in generated templates.
 - [x] GLib timeout/idle scheduling and GObject signal lifecycle helpers.\n- [ ] GNOME Shell 51 St/Clutter integration tests.
 - [x] Initial GTK4/libadwaita host adapter with reactive bindings and keyed loops.
 - [x] GTK4/libadwaita preferences example entry point and template compilation.

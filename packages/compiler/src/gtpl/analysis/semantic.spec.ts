@@ -63,7 +63,7 @@ describe('GTPL semantic scopes', () => {
     const parsed = parseGtpl(source);
     const semantic = analyzeGtpl(parsed.nodes, { componentMembers: ['first'], source });
     const diagnostic = semantic.diagnostics.find((item) => item.code === 'GTPL4002');
-    expect(diagnostic?.span).toMatchObject({ start: source.indexOf('missing'), end: source.indexOf('missing') + 7, line: 2, column: 13 });
+    expect(diagnostic?.span).toMatchObject({ start: source.indexOf('missing'), end: source.indexOf('missing') + 7, line: 2, column: 12 });
   });
 
   it('supports explicitly declared framework globals', () => {

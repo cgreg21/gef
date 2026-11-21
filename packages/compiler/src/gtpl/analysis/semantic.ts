@@ -228,7 +228,7 @@ class GtplSemanticAnalyzer {
         for (const argument of expression.arguments) this.checkExpression(argument, scope, sourceSpan, preciseSpan);
         return;
       case 'array':
-        for (const element of expression.elements) this.checkExpression(element, scope, sourceSpan);
+        for (const element of expression.elements) this.checkExpression(element, scope, sourceSpan, preciseSpan);
         return;
     }
   }

@@ -307,7 +307,7 @@ describe('createGtkRenderHost', () => {
       active: { kind: 'binding', get: () => false },
       activeChange: (value: unknown) => values.push(value),
     }, undefined) as FakeWidget;
-    widget.properties.active = true;
+    (widget as unknown as { active: boolean }).active = true;
     widget.emit('notify::active');
     expect(values).toEqual([true]);
     host.destroy(widget);

@@ -52,7 +52,7 @@ npx --yes --package gnome-extension-framework gef --help
 npx --yes --package gnome-extension-framework gef new my-extension
 ```
 
-The published package exposes the `gef` executable and the compiler/runtime ESM entry points. Publishing is performed from a tagged release after CI and the package-content checks pass; no npm token is stored in the repository.
+The published package exposes the `gef` executable and the compiler/runtime ESM entry points. CI builds the package, installs the generated tarball into a clean temporary project, checks both ESM entry points and invokes the CLI through `npx`. Publishing is performed from a tagged release after these checks pass; no npm token is stored in the repository.
 
 ## Packages
 

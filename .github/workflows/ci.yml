@@ -38,6 +38,19 @@ jobs:
         run: npm run package:example
       - name: Verify npm package contents
         run: npm pack --dry-run --ignore-scripts
+      - name: Test packed package installation and npx executable
+        shell: bash
+        run: |
+          npm pack --pack-destination "$RUNNER_TEMP"
+          PACKAGE_TARBALL="$(find "$RUNNER_TEMP" -maxdepth 1 -name '*.tgz' -print -quit)"
+          test -n "$PACKAGE_TARBALL"
+          TEST_DIR="$(mktemp -d)"
+          cd "$TEST_DIR"
+          npm init -y
+          npm install "$PACKAGE_TARBALL" --no-audit --no-fund
+          ./node_modules/.bin/gef --help
+          node --input-type=module -e "await import('gnome-extension-framework'); await import('gnome-extension-framework/runtime')"
+          npx --yes --package "$PACKAGE_TARBALL" gef --help
 
   gtk-integration:
     name: GTK4 and libadwaita integration

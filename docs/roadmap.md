@@ -13,7 +13,8 @@
 ## npm publication and CLI distribution
 - [ ] Confirm the public npm package name and publish the first stable release.
 - [ ] Publish package metadata, compiler/runtime ESM exports and the `gef` executable.
-- [ ] Verify clean installation and `npx --package gnome-extension-framework gef` from a temporary project.
+- [x] Add CI coverage for clean tarball installation, compiler/runtime ESM imports and CLI execution through `npx`.
+- [ ] Verify the first published version from the public npm registry.
 - [ ] Add a tagged GitHub release workflow with npm trusted publishing (OIDC) or a protected publish token; never store credentials in source.
 - [ ] Document versioning, changelog and release rollback procedure.
 

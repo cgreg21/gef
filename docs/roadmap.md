@@ -30,7 +30,8 @@
 - [x] Reactive `@if`, `@switch` and keyed `@for` updates in the St host.
 - [x] Explicit hierarchical dependency injector with scoped disposal.
 - [x] Component instance/view lifecycle with child injector scopes and reverse-order teardown.
-- [ ] Directive instantiation and host-binding/host-listener wiring.
+- [x] Explicit directive instance mounting with host bindings, host listeners and deterministic cleanup.
+- [ ] Automatic selector matching and directive instantiation from templates.
 - [ ] GNOME Shell 51 St/Clutter integration tests.
 - [x] Initial GTK4/libadwaita host adapter with reactive bindings and keyed loops.
 - [ ] GTK4/libadwaita preferences integration tests and complete renderer coverage.

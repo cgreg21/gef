@@ -3,6 +3,11 @@ import { mountGtplTemplate, type GtplRenderFunction, type GtplRenderHost, type G
 import { ResourceScope } from '../resources/resource-scope.js';
 import type { PipeRegistry } from '../pipes/pipe-registry.js';
 
+export interface ComponentLifecycle {
+  onInit?(): void;
+  onDestroy?(): void;
+}
+
 export interface ComponentDefinition<Instance, Node> {
   readonly create: (injector: Injector) => Instance;
   readonly render: GtplRenderFunction<Instance, Node>;
@@ -34,6 +39,10 @@ export function mountComponent<Instance, Node>(
   try {
     const instance = definition.create(injector);
     if (definition.dispose) resources.add(() => definition.dispose?.(instance));
+    if (isComponentLifecycle(instance)) {
+      resources.add(() => instance.onDestroy?.());
+      instance.onInit?.();
+    }
     const view = mountGtplTemplate(instance, definition.render, host, definition.pipes);
     resources.add(() => view.dispose());
     return {
@@ -50,4 +59,9 @@ export function mountComponent<Instance, Node>(
     }
     throw error;
   }
+}
+
+function isComponentLifecycle(value: unknown): value is ComponentLifecycle {
+  return typeof value === 'object' && value !== null
+    && ('onInit' in value || 'onDestroy' in value);
 }

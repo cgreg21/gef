@@ -74,8 +74,8 @@ export function mountComponent<Instance, Node>(
       else (instance as Record<string, unknown>)[input.member] = value;
     }
     if (isComponentLifecycle(instance)) {
-      resources.add(() => instance.onDestroy?.());
-      instance.onInit?.();
+      if (typeof instance.onDestroy === 'function') resources.add(() => instance.onDestroy?.());
+      if (typeof instance.onInit === 'function') instance.onInit();
     }
     const view = mountGtplTemplate(instance, definition.render, host, definition.pipes, definition.directives, injector, definition.components);
     resources.add(() => view.dispose());

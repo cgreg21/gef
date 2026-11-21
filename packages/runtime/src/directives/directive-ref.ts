@@ -3,6 +3,11 @@ import { ResourceScope } from '../resources/resource-scope.js';
 import { effect, type ReadonlySignal } from '../reactivity/signal.js';
 import type { EventEmitter } from '../../../shared/src/events/event-emitter.js';
 
+export interface DirectiveLifecycle {
+  onInit?(): void;
+  onDestroy?(): void;
+}
+
 export interface DirectiveHost<Node> {
   setProperty(node: Node, property: string, value: unknown): void;
   listen(node: Node, event: string, handler: (...args: unknown[]) => unknown): () => void;
@@ -82,6 +87,10 @@ export function mountDirective<Instance extends object, Node>(
       outputs[output.publicName] = emitter;
       resources.add(() => emitter.clear());
     }
+    if (isDirectiveLifecycle(instance)) {
+      if (typeof instance.onDestroy === 'function') resources.add(() => instance.onDestroy?.());
+      if (typeof instance.onInit === 'function') instance.onInit();
+    }
     for (const input of definition.inputs ?? []) {
       if (!(input.publicName in inputs)) continue;
       const value = inputs[input.publicName];
@@ -125,6 +134,12 @@ export function mountDirective<Instance extends object, Node>(
     try { resources.dispose(); } catch { /* Keep construction failure primary. */ }
     throw error;
   }
+}
+
+function isDirectiveLifecycle(value: unknown): value is DirectiveLifecycle {
+  return typeof value === 'object' && value !== null
+    && (('onInit' in value && typeof value.onInit === 'function')
+      || ('onDestroy' in value && typeof value.onDestroy === 'function'));
 }
 
 function isEventEmitter(value: unknown): value is EventEmitter<unknown> {

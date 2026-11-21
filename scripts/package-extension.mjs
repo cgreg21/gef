@@ -61,6 +61,10 @@ async function listFiles(directory) {
 }
 
 for (const file of await listFiles(output)) {
+  if (file.endsWith('.d.ts') || file.endsWith('.map')) await rm(file, { force: true });
+}
+
+for (const file of await listFiles(output)) {
   if (!file.endsWith('.js')) continue;
   const source = await readFile(file, 'utf8');
   const imports = [...source.matchAll(/(?:from\s*|import\s*)['"]([^'"]+)['"]/g)];

@@ -33,9 +33,10 @@
 - [x] Component instance/view lifecycle with child injector scopes and reverse-order teardown.
 - [x] Explicit directive instance mounting with host bindings, host listeners and deterministic cleanup.
 - [x] Selector-matched directive instantiation, input binding and host behavior in generated templates.
-- [x] GLib timeout/idle scheduling and GObject signal lifecycle helpers.\n- [ ] GNOME Shell 51 St/Clutter integration tests.
+- [x] GLib timeout/idle scheduling, GObject signal lifecycle, D-Bus subscriptions and Clutter transition cleanup.\n- [ ] GNOME Shell 51 St/Clutter integration tests.
 - [x] Initial GTK4/libadwaita host adapter with reactive bindings and keyed loops.
 - [x] GTK4/libadwaita preferences example entry point and template compilation.
+- [x] Scoped GTK stylesheet provider and GNOME Shell extension stylesheet lifecycle helpers.
 - [ ] GTK4/libadwaita preferences integration tests and complete renderer coverage.
 - [ ] Native GJS code generation and source maps.
 
@@ -45,5 +46,6 @@
 - [x] CLI `check` and `compile` commands.
 - [x] CLI `new` and `doctor` commands.
 - [x] CLI `generate component`, `test`, `package` and `styles` commands.
-- [ ] Watch mode and integrated GNOME test runner.
+- [x] Native filesystem watch mode and GNOME Shell 51 virtual-display smoke test harness.
+- [ ] Full automated GNOME Shell 51 and GTK4 integration suite.
 - [ ] Watch mode, diagnostics and examples.

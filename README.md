@@ -42,7 +42,7 @@ node dist/cli/src/index.js doctor
 
 - `gnome-extension-framework`: compiler declarations and GTPL tooling
 - `gnome-extension-framework/runtime`: renderer-independent runtime, DI,
-  reactivity, GJS lifecycle helpers, St and GTK render hosts
+  reactivity, GJS lifecycle helpers, St and GTK render hosts, scoped native stylesheet providers
 - `gef`: project and build CLI
 
 The runtime package has no Node.js imports. Node and Sass are build-time tools.

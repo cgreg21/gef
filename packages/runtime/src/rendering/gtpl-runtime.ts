@@ -119,6 +119,13 @@ export function createGtplRenderRuntime<Node>(
           setProperty: host.setProperty.bind(host),
           listen: host.listen.bind(host),
           }, node, match.inputs);
+          for (const [output, emitter] of Object.entries(ref.outputs)) {
+            const handler = attributes[output];
+            if (typeof handler === 'function') {
+              const subscription = emitter.subscribe(handler as (value: unknown) => void);
+              ref.onDestroy(() => subscription.unsubscribe());
+            }
+          }
           host.onDestroy(node, () => ref.destroy());
         }
       } catch (error) {

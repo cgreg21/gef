@@ -1,6 +1,7 @@
 import { Injector, type Provider } from '../di/injector.js';
 import { ResourceScope } from '../resources/resource-scope.js';
 import { effect, type ReadonlySignal } from '../reactivity/signal.js';
+import type { EventEmitter } from '../../../shared/src/events/event-emitter.js';
 
 export interface DirectiveHost<Node> {
   setProperty(node: Node, property: string, value: unknown): void;
@@ -23,8 +24,14 @@ export interface DirectiveInput {
   readonly member: string;
 }
 
+export interface DirectiveOutput {
+  readonly publicName: string;
+  readonly member: string;
+}
+
 export interface DirectiveDefinition<Instance, Node> {
   readonly inputs?: readonly DirectiveInput[];
+  readonly outputs?: readonly DirectiveOutput[];
   readonly create: (injector: Injector) => Instance;
   readonly hostBindings?: readonly DirectiveHostBinding[];
   readonly hostListeners?: readonly DirectiveHostListener[];
@@ -35,6 +42,8 @@ export interface DirectiveDefinition<Instance, Node> {
 export interface DirectiveRef<Instance> {
   readonly instance: Instance;
   readonly injector: Injector;
+  readonly outputs: Readonly<Record<string, EventEmitter<unknown>>>;
+  onDestroy(callback: () => void): void;
   destroy(): void;
 }
 
@@ -66,6 +75,13 @@ export function mountDirective<Instance extends object, Node>(
   try {
     const instance = definition.create(injector);
     if (definition.dispose) resources.add(() => definition.dispose?.(instance));
+    const outputs: Record<string, EventEmitter<unknown>> = {};
+    for (const output of definition.outputs ?? []) {
+      const emitter = (instance as Record<string, unknown>)[output.member];
+      if (!isEventEmitter(emitter)) throw new TypeError(`Directive output "${output.member}" must be an EventEmitter.`);
+      outputs[output.publicName] = emitter;
+      resources.add(() => emitter.clear());
+    }
     for (const input of definition.inputs ?? []) {
       if (!(input.publicName in inputs)) continue;
       const value = inputs[input.publicName];
@@ -98,11 +114,23 @@ export function mountDirective<Instance extends object, Node>(
       }));
     }
 
-    return { instance, injector, destroy: () => resources.dispose() };
+    return {
+      instance,
+      injector,
+      outputs,
+      onDestroy: (callback) => { resources.add(callback); },
+      destroy: () => resources.dispose(),
+    };
   } catch (error) {
     try { resources.dispose(); } catch { /* Keep construction failure primary. */ }
     throw error;
   }
+}
+
+function isEventEmitter(value: unknown): value is EventEmitter<unknown> {
+  return typeof value === 'object' && value !== null
+    && 'subscribe' in value && typeof value.subscribe === 'function'
+    && 'clear' in value && typeof value.clear === 'function';
 }
 
 function isBinding(value: unknown): value is { get(): unknown } {

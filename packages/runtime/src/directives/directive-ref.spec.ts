@@ -3,6 +3,7 @@ import { Injector } from '../di/injector.js';
 import { signal } from '../reactivity/signal.js';
 import { mountDirective } from './directive-ref.js';
 import { DirectiveRegistry } from './directive-registry.js';
+import { EventEmitter } from '../../../shared/src/events/event-emitter.js';
 
 describe('mountDirective', () => {
   it('matches element, attribute and class selectors', () => {
@@ -20,8 +21,21 @@ describe('mountDirective', () => {
       inputBindings: [{ publicName: 'text', member: 'text' }],
       hostBindings: [{ member: 'label', property: 'accessible-name' }],
       hostListeners: [{ member: 'activate', event: 'clicked', args: ['$event'] }],
-    }, { create: () => ({ text: '', label: '', activate: () => {} }) });
+      outputBindings: [{ publicName: 'activated', member: 'activated' }],
+    }, { create: () => ({ text: '', label: '', activated: new EventEmitter<void>(), activate: () => {} }) });
     expect(registry.match('StButton', { gefTooltip: true })).toHaveLength(1);
+  });
+
+  it('exposes directive outputs and clears them on destroy', () => {
+    const output = new EventEmitter<string>();
+    const ref = mountDirective({
+      create: () => ({ output }),
+      outputs: [{ publicName: 'changed', member: 'output' }],
+    }, new Injector(), { setProperty: vi.fn(), listen: () => () => {} }, {});
+    expect(ref.outputs.changed).toBe(output);
+    ref.destroy();
+    expect(output.subscribe(vi.fn())).toBeDefined();
+    output.emit('cleared');
   });
 
   it('applies inputs and host bindings, then disposes subscriptions', () => {

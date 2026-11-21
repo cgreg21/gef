@@ -50,21 +50,13 @@ const schema = schemaSource.lookup('org.gnome.shell.extensions.gef-hello-world',
 if (!schema) throw new Error('Compiled GSettings schema was not staged.');
 const settings = Gio.Settings.new_full(schema, null, null);
 const enabled = bindGSettingsBoolean(settings, 'enabled');
-const preferences = host.element(
-  'AdwPreferencesPage',
-  {},
-  host.element(
-    'AdwPreferencesGroup',
-    {},
-    host.element('AdwSwitchRow', {
-      title: 'Enable GEF',
-      active: { kind: 'binding', get: () => enabled.get() },
-      activeChange: (value) => enabled.set(value),
-    }, undefined),
-  ),
-);
-const group = preferences.get_first_child();
-const switchRow = group.get_first_child();
+const switchRow = host.element('AdwSwitchRow', {
+  title: 'Enable GEF',
+  active: { kind: 'binding', get: () => enabled.get() },
+  activeChange: (value) => enabled.set(value),
+}, undefined);
+const group = host.element('AdwPreferencesGroup', {}, switchRow);
+const preferences = host.element('AdwPreferencesPage', {}, group);
 
 settings.set_boolean('enabled', false);
 if (enabled.get() !== false || switchRow.get_active()) {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ResourceScope } from '../resources/resource-scope.js';
-import { bindGSettingsBoolean } from './gsettings.js';
+import { bindGSettingsBoolean, bindGSettingsInt, bindGSettingsString, bindGSettingsStrv } from './gsettings.js';
 
 function createSettings(initial: boolean) {
   let value = initial;
@@ -34,6 +34,39 @@ describe('GSettings reactive binding', () => {
     expect(settings.disconnect).toHaveBeenCalledWith(9);
     expect(settings.set_boolean).not.toHaveBeenCalled();
   });
+
+  it('supports integer, string and string-array settings', () => {
+    const values = new Map<string, number | string | string[]>([
+      ['count', 3], ['title', 'GEF'], ['items', ['one']],
+    ]);
+    const callbacks = new Map<string, () => void>();
+    const settings = {
+      connect: vi.fn((signal: string, callback: () => void) => {
+        callbacks.set(signal, callback);
+        return callbacks.size;
+      }),
+      disconnect: vi.fn(),
+      get_int: (key: string) => values.get(key) as number,
+      set_int: (key: string, value: number) => { values.set(key, value); callbacks.get(`changed::${key}`)?.(); },
+      get_string: (key: string) => values.get(key) as string,
+      set_string: (key: string, value: string) => { values.set(key, value); callbacks.get(`changed::${key}`)?.(); },
+      get_strv: (key: string) => values.get(key) as string[],
+      set_strv: (key: string, value: string[]) => { values.set(key, value); callbacks.get(`changed::${key}`)?.(); },
+    };
+    const count = bindGSettingsInt(settings, 'count');
+    const title = bindGSettingsString(settings, 'title');
+    const items = bindGSettingsStrv(settings, 'items');
+    count.set(4);
+    title.set('Framework');
+    items.set(['one', 'two']);
+    expect(values.get('count')).toBe(4);
+    expect(values.get('title')).toBe('Framework');
+    expect(values.get('items')).toEqual(['one', 'two']);
+    count.dispose();
+    title.dispose();
+    items.dispose();
+  });
+
   it('rejects invalid key names', () => {
     expect(() => bindGSettingsBoolean(createSettings(false), 'Not A Key')).toThrow(/Invalid GSettings key/);
   });

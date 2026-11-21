@@ -1,6 +1,8 @@
 import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
+import Gio from 'gi://Gio';
 import {
+  bindGSettingsBoolean,
   createGtkRenderHost,
   mountGtplTemplate,
   signal,
@@ -30,4 +32,19 @@ const preferencesPage = host.element('AdwPreferencesPage', {}, undefined);
 if (!preferencesPage) throw new Error('libadwaita preferences page was not created.');
 host.destroy(preferencesPage);
 
-print('GEF GTK4/libadwaita runtime smoke tests passed.');
+const schemaSource = Gio.SettingsSchemaSource.new_from_directory(
+  'dist/extension/schemas',
+  Gio.SettingsSchemaSource.get_default(),
+  false,
+);
+const schema = schemaSource.lookup('org.gnome.shell.extensions.gef-hello-world', false);
+if (!schema) throw new Error('Compiled GSettings schema was not staged.');
+const settings = Gio.Settings.new_full(schema, null, null);
+const enabled = bindGSettingsBoolean(settings, 'enabled');
+settings.set_boolean('enabled', false);
+if (enabled.get() !== false) throw new Error('GSettings changes did not update the reactive signal.');
+enabled.set(true);
+if (!settings.get_boolean('enabled')) throw new Error('Reactive signal writes did not persist to GSettings.');
+enabled.dispose();
+
+print('GEF GTK4/libadwaita and GSettings runtime smoke tests passed.');

@@ -40,6 +40,8 @@ node dist/cli/src/index.js package
 node dist/cli/src/index.js doctor
 ```
 
+The `compile` command creates missing parent directories for its JavaScript output.
+
 ## Packages
 
 - `gnome-extension-framework`: compiler declarations and GTPL tooling

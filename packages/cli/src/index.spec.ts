@@ -58,6 +58,13 @@ describe('GEF CLI', () => {
     expect(output[0]).toContain('Generated:');
   });
 
+  it('creates parent directories for compiled output files', async () => {
+    const { io, directories, writes } = createIO('<StLabel>Hello</StLabel>');
+    expect(await runCli(['compile', 'view.gtpl', 'dist/generated/view.js'], io)).toBe(0);
+    expect(directories).toContain(resolve('dist/generated'));
+    expect(writes[0]?.path).toContain('dist/generated/view.js');
+  });
+
   it('creates a minimal extension project', async () => {
     const { io, output, writes, directories } = createIO('');
     expect(await runCli(['new', 'hello-world', 'out'], io)).toBe(0);

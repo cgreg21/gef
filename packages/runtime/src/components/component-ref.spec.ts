@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { InjectionToken, Injector } from '../di/injector.js';
 import { mountComponent } from './component-ref.js';
+import { EventEmitter } from '../../../shared/src/events/event-emitter.js';
 import type { GtplRenderHost } from '../rendering/gtpl-runtime.js';
 
 type Node = { readonly kind: string; readonly value?: unknown; readonly children?: readonly Node[] };
@@ -39,6 +40,27 @@ describe('mountComponent', () => {
     component.destroy();
     expect(order).toEqual(['view', 'component', 'injector']);
     expect(parent.get(DEPENDENCY)).toBe('ready');
+    parent.destroy();
+  });
+
+  it('assigns inputs before initialization and exposes outputs with owned cleanup', () => {
+    const output = new EventEmitter<string>();
+    const order: string[] = [];
+    const parent = new Injector();
+    const component = mountComponent({
+      create: () => ({
+        label: 'initial',
+        output,
+        onInit() { order.push(`init:${this.label}`); },
+      }),
+      inputs: [{ publicName: 'label', member: 'label' }],
+      outputs: [{ publicName: 'changed', member: 'output' }],
+      render: (instance, runtime) => runtime.text(instance.label),
+    }, parent, createHost(), { label: 'provided' });
+    expect(order).toEqual(['init:provided']);
+    expect(component.outputs.changed).toBe(output);
+    component.destroy();
+    expect(() => output.emit('closed')).not.toThrow();
     parent.destroy();
   });
 

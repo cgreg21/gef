@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createGtplRenderRuntime, mountGtplTemplate, type GtplRenderHost } from './gtpl-runtime.js';
 import { DirectiveRegistry } from '../directives/directive-registry.js';
+import { ComponentRegistry } from '../components/component-registry.js';
+import { EventEmitter } from '../../../shared/src/events/event-emitter.js';
 import { Injector } from '../di/injector.js';
 import { vi } from 'vitest';
 
@@ -67,6 +69,30 @@ describe('createGtplRenderRuntime', () => {
     expect(listen).toHaveBeenCalledOnce();
     destroyCallbacks.forEach((callback) => callback());
     expect(listen.mock.results[0]?.value).toHaveBeenCalledOnce();
+  });
+
+  it('mounts registered components and connects declared outputs', () => {
+    const destroyed: Array<() => void> = [];
+    const clicked = new EventEmitter<string>();
+    const host = {
+      ...createHost(),
+      onDestroy: (_node: Node, callback: () => void) => destroyed.push(callback),
+    };
+    const registry = new ComponentRegistry<Node>().register('GefButton', {
+      create: () => ({ label: 'Ready', clicked }),
+      inputs: [{ publicName: 'label', member: 'label' }],
+      outputs: [{ publicName: 'pressed', member: 'clicked' }],
+      render: (instance, runtime) => runtime.text(instance.label),
+    });
+    const onPressed = vi.fn();
+    const runtime = createGtplRenderRuntime(host, undefined, undefined, new Injector(), registry);
+    const node = runtime.element('GefButton', { label: 'Go', pressed: onPressed }, undefined);
+    expect(node).toMatchObject({ kind: 'text', value: 'Go' });
+    clicked.emit('yes');
+    expect(onPressed).toHaveBeenCalledWith('yes');
+    destroyed.forEach((callback) => callback());
+    clicked.emit('no');
+    expect(onPressed).toHaveBeenCalledOnce();
   });
 
   it('creates explicit binding values for reactive hosts', () => {

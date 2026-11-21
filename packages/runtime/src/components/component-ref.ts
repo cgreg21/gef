@@ -3,6 +3,7 @@ import { mountGtplTemplate, type GtplRenderFunction, type GtplRenderHost, type G
 import { ResourceScope } from '../resources/resource-scope.js';
 import type { PipeRegistry } from '../pipes/pipe-registry.js';
 import type { DirectiveRegistry } from '../directives/directive-registry.js';
+import type { ComponentRegistry } from './component-registry.js';
 import { effect } from '../reactivity/signal.js';
 import type { EventEmitter } from '../../../shared/src/events/event-emitter.js';
 
@@ -29,6 +30,7 @@ export interface ComponentDefinition<Instance, Node> {
   readonly providers?: readonly Provider[];
   readonly pipes?: PipeRegistry;
   readonly directives?: DirectiveRegistry<Node>;
+  readonly components?: ComponentRegistry<Node>;
   readonly dispose?: (instance: Instance) => void;
 }
 
@@ -75,7 +77,7 @@ export function mountComponent<Instance, Node>(
       resources.add(() => instance.onDestroy?.());
       instance.onInit?.();
     }
-    const view = mountGtplTemplate(instance, definition.render, host, definition.pipes, definition.directives, injector);
+    const view = mountGtplTemplate(instance, definition.render, host, definition.pipes, definition.directives, injector, definition.components);
     resources.add(() => view.dispose());
     return {
       instance,

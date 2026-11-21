@@ -3,6 +3,8 @@ import { ResourceScope } from '../resources/resource-scope.js';
 import { Injector } from '../di/injector.js';
 import { mountDirective } from '../directives/directive-ref.js';
 import { DirectiveRegistry } from '../directives/directive-registry.js';
+import { mountComponent } from '../components/component-ref.js';
+import { ComponentRegistry } from '../components/component-registry.js';
 
 export interface GtplRepeatItem<Node> {
   readonly key: unknown;
@@ -81,11 +83,29 @@ export function createGtplRenderRuntime<Node>(
   pipes: PipeRegistry = new PipeRegistry(),
   directives: DirectiveRegistry<Node> = new DirectiveRegistry<Node>(),
   injector: Injector = new Injector(),
+  components: ComponentRegistry<Node> = new ComponentRegistry<Node>(),
 ): GtplRenderRuntime<Node> {
   return {
     pipe: (name, value, ...args) => pipes.transform(name, value, ...args),
     bind: (get) => ({ kind: 'binding', get }),
     element: (name, attributes, children) => {
+      const component = components.match(name, attributes);
+      if (component) {
+        const ref = mountComponent(component, injector, host, attributes);
+        for (const [output, emitter] of Object.entries(ref.outputs)) {
+          const handler = attributes[output];
+          if (typeof handler === 'function') {
+            const subscription = emitter.subscribe(handler as (value: unknown) => void);
+            ref.onDestroy(() => subscription.unsubscribe());
+          }
+        }
+        if (!host.onDestroy) {
+          ref.destroy();
+          throw new Error('The renderer host does not support component lifecycle cleanup.');
+        }
+        host.onDestroy(ref.view.node, () => ref.destroy());
+        return ref.view.node;
+      }
       const node = host.element(name, attributes, children);
       const matches = directives.match(name, attributes);
       if (matches.length === 0) return node;
@@ -157,9 +177,10 @@ export function mountGtplTemplate<Context, Node>(
   pipes?: PipeRegistry,
   directives?: DirectiveRegistry<Node>,
   injector?: Injector,
+  components?: ComponentRegistry<Node>,
 ): GtplRenderView<Node> {
   const ownedInjector = injector ?? new Injector();
-  const node = render(context, createGtplRenderRuntime(host, pipes, directives, ownedInjector));
+  const node = render(context, createGtplRenderRuntime(host, pipes, directives, ownedInjector, components));
   const resources = new ResourceScope();
   if (!injector) resources.add(() => ownedInjector.destroy());
   resources.add(() => host.destroy(node));

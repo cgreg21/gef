@@ -9,7 +9,7 @@ export interface GSettingsBooleanSource {
 }
 
 /** Bridges one GSettings boolean key to a writable reactive signal. */
-export function bindGSettingsBoolean(settings: GSettingsBooleanSource, key: string, scope?: ResourceScope): Signal<boolean> {
+export function bindGSettingsBoolean(settings: GSettingsBooleanSource, key: string, scope?: ResourceScope): Signal<boolean> & { dispose(): void } {
   if (!/^[a-z][a-z0-9-]*$/.test(key)) throw new TypeError(`Invalid GSettings key "${key}".`);
   const value = new Signal(settings.get_boolean(key));
   const handlerId = settings.connect(`changed::${key}`, () => value.set(settings.get_boolean(key)));

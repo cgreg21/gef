@@ -18,7 +18,15 @@ declare module 'resource:///org/gnome/shell/extensions/extension.js' {
     disable(): void;
     loadStylesheet(): void;
     unloadStylesheet(): void;
+    getSettings(): GSettings;
   }
+}
+
+interface GSettings {
+  get_boolean(key: string): boolean;
+  set_boolean(key: string, value: boolean): void;
+  connect(signal: string, callback: (...args: unknown[]) => void): number;
+  disconnect(handlerId: number): void;
 }
 
 declare module 'gi://Gtk' {
@@ -44,6 +52,7 @@ declare module 'gi://Adw' {
 }
 declare module 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js' {
   export class ExtensionPreferences {
+    getSettings(): GSettings;
     fillPreferencesWindow(window: { add(widget: unknown): void }): void;
   }
 }

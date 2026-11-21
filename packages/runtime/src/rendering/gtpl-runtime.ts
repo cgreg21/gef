@@ -110,7 +110,7 @@ export function createGtplRenderRuntime<Node>(
       }
       const node = host.element(name, attributes, children);
       const matches = directives.match(name, attributes);
-      if (matches.length === 0) return node;
+      if (matches.length === 0) return track(node);
       if (!host.setProperty || !host.listen || !host.onDestroy) {
         host.destroy(node);
         throw new Error('The renderer host does not support directive host bindings and listeners.');
@@ -134,19 +134,19 @@ export function createGtplRenderRuntime<Node>(
         host.destroy(node);
         throw error;
       }
-      return node;
+      return track(node);
     },
-    text: (value) => host.text(value),
-    fragment: (children) => host.fragment(children),
+    text: (value) => track(host.text(value)),
+    fragment: (children) => track(host.fragment(children)),
     if: (condition, render, fallback) => {
-      const renderFallback = fallback ?? (() => host.fragment([]));
+      const renderFallback = fallback ?? (() => track(host.fragment([])));
       return isGtplBinding(condition)
-        ? host.conditional(condition, render, renderFallback)
+        ? track(host.conditional(condition, render, renderFallback))
         : condition ? render(condition) : renderFallback();
     },
     for: (collection, renderItem, trackBy, renderEmpty) => {
       const getCollection = isGtplBinding(collection) ? collection.get : () => collection;
-      return host.repeat({
+      return track(host.repeat({
         kind: 'binding',
         get: () => {
           const values = Array.from(getCollection() ?? []);
@@ -167,7 +167,7 @@ export function createGtplRenderRuntime<Node>(
             throw error;
           }
         },
-      });
+      }));
     },
     switch: (value, cases, renderDefault) => {
       const render = (current: unknown): Node => {
@@ -177,7 +177,7 @@ export function createGtplRenderRuntime<Node>(
         return renderDefault?.() ?? host.fragment([]);
       };
       return isGtplBinding(value)
-        ? host.switch(value, cases, renderDefault)
+        ? track(host.switch(value, cases, renderDefault))
         : render(value);
     },
   };

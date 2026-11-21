@@ -6,7 +6,8 @@ The runtime stays reflection-free: pass the metadata into an explicit registry.
 ## Component
 
 ```ts
-import { Component, Input, Output, getComponentMetadata } from 'gnome-extension-framework';
+import { Component, Input, Output } from 'gnome-extension-framework/runtime';
+import { getComponentMetadata } from 'gnome-extension-framework';
 import { EventEmitter } from 'gnome-extension-framework/runtime';
 
 @Component({

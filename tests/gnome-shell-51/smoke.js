@@ -1,18 +1,35 @@
 import Clutter from 'gi://Clutter';
 import St from 'gi://St';
+import {
+  Component,
+  PipeRegistry,
+  createStRenderHost,
+  getComponentMetadata,
+  signal,
+} from '../../dist/extension/lib/runtime/index.js';
 
 Clutter.init(null);
 
-const box = new St.BoxLayout({ vertical: true });
-const label = new St.Label({ text: 'GEF GNOME Shell 51 smoke test' });
-let destroyed = false;
+const state = signal(1);
+state.set(2);
+if (state.get() !== 2) throw new Error('GJS runtime signal smoke test failed.');
 
-box.add_child(label);
-label.connect('destroy', () => { destroyed = true; });
+const pipes = new PipeRegistry().register('upper', {
+  transform: (value) => String(value).toUpperCase(),
+});
+if (pipes.transform('upper', 'gef') !== 'GEF') throw new Error('GJS pipe registry smoke test failed.');
+
+class SmokeComponent {}
+Component({ selector: 'GefSmoke', template: '<StLabel />' })(SmokeComponent);
+if (getComponentMetadata(SmokeComponent)?.selector !== 'GefSmoke') {
+  throw new Error('Runtime-safe component metadata smoke test failed.');
+}
+
+const host = createStRenderHost(St);
+const label = host.element('StLabel', { text: 'GEF GNOME Shell 51 smoke test' }, undefined);
 if (label.get_text() !== 'GEF GNOME Shell 51 smoke test') {
   throw new Error('St.Label did not preserve its text property.');
 }
-box.destroy();
-if (!destroyed) throw new Error('St actor destroy signal was not emitted.');
+host.destroy(label);
 
-print('GNOME Shell 51 St actor smoke test passed.');
+print('GEF runtime and GNOME Shell 51 St actor smoke tests passed.');

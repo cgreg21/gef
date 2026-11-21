@@ -60,6 +60,9 @@ async function listFiles(directory) {
 for (const file of await listFiles(output)) {
   if (!file.endsWith('.js')) continue;
   const source = await readFile(file, 'utf8');
+  if (file.includes('/lib/runtime/') && (source.includes('node:') || source.includes('typescript'))) {
+    throw new Error(`Node.js or TypeScript dependency found in GJS runtime module: ${file}`);
+  }
   const imports = source.matchAll(/(?:from\s*|import\s*)['"]([^'"]+)['"]/g);
   for (const match of imports) {
     const specifier = match[1] ?? '';

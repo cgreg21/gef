@@ -11,6 +11,18 @@ function emit(source: string, componentMembers: string[] = []): string {
 }
 
 describe('emitGtplTemplate', () => {
+  it('treats free template identifiers as context members by default', () => {
+    const parsed = parseGtpl('<StLabel>{{name}}</StLabel>');
+    expect(parsed.diagnostics).toEqual([]);
+    expect(emitGtplTemplate(parsed.nodes)).toContain('ctx.name');
+  });
+
+  it('keeps built-in globals unqualified while resolving context members', () => {
+    const parsed = parseGtpl('<StLabel>{{String(name)}}</StLabel>');
+    expect(parsed.diagnostics).toEqual([]);
+    expect(emitGtplTemplate(parsed.nodes)).toContain('String(ctx.name)');
+  });
+
   it('emits elements, static attributes and interpolated text', () => {
     const output = emit('<label class="title">Hello {{name}}</label>', ['name']);
     expect(output).toContain('runtime.element("label"');

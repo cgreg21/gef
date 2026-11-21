@@ -24,6 +24,7 @@ export interface GtkNamespace {
   readonly Entry: GtkWidgetConstructor;
   readonly Image: GtkWidgetConstructor;
   readonly ScrolledWindow: GtkWidgetConstructor;
+  readonly Switch?: GtkWidgetConstructor;
 }
 
 export interface AdwNamespace {
@@ -85,6 +86,7 @@ export function createGtkRenderHost(
     GtkEntry: Gtk.Entry,
     GtkImage: Gtk.Image,
     GtkScrolledWindow: Gtk.ScrolledWindow,
+    ...(Gtk.Switch ? { GtkSwitch: Gtk.Switch } : {}),
     ...(options.adw?.PreferencesPage ? { AdwPreferencesPage: options.adw.PreferencesPage } : {}),
     ...(options.adw?.PreferencesGroup ? { AdwPreferencesGroup: options.adw.PreferencesGroup } : {}),
     ...(options.adw?.ActionRow ? { AdwActionRow: options.adw.ActionRow } : {}),

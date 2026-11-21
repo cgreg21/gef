@@ -29,6 +29,10 @@ export class PipeRegistry {
     return this;
   }
 
+  registerMetadata(metadata: { readonly name: string; readonly pure: boolean }, pipe: RuntimePipe): this {
+    return this.register(metadata.name, pipe, metadata.pure);
+  }
+
   transform(name: string, value: unknown, ...args: unknown[]): unknown {
     const entry = this.#pipes.get(name);
     if (!entry) throw new Error(`No GEF pipe registered as "${name}".`);

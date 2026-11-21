@@ -11,6 +11,13 @@ describe('PipeRegistry', () => {
     expect(transform).toHaveBeenCalledTimes(2);
   });
 
+  it('registers a pipe using decorator metadata', () => {
+    const transform = vi.fn((value: unknown) => String(value).toUpperCase());
+    const pipes = new PipeRegistry().registerMetadata({ name: 'uppercase', pure: true }, { transform });
+    expect(pipes.transform('uppercase', 'gef')).toBe('GEF');
+    expect(pipes.has('uppercase')).toBe(true);
+  });
+
   it('does not cache impure pipes', () => {
     const transform = vi.fn((value: unknown) => value);
     const pipes = new PipeRegistry().register('clock', { transform }, false);

@@ -61,6 +61,18 @@ function reportCssDiagnostics(source: string, input: string, io: CliIO): number 
   return diagnostics.length;
 }
 
+function formatDiagnostic(source: string, input: string, diagnostic: { code: string; message: string; span: { line: number; column: number; start: number; end: number } }): string {
+  const lines = source.split(/\r?\n/);
+  const line = lines[diagnostic.span.line - 1] ?? '';
+  const width = String(diagnostic.span.line).length;
+  const markerLength = Math.max(1, Math.min(diagnostic.span.end - diagnostic.span.start, Math.max(1, line.length - diagnostic.span.column + 1)));
+  return [
+    `${input}:${diagnostic.span.line}:${diagnostic.span.column}: ${diagnostic.code}: ${diagnostic.message}`,
+    `${String(diagnostic.span.line).padStart(width)} | ${line}`,
+    `${' '.repeat(width)} | ${' '.repeat(Math.max(0, diagnostic.span.column - 1)}${'^'.repeat(markerLength)}`,
+  ].join('\n');
+}
+
 export async function runCli(args: readonly string[] = process.argv.slice(2), io: CliIO = defaultIO): Promise<number> {
   const [command, inputArg, outputArg] = args;
   if (!command || command === '--help' || command === '-h') {
@@ -191,7 +203,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
 
   const result = checkGtpl(source);
   for (const diagnostic of result.diagnostics) {
-    io.stderr(`${input}:${diagnostic.span.line}:${diagnostic.span.column}: ${diagnostic.code}: ${diagnostic.message}`);
+    io.stderr(formatDiagnostic(source, input, diagnostic));
   }
   if (result.diagnostics.length > 0) return 1;
   if (command === 'check') {

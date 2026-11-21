@@ -11,6 +11,7 @@ export interface ComponentCompileOptions {
   readonly globals?: readonly string[];
   readonly components?: readonly GtplComponentDefinition[];
   readonly strictComponents?: boolean;
+  readonly contextType?: string;
 }
 
 export interface ComponentCompileResult {

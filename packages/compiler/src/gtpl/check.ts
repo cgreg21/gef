@@ -2,6 +2,7 @@ import type { GtplNode } from './ast/types.js';
 import type { Diagnostic } from './diagnostics/diagnostic.js';
 import { analyzeGtpl, type GtplSemanticOptions } from './analysis/semantic.js';
 import { parseGtpl } from './parser/parser.js';
+import { validateGtplExpressionTypes } from './analysis/types.js';
 import { lowerGtplStructuralDirectives } from './lowering/structural.js';
 import {
   validateGtplComponents,
@@ -12,6 +13,8 @@ export interface GtplCheckOptions extends GtplSemanticOptions {
   readonly components?: readonly GtplComponentDefinition[];
   /** Report unknown element selectors as errors. Defaults to false for native St actors. */
   readonly strictComponents?: boolean;
+  /** Optional TypeScript type literal used to check component template expressions. */
+  readonly contextType?: string;
 }
 
 export interface GtplCheckResult {
@@ -32,8 +35,12 @@ export function checkGtpl(source: string, options: GtplCheckOptions = {}): GtplC
     strict: options.strictComponents ?? false,
   });
 
+  const types = options.contextType
+    ? validateGtplExpressionTypes(lowered.nodes, options.contextType)
+    : [];
+
   return {
     nodes: lowered.nodes,
-    diagnostics: [...parsed.diagnostics, ...lowered.diagnostics, ...semantic.diagnostics, ...components],
+    diagnostics: [...parsed.diagnostics, ...lowered.diagnostics, ...semantic.diagnostics, ...components, ...types],
   };
 }

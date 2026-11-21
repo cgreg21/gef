@@ -37,7 +37,8 @@ node dist/cli/src/index.js new my-extension
 node dist/cli/src/index.js generate component UserCard src/components
 node dist/cli/src/index.js test
 node dist/cli/src/index.js package
-node dist/cli/src/index.js doctor\nnode dist/cli/src/index.js ego-check dist/extension
+node dist/cli/src/index.js doctor
+node dist/cli/src/index.js ego-check dist/extension
 ```
 
 The `ego-check` command checks staged metadata, stable Shell versions, declared GSettings schema presence and ID, forbidden development files and basic Shell/preferences import boundaries. The package workflow runs this validator automatically after staging. It is a useful local guard, not a substitute for EGO review. The `new` command creates a working panel-indicator example, with minimal GJS type declarations, direct generated types and explicit `enable()`/`disable()` resource cleanup. Generated Node.js packaging code uses static imports and a straightforward synchronous pack command. Generated source includes the GNOME guidance notice for AI-assisted code; remove it only if you understand and can maintain the JavaScript before considering EGO publication. The `compile` command creates missing parent directories for its JavaScript output path, including nested relative paths. CSS compatibility errors include source excerpts and caret markers.

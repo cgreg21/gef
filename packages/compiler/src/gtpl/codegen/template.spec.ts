@@ -32,6 +32,18 @@ describe('emitGtplTemplate', () => {
     expect(generated.map.mappings).not.toBe('');
   });
 
+
+  it('maps nested elements and their text nodes', () => {
+    const source = `<StBox>
+  <StLabel>{{name}}</StLabel>
+</StBox>`;
+    const parsed = parseGtpl(source);
+    expect(parsed.diagnostics).toEqual([]);
+    const generated = emitGtplTemplateWithSourceMap(parsed.nodes, { source: 'view.gtpl' });
+    expect(generated.map.mappings.split(',')).toHaveLength(3);
+    expect(generated.code).not.toContain('__GEF_MAP_');
+  });
+
   it('ignores formatting whitespace between native child widgets', () => {
     const parsed = parseGtpl(`<AdwPreferencesPage>
   <AdwPreferencesGroup>

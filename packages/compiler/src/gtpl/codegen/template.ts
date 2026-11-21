@@ -36,7 +36,7 @@ export interface GtplTemplateWithSourceMap {
   readonly map: GtplSourceMap;
 }
 
-interface RootNodeMapping {
+interface NodeMapping {
   readonly generatedColumn: number;
   readonly sourceLine: number;
   readonly sourceColumn: number;
@@ -118,13 +118,12 @@ function expression(node: ExpressionNode | undefined, locals: ReadonlySet<string
 function emitGtplTemplateInternal(
   nodes: readonly GtplNode[],
   options: GtplTemplateOptions,
-): { code: string; rootMappings: RootNodeMapping[] } {
-  const rootMappings: RootNodeMapping[] = [];
-  const renderNodes = (items: readonly GtplNode[], parentLocals: ReadonlySet<string>, captureRootNodes = false): string => {
+): { code: string; nodeMappings: NodeMapping[] } {
+  const nodeMappings: NodeMapping[] = [];
+  const renderNodes = (items: readonly GtplNode[], parentLocals: ReadonlySet<string>): string => {
     const locals = new Set(parentLocals);
     const statements: string[] = [];
     const rendered: string[] = [];
-    const renderedNodes: GtplNode[] = [];
     const contentNodes = items.filter((node) => !isWhitespaceOnlyText(node));
     const isElementContainer = contentNodes.length > 0
       && contentNodes.every((node) => node.kind === 'element');
@@ -138,7 +137,6 @@ function emitGtplTemplateInternal(
         continue;
       }
       rendered.push(renderNode(node, locals));
-      if (captureRootNodes) renderedNodes.push(node);
     }
 
     const contentPrefix = rendered.length > 1 ? 'runtime.fragment([' : '';
@@ -146,18 +144,6 @@ function emitGtplTemplateInternal(
       ? 'runtime.fragment([])'
       : rendered.length === 1 ? rendered[0]! : contentPrefix + rendered.join(', ') + '])';
     const statementPrefix = statements.length === 0 ? '' : '(() => { ' + statements.join(' ') + ' return ';
-    if (captureRootNodes) {
-      let generatedColumn = '(ctx, runtime) => '.length + statementPrefix.length + contentPrefix.length;
-      for (let index = 0; index < renderedNodes.length; index += 1) {
-        const node = renderedNodes[index]!;
-        rootMappings.push({
-          generatedColumn,
-          sourceLine: node.span.line - 1,
-          sourceColumn: node.span.column - 1,
-        });
-        generatedColumn += rendered[index]!.length + (index < renderedNodes.length - 1 ? 2 : 0);
-      }
-    }
     return statementPrefix + content + (statements.length === 0 ? '' : ' })()');
   };
 
@@ -233,74 +219,25 @@ function emitGtplTemplateInternal(
   };
 
   const renderNode = (node: GtplNode, locals: ReadonlySet<string>): string => {
+    const marker = nodeMappings.length;
+    nodeMappings.push({ generatedColumn: 0, sourceLine: node.span.line - 1, sourceColumn: node.span.column - 1 });
+    let rendered: string;
     switch (node.kind) {
-      case 'text': return renderText(node, locals);
-      case 'element': return renderElement(node, locals);
-      case 'if-block': return renderIf(node, locals);
-      case 'for-block': return renderFor(node as ForBlockNode, locals);
-      case 'switch-block': return renderSwitch(node, locals);
-      case 'let-declaration': return 'runtime.fragment([])';
+      case 'text': rendered = renderText(node, locals); break;
+      case 'element': rendered = renderElement(node, locals); break;
+      case 'if-block': rendered = renderIf(node, locals); break;
+      case 'for-block': rendered = renderFor(node as ForBlockNode, locals); break;
+      case 'switch-block': rendered = renderSwitch(node, locals); break;
+      case 'let-declaration': rendered = 'runtime.fragment([])'; break;
     }
+    return `__GEF_MAP_${marker}__${rendered}`;
   };
 
-  return { code: '(ctx, runtime) => ' + renderNodes(nodes, new Set(), true), rootMappings };
-}
-
-function encodeVlq(value: number): string {
-  const signed = value < 0 ? (-value << 1) | 1 : value << 1;
-  let remaining = signed;
-  let encoded = '';
-  do {
-    let digit = remaining & 31;
-    remaining >>>= 5;
-    if (remaining > 0) digit |= 32;
-    encoded += 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'[digit]!;
-  } while (remaining > 0);
-  return encoded;
-}
-
-function createMappings(mappings: readonly RootNodeMapping[]): string {
-  let previousGeneratedColumn = 0;
-  let previousSourceLine = 0;
-  let previousSourceColumn = 0;
-  return mappings.map((mapping) => {
-    const segment = [
-      encodeVlq(mapping.generatedColumn - previousGeneratedColumn),
-      encodeVlq(0),
-      encodeVlq(mapping.sourceLine - previousSourceLine),
-      encodeVlq(mapping.sourceColumn - previousSourceColumn),
-    ].join('');
-    previousGeneratedColumn = mapping.generatedColumn;
-    previousSourceLine = mapping.sourceLine;
-    previousSourceColumn = mapping.sourceColumn;
-    return segment;
-  }).join(',');
-}
-
-/** Emits a render function and a source map for its top-level GTPL nodes. */
-export function emitGtplTemplateWithSourceMap(
-  nodes: readonly GtplNode[],
-  options: GtplSourceMapOptions,
-): GtplTemplateWithSourceMap {
-  const { source, sourceContent, file, ...templateOptions } = options;
-  const generated = emitGtplTemplateInternal(nodes, templateOptions);
-  return {
-    code: generated.code,
-    map: {
-      version: 3,
-      ...(file ? { file } : {}),
-      sources: [source],
-      ...(sourceContent === undefined ? {} : { sourcesContent: [sourceContent] }),
-      names: [],
-      mappings: createMappings(generated.rootMappings),
-    },
-  };
-}
-
-/** Emits a render function without source-map metadata. */
-export function emitGtplTemplate(
-  nodes: readonly GtplNode[],
-  options: GtplTemplateOptions = {},
-): string {
-  return emitGtplTemplateInternal(nodes, options).code;
-}
+  const markedCode = '(ctx, runtime) => ' + renderNodes(nodes, new Set());
+  let removedLength = 0;
+  const result = markedCode.replace(/__GEF_MAP_(\d+)__/g, (marker, index: string, offset: number) => {
+    nodeMappings[Number(index)]!.generatedColumn = offset - removedLength;
+    removedLength += marker.length;
+    return '';
+  });
+  return { code: result, nodeMappings };

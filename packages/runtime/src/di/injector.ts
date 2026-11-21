@@ -31,6 +31,7 @@ export class Injector {
   readonly #providers = new Map<Token, Provider>();
   readonly #instances = new Map<Token, unknown>();
   readonly #resolving: Token[] = [];
+  readonly #children = new Set<Injector>();
   readonly #resources = new ResourceScope();
   #destroyed = false;
 
@@ -44,6 +45,7 @@ export class Injector {
       }
       this.#providers.set(provider.provide, provider);
     }
+    parent?.#children.add(this);
   }
 
   get<T>(token: Token<T>): T {
@@ -80,8 +82,20 @@ export class Injector {
   destroy(): void {
     if (this.#destroyed) return;
     this.#destroyed = true;
-    this.#resources.dispose();
+    let firstError: unknown;
+    let hasError = false;
+    for (const child of [...this.#children]) {
+      try { child.destroy(); } catch (error) {
+        if (!hasError) { firstError = error; hasError = true; }
+      }
+    }
+    this.#children.clear();
+    try { this.#resources.dispose(); } catch (error) {
+      if (!hasError) { firstError = error; hasError = true; }
+    }
     this.#instances.clear();
+    this.parent?.#children.delete(this);
+    if (hasError) throw firstError;
   }
 
   private create(provider: Provider): unknown {

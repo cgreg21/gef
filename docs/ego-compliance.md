@@ -19,6 +19,8 @@ with GNOME reviewers.
 - Avoid redundant guards, empty catch blocks, unnecessary try/catch wrappers,
   excessive comments, and generated placeholder behavior.
 - Generated code must be explainable and maintainable by the extension author.
+- Prefer native inferred or directly referenced types over one-use aliases.
+- Keep generated build scripts linear; avoid dynamic imports and wrappers when a direct import and call suffice.
 
 ## Extension lifecycle
 

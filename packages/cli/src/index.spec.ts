@@ -75,6 +75,11 @@ describe('GEF CLI', () => {
     expect(extension).toContain('override enable(): void');
     expect(extension).toContain('Main.panel.addToStatusArea');
     expect(extension).toContain('this.indicator?.destroy()');
+    expect(extension).toContain('InstanceType<typeof St.Button>');
+    expect(extension).not.toContain('StButton');
+    const packageScript = writes.find((item) => item.path.endsWith('scripts/package.mjs'))?.content ?? '';
+    expect(packageScript).toContain("import { spawnSync } from 'node:child_process'");
+    expect(packageScript).not.toContain("await import('node:child_process')");
     expect(extension).toContain('Do NOT upload to extensions.gnome.org');
     expect(directories).toEqual(expect.arrayContaining([expect.stringContaining('out/scripts')]));
     expect(output[0]).toContain('Created extension project');

@@ -203,12 +203,15 @@ describe('createGtkRenderHost', () => {
   it('cleans up GTK conditional and switch nodes when attachment fails', () => {
     const host = createGtkRenderHost({ ...createGtk(), Box: FailingBox });
     const condition = signal(false);
+    let conditionalNode!: FakeWidget;
     const conditional = host.conditional(
       { kind: 'binding', get: () => condition.get() },
-      () => host.element('GtkButton', { clicked: () => undefined }, undefined) as FakeWidget,
+      () => {
+        conditionalNode = host.element('GtkButton', { clicked: () => undefined }, undefined) as FakeWidget;
+        return conditionalNode;
+      },
       () => host.text('fallback'),
     ) as FakeWidget;
-    const conditionalNode = conditional.children[0] as FakeWidget;
     FailingBox.remaining = 0;
     expect(() => condition.set(true)).toThrow('attachment failed');
     FailingBox.remaining = -1;
@@ -216,12 +219,18 @@ describe('createGtkRenderHost', () => {
     host.destroy(conditional);
 
     const selected = signal('fallback');
+    let switchNode!: FakeWidget;
     const switched = host.switch(
       { kind: 'binding', get: () => selected.get() },
-      [{ values: ['button'], render: () => host.element('GtkButton', { clicked: () => undefined }, undefined) as FakeWidget }],
+      [{
+        values: ['button'],
+        render: () => {
+          switchNode = host.element('GtkButton', { clicked: () => undefined }, undefined) as FakeWidget;
+          return switchNode;
+        },
+      }],
       () => host.text('fallback'),
     ) as FakeWidget;
-    const switchNode = switched.children[0] as FakeWidget;
     FailingBox.remaining = 0;
     expect(() => selected.set('button')).toThrow('attachment failed');
     FailingBox.remaining = -1;

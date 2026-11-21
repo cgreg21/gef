@@ -190,8 +190,8 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         for (const match of source.matchAll(/^\s*(?:import|export)\s+(?:[\s\S]*?\s+from\s+)?['"]([^'"]+)['"]/gm)) {
           const specifier = match[1]!;
           if (forbidden.test(specifier)) {
-            const relative = file.slice(directory.length + 1).replaceAll('\\', '/');
-            errors.push(`${relative}: ${message}`);
+            const path = relative(directory, file).replaceAll('\\', '/');
+            errors.push(`${path}: ${message}`);
           }
           if (specifier.startsWith('./') || specifier.startsWith('../')) {
             const dependency = resolve(dirname(file), specifier);
@@ -199,14 +199,15 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
           }
         }
       }
-      return visited;
+      return new Set([...visited].map((file) => relative(directory, file).replaceAll('\\', '/')));
     };
-    const reachableJavaScript = new Set([resolve(directory, 'extension.js'), resolve(directory, 'prefs.js')]);
+    const reachableJavaScript = new Set(['extension.js', 'prefs.js']);
     for (const file of inspectImports('prefs.js', /^gi:\/\/(?:St|Clutter|Meta|Shell)(?:[/?]|$)/, 'preferences dependency imports a Shell-only library.')) reachableJavaScript.add(file);
     for (const file of inspectImports('extension.js', /^gi:\/\/(?:Gtk|Gdk|Adw)(?:[/?]|$)/, 'Shell dependency imports GTK or libadwaita.')) reachableJavaScript.add(file);
     for (const file of javascriptSources.keys()) {
-      if (!reachableJavaScript.has(file)) {
-        errors.push(`JavaScript file is not imported by either extension entry point: ${file.slice(directory.length + 1).replaceAll('\\', '/')}`);
+      const path = relative(directory, file).replaceAll('\\', '/');
+      if (!reachableJavaScript.has(path)) {
+        errors.push(`JavaScript file is not imported by either extension entry point: ${path}`);
       }
     }
     if (errors.length) {

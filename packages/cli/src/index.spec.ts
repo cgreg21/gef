@@ -275,7 +275,7 @@ describe('GEF CLI', () => {
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org.example.demo' })
         : path.endsWith('.gschema.xml') ? '<schemalist><schema id="org.example.demo" path="/org/example/demo/"></schema></schemalist>' : 'export default class Demo { enable() {} disable() {} }',
     };
-    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
+    expect(await runCli(['ego-check', '/tmp/demo'], io), base.errors.join('\n')).toBe(0);
   });
 
   it('accepts a clean staged extension', async () => {

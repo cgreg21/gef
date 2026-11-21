@@ -62,6 +62,11 @@ function collectIdentifiers(node: ExpressionNode, names: Set<string>): void {
   }
 }
 
+function isWhitespaceOnlyText(node: GtplNode): boolean {
+  return node.kind === 'text'
+    && node.parts.every((part) => part.kind === 'text' && /^\\s*$/.test(part.value));
+}
+
 function expression(node: ExpressionNode | undefined, locals: ReadonlySet<string>, options: GtplTemplateOptions): string {
   if (!node) throw new Error('Cannot generate GTPL: an expression has no valid AST.');
   const identifiers = new Set<string>();
@@ -92,8 +97,10 @@ export function emitGtplTemplate(
     const locals = new Set(parentLocals);
     const statements: string[] = [];
     const rendered: string[] = [];
+    const hasContent = items.some((node) => !isWhitespaceOnlyText(node));
+    const nodes = hasContent ? items.filter((node) => !isWhitespaceOnlyText(node)) : items;
 
-    for (const node of items) {
+    for (const node of nodes) {
       if (node.kind === 'let-declaration') {
         const value = expression(node.parsedExpression, locals, options);
         statements.push(`const ${node.name} = ${value};`);

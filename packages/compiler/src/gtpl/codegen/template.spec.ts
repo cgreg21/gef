@@ -11,6 +11,19 @@ function emit(source: string, componentMembers: string[] = []): string {
 }
 
 describe('emitGtplTemplate', () => {
+  it('ignores formatting whitespace between native child widgets', () => {
+    const parsed = parseGtpl(`<AdwPreferencesPage>
+  <AdwPreferencesGroup>
+    <AdwActionRow title="General" />
+  </AdwPreferencesGroup>
+</AdwPreferencesPage>`);
+    expect(parsed.diagnostics).toEqual([]);
+    const source = emitGtplTemplate(parsed.nodes);
+    expect(source).not.toContain('runtime.fragment');
+    expect(source).toContain('runtime.element("AdwPreferencesGroup"');
+    expect(source).toContain('runtime.element("AdwActionRow"');
+  });
+
   it('treats free template identifiers as context members by default', () => {
     const parsed = parseGtpl('<StLabel>{{name}}</StLabel>');
     expect(parsed.diagnostics).toEqual([]);

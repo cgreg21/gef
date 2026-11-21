@@ -174,7 +174,7 @@ export function createGtplRenderRuntime<Node>(
         for (const branch of cases) {
           if (branch.values.some((candidate) => Object.is(candidate, current))) return branch.render();
         }
-        return renderDefault?.() ?? host.fragment([]);
+        return renderDefault?.() ?? track(host.fragment([]));
       };
       return isGtplBinding(value)
         ? track(host.switch(value, cases, renderDefault))

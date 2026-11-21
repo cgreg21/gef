@@ -85,8 +85,14 @@ export function createStRenderHost(
       ? {}
       : { orientation: options.fragmentOrientation };
     const actor = new St.BoxLayout(properties);
-    appendChildren(actor, children);
-    return actor;
+    try {
+      appendChildren(actor, children);
+      return actor;
+    } catch (error) {
+      for (const child of children) actor.remove_child?.(child);
+      actor.destroy();
+      throw error;
+    }
   };
 
   return {
@@ -151,7 +157,8 @@ export function createStRenderHost(
       actor.connect('destroy', () => {
         resources.dispose();
       });
-      resources.add(effect(() => {
+      try {
+        resources.add(effect(() => {
         const value = condition.get();
         const next = value ? render(value) : fallback();
         if (current) {
@@ -160,8 +167,12 @@ export function createStRenderHost(
         }
         actor.set_child?.(next);
         current = next;
-      }));
-      return actor;
+        }));
+        return actor;
+      } catch (error) {
+        actor.destroy();
+        throw error;
+      }
     },
     switch(value, cases, renderDefault) {
       const actor = new St.Bin({});
@@ -170,7 +181,8 @@ export function createStRenderHost(
       actor.connect('destroy', () => {
         resources.dispose();
       });
-      resources.add(effect(() => {
+      try {
+        resources.add(effect(() => {
         const selected = cases.find((branch) => branch.values.some((candidate) => Object.is(candidate, value.get())));
         const next = selected?.render() ?? renderDefault?.() ?? makeContainer([]);
         if (current) {
@@ -179,8 +191,12 @@ export function createStRenderHost(
         }
         actor.set_child?.(next);
         current = next;
-      }));
-      return actor;
+        }));
+        return actor;
+      } catch (error) {
+        actor.destroy();
+        throw error;
+      }
     },
     fragment(children) {
       return makeContainer(children);

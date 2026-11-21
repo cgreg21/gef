@@ -134,8 +134,13 @@ export function createGtkRenderHost(
     const box = makeBox(Gtk, options);
     const scope = new ResourceScope();
     own(box, scope);
-    update(box, scope);
-    return box;
+    try {
+      update(box, scope);
+      return box;
+    } catch (error) {
+      disposeWidget(box);
+      throw error;
+    }
   };
 
   return {
@@ -211,10 +216,17 @@ export function createGtkRenderHost(
     },
     fragment(nodes) {
       const box = makeBox(Gtk, options);
-      for (const node of nodes) addChild(box, node);
-      children.set(box, [...nodes]);
+      const added: GtkActor[] = [];
       own(box, new ResourceScope());
-      return box;
+      try {
+        for (const node of nodes) { addChild(box, node); added.push(node); }
+        children.set(box, added);
+        return box;
+      } catch (error) {
+        children.set(box, added);
+        disposeWidget(box);
+        throw error;
+      }
     },
     repeat(state: GtplBinding<GtplRepeatState<GtkActor>>) {
       const box = makeBox(Gtk, options);
@@ -222,7 +234,8 @@ export function createGtkRenderHost(
       own(box, scope);
       let previousItems: GtplRepeatItem<GtkActor>[] = [];
       let previousEmpty: GtkActor | undefined;
-      scope.add(effect(() => {
+      try {
+        scope.add(effect(() => {
         const nextState = state.get();
         const oldByKey = new Map(previousItems.map((item) => [item.key, item]));
         const nextItems = nextState.items.map((item) => {
@@ -241,8 +254,12 @@ export function createGtkRenderHost(
         children.set(box, nextChildren);
         previousItems = nextItems;
         previousEmpty = nextState.empty;
-      }));
-      return box;
+        }));
+        return box;
+      } catch (error) {
+        disposeWidget(box);
+        throw error;
+      }
     },
     conditional(condition, render, fallback) {
       return makeDynamicBox((box, scope) => {

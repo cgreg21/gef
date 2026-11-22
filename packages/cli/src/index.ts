@@ -128,7 +128,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     }
     const schemaId = metadata['settings-schema'];
     if (schemaId !== undefined) {
-      if (typeof schemaId !== 'string' || !/^[A-Za-z][A-Za-z0-9]*(?:[.][A-Za-z][A-Za-z0-9]*)+$/.test(schemaId)) {
+      if (typeof schemaId !== 'string' || !/^[A-Za-z](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:[.][A-Za-z](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/.test(schemaId)) {
         errors.push('metadata.json: settings-schema must be a valid dotted GSettings schema ID.');
       } else {
         const schemaFiles = files.filter((file) => file.includes('/schemas/') && file.endsWith('.gschema.xml'));

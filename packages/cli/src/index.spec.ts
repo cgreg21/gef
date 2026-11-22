@@ -272,8 +272,8 @@ describe('GEF CLI', () => {
       ...base.io,
       listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/schemas/demo.gschema.xml'],
       readFile: async (path) => path.endsWith('metadata.json')
-        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org.example.demo' })
-        : '<schemalist><schema id="org.example.other" path="/org/example/other/"><key name="note" type="s"><default>"org.example.demo"</default></key></schema></schemalist>',
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org.example.demo-extension' })
+        : '<schemalist><schema id="org.example.other" path="/org/example/other/"><key name="note" type="s"><default>"org.example.demo-extension"</default></key></schema></schemalist>',
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
     expect(base.errors.join('\\n')).toContain('does not match a packaged GSettings schema');
@@ -285,7 +285,7 @@ describe('GEF CLI', () => {
       ...base.io,
       listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js'],
       readFile: async (path) => path.endsWith('metadata.json')
-        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org.example.demo' })
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org.example.demo-extension' })
         : '',
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
@@ -296,10 +296,10 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/schemas/org.example.demo.gschema.xml'],
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/schemas/org.example.demo-extension.gschema.xml'],
       readFile: async (path) => path.endsWith('metadata.json')
-        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org.example.demo' })
-        : path.endsWith('.gschema.xml') ? '<schemalist><schema id="org.example.demo" path="/org/example/demo/"></schema></schemalist>' : 'export default class Demo { enable() {} disable() {} }',
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org.example.demo-extension' })
+        : path.endsWith('.gschema.xml') ? '<schemalist><schema id="org.example.demo-extension" path="/org/example/demo/"></schema></schemalist>' : 'export default class Demo { enable() {} disable() {} }',
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io), base.errors.join('\n')).toBe(0);
   });

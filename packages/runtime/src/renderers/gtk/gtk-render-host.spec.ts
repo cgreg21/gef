@@ -165,10 +165,10 @@ describe('createGtkRenderHost', () => {
     expect(clicks).toBe(0);
     expect(button.signals.size).toBe(0);
     expect(text.properties.label).toBe('before');
-    expect(root.children).toHaveLength(0);
-    expect(button.children).toHaveLength(0);
-    expect(button.parent).toBeNull();
-    expect(text.parent).toBeNull();
+    expect(root.children).toEqual([button]);
+    expect(button.children).toEqual([text]);
+    expect(button.parent).toBe(root);
+    expect(text.parent).toBe(button);
   });
 
   it('updates bound properties and text, then disposes subscriptions', () => {

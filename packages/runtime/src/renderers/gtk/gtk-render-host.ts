@@ -164,12 +164,12 @@ export function createGtkRenderHost(
     // GTK4 widgets do not expose GTK3's destroy signal; explicit view disposal owns cleanup.
   };
 
-  const disposeWidget = (actor: GtkActor): void => {
+  const disposeWidget = (actor: GtkActor, detach = true): void => {
     if (disposed.has(actor)) return;
     disposed.add(actor);
-    for (const child of children.get(actor) ?? []) disposeWidget(child);
+    for (const child of children.get(actor) ?? []) disposeWidget(child, false);
     resources.get(actor)?.dispose();
-    const parent = actor.get_parent?.();
+    const parent = detach ? actor.get_parent?.() : null;
     if (parent) removeChild(parent, actor);
     children.delete(actor);
     resources.delete(actor);

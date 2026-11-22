@@ -212,6 +212,21 @@ describe('GEF CLI', () => {
     expect(base.errors.join('\\n')).toContain('extension class must implement disable()');
   });
 
+  it('warns when the extension constructor creates GNOME resources or connects signals', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : "import St from 'gi://St';\\nexport default class Demo { constructor() { this.button = new St.Button(); this.button.connect('clicked', () => {}); } enable() {} disable() {} }",
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
+    expect(base.errors).toHaveLength(0);
+    expect(base.output).toContain('EGO checks passed');
+    expect(base.warnings.join('\\n')).toContain('constructor contains GNOME resource or signal side effects');
+  });
+
   it('rejects Shell imports from preferences code', async () => {
     const base = createIO('');
     const io: CliIO = {

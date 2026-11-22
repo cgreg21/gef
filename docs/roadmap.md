@@ -5,7 +5,8 @@
 - [ ] Emit readable, consistently formatted JavaScript without minification or obfuscation.
 - [x] Check Shell and preferences entry points and their complete static JavaScript dependency graphs for process-specific GI imports.
 - [x] Require the default-exported Shell extension class to implement `enable()` and `disable()`.
-- [ ] Generate lifecycle-safe extensions: no dynamic GNOME objects or signal connections before `enable()`; clean all created resources in `disable()`.
+- [ ] Complete lifecycle validation: detect more pre-enable side effects, verify resource cleanup in `disable()` and add GNOME Shell 51 runtime lifecycle fixtures.
+- [x] Warn about GNOME actor creation, signal connections and GLib timers in the extension constructor.
 - [x] Validate unique stable `shell-version` values and positive integer optional metadata `version`.
 - [x] Validate required `metadata.json` fields, UUID format and optional settings schema metadata.
 - [x] Reject JavaScript modules not reachable from either extension entry point.

@@ -167,6 +167,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         }
       }
     }
+    const warnings: string[] = [];
     const shellEntry = resolve(directory, 'extension.js');
     const shellSource = javascriptSources.get(shellEntry);
     if (shellSource !== undefined) {
@@ -177,6 +178,10 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         if (!new RegExp('\\b' + hook + '\\s*\\(\\s*\\)\\s*\\{').test(shellSource)) {
           errors.push('extension.js: extension class must implement ' + hook + '().');
         }
+      }
+      const constructorBody = shellSource.match(/\\bconstructor\\s*\\([^)]*\\)\\s*\\{([\\s\\S]*?)\\n\\s*\\}/)?.[1] ?? '';
+      if (/\\b(?:connect|connectObject|timeout_add|idle_add)\\s*\\(|\\bnew\\s+(?:St|Clutter|Meta|Shell)\\./.test(constructorBody)) {
+        warnings.push('extension.js: constructor contains GNOME resource or signal side effects; move them into enable() and release them in disable().');
       }
     }
     const inspectImports = (entry: string, forbidden: RegExp, message: string): Set<string> => {
@@ -229,7 +234,6 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     for (const file of files.filter((path) => path.endsWith('.css'))) {
       try { resourceSources.push(await io.readFile(file)); } catch { /* A failed optional asset read is reported as a possible unused resource. */ }
     }
-    const warnings: string[] = [];
     for (const file of resourceFiles) {
       const path = relative(directory, file).replaceAll('\\', '/');
       if (path === 'stylesheet.css') continue;

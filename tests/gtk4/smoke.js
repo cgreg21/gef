@@ -89,6 +89,15 @@ if (!settings.get_boolean('enabled')) {
 }
 host.destroy(preferences);
 
+function findSwitch(widget) {
+  if (widget instanceof Gtk.Switch) return widget;
+  for (let child = widget.get_first_child?.(); child; child = child.get_next_sibling?.()) {
+    const match = findSwitch(child);
+    if (match) return match;
+  }
+  return undefined;
+}
+
 for (let cycle = 1; cycle <= 3; cycle += 1) {
   const preferencesScope = new ResourceScope();
   const cycleEnabled = bindGSettingsBoolean(settings, 'enabled', preferencesScope);

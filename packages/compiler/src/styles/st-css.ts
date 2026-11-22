@@ -58,7 +58,7 @@ export function validateStCss(source: string): readonly StCssDiagnostic[] {
       } else if (char !== '\n' && char !== '\r') masked[index] = ' ';
     } else if (maskedQuote) {
       if (char === '\\') {
-        if (char !== '\n' && char !== '\r') masked[index] = ' ';
+        masked[index] = ' ';
         if (index + 1 < source.length) {
           if (next !== '\n' && next !== '\r') masked[index + 1] = ' ';
           index += 1;

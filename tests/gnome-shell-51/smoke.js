@@ -1,10 +1,8 @@
 import Clutter from 'gi://Clutter';
-import GLib from 'gi://GLib';
 import St from 'gi://St';
 import {
   Component,
   PipeRegistry,
-  ResourceScope,
   createStRenderHost,
   getComponentMetadata,
   signal,
@@ -12,35 +10,7 @@ import {
 
 Clutter.init(null);
 
-for (let cycle = 0; cycle < 2; cycle += 1) {
-  const scope = new ResourceScope();
-  const actor = new St.Button({ label: `Lifecycle cycle ${cycle}` });
-  let destroySignalCalls = 0;
-  let timerCalls = 0;
-
-  scope.add(() => actor.destroy());
-  const signalId = actor.connect('destroy', () => destroySignalCalls += 1);
-  scope.add(() => actor.disconnect(signalId));
-  const timerId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 10, () => {
-    timerCalls += 1;
-    return GLib.SOURCE_REMOVE;
-  });
-  scope.add(() => GLib.source_remove(timerId));
-
-  scope.dispose();
-  scope.dispose();
-
-  const loop = GLib.MainLoop.new(null, false);
-  GLib.timeout_add(GLib.PRIORITY_DEFAULT, 30, () => {
-    loop.quit();
-    return GLib.SOURCE_REMOVE;
-  });
-  loop.run();
-
-  if (destroySignalCalls !== 0 || timerCalls !== 0 || !scope.disposed) {
-    throw new Error(`GNOME lifecycle cleanup failed in cycle ${cycle}.`);
-  }
-}
+import './lifecycle.js';
 
 const state = signal(1);
 state.set(2);

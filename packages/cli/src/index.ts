@@ -218,7 +218,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     }
     const warnings: string[] = [];
     for (const file of resourceFiles) {
-      const path = relative(directory, file).replaceAll('\\\\', '/');
+      const path = relative(directory, file).replaceAll('\\', '/');
       if (path === 'stylesheet.css') continue;
       let used = false;
       if (file.endsWith('.gschema.xml')) {

@@ -1,5 +1,7 @@
 # GNOME Extension Framework (GEF)
 
+> **Alpha software:** GEF is under active development. APIs, generated output and CLI behavior may change between alpha releases. It targets GNOME Shell 51; do not treat local validation as a guarantee of extensions.gnome.org approval.
+
 GEF is a TypeScript and GTPL framework for native GNOME Shell 51 extensions.
 It targets GJS and GNOME's St/Clutter APIs for the Shell process, and GTK4 /
 libadwaita for the preferences process. It does not use a browser DOM. The GNOME Shell 51 smoke test exercises resource-scope cleanup, St host signal/effect teardown and GLib timer cancellation, then installs the generated EGO ZIP and runs two real extension enable/disable cycles on a virtual X11 display.
@@ -46,14 +48,14 @@ Run `gef --help` to see each command and its description on separate lines; a CL
 
 ## npm and npx
 
-After publication on npm, install GEF in an extension project with `npm install --save-dev gnome-extension-framework`, or run the CLI without a global installation:
+For the alpha channel, install GEF in an extension project with `npm install --save-dev gnome-extension-framework@next`, or run the CLI without a global installation:
 
 ```sh
-npx --yes --package gnome-extension-framework gef --help
-npx --yes --package gnome-extension-framework gef new my-extension
+npx --yes --package gnome-extension-framework@next gef --help
+npx --yes --package gnome-extension-framework@next gef new my-extension
 ```
 
-The published package exposes the `gef` executable and the compiler/runtime ESM entry points. CI builds the package, installs the generated tarball into a clean temporary project, checks both ESM entry points and invokes the CLI through `npx`. Publishing is performed from a GitHub Release after these checks pass, using npm trusted publishing (OIDC) with a current npm CLI; the release tag must match the package version. The first npm publication must bootstrap the package manually before its trusted publisher can be configured. No npm token is stored in the repository. See [npm release setup](docs/npm-release.md).
+The published package exposes the `gef` executable and the compiler/runtime ESM entry points. CI builds the package, installs the generated tarball into a clean temporary project, checks both ESM entry points and invokes the CLI through `npx`. Alpha releases are published to the npm `next` dist-tag so they do not replace the stable `latest` channel. Stable releases use `latest`. Publishing is performed from a GitHub Release after these checks pass, using npm trusted publishing (OIDC) with a current npm CLI; the release tag must match the package version. The first npm publication must bootstrap the package manually before its trusted publisher can be configured. The current source is prepared as `0.1.0-alpha.1`; it is not public on npm until that bootstrap and release workflow are completed. No npm token is stored in the repository. See [npm release setup](docs/npm-release.md).
 
 ## Packages
 

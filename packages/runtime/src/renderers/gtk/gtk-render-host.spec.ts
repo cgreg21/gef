@@ -121,9 +121,10 @@ describe('createGtkRenderHost', () => {
     const row = host.element('AdwActionRow', {}, child) as FakeActionRow;
 
     expect(row.children).toEqual([child]);
-    host.destroy(row);
+    host.destroy(child);
     expect(row.children).toHaveLength(0);
     expect(child.parent).toBeNull();
+    host.destroy(row);
   });
 
   it('creates GTK widgets with normalized properties and optional children', () => {

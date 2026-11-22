@@ -14,6 +14,7 @@
 - [ ] Bundle only required runtime files; exclude build tools, scripts, development files and unused assets.
 - [ ] Check generated code for unsupported APIs, excessive logging, unnecessary subprocesses and review-hostile output.
 - [ ] Provide an EGO pre-submission validation command and a readable review report.
+- [x] Generate a UUID-named EGO ZIP with extension files at the archive root; verify archive integrity, required files and absence of development-only paths.
 - [ ] Add GNOME Shell 51 packaging and lifecycle fixtures that exercise the final ZIP contents.
 
 ## npm publication and CLI distribution

@@ -51,6 +51,7 @@ with GNOME reviewers.
 - Include `settings-schema` when the extension uses its own GSettings schema, and ensure the packaged XML or compiled schema matches the declared ID.
 - The local validator checks the declared schema against staged `.gschema.xml` files, or accepts a compiled schema when source XML is not shipped.
 - Include required runtime JavaScript, schemas, translations and assets only.
+- Create the final `<uuid>.shell-extension.zip` from the staged directory with `metadata.json` and `extension.js` at the archive root; validate archive integrity and inspect its file list.
 - Reject JavaScript modules that are not reachable from either extension entry point.\n- Exclude build scripts, development dependencies, source maps not intended
   for distribution, tests, caches and unused files from the EGO archive.
 - Do not ship binary executables or bundled external applications.
@@ -61,8 +62,7 @@ The compiler must generate reviewable JavaScript, not merely syntactically
 valid output. The project generator must not create empty lifecycle methods
 or pretend that a placeholder extension is ready for publication.
 
-The packager and a future EGO validation command must inspect the final
-staged directory and archive, not just source files. They should report
+The packager inspects the staged directory and the final ZIP, not just source files. It checks required root files, archive integrity and rejects development-only paths. They should report
 actionable errors for metadata, process-boundary, lifecycle and package
 content violations.
 

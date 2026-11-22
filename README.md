@@ -10,6 +10,7 @@ libadwaita for the preferences process. It does not use a browser DOM. A separat
 - GNOME Shell 51 and GJS for the extension runtime
 - GTK4 and libadwaita for preferences UI
 - Sass (installed with the development dependencies) for SCSS compilation
+- `zip` and `unzip` for creating and validating the EGO archive
 
 ## Development
 
@@ -24,7 +25,7 @@ npm run test:gtk
 npm run test:gnome
 ```
 
-The staged GNOME Shell 51 example is written to `dist/extension/`.
+The staged GNOME Shell 51 example is written to `dist/extension/` and packaged as `dist/<uuid>.shell-extension.zip`. The ZIP is rooted at the extension files (not a containing directory), integrity-checked, and scanned for required and development-only paths.
 `npm run dev:watch` rebuilds and restages it when source files change.
 
 ## CLI

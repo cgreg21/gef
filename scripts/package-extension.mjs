@@ -24,6 +24,11 @@ function run(command, args, label) {
   if (result.status !== 0) throw new Error(label);
 }
 
+function runFrom(directory, command, args, label) {
+  const result = spawnSync(command, args, { cwd: directory, stdio: 'inherit' });
+  if (result.status !== 0) throw new Error(label);
+}
+
 run(process.execPath, [cli, 'compile', shellTemplate, shellGenerated], 'Unable to compile the Shell GTPL template.');
 run(process.execPath, [cli, 'compile', preferencesTemplate, preferencesGenerated], 'Unable to compile the preferences GTPL template.');
 
@@ -85,4 +90,24 @@ for (const file of await listFiles(output)) {
 
 run(process.execPath, [cli, 'ego-check', output], 'EGO package validation failed.');
 
-process.stdout.write(`Staged and verified GNOME Shell extension and GTK preferences: ${output}\n`);
+const { uuid } = JSON.parse(await readFile(resolve(output, 'metadata.json'), 'utf8'));
+const archive = resolve(root, 'dist', `${uuid}.shell-extension.zip`);
+await rm(archive, { force: true });
+runFrom(output, 'zip', ['-qr', archive, '.'], 'Unable to create the GNOME extension ZIP archive.');
+run('unzip', ['-t', archive], 'The generated GNOME extension ZIP archive is invalid.');
+
+const listing = spawnSync('unzip', ['-Z1', archive], { cwd: root, encoding: 'utf8' });
+if (listing.status !== 0) throw new Error('Unable to inspect the generated GNOME extension ZIP archive.');
+const archiveFiles = listing.stdout.split(/\r?\n/).filter(Boolean).map((path) => path.replace(/^\.\//, '').replace(/\/$/, ''));
+const requiredFiles = ['extension.js', 'prefs.js', 'metadata.json', 'stylesheet.css', 'schemas/gschemas.compiled', 'lib/runtime/index.js'];
+for (const file of requiredFiles) {
+  if (!archiveFiles.includes(file)) throw new Error(`GNOME extension ZIP is missing required file: ${file}`);
+}
+for (const file of archiveFiles) {
+  if (file.startsWith('/') || file.split('/').includes('..') || /(?:^|\/)(?:node_modules|scripts|tests?|\.git)(?:\/|$)/.test(file)
+    || /\.(?:ts|map|md|lock)$/.test(file) || /(?:^|\/)package\.json$/.test(file)) {
+    throw new Error(`GNOME extension ZIP contains an invalid or development-only path: ${file}`);
+  }
+}
+
+process.stdout.write(`Staged and verified GNOME Shell extension and GTK preferences: ${output}\nCreated EGO archive: ${archive}\n`);

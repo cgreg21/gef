@@ -265,6 +265,8 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         { name: 'GTK4', command: 'pkg-config', args: ['--modversion', 'gtk4'] },
         { name: 'libadwaita', command: 'pkg-config', args: ['--modversion', 'libadwaita-1'] },
         { name: 'GSettings schema compiler', command: 'glib-compile-schemas', args: ['--version'] },
+        { name: 'ZIP archiver', command: 'zip', args: ['-v'] },
+        { name: 'ZIP verifier', command: 'unzip', args: ['-v'] },
       ] as const).map((check) => {
         const result = io.run(check.command, check.args);
         const detail = result.output.trim() || (result.status === 0 ? 'available' : 'not installed');

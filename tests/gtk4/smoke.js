@@ -89,38 +89,65 @@ if (!settings.get_boolean('enabled')) {
 }
 host.destroy(preferences);
 
-const preferencesContext = Object.defineProperty({}, 'enabled', {
-  enumerable: true,
-  get: () => enabled.get(),
-  set: (value) => enabled.set(Boolean(value)),
-});
-const preferencesHost = createGtkRenderHost(Gtk, { adw: Adw, orientation: Gtk.Orientation.VERTICAL, spacing: 12 });
-const preferencesView = mountGtplTemplate(preferencesContext, renderPreferences, preferencesHost);
-function findSwitch(widget) {
-  if (widget instanceof Gtk.Switch) return widget;
-  for (let child = widget.get_first_child?.(); child; child = child.get_next_sibling?.()) {
-    const match = findSwitch(child);
-    if (match) return match;
+for (let cycle = 1; cycle <= 3; cycle += 1) {
+  const preferencesScope = new ResourceScope();
+  const cycleEnabled = bindGSettingsBoolean(settings, 'enabled', preferencesScope);
+  const preferencesContext = Object.defineProperty({}, 'enabled', {
+    enumerable: true,
+    get: () => cycleEnabled.get(),
+    set: (value) => cycleEnabled.set(Boolean(value)),
+  });
+  const preferencesHost = createGtkRenderHost(Gtk, {
+    adw: Adw,
+    orientation: Gtk.Orientation.VERTICAL,
+    spacing: 12,
+  });
+  const preferencesView = mountGtplTemplate(preferencesContext, renderPreferences, preferencesHost);
+  const preferencesWindow = new Adw.PreferencesWindow();
+  preferencesWindow.add(preferencesView.node);
+  let disposed = false;
+  const disposeView = () => {
+    if (disposed) return;
+    disposed = true;
+    preferencesView.dispose();
+    preferencesScope.dispose();
+  };
+  const closeHandler = preferencesWindow.connect('close-request', () => {
+    disposeView();
+    return false;
+  });
+
+  preferencesWindow.present();
+  if (!preferencesWindow.get_visible()) {
+    throw new Error(`The libadwaita preferences window did not open in cycle ${cycle}.`);
   }
-  return undefined;
+  const preferenceSwitch = findSwitch(preferencesView.node);
+  if (!preferenceSwitch) {
+    throw new Error('The compiled preferences template did not create its GTK switch.');
+  }
+
+  settings.set_boolean('enabled', false);
+  if (preferenceSwitch.active) {
+    throw new Error('GSettings did not update the compiled preferences template.');
+  }
+  preferenceSwitch.set_active(true);
+  if (!settings.get_boolean('enabled')) {
+    throw new Error('The compiled preferences template did not persist the switch change.');
+  }
+
+  preferencesWindow.close();
+  preferencesWindow.disconnect(closeHandler);
+  if (!disposed || preferencesView.node.get_parent() !== null) {
+    throw new Error(`Closing preferences did not dispose and detach the view in cycle ${cycle}.`);
+  }
+
+  settings.set_boolean('enabled', false);
+  preferenceSwitch.set_active(true);
+  if (settings.get_boolean('enabled')) {
+    throw new Error(`A destroyed preferences view still changed GSettings in cycle ${cycle}.`);
+  }
+  preferencesScope.dispose();
+  preferencesWindow.destroy();
 }
-const preferencesWindow = new Adw.PreferencesWindow();
-preferencesWindow.add(preferencesView.node);
-const closeHandler = preferencesWindow.connect('close-request', () => {
-  preferencesView.dispose();
-  return false;
-});
-preferencesWindow.present();
-if (!preferencesWindow.get_visible()) throw new Error('The libadwaita preferences window did not open.');
-const preferenceSwitch = findSwitch(preferencesView.node);
-if (!preferenceSwitch) throw new Error('The compiled preferences template did not create its GTK switch.');
-settings.set_boolean('enabled', false);
-if (preferenceSwitch.active) throw new Error('GSettings did not update the compiled preferences template.');
-preferenceSwitch.set_active(true);
-if (!settings.get_boolean('enabled')) throw new Error('The compiled preferences template did not persist the switch change.');
-preferencesWindow.close();
-preferencesWindow.disconnect(closeHandler);
-if (preferencesView.node.get_parent() !== null) throw new Error('Closing the preferences window did not detach its disposed view.');
-enabled.dispose();
 
 print('GEF GTK4/libadwaita and GSettings runtime smoke tests passed.');

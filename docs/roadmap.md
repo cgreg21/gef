@@ -81,7 +81,7 @@
 - [x] Native GTK4/libadwaita widget and GSettings smoke test under Xvfb in CI.
 - [x] Compile and stage the extension GSettings schema during packaging.
 - [x] Scoped GTK stylesheet provider and GNOME Shell extension stylesheet lifecycle helpers, with native GTK4 CSS load/unload smoke coverage.
-- [x] Native Adw.PreferencesWindow smoke test for compiled preferences-page mounting, visibility, GSettings interaction, close handling and view detachment.
+- [x] Native Adw.PreferencesWindow smoke test for compiled preferences-page mounting, visibility, GSettings interaction, three open/close cycles, view detachment and post-destruction isolation.
 - [ ] Full preferences-window integration tests and remaining renderer coverage.
 - [ ] Native GJS code generation and source maps.
 

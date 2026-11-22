@@ -210,6 +210,18 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         errors.push(`JavaScript file is not imported by either extension entry point: ${path}`);
       }
     }
+    for (const file of files.filter((path) => path.endsWith('.css'))) {
+      let stylesheet: string;
+      try { stylesheet = await io.readFile(file); } catch { continue; }
+      for (const match of stylesheet.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi)) {
+        const asset = match[2]!.trim();
+        if (/^(?:data:|https?:|#|\/)/i.test(asset)) continue;
+        const assetPath = resolve(dirname(file), asset.split(/[?#]/, 1)[0]!);
+        if (!files.includes(assetPath)) {
+          errors.push(relative(directory, file).replaceAll('\\', '/') + ': stylesheet references missing asset "' + asset + '".');
+        }
+      }
+    }
     const resourceFiles = files.filter((file) => /\.(?:css|svg|png|jpe?g|webp|gif|woff2?|ttf|otf|gschema\.xml|gresource\.xml)$/i.test(file)
       || file.endsWith('/schemas/gschemas.compiled'));
     const resourceSources = [...javascriptSources.values()];

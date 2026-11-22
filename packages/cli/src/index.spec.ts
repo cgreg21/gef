@@ -278,6 +278,21 @@ describe('GEF CLI', () => {
     expect(await runCli(['ego-check', '/tmp/demo'], io), base.errors.join('\n')).toBe(0);
   });
 
+  it('rejects stylesheet references to missing local assets', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/stylesheet.css'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : path.endsWith('stylesheet.css')
+          ? ".icon { background-image: url('icons/missing.svg'); }"
+          : 'export default class Demo { enable() {} disable() {} }',
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
+    expect(base.errors.join('\n')).toContain('stylesheet references missing asset "icons/missing.svg"');
+  });
+
   it('warns about unreferenced assets without failing the EGO check', async () => {
     const base = createIO('');
     const io: CliIO = {

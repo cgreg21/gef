@@ -26,6 +26,9 @@ with GNOME reviewers.
 
 - Module evaluation and the extension constructor must not create dynamic
   GObjects, connect signals, install timers, or modify GNOME Shell.
+- The local validator warns when it detects actor creation, signal connections
+  or GLib timers inside the extension constructor. This is an advisory static
+  check; it does not prove that all module-level side effects are absent.
 - Require the Shell entry point to default-export an extension class with `enable()` and `disable()` methods.
 - Create runtime objects and connect signals in `enable()`.
 - Destroy created objects, disconnect signals and remove sources in

@@ -117,6 +117,36 @@ describe('createGtkRenderHost', () => {
     expect((child as FakeWidget).parent).toBe(button);
   });
 
+  it('tears down nested GTK signals and reactive bindings with the root widget', () => {
+    const host = createGtkRenderHost(createGtk());
+    const runtime = createGtplRenderRuntime(host);
+    const label = signal('before');
+    let clicks = 0;
+    const text = host.element('GtkLabel', {
+      label: runtime.bind(() => label.get()),
+    }, undefined) as FakeWidget;
+    const button = host.element('GtkButton', {
+      clicked: () => { clicks += 1; },
+    }, text) as FakeWidget;
+    const root = host.element('GtkBox', {}, button) as FakeWidget;
+
+    expect(root.children).toEqual([button]);
+    expect(button.children).toEqual([text]);
+    expect(text.properties.label).toBe('before');
+
+    host.destroy(root);
+    button.emit('clicked');
+    label.set('after');
+
+    expect(clicks).toBe(0);
+    expect(button.signals.size).toBe(0);
+    expect(text.properties.label).toBe('before');
+    expect(root.children).toHaveLength(0);
+    expect(button.children).toHaveLength(0);
+    expect(button.parent).toBeNull();
+    expect(text.parent).toBeNull();
+  });
+
   it('updates bound properties and text, then disposes subscriptions', () => {
     const host = createGtkRenderHost(createGtk());
     const runtime = createGtplRenderRuntime(host);

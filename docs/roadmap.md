@@ -80,7 +80,7 @@
 - [x] Reactive GSettings adapters for boolean, integer, string and string-array keys.
 - [x] Native GTK4/libadwaita widget and GSettings smoke test under Xvfb in CI.
 - [x] Compile and stage the extension GSettings schema during packaging.
-- [x] Scoped GTK stylesheet provider and GNOME Shell extension stylesheet lifecycle helpers.
+- [x] Scoped GTK stylesheet provider and GNOME Shell extension stylesheet lifecycle helpers, with native GTK4 CSS load/unload smoke coverage.
 - [ ] Full preferences-window integration tests and remaining renderer coverage.
 - [ ] Native GJS code generation and source maps.
 

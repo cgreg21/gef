@@ -1,10 +1,14 @@
 import Gtk from 'gi://Gtk';
+import Gdk from 'gi://Gdk';
 import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import {
   bindGSettingsBoolean,
   createGtkRenderHost,
   mountGtplTemplate,
+  ResourceScope,
+  loadGtkStylesheet,
   signal,
 } from '../../dist/runtime/src/index.js';
 import renderTwoWay from '../../dist/two-way.js';
@@ -12,6 +16,22 @@ import renderPreferences from '../../dist/examples/preferences/template.js';
 
 Gtk.init();
 Adw.init();
+
+const [cssFd, cssPath] = GLib.file_open_tmp('gef-gtk-smoke-XXXXXX.css');
+GLib.close(cssFd);
+GLib.file_set_contents(cssPath, '.gef-smoke { color: red; }');
+const styleScope = new ResourceScope();
+const unloadStylesheet = loadGtkStylesheet(
+  Gtk,
+  Gdk.Display.get_default(),
+  cssPath,
+  Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+  styleScope,
+);
+styleScope.dispose();
+styleScope.dispose();
+unloadStylesheet();
+Gio.File.new_for_path(cssPath).delete(null);
 
 const state = signal('GEF GTK4 smoke test');
 const host = createGtkRenderHost(Gtk, { adw: Adw, orientation: Gtk.Orientation.VERTICAL, spacing: 4 });

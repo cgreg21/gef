@@ -104,13 +104,23 @@ function findSwitch(widget) {
   }
   return undefined;
 }
+const preferencesWindow = new Adw.PreferencesWindow();
+preferencesWindow.add(preferencesView.node);
+const closeHandler = preferencesWindow.connect('close-request', () => {
+  preferencesView.dispose();
+  return false;
+});
+preferencesWindow.present();
+if (!preferencesWindow.get_visible()) throw new Error('The libadwaita preferences window did not open.');
 const preferenceSwitch = findSwitch(preferencesView.node);
 if (!preferenceSwitch) throw new Error('The compiled preferences template did not create its GTK switch.');
 settings.set_boolean('enabled', false);
 if (preferenceSwitch.active) throw new Error('GSettings did not update the compiled preferences template.');
 preferenceSwitch.set_active(true);
 if (!settings.get_boolean('enabled')) throw new Error('The compiled preferences template did not persist the switch change.');
-preferencesView.dispose();
+preferencesWindow.close();
+preferencesWindow.disconnect(closeHandler);
+if (preferencesView.node.get_parent() !== null) throw new Error('Closing the preferences window did not detach its disposed view.');
 enabled.dispose();
 
 print('GEF GTK4/libadwaita and GSettings runtime smoke tests passed.');

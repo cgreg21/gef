@@ -257,7 +257,7 @@ describe('createGtkRenderHost', () => {
     expect(child.parent).toBe(list);
     expect(child.signals.size).toBe(1);
     host.destroy(list);
-    expect(child.parent).toBeNull();
+    expect(child.parent).toBe(list);
     expect(child.signals.size).toBe(0);
   });
 

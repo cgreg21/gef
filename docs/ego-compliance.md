@@ -34,7 +34,7 @@ with GNOME reviewers.
 - Destroy created objects, disconnect signals and remove sources in
   `disable()`.
 - Keep setup and cleanup easy to compare during review.
-- Resource ownership must be explicit and cleanup must be deterministic.
+- Resource ownership must be explicit and cleanup must be deterministic. Prefer one resource scope per activation so partially completed setup can roll back and `disable()` has one cleanup path.
 
 ## Process isolation
 

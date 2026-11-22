@@ -15,24 +15,39 @@ import renderTemplate from './template.js';
 
 export default class GefHelloWorldExtension extends Extension {
   private view: GtplRenderView<StActor> | undefined;
-  private releaseStylesheet: (() => void) | undefined;
-  private settingsScope: ResourceScope | undefined;
+  private scope: ResourceScope | undefined;
 
   override enable(): void {
-    this.releaseStylesheet = loadStStylesheet(this);
-    const host = createStRenderHost(St as StNamespace);
-    this.settingsScope = new ResourceScope();
-    const enabled = bindGSettingsBoolean(this.getSettings(), 'enabled', this.settingsScope);
-    this.view = mountGtplTemplate({ enabled }, renderTemplate, host);
-    Main.panel.addToStatusArea('gef-hello-world', this.view.node);
+    if (this.scope) return;
+
+    const scope = new ResourceScope();
+    this.scope = scope;
+
+    try {
+      loadStStylesheet(this, scope);
+
+      const settingsScope = new ResourceScope();
+      scope.add(() => settingsScope.dispose());
+      const enabled = bindGSettingsBoolean(this.getSettings(), 'enabled', settingsScope);
+      const host = createStRenderHost(St as StNamespace);
+      const view = mountGtplTemplate({ enabled }, renderTemplate, host);
+      this.view = view;
+      scope.add(() => {
+        view.dispose();
+        this.view = undefined;
+      });
+
+      Main.panel.addToStatusArea('gef-hello-world', view.node);
+    } catch (error) {
+      scope.dispose();
+      this.scope = undefined;
+      throw error;
+    }
   }
 
   override disable(): void {
-    this.view?.dispose();
-    this.view = undefined;
-    this.releaseStylesheet?.();
-    this.releaseStylesheet = undefined;
-    this.settingsScope?.dispose();
-    this.settingsScope = undefined;
+    const scope = this.scope;
+    this.scope = undefined;
+    scope?.dispose();
   }
 }

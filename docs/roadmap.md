@@ -58,6 +58,7 @@
 
 ## Runtime and renderers
 - [x] Initial resource scope with reverse-order, idempotent cleanup.
+- [x] Generated Shell example owns stylesheet, GSettings bindings and mounted view in one activation scope, including rollback when setup fails.
 - [x] Initial renderer-independent GTPL runtime and disposable render views.
 - [x] Initial GNOME Shell St host adapter with reactive property/text bindings and signal cleanup.
 - [x] Synchronous signal, computed and effect primitives.

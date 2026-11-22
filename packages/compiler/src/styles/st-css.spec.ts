@@ -11,6 +11,15 @@ describe('validateStCss', () => {
     expect(validateStCss('}').map((item) => item.code)).toContain('GEFCSS1002');
   });
 
+  it('reports unterminated strings and comments at their opening positions', () => {
+    expect(validateStCss('content: "unfinished')).toMatchObject([
+      { code: 'GEFCSS1006', line: 1, column: 10, start: 9, end: 10 },
+    ]);
+    expect(validateStCss('/* unfinished')).toMatchObject([
+      { code: 'GEFCSS1007', line: 1, column: 1, start: 0, end: 2 },
+    ]);
+  });
+
   it('reports common browser-only layout declarations', () => {
     const diagnostics = validateStCss('.panel { display: flex; grid-template-columns: 1fr; position: sticky; }');
     expect(diagnostics.map((item) => item.code)).toEqual(['GEFCSS1003', 'GEFCSS1004', 'GEFCSS1005']);

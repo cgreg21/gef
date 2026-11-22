@@ -20,18 +20,20 @@ export function validateStCss(source: string): readonly StCssDiagnostic[] {
   let line = 1;
   let column = 1;
   let quote = '';
+  let quoteStart: { line: number; column: number; start: number } | undefined;
   let comment = false;
+  let commentStart: { line: number; column: number; start: number } | undefined;
   for (let index = 0; index < source.length; index += 1) {
     const char = source[index]!;
     const next = source[index + 1] ?? '';
     if (comment) {
-      if (char === '*' && next === '/') { comment = false; index += 1; column += 2; continue; }
+      if (char === '*' && next === '/') { comment = false; commentStart = undefined; index += 1; column += 2; continue; }
     } else if (quote) {
       if (char === '\\') { index += 1; column += 2; continue; }
-      if (char === quote) quote = '';
+      if (char === quote) { quote = ''; quoteStart = undefined; }
     } else if (char === '/' && next === '*') {
-      comment = true; index += 1; column += 2; continue;
-    } else if (char === '"' || char === "'") quote = char;
+      comment = true; commentStart = { line, column, start: index }; index += 1; column += 2; continue;
+    } else if (char === '"' || char === "'") { quote = char; quoteStart = { line, column, start: index }; }
     else if (char === '{') stack.push({ line, column, start: index });
     else if (char === '}') {
       if (stack.length === 0) diagnostics.push({ code: 'GEFCSS1002', message: 'Unexpected closing brace.', line, column, start: index, end: index + 1 });
@@ -39,6 +41,12 @@ export function validateStCss(source: string): readonly StCssDiagnostic[] {
     }
     if (char === '\n') { line += 1; column = 1; } else column += 1;
   }
+  if (quoteStart) diagnostics.push({
+    code: 'GEFCSS1006', message: 'Unterminated CSS string.', ...quoteStart, end: quoteStart.start + 1,
+  });
+  if (commentStart) diagnostics.push({
+    code: 'GEFCSS1007', message: 'Unterminated CSS comment.', ...commentStart, end: commentStart.start + 2,
+  });
   for (const opening of stack) diagnostics.push({
     code: 'GEFCSS1001', message: 'Unclosed CSS block.', line: opening.line, column: opening.column, start: opening.start, end: opening.start + 1,
   });

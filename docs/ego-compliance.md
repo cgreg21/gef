@@ -26,7 +26,9 @@ with GNOME reviewers.
 
 - Module evaluation and the extension constructor must not create dynamic
   GObjects, connect signals, install timers, or modify GNOME Shell.
-- The stylesheet checker ignores comments and quoted string contents when looking for unsupported browser layout declarations, so text inside CSS values is not mistaken for a real declaration.\n- The local validator warns when it detects actor creation, signal connections
+- The stylesheet checker ignores comments and quoted string contents when looking for unsupported browser layout declarations, so text inside CSS values is not mistaken for a real declaration.
+- The local validator reports unterminated CSS strings and comments at their opening source positions.
+- The local validator warns when it detects actor creation, signal connections
   or GLib timers inside the extension constructor. This is an advisory static
   check; it does not prove that all module-level side effects are absent.
 - Require the Shell entry point to default-export an extension class with `enable()` and `disable()` methods.
@@ -55,7 +57,8 @@ with GNOME reviewers.
 - The local validator checks the declared schema against staged `.gschema.xml` files, or accepts a compiled schema when source XML is not shipped.
 - Include required runtime JavaScript, schemas, translations and assets only.
 - Create the final `<uuid>.shell-extension.zip` from the staged directory with `metadata.json` and `extension.js` at the archive root; validate archive integrity and inspect its file list.
-- Reject JavaScript modules that are not reachable from either extension entry point.\n- Exclude build scripts, development dependencies, source maps not intended
+- Reject JavaScript modules that are not reachable from either extension entry point.
+- Exclude build scripts, development dependencies, source maps not intended
   for distribution, tests, caches and unused files from the EGO archive.
 - Do not ship binary executables or bundled external applications.
 

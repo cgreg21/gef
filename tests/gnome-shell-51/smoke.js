@@ -7,11 +7,10 @@ import {
   getComponentMetadata,
   signal,
 } from '../../dist/extension/lib/runtime/index.js';
+import { runLifecycleSmokeTest } from './lifecycle.js';
 
 Clutter.init(null);
 runLifecycleSmokeTest();
-
-import { runLifecycleSmokeTest } from './lifecycle.js';
 
 const state = signal(1);
 state.set(2);

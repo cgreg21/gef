@@ -85,6 +85,7 @@
 - [x] Scoped GTK stylesheet provider and GNOME Shell extension stylesheet lifecycle helpers, with native GTK4 CSS load/unload smoke coverage.
 - [x] Native Adw.PreferencesWindow smoke test for compiled preferences-page mounting, visibility, GSettings interaction, three open/close cycles, view detachment and post-destruction isolation.
 - [x] Verify recursive GTK widget-tree teardown disconnects nested GObject signal handlers and stops child reactive bindings.
+- [x] Match AdwActionRow suffix insertion and removal APIs to avoid redundant-child removal warnings during preferences teardown.
 - [ ] Full preferences-window integration tests and remaining renderer coverage.
 - [ ] Native GJS code generation and source maps.
 

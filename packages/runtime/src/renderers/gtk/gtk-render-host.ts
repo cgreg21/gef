@@ -102,8 +102,8 @@ function addChild(parent: GtkActor, child: GtkActor): void {
 }
 
 function removeChild(parent: GtkActor, child: GtkActor): void {
-  if (typeof parent.remove === 'function') parent.remove(child);
-  else if (typeof parent.remove_suffix === 'function') parent.remove_suffix(child);
+  if (typeof parent.remove_suffix === 'function') parent.remove_suffix(child);
+  else if (typeof parent.remove === 'function') parent.remove(child);
   else if (typeof parent.set_child === 'function') parent.set_child(null);
   else throw new Error('This GTK container cannot remove its child widget.');
 }

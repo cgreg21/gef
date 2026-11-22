@@ -54,6 +54,17 @@ class FakeSingleChild extends FakeWidget {
   }
 }
 
+class FakeActionRow extends FakeWidget {
+  override remove(_child: GtkActor): void {
+    throw new Error('AdwActionRow requires remove_suffix for suffix children');
+  }
+  override remove_suffix(child: GtkActor): void {
+    const index = this.children.indexOf(child);
+    if (index !== -1) this.children.splice(index, 1);
+    (child as FakeWidget).parent = null;
+  }
+}
+
 class FailingBox extends FakeWidget {
   static remaining = -1;
   override append(child: GtkActor): void {
@@ -100,6 +111,19 @@ describe('createGtkRenderHost', () => {
     for (const name of ['GtkCheckButton', 'GtkDropDown', 'GtkSpinButton', 'GtkProgressBar', 'GtkSeparator', 'GtkListBox', 'GtkListBoxRow', 'GtkGrid', 'GtkStack', 'GtkRevealer', 'GtkTextView', 'GtkPasswordEntry', 'GtkSearchEntry', 'AdwSwitchRow', 'AdwEntryRow', 'AdwPasswordEntryRow', 'AdwExpanderRow', 'AdwComboRow', 'AdwSpinRow', 'AdwBanner', 'AdwHeaderBar', 'AdwToolbarView']) {
       expect(host.element(name, {}, undefined)).toBeInstanceOf(FakeWidget);
     }
+  });
+
+  it('removes libadwaita action-row suffix children with the matching GTK API', () => {
+    const host = createGtkRenderHost(createGtk(), {
+      adw: { ActionRow: FakeActionRow },
+    });
+    const child = host.element('GtkSwitch', {}, undefined) as FakeWidget;
+    const row = host.element('AdwActionRow', {}, child) as FakeActionRow;
+
+    expect(row.children).toEqual([child]);
+    host.destroy(row);
+    expect(row.children).toHaveLength(0);
+    expect(child.parent).toBeNull();
   });
 
   it('creates GTK widgets with normalized properties and optional children', () => {

@@ -223,7 +223,7 @@ describe('GEF CLI', () => {
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
     expect(base.errors.join('\\n')).toContain('constructor contains GNOME resource or signal side effects');
-    expect(base.output).toContain('EGO checks passed');
+    expect(base.output.join('\\n')).toContain('EGO checks passed');
   });
 
   it('rejects Shell imports from preferences code', async () => {

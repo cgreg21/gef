@@ -30,7 +30,7 @@ with GNOME reviewers.
   or GLib timers inside the extension constructor. This is an advisory static
   check; it does not prove that all module-level side effects are absent.
 - Require the Shell entry point to default-export an extension class with `enable()` and `disable()` methods.
-- Create runtime objects and connect signals in `enable()`.
+- Create runtime objects and connect signals in `enable()`. The GNOME Shell 51 integration harness installs the packaged ZIP and asks the running Shell to enable and disable the generated extension twice.
 - Destroy created objects, disconnect signals and remove sources in
   `disable()`.
 - Keep setup and cleanup easy to compare during review.

@@ -5,7 +5,7 @@
 - [ ] Emit readable, consistently formatted JavaScript without minification or obfuscation.
 - [x] Check Shell and preferences entry points and their complete static JavaScript dependency graphs for process-specific GI imports.
 - [x] Require the default-exported Shell extension class to implement `enable()` and `disable()`.
-- [ ] Complete lifecycle validation: detect more pre-enable side effects, verify resource cleanup in `disable()` and exercise the generated extension class in GNOME Shell 51.
+- [ ] Complete lifecycle validation: detect more pre-enable side effects and verify resource cleanup in `disable()`. The Shell 51 harness now installs the generated archive and exercises two real enable/disable cycles; runtime execution still requires a GNOME Shell 51 host.
 - [x] Add a GNOME Shell 51 GJS fixture that repeats resource-scope cleanup for real St actors, GObject signals and GLib timers.
 - [x] Warn about GNOME actor creation, signal connections and GLib timers in the extension constructor.
 - [x] Validate unique stable `shell-version` values and positive integer optional metadata `version`.
@@ -17,7 +17,7 @@
 - [ ] Check generated code for unsupported APIs, excessive logging, unnecessary subprocesses and review-hostile output.
 - [ ] Provide an EGO pre-submission validation command and a readable review report.
 - [x] Generate a UUID-named EGO ZIP with extension files at the archive root; verify archive integrity, required files and absence of development-only paths.
-- [ ] Add GNOME Shell 51 packaging and lifecycle fixtures that exercise the final ZIP contents.
+- [x] Add a GNOME Shell 51 harness that installs the final EGO ZIP and verifies two real enable/disable cycles through `gnome-extensions`.
 
 ## npm publication and CLI distribution
 - [ ] Confirm the public npm package name and publish the first stable release.

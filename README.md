@@ -2,7 +2,7 @@
 
 GEF is a TypeScript and GTPL framework for native GNOME Shell 51 extensions.
 It targets GJS and GNOME's St/Clutter APIs for the Shell process, and GTK4 /
-libadwaita for the preferences process. It does not use a browser DOM. A separate smoke test exercises real St actors on a virtual X11 display when GNOME Shell 51 is installed.
+libadwaita for the preferences process. It does not use a browser DOM. A smoke test exercises real St actors, GObject signal disconnection and GLib timer cancellation across repeated resource-scope cleanup cycles on a virtual X11 display when GNOME Shell 51 is installed.
 
 ## Requirements
 

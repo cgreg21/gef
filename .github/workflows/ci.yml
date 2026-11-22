@@ -38,8 +38,47 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y zip unzip
       - name: Package GNOME Shell example
         run: npm run package:example
-      - name: Verify npm package contents
-        run: npm pack --dry-run --ignore-scripts
+      - name: Verify npm package manifest and contents
+        run: |
+          node --input-type=module <<'NODE'
+          import { execFileSync } from 'node:child_process';
+          import { readFileSync } from 'node:fs';
+
+          const manifest = JSON.parse(readFileSync('package.json', 'utf8'));
+          const packed = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { encoding: 'utf8' }))[0];
+          const files = new Set(packed.files.map((file) => file.path));
+          const required = [
+            'dist/cli/src/index.js',
+            'dist/compiler/src/index.js',
+            'dist/compiler/src/index.d.ts',
+            'dist/runtime/src/index.js',
+            'dist/runtime/src/index.d.ts',
+            'README.md',
+          ];
+
+          if (manifest.name !== 'gnome-extension-framework' || manifest.private) {
+            throw new Error('The public npm package name or visibility is invalid.');
+          }
+          if (manifest.bin?.gef !== 'dist/cli/src/index.js') {
+            throw new Error('The gef executable is missing or points to the wrong file.');
+          }
+          for (const entry of ['.', './compiler', './runtime']) {
+            const target = manifest.exports?.[entry];
+            if (!target?.import || !target?.types) throw new Error(`Missing ESM or type export: ${entry}`);
+            for (const path of [target.import, target.types]) {
+              if (!files.has(path.replace(/^\.\//, ''))) throw new Error(`Package export is absent from tarball: ${path}`);
+            }
+          }
+          for (const path of required) {
+            if (!files.has(path)) throw new Error(`Required npm package file is missing: ${path}`);
+          }
+          for (const path of files) {
+            if (/^(?:packages|scripts|tests|node_modules)\//.test(path)) {
+              throw new Error(`Development-only file leaked into npm package: ${path}`);
+            }
+          }
+          console.log(`Verified ${packed.name}@${packed.version}: ${files.size} files`);
+          NODE
       - name: Test packed package installation and npx executable
         shell: bash
         run: |

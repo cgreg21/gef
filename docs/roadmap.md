@@ -24,7 +24,7 @@
 - [x] Prepare the first alpha version as `0.1.0-alpha.1` and keep prereleases on npm's `next` dist-tag.
 - [ ] Confirm the public npm package name and publish the first alpha release.
 - [ ] Publish package metadata, compiler/runtime ESM exports and the `gef` executable.
-- [x] Add CI coverage for clean tarball installation, compiler/runtime ESM imports and CLI execution through `npx`.
+- [x] Add CI coverage for npm manifest/export/tarball contents, clean installation, compiler/runtime ESM imports and CLI execution through `npx`.
 - [ ] Verify the first published alpha from the public npm registry and install it through `npx --package gnome-extension-framework@next gef --help`.
 - [x] Add a GitHub Release workflow with npm trusted publishing (OIDC), including an exact release-tag/package-version guard; never store credentials in source.
 - [x] Document the one-time manual npm package bootstrap, versioning, changelog and release recovery procedure.

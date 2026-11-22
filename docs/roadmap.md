@@ -7,7 +7,7 @@
 - [x] Require the default-exported Shell extension class to implement `enable()` and `disable()`.
 - [ ] Generate lifecycle-safe extensions: no dynamic GNOME objects or signal connections before `enable()`; clean all created resources in `disable()`.
 - [x] Validate unique stable `shell-version` values and positive integer optional metadata `version`.
-- [ ] Complete validation of required `metadata.json` fields, UUID format and optional settings schema metadata.
+- [x] Validate required `metadata.json` fields, UUID format and optional settings schema metadata.
 - [x] Reject JavaScript modules not reachable from either extension entry point.
 - [x] Validate local CSS `url()` references against packaged files.
 - [x] Warn about potentially unused CSS, image, font, resource and schema files without rejecting dynamic runtime references.

@@ -253,6 +253,32 @@ describe('GEF CLI', () => {
     expect(base.errors.join('\\n')).toContain('Shell dependency imports GTK or libadwaita');
   });
 
+  it('rejects malformed GSettings schema IDs', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/schemas/demo.gschema.xml'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org..demo' })
+        : '<schemalist><schema id="org..demo" path="/org/demo/"></schema></schemalist>',
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
+    expect(base.errors.join('\\n')).toContain('settings-schema must be a valid dotted GSettings schema ID');
+  });
+
+  it('matches settings-schema only against schema element IDs', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/schemas/demo.gschema.xml'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org.example.demo' })
+        : '<schemalist><schema id="org.example.other" path="/org/example/other/"><key name="note" type="s"><default>"org.example.demo"</default></key></schema></schemalist>',
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
+    expect(base.errors.join('\\n')).toContain('does not match a packaged GSettings schema');
+  });
+
   it('rejects a declared settings schema that is not packaged', async () => {
     const base = createIO('');
     const io: CliIO = {

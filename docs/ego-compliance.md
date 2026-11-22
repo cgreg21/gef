@@ -45,6 +45,7 @@ with GNOME reviewers.
 - Validate `metadata.json` as JSON and validate the required `uuid`,
   `name`, `description` and `shell-version` fields.
 - Validate UUID syntax with non-empty, well-formed domain labels.
+- Require `settings-schema`, when present, to be a valid dotted schema ID and match an actual `<schema id="…">` element in a packaged XML schema. A compiled-only schema is accepted because its binary contents are not inspected by this static check.
 - Require the root `extension.js` Shell entry point in every staged extension.
 - Include only unique, stable GNOME Shell versions in release metadata. If `version` is present, it must be a positive integer.
 - Include `settings-schema` when the extension uses its own GSettings schema, and ensure the packaged XML or compiled schema matches the declared ID.

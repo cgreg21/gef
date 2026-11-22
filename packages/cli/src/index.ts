@@ -128,8 +128,8 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     }
     const schemaId = metadata['settings-schema'];
     if (schemaId !== undefined) {
-      if (typeof schemaId !== 'string' || !schemaId.trim()) {
-        errors.push('metadata.json: settings-schema must be a non-empty schema ID.');
+      if (typeof schemaId !== 'string' || !/^[A-Za-z][A-Za-z0-9]*(?:\\.[A-Za-z][A-Za-z0-9]*)+$/.test(schemaId)) {
+        errors.push('metadata.json: settings-schema must be a valid dotted GSettings schema ID.');
       } else {
         const schemaFiles = files.filter((file) => file.includes('/schemas/') && file.endsWith('.gschema.xml'));
         if (schemaFiles.length === 0 && !files.some((file) => file.endsWith('/schemas/gschemas.compiled'))) {
@@ -139,7 +139,8 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
           for (const file of schemaFiles) {
             try {
               const source = await io.readFile(file);
-              if (source.includes(`id="${schemaId}"`) || source.includes(`id='${schemaId}'`)) found = true;
+              const ids = [...source.matchAll(/<schema\\b[^>]*\\bid=["']([^"']+)["']/g)].map((match) => match[1]);
+              if (ids.includes(schemaId)) found = true;
             } catch {
               errors.push(`Unable to read GSettings schema: ${file.slice(directory.length + 1)}`);
             }

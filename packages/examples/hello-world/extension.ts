@@ -6,15 +6,12 @@ import {
   bindGSettingsBoolean,
   createStRenderHost,
   mountGtplTemplate,
-  type GtplRenderView,
-  type StActor,
   type StNamespace,
   loadStStylesheet,
 } from '../../runtime/src/index.js';
 import renderTemplate from './template.js';
 
 export default class GefHelloWorldExtension extends Extension {
-  private view: GtplRenderView<StActor> | undefined;
   private scope: ResourceScope | undefined;
 
   override enable(): void {
@@ -31,11 +28,7 @@ export default class GefHelloWorldExtension extends Extension {
       const enabled = bindGSettingsBoolean(this.getSettings(), 'enabled', settingsScope);
       const host = createStRenderHost(St as StNamespace);
       const view = mountGtplTemplate({ enabled }, renderTemplate, host);
-      this.view = view;
-      scope.add(() => {
-        view.dispose();
-        this.view = undefined;
-      });
+      scope.add(() => view.dispose());
 
       Main.panel.addToStatusArea('gef-hello-world', view.node);
     } catch (error) {

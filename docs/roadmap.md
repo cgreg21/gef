@@ -7,6 +7,7 @@
 - [x] Require the default-exported Shell extension class to implement `enable()` and `disable()`.
 - [ ] Complete lifecycle validation: detect more pre-enable side effects and verify resource cleanup in `disable()`. The Shell 51 harness now installs the generated archive and exercises two real enable/disable cycles; runtime execution still requires a GNOME Shell 51 host.
 - [x] Add a GNOME Shell 51 GJS fixture that repeats resource-scope cleanup for real St actors, GObject signals and GLib timers.
+- [x] Verify St host signal-handler and reactive-effect teardown when their actors are destroyed.
 - [x] Warn about GNOME actor creation, signal connections and GLib timers in the extension constructor.
 - [x] Validate unique stable `shell-version` values and positive integer optional metadata `version`.
 - [x] Validate required `metadata.json` fields, UUID format and optional settings schema metadata.

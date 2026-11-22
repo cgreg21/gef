@@ -1,6 +1,6 @@
 import GLib from 'gi://GLib';
 import St from 'gi://St';
-import { ResourceScope } from '../../dist/extension/lib/runtime/index.js';
+import { createStRenderHost, ResourceScope, signal } from '../../dist/extension/lib/runtime/index.js';
 
 export function runLifecycleSmokeTest() {
   for (let cycle = 0; cycle < 2; cycle += 1) {
@@ -33,5 +33,22 @@ export function runLifecycleSmokeTest() {
     }
   }
 
-  print('GNOME Shell 51 lifecycle cleanup fixture passed.');
+  const host = createStRenderHost(St);
+  let clicked = 0;
+  const button = host.element('StButton', { clicked: () => clicked += 1 }, undefined);
+  button.emit('clicked');
+  if (clicked !== 1) throw new Error('St host did not connect the button signal.');
+  host.destroy(button);
+  button.emit('clicked');
+  if (clicked !== 1) throw new Error('St host retained a signal handler after actor destruction.');
+
+  const value = signal('before');
+  const label = host.text({ kind: 'binding', get: () => value.get() });
+  value.set('during');
+  if (label.get_text() !== 'during') throw new Error('St host did not update a bound label.');
+  host.destroy(label);
+  value.set('after');
+  if (label.get_text() !== 'during') throw new Error('St host retained a reactive effect after actor destruction.');
+
+  print('GNOME Shell 51 resource-scope and St host lifecycle cleanup fixtures passed.');
 }

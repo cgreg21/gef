@@ -2,7 +2,7 @@
 
 GEF is a TypeScript and GTPL framework for native GNOME Shell 51 extensions.
 It targets GJS and GNOME's St/Clutter APIs for the Shell process, and GTK4 /
-libadwaita for the preferences process. It does not use a browser DOM. The GNOME Shell 51 smoke test exercises real St actors, GObject signal disconnection and GLib timer cancellation, then installs the generated EGO ZIP and runs two real extension enable/disable cycles on a virtual X11 display.
+libadwaita for the preferences process. It does not use a browser DOM. The GNOME Shell 51 smoke test exercises resource-scope cleanup, St host signal/effect teardown and GLib timer cancellation, then installs the generated EGO ZIP and runs two real extension enable/disable cycles on a virtual X11 display.
 
 ## Requirements
 
@@ -25,7 +25,7 @@ npm run test:gtk
 npm run test:gnome
 ```
 
-The staged GNOME Shell 51 example is written to `dist/extension/` and packaged as `dist/<uuid>.shell-extension.zip`. The ZIP is rooted at the extension files (not a containing directory), integrity-checked, and scanned for required and development-only paths. On a GNOME Shell 51 host, `npm run test:gnome` installs that exact ZIP into an isolated user data directory, checks the Shell-reported state after enabling and disabling it twice, and removes the temporary installation afterward.
+The GJS lifecycle fixture also checks that St host signal handlers and reactive effects stop when their actors are destroyed. The generated extension's Shell-reported enable/disable cycles are tested separately; this does not introspect every Shell-owned resource. The staged GNOME Shell 51 example is written to `dist/extension/` and packaged as `dist/<uuid>.shell-extension.zip`. The ZIP is rooted at the extension files (not a containing directory), integrity-checked, and scanned for required and development-only paths. On a GNOME Shell 51 host, `npm run test:gnome` installs that exact ZIP into an isolated user data directory, checks the Shell-reported state after enabling and disabling it twice, and removes the temporary installation afterward.
 `npm run dev:watch` rebuilds and restages it when source files change.
 
 ## CLI

@@ -2,7 +2,8 @@ import GLib from 'gi://GLib';
 import St from 'gi://St';
 import { ResourceScope } from '../../dist/extension/lib/runtime/index.js';
 
-for (let cycle = 0; cycle < 2; cycle += 1) {
+export function runLifecycleSmokeTest() {
+  for (let cycle = 0; cycle < 2; cycle += 1) {
   const scope = new ResourceScope();
   const actor = new St.Button({ label: `Lifecycle cycle ${cycle}` });
   let destroySignalCalls = 0;
@@ -32,4 +33,7 @@ for (let cycle = 0; cycle < 2; cycle += 1) {
   }
 }
 
-print('GNOME Shell 51 lifecycle cleanup fixture passed.');
+  }
+
+  print('GNOME Shell 51 lifecycle cleanup fixture passed.');
+}

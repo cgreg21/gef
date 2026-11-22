@@ -9,8 +9,9 @@ import {
 } from '../../dist/extension/lib/runtime/index.js';
 
 Clutter.init(null);
+runLifecycleSmokeTest();
 
-import './lifecycle.js';
+import { runLifecycleSmokeTest } from './lifecycle.js';
 
 const state = signal(1);
 state.set(2);

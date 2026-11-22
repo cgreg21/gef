@@ -43,9 +43,43 @@ export function validateStCss(source: string): readonly StCssDiagnostic[] {
     code: 'GEFCSS1001', message: 'Unclosed CSS block.', line: opening.line, column: opening.column, start: opening.start, end: opening.start + 1,
   });
 
-  const withoutComments = source.replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, ' '));
+  const masked = source.split('');
+  let maskedQuote = '';
+  let maskedComment = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index]!;
+    const next = source[index + 1] ?? '';
+    if (maskedComment) {
+      if (char === '*' && next === '/') {
+        masked[index] = ' ';
+        masked[index + 1] = ' ';
+        maskedComment = false;
+        index += 1;
+      } else if (char !== '\\n' && char !== '\\r') masked[index] = ' ';
+    } else if (maskedQuote) {
+      if (char === '\\\\') {
+        if (char !== '\\n' && char !== '\\r') masked[index] = ' ';
+        if (index + 1 < source.length) {
+          if (next !== '\\n' && next !== '\\r') masked[index + 1] = ' ';
+          index += 1;
+        }
+      } else {
+        if (char !== '\\n' && char !== '\\r') masked[index] = ' ';
+        if (char === maskedQuote) maskedQuote = '';
+      }
+    } else if (char === '/' && next === '*') {
+      masked[index] = ' ';
+      masked[index + 1] = ' ';
+      maskedComment = true;
+      index += 1;
+    } else if (char === '"' || char === "'") {
+      masked[index] = ' ';
+      maskedQuote = char;
+    }
+  }
+  const withoutCommentsAndStrings = masked.join('');
   const declaration = /(?:^|[;{])\s*([a-z-]+\s*:\s*[^;{}]+)/gim;
-  for (const match of withoutComments.matchAll(declaration)) {
+  for (const match of withoutCommentsAndStrings.matchAll(declaration)) {
     const value = match[1]?.trim() ?? '';
     const rule = UNSUPPORTED.find((candidate) => candidate.pattern.test(value));
     if (!rule) continue;

@@ -28,6 +28,16 @@ describe('validateStCss', () => {
     });
   });
 
+  it('ignores declaration-like text inside quoted strings, including embedded semicolons', () => {
+    expect(validateStCss('.panel { content: "safe; display: flex"; background: url("data:text/plain;display:grid"); }')).toEqual([]);
+  });
+
+  it('still validates declarations after quoted semicolons', () => {
+    const diagnostics = validateStCss('.panel { content: "safe; display: flex"; display: grid; }');
+    expect(diagnostics.map((item) => item.code)).toEqual(['GEFCSS1003']);
+    expect(diagnostics[0]?.start).toBeGreaterThan(0);
+  });
+
   it('ignores unsupported-looking text inside comments and strings', () => {
     expect(validateStCss('.panel { content: "display: flex"; /* display: grid; */ }')).toEqual([]);
   });

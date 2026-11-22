@@ -26,7 +26,7 @@ with GNOME reviewers.
 
 - Module evaluation and the extension constructor must not create dynamic
   GObjects, connect signals, install timers, or modify GNOME Shell.
-- The local validator warns when it detects actor creation, signal connections
+- The stylesheet checker ignores comments and quoted string contents when looking for unsupported browser layout declarations, so text inside CSS values is not mistaken for a real declaration.\n- The local validator warns when it detects actor creation, signal connections
   or GLib timers inside the extension constructor. This is an advisory static
   check; it does not prove that all module-level side effects are absent.
 - Require the Shell entry point to default-export an extension class with `enable()` and `disable()` methods.

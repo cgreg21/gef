@@ -92,7 +92,7 @@
 ## Styles and developer tools
 - [x] SCSS compilation through the Sass CLI.
 - [x] Initial GNOME theme CSS validation for unsupported browser layout declarations and block balance.
-- [ ] Complete St/GTK-specific CSS validation and style scoping.
+- [x] Ignore comments and quoted strings (including embedded semicolons) when checking browser-only CSS declarations, while preserving diagnostic source offsets.\n- [ ] Complete St/GTK-specific CSS validation and style scoping.
 - [x] CLI `check`, `compile` and `build` commands.
 - [x] CLI `new` and `doctor` commands.
 - [x] CLI `generate component` creates a decorated, input-driven component and matching GTPL template.

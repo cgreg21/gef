@@ -278,6 +278,23 @@ describe('GEF CLI', () => {
     expect(await runCli(['ego-check', '/tmp/demo'], io), base.errors.join('\n')).toBe(0);
   });
 
+  it('warns about unreferenced assets without failing the EGO check', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/stylesheet.css', '/tmp/demo/icons/unused.png', '/tmp/demo/icons/used.svg'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : path.endsWith('extension.js')
+          ? "export default class Demo { enable() { this.icon = 'icons/used.svg'; } disable() {} }"
+          : path.endsWith('stylesheet.css') ? ".icon { background-image: url('icons/used.svg'); }" : '',
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
+    expect(base.errors.join('\\n')).toContain('Possibly unused package resource: icons/unused.png');
+    expect(base.errors.join('\\n')).not.toContain('icons/used.svg');
+    expect(base.output[0]).toContain('EGO checks passed');
+  });
+
   it('accepts a clean staged extension', async () => {
     const base = createIO('');
     const io: CliIO = {

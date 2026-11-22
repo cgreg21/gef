@@ -210,10 +210,34 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         errors.push(`JavaScript file is not imported by either extension entry point: ${path}`);
       }
     }
+    const resourceFiles = files.filter((file) => /\.(?:css|svg|png|jpe?g|webp|gif|woff2?|ttf|otf|gschema\.xml|gresource\.xml)$/i.test(file)
+      || file.endsWith('/schemas/gschemas.compiled'));
+    const resourceSources = [...javascriptSources.values()];
+    for (const file of files.filter((path) => path.endsWith('.css'))) {
+      try { resourceSources.push(await io.readFile(file)); } catch { /* A failed optional asset read is reported as a possible unused resource. */ }
+    }
+    const warnings: string[] = [];
+    for (const file of resourceFiles) {
+      const path = relative(directory, file).replaceAll('\\\\', '/');
+      if (path === 'stylesheet.css') continue;
+      let used = false;
+      if (file.endsWith('.gschema.xml')) {
+        const schema = await io.readFile(file).catch(() => '');
+        const id = schema.match(/<schema\\b[^>]*\\bid=["']([^"']+)["']/)?.[1];
+        used = Boolean(id && (metadata['settings-schema'] === id || [...javascriptSources.values()].some((source) => source.includes(id))));
+      } else if (file.endsWith('/schemas/gschemas.compiled')) {
+        used = typeof schemaId === 'string';
+      } else {
+        const name = basename(file);
+        used = resourceSources.some((source) => source.includes(path) || source.includes(name));
+      }
+      if (!used) warnings.push(`Possibly unused package resource: ${path}`);
+    }
     if (errors.length) {
       errors.forEach((error) => io.stderr(error));
       return 1;
     }
+    warnings.forEach((warning) => io.stderr(warning));
     io.stdout(`EGO checks passed: ${directory}`);
     return 0;
   }

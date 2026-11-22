@@ -30,18 +30,34 @@ npm run test:gnome
 The GTK4 smoke test opens and closes a real `Adw.PreferencesWindow` three times using a shared widget lookup helper, mounts the compiled preferences page on each cycle, checks its GSettings-backed switch, verifies view detachment and confirms a destroyed switch can no longer change settings. Renderer unit tests also destroy nested GTK widget trees and verify that child signal handlers and reactive bindings are stopped recursively. GTK teardown releases descendant resources without redundantly detaching children from a container that is itself being disposed. It also loads a real CSS file through a native `Gtk.CssProvider` and verifies resource-scope cleanup without duplicate removal. The GJS lifecycle fixture also checks that St host signal handlers and reactive effects stop when their actors are destroyed. The generated extension's Shell-reported enable/disable cycles are tested separately; this does not introspect every Shell-owned resource. The staged GNOME Shell 51 example is written to `dist/extension/` and packaged as `dist/<uuid>.shell-extension.zip`. The ZIP is rooted at the extension files (not a containing directory), integrity-checked, and scanned for required and development-only paths. On a GNOME Shell 51 host, `npm run test:gnome` installs that exact ZIP into an isolated user data directory, checks the Shell-reported state after enabling and disabling it twice, and removes the temporary installation afterward.
 `npm run dev:watch` rebuilds and restages it when source files change.
 
-## CLI
+## Quick start
+
+Install the alpha in an extension project:
 
 ```sh
-node dist/cli/src/index.js check src/view.gtpl
-node dist/cli/src/index.js compile src/view.gtpl dist/view.js
-node dist/cli/src/index.js styles src/theme.scss dist/theme.css
-node dist/cli/src/index.js new my-extension
-node dist/cli/src/index.js generate component UserCard src/components
-node dist/cli/src/index.js test
-node dist/cli/src/index.js package
-node dist/cli/src/index.js doctor
-node dist/cli/src/index.js ego-check dist/extension
+npm install --save-dev gnome-extension-framework@next
+npx --yes --package gnome-extension-framework@next gef --help
+npx --yes --package gnome-extension-framework@next gef new my-extension
+```
+
+The `new` command creates a small GNOME Shell 51 starter project with TypeScript configuration, metadata, an extension class and a packaging script. Review the generated files before building or publishing; the starter is intentionally small and is not a promise that every project-specific build step is configured.
+
+For the full first-project walkthrough, see [Getting started](docs/getting-started.md). For command syntax and behavior, see the [CLI reference](docs/cli-reference.md).
+
+## CLI
+
+From a source checkout, use `npm run gef -- <command>`. After installing the published package in a project, use `npx gef <command>` or the local `node_modules/.bin/gef` executable.
+
+```sh
+npm run gef -- check src/view.gtpl
+npm run gef -- compile src/view.gtpl dist/view.js
+npm run gef -- styles src/theme.scss dist/theme.css
+npm run gef -- new my-extension
+npm run gef -- generate component UserCard src/components
+npm run gef -- test
+npm run gef -- package
+npm run gef -- doctor
+npm run gef -- ego-check dist/extension
 ```
 
 Run `gef --help` to see each command and its description on separate lines; a CLI regression test checks that `doctor` and `ego-check` remain distinct entries. `gef generate component UserCard src/components` creates a decorated component with a working `@Input()` property and a GTPL interpolation that displays it. The `ego-check` command checks staged metadata and UUID syntax, requires the root `extension.js` entry point, validates unique stable Shell versions and positive integer metadata versions when supplied, checks declared GSettings schema presence, dotted ID syntax and exact schema-element ID matching, warns about GNOME resource and signal side effects in constructors, rejects development files and orphan JavaScript modules using normalized relative paths, validates local CSS `url()` asset references, and warns about potentially unused CSS, image, font, resource and schema files without failing when dynamic references cannot be proven, and checks Shell/preferences API boundaries across each entry point's local JavaScript dependency graph and requires the Shell entry class to implement `enable()` and `disable()`. The package workflow runs this validator automatically after staging. It is a useful local guard, not a substitute for EGO review. The `new` command creates a working panel-indicator example, with minimal GJS type declarations, direct generated types and explicit `enable()`/`disable()` resource cleanup. The example owns its stylesheet, settings bindings and mounted view in one reverse-order resource scope; a failed partial activation rolls back resources immediately. Generated Node.js packaging code uses static imports and a straightforward synchronous pack command. Generated source includes the GNOME guidance notice for AI-assisted code; remove it only if you understand and can maintain the JavaScript before considering EGO publication. The `compile` command creates missing parent directories for its JavaScript output path, including nested relative paths, and writes a linked Source Map v3 file. The compiler API and component compilation results also expose GTPL node mappings, including nested elements and text nodes; expression mappings are emitted for interpolations and expression-bound attributes; control-flow expressions are also mapped; each nested expression AST node is mapped to its own GTPL source position. CSS compatibility errors include source excerpts and caret markers. CLI diagnostics split LF, CRLF and standalone CR line endings consistently with GTPL source positions.
@@ -57,6 +73,19 @@ npx --yes --package gnome-extension-framework@next gef new my-extension
 
 The published package exposes the `gef` executable and the compiler/runtime ESM entry points. CI verifies the published manifest and required tarball files, installs the generated package into a clean temporary project, checks compiler/runtime ESM imports and invokes the CLI through `npx`. Alpha releases are published to the npm `next` dist-tag so they do not replace the stable `latest` channel. Stable releases use `latest`. Publishing is performed from a GitHub Release after these checks pass, using npm trusted publishing (OIDC) with a current npm CLI; the release tag must match the package version. The first npm publication must bootstrap the package manually before its trusted publisher can be configured. The current source is prepared as `0.1.0-alpha.1`; it is not public on npm until that bootstrap and release workflow are completed. No npm token is stored in the repository. See [npm release setup](docs/npm-release.md).
 
+## Documentation
+
+- [Documentation index](docs/README.md)
+- [Getting started](docs/getting-started.md)
+- [CLI reference](docs/cli-reference.md)
+- [GTPL language](docs/gtpl-language.md)
+- [Components, directives and pipes](docs/components.md)
+- [Semantic analysis](docs/semantic-analysis.md)
+- [Architecture](docs/architecture.md)
+- [EGO compliance](docs/ego-compliance.md)
+- [npm releases](docs/npm-release.md)
+- [Development roadmap](docs/roadmap.md)
+
 ## Packages
 
 - `gnome-extension-framework`: compiler declarations and GTPL tooling
@@ -69,7 +98,7 @@ The runtime package has no Node.js or TypeScript imports. Decorator metadata is 
 ## Current scope
 
 Implemented foundations include the GTPL parser and structural lowering,
-expression and template code generation with preserved meaningful text whitespace and an initial source-map API for top-level GTPL nodes, optional TypeScript expression type checking, component contract validation,
+expression and template code generation with preserved meaningful text whitespace and Source Map v3 mappings for template and expression nodes, optional TypeScript expression type checking, component contract validation,
 selector-matched runtime directives and components, component input/output
 lifecycles and DI (including reactive input teardown tests and GTK component
 reactive input binding, mounting and disposal coverage), repeat-item failure cleanup,

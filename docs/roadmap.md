@@ -1,5 +1,9 @@
 # Development roadmap
 
+## Documentation
+- [x] Add a documentation index, first-extension walkthrough and complete CLI command reference.
+- [x] Link the documentation set from the repository README and keep alpha limitations explicit.
+
 ## EGO publication compliance
 - [x] Require the staged `extension.js` entry point and reject malformed UUID domain labels.
 - [ ] Emit readable, consistently formatted JavaScript without minification or obfuscation.

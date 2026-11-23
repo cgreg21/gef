@@ -4,3 +4,4 @@ export * from './components/input/input.component.js';
 export * from './components/label/label.component.js';
 export * from './platform/gnome-shell.js';
 export * from './platform/gtk.js';
+export * from './components/progress-bar/progress-bar.component.js';

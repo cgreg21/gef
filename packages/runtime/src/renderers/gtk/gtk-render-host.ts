@@ -17,6 +17,8 @@ export interface GtkActor {
   off?(signal: string, callback: (...args: unknown[]) => unknown): void;
   get_parent?(): GtkActor | null;
   getParent?(): GtkActor | null;
+  add_css_class?(name: string): void;
+  remove_css_class?(name: string): void;
   setChild?(child: GtkActor | null): void;
   addSuffix?(child: GtkActor): void;
   removeSuffix?(child: GtkActor): void;

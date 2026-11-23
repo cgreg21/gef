@@ -157,6 +157,12 @@ class FakeTextView extends FakeWidget {
   readonly buffer = new FakeTextBuffer();
 }
 
+class FakePasswordEntry extends FakeWidget {
+  text = '';
+  get_text(): string { return this.text; }
+  set_text(value: string): void { this.text = value; this.emit('changed'); }
+}
+
 function constructor(): GtkWidgetConstructor { return FakeWidget; }
 function createGtk(): GtkNamespace {
   return {
@@ -179,7 +185,7 @@ function createGtk(): GtkNamespace {
     Stack: FakeWidget,
     Revealer: FakeWidget,
     TextView: FakeTextView,
-    PasswordEntry: FakeWidget,
+    PasswordEntry: FakePasswordEntry,
     SearchEntry: FakeWidget,
   };
 }
@@ -195,6 +201,26 @@ describe('createGtkRenderHost', () => {
     for (const name of ['GtkCheckButton', 'GtkDropDown', 'GtkSpinButton', 'GtkProgressBar', 'GtkSeparator', 'GtkListBox', 'GtkListBoxRow', 'GtkGrid', 'GtkStack', 'GtkRevealer', 'GtkTextView', 'GtkPasswordEntry', 'GtkSearchEntry', 'AdwSwitchRow', 'AdwEntryRow', 'AdwPasswordEntryRow', 'AdwExpanderRow', 'AdwComboRow', 'AdwSpinRow', 'AdwBanner', 'AdwHeaderBar', 'AdwToolbarView', 'HeaderBar', 'Sidebar']) {
       expect(host.element(name, {}, undefined)).toBeInstanceOf(FakeWidget);
     }
+  });
+
+  it('binds GtkPasswordEntry through GtkEditable and emits changed text', () => {
+    const host = createGtkRenderHost(createGtk());
+    const value = signal('secret');
+    const changed: string[] = [];
+    const entry = host.element('GtkPasswordEntry', {
+      text: { kind: 'binding', get: () => value.get() },
+      textChange: (text: string) => { changed.push(text); value.set(text); },
+    }, undefined) as FakePasswordEntry;
+
+    expect(entry.text).toBe('secret');
+    value.set('updated externally');
+    expect(entry.text).toBe('updated externally');
+    entry.set_text('typed secret');
+    expect(changed).toEqual(['typed secret']);
+    expect(value.get()).toBe('typed secret');
+    host.destroy(entry);
+    entry.set_text('ignored');
+    expect(changed).toEqual(['typed secret']);
   });
 
   it('binds GtkTextView text through its native Gtk.TextBuffer', () => {

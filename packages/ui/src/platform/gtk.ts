@@ -10,6 +10,7 @@ import { GefLabel } from '../components/label/label.component.js';
 import { GefProgressBar } from '../components/progress-bar/progress-bar.component.js';
 import { GefSelect } from '../components/select/select.component.js';
 import { GefTextArea } from '../components/textarea/textarea.component.js';
+import { GefPasswordInput } from '../components/password-input/password-input.component.js';
 
 export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
   const registry = new ComponentRegistry<GtkActor>();
@@ -45,6 +46,21 @@ export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
     render: (input: GefInput, runtime: GtplRenderRuntime<GtkActor>) => runtime.element(
       'GtkEntry',
       {
+        text: runtime.bind(() => input.value),
+        textChange: (value: string) => {
+          input.value = value;
+          input.valueChange.emit(value);
+        },
+      },
+      undefined,
+    ),
+  });
+  registry.registerType(GefPasswordInput, {
+    create: () => new GefPasswordInput(),
+    render: (input: GefPasswordInput, runtime: GtplRenderRuntime<GtkActor>) => runtime.element(
+      'GtkPasswordEntry',
+      {
+        'show-peek-icon': runtime.bind(() => input.showPeekIcon),
         text: runtime.bind(() => input.value),
         textChange: (value: string) => {
           input.value = value;

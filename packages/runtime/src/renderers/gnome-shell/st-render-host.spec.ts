@@ -76,6 +76,18 @@ class FakeBin extends FakeActor {
   }
 }
 
+class FakePasswordEntry extends FakeActor {
+  readonly textActor = new FakeActor();
+  constructor(properties: Record<string, unknown> = {}) {
+    super(properties);
+    this.properties['clutter-text'] = this.textActor;
+  }
+  set_property(name: string, value: unknown): void {
+    super.set_property(name, value);
+    if (name === 'text') this.textActor.set_property('text', value);
+  }
+}
+
 class FakePopupMenu {
   static latest: FakePopupMenu | undefined;
   readonly actor = new FakeActor();
@@ -118,6 +130,7 @@ function createSt(): StNamespace {
     Bin: FakeBin,
     Widget: constructor(),
     Entry: constructor(),
+    PasswordEntry: FakePasswordEntry,
     ScrollView: FakeBin,
     Viewport: FakeBin,
     Frame: constructor(),
@@ -137,6 +150,35 @@ describe('createStRenderHost', () => {
     const actor = host.element('StLabel', { styleClass: 'title' }, child) as FakeActor;
     expect(actor.properties).toEqual({ style_class: 'title' });
     expect(actor.children).toEqual([child]);
+  });
+
+  it('binds StPasswordEntry through its native Clutter.Text actor', () => {
+    const host = createStRenderHost(createSt());
+    const value = signal('secret');
+    const changed: string[] = [];
+    const entry = host.element('StPasswordEntry', {
+      text: { kind: 'binding', get: () => value.get() },
+      textChange: (text: string) => { changed.push(text); value.set(text); },
+    }, undefined) as FakePasswordEntry;
+
+    expect(entry.properties.text).toBe('secret');
+    value.set('updated externally');
+    expect(entry.properties.text).toBe('updated externally');
+    entry.set_property('text', 'typed secret');
+    entry.textActor.emit('text-changed');
+    expect(changed).toEqual(['typed secret']);
+    expect(value.get()).toBe('typed secret');
+    host.destroy(entry);
+    entry.textActor.emit('text-changed');
+    expect(changed).toEqual(['typed secret']);
+  });
+
+  it('requires the native Clutter.Text actor for StPasswordEntry', () => {
+    const St = createSt();
+    St.PasswordEntry = constructor();
+    const host = createStRenderHost(St);
+    expect(() => host.element('StPasswordEntry', { text: '' }, undefined))
+      .toThrow(/requires its native Clutter.Text actor/);
   });
 
   it('creates a scrollable multiline StTextArea backed by editable Clutter.Text', () => {

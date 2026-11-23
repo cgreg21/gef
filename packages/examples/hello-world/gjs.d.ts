@@ -42,6 +42,7 @@ declare module 'gi://Gtk' {
     readonly Label: new (properties?: Record<string, unknown>) => unknown;
     readonly Button: new (properties?: Record<string, unknown>) => unknown;
     readonly Entry: new (properties?: Record<string, unknown>) => unknown;
+    readonly PasswordEntry: new (properties?: Record<string, unknown>) => unknown;
     readonly Image: new (properties?: Record<string, unknown>) => unknown;
     readonly ScrolledWindow: new (properties?: Record<string, unknown>) => unknown;
     readonly Switch: new (properties?: Record<string, unknown>) => unknown;

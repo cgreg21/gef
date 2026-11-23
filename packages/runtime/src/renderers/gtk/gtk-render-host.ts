@@ -14,6 +14,10 @@ export interface GtkActor {
   set_child?(child: GtkActor | null): void;
   set_property?(name: string, value: unknown): void;
   get_property?(name: string): unknown;
+  get_text?(): string;
+  getText?(): string;
+  set_text?(text: string): void;
+  setText?(text: string): void;
   connect?(signal: string, callback: (actor: GtkActor, ...args: unknown[]) => unknown): number;
   disconnect?(id: number): void;
   on?(signal: string, callback: (...args: unknown[]) => unknown): void;
@@ -336,7 +340,10 @@ export function createGtkRenderHost(
       let gridColumns = 2;
       const isSelect = name === 'GtkDropDown' && Object.prototype.hasOwnProperty.call(attributes, 'options');
       const isTextArea = name === 'GtkTextView' && Object.prototype.hasOwnProperty.call(attributes, 'text');
+      const isPasswordInput = name === 'GtkPasswordEntry' && Object.prototype.hasOwnProperty.call(attributes, 'text');
       const selectOptions = isSelect ? attributes.options : undefined;
+      const passwordValue = isPasswordInput ? attributes.text : undefined;
+      const passwordChange = isPasswordInput ? attributes.textChange : undefined;
       const textValue = isTextArea ? attributes.text : undefined;
       const textChange = isTextArea ? attributes.textChange : undefined;
       const selectValue = isSelect ? attributes.value : undefined;
@@ -344,6 +351,7 @@ export function createGtkRenderHost(
       for (const [attribute, value] of Object.entries(attributes)) {
         if (isSelect && ['options', 'value', 'valueChange'].includes(attribute)) continue;
         if (isTextArea && ['text', 'textChange'].includes(attribute)) continue;
+        if (isPasswordInput && ['text', 'textChange'].includes(attribute)) continue;
         if (attribute === 'class' || attribute === 'className') {
           if (isGtplBinding(value)) classBindings.push(value);
           else classes.push(...classNames(value));
@@ -380,6 +388,28 @@ export function createGtkRenderHost(
       if (name === 'Sidebar') properties.orientation ??= 1;
       const actor = new Constructor(properties);
       const scope = new ResourceScope();
+      if (isPasswordInput) {
+        let updating = false;
+        const readText = (): string => actor.get_text?.() ?? actor.getText?.()
+          ?? (readProperty(actor, 'text', options.api ?? 'gjs') as string | undefined) ?? '';
+        const syncText = (): void => {
+          const value = isGtplBinding(passwordValue) ? passwordValue.get() : passwordValue ?? '';
+          if (typeof value !== 'string') throw new Error('GtkPasswordEntry text must be a string.');
+          updating = true;
+          try {
+            if (actor.set_text) actor.set_text(value);
+            else if (actor.setText) actor.setText(value);
+            else setProperty(actor, 'text', value, options.api ?? 'gjs');
+          } finally { updating = false; }
+        };
+        if (isGtplBinding(passwordValue)) scope.add(effect(syncText));
+        else syncText();
+        if (typeof passwordChange === 'function') {
+          scope.add(connectSignal(actor, 'changed', () => {
+            if (!updating) passwordChange(readText());
+          }));
+        }
+      }
       if (isTextArea) {
         const buffer = readProperty(actor, 'buffer', options.api ?? 'gjs') as GtkTextBuffer | undefined;
         if (!buffer) throw new Error('GtkTextView requires its native Gtk.TextBuffer.');

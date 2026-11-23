@@ -18,6 +18,8 @@ const fraction = signal(0.25);
 const selectOptions = signal(['Red', 'Green', 'Blue']);
 const selectedValue = signal('Green');
 const areaValue = signal('first line\nsecond line');
+const passwordValue = signal('secret');
+let passwordEvent = '';
 let areaEvent = '';
 let selectedEvent = '';
 const label = host.element('GtkLabel', {
@@ -34,6 +36,11 @@ const dropdown = host.element('GtkDropDown', {
 }, undefined);
 const progress = host.element('GtkProgressBar', {
   fraction: runtime.bind(() => fraction.get()),
+}, undefined);
+const passwordEntry = host.element('GtkPasswordEntry', {
+  'show-peek-icon': true,
+  text: runtime.bind(() => passwordValue.get()),
+  textChange: (value) => { passwordEvent = value; passwordValue.set(value); },
 }, undefined);
 const textArea = host.element('GtkTextView', {
   text: runtime.bind(() => areaValue.get()),
@@ -54,13 +61,19 @@ const gefSwitch = componentRuntime.element('GefSwitch', {
   active: componentRuntime.bind(() => switchState.get()),
   activeChange: (value) => switchState.set(value),
 }, undefined);
-const root = host.fragment([button, toggle, icon, progress, dropdown, gefSwitch, textArea]);
+const root = host.fragment([button, toggle, icon, progress, dropdown, gefSwitch, textArea, passwordEntry]);
 
 assert.equal(label.label, 'before');
 assert.equal(label.useUnderline, true);
 assert.equal(icon.iconName, 'document-save-symbolic');
 assert.equal(progress.fraction, 0.25);
 assert.equal(textArea.buffer.text, 'first line\nsecond line');
+assert.equal(passwordEntry.text, 'secret');
+passwordEntry.setText('typed secret');
+assert.equal(passwordEvent, 'typed secret');
+assert.equal(passwordValue.get(), 'typed secret');
+passwordValue.set('updated secret');
+assert.equal(passwordEntry.text, 'updated secret');
 textArea.buffer.setText('edited\nby Node-GTK', -1);
 assert.equal(areaEvent, 'edited\nby Node-GTK');
 assert.equal(areaValue.get(), 'edited\nby Node-GTK');

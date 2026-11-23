@@ -24,6 +24,7 @@ export interface StNamespace {
   readonly Bin: StWidgetConstructor;
   readonly Widget: StWidgetConstructor;
   readonly Entry?: StWidgetConstructor;
+  readonly PasswordEntry?: StWidgetConstructor;
   readonly ScrollView?: StWidgetConstructor;
   readonly Viewport?: StWidgetConstructor;
   readonly Frame?: StWidgetConstructor;
@@ -172,6 +173,7 @@ export function createStRenderHost(
     StBin: St.Bin,
     StWidget: St.Widget,
     ...(St.Entry ? { StEntry: St.Entry } : {}),
+    ...(St.PasswordEntry ? { StPasswordEntry: St.PasswordEntry } : {}),
     ...(St.ScrollView ? { StScrollView: St.ScrollView } : {}),
     ...(St.Viewport ? { StViewport: St.Viewport } : {}),
     ...(St.Frame ? { StFrame: St.Frame } : {}),
@@ -233,9 +235,12 @@ export function createStRenderHost(
       const selectChange = name === 'StSelect' ? attributes.valueChange : undefined;
       const textValue = name === 'StTextArea' ? attributes.text : undefined;
       const textChange = name === 'StTextArea' ? attributes.textChange : undefined;
+      const passwordValue = name === 'StPasswordEntry' ? attributes.text : undefined;
+      const passwordChange = name === 'StPasswordEntry' ? attributes.textChange : undefined;
       for (const [attribute, value] of Object.entries(attributes)) {
         if (name === 'StSelect' && ['options', 'value', 'valueChange'].includes(attribute)) continue;
         if (name === 'StTextArea' && ['text', 'textChange'].includes(attribute)) continue;
+        if (name === 'StPasswordEntry' && ['text', 'textChange'].includes(attribute)) continue;
         if (name === 'Grid' && attribute === 'columns') {
           gridColumns = typeof value === 'number' ? value : Number(value);
           if (!Number.isInteger(gridColumns) || gridColumns < 1) throw new Error('Grid columns must be a positive integer.');
@@ -290,6 +295,30 @@ export function createStRenderHost(
       const resources = new ResourceScope();
       actor.connect('destroy', () => { destroyed.add(actor); resources.dispose(); });
       try {
+        if (name === 'StPasswordEntry') {
+          const textActor = readProperty(actor, 'clutter-text') as StActor | undefined;
+          if (!textActor) throw new Error('StPasswordEntry requires its native Clutter.Text actor.');
+          let updating = false;
+          const readText = (): string => {
+            const value = readProperty(actor, 'text');
+            return typeof value === 'string' ? value : '';
+          };
+          const syncText = (): void => {
+            const value = isGtplBinding(passwordValue) ? passwordValue.get() : passwordValue ?? '';
+            if (typeof value !== 'string') throw new Error('StPasswordEntry text must be a string.');
+            updating = true;
+            try { actor.set_property('text', value); }
+            finally { updating = false; }
+          };
+          if (isGtplBinding(passwordValue)) resources.add(effect(syncText));
+          else syncText();
+          if (typeof passwordChange === 'function') {
+            const changed = textActor.connect('text-changed', () => {
+              if (!updating) passwordChange(readText());
+            });
+            resources.add(() => textActor.disconnect(changed));
+          }
+        }
         if (name === 'StTextArea') {
           if (!actor.set_child) throw new Error('StTextArea requires St.ScrollView child management.');
           const viewport = new St.Viewport!({ x_expand: true, y_expand: true });

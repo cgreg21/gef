@@ -2,9 +2,7 @@
 
 > **Alpha software:** GEF is under active development. APIs, generated output and CLI behavior may change between alpha releases. It targets GNOME Shell 51; do not treat local validation as a guarantee of extensions.gnome.org approval.
 
-GEF is a TypeScript and GTPL framework for native GNOME Shell 51 extensions.
-It targets GJS and GNOME's St/Clutter APIs for the Shell process, and GTK4 /
-libadwaita for the preferences process. It does not use a browser DOM. The GNOME Shell 51 smoke test exercises resource-scope cleanup, St host signal/effect teardown and GLib timer cancellation, then installs the generated EGO ZIP and runs two real extension enable/disable cycles on a virtual X11 display.
+GEF is a TypeScript and GTPL framework for native GNOME desktop projects. It supports GNOME Shell 51 extensions running in GJS and native GTK4/libadwaita applications running in Node.js through node-gtk. The two project types are selected in `gef.json`; they remain separate runtime targets. It does not use a browser DOM. The GNOME Shell 51 smoke test exercises resource-scope cleanup, St host signal/effect teardown and GLib timer cancellation, then installs the generated EGO ZIP and runs two real extension enable/disable cycles on a virtual X11 display.
 
 ## Requirements
 
@@ -47,9 +45,10 @@ After the alpha is published, install it in an extension project:
 npm install --save-dev gnome-extension-framework@next
 npx --yes --package gnome-extension-framework@next gef --help
 npx --yes --package gnome-extension-framework@next gef new my-extension
+npx --yes --package gnome-extension-framework@next gef new my-app --type application
 ```
 
-The `new` command creates a small GNOME Shell 51 starter project with TypeScript configuration, metadata, an extension class and a packaging script. Review the generated files before building or publishing; the starter is intentionally small and is not a promise that every project-specific build step is configured.
+The `new` command creates a project with an Angular-style `gef.json` workspace file. Use `--type extension` (the default) for a GNOME Shell 51 extension, or `--type application` for a Node-GTK GTK4/libadwaita desktop application. Review the generated files before building or publishing; the starter is intentionally small and is not a promise that every project-specific build step is configured.
 
 For the full first-project walkthrough, see [Getting started](docs/getting-started.md). For command syntax and behavior, see the [CLI reference](docs/cli-reference.md).
 ## CLI

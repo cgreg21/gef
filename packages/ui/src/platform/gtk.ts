@@ -10,10 +10,10 @@ export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
     render: (button: GefButton, runtime: GtplRenderRuntime<GtkActor>) => runtime.element(
       'GtkButton',
       {
-        sensitive: !button.disabled,
+        sensitive: runtime.bind(() => !button.disabled),
         clicked: () => button.clicked.emit(undefined),
       },
-      runtime.text(button.label),
+      runtime.text(runtime.bind(() => button.label)),
     ),
   });
   return registry;

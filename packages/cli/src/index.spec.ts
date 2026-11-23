@@ -191,7 +191,9 @@ describe('GEF CLI', () => {
       ...base.io,
       readFile: async (path) => path.endsWith('gef.json')
         ? JSON.stringify({ version: 1, defaultProject: 'app', projects: { app: { projectType: 'application' } } })
-        : '',
+        : path.endsWith('package.json')
+          ? JSON.stringify({ scripts: { package: 'node-gtk bundle' } })
+          : '',
     };
     expect(await runCli(['package'], io)).toBe(0);
     expect(base.commands).toEqual([{ command: 'npm', args: ['run', 'package'] }]);

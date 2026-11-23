@@ -82,6 +82,8 @@ export function createStRenderHost(
   const constructors: Readonly<Record<string, StWidgetConstructor>> = {
     StBox: St.BoxLayout,
     StBoxLayout: St.BoxLayout,
+    HeaderBar: St.BoxLayout,
+    Sidebar: St.BoxLayout,
     StLabel: St.Label,
     StIcon: St.Icon,
     StButton: St.Button,
@@ -145,6 +147,8 @@ export function createStRenderHost(
         else properties[propertyName(attribute)] = value;
       }
 
+      if (name === 'HeaderBar') properties.orientation ??= 0;
+      if (name === 'Sidebar') properties.orientation ??= 1;
       const actor = new Constructor(properties);
       const resources = new ResourceScope();
       actor.connect('destroy', () => { destroyed.add(actor); resources.dispose(); });

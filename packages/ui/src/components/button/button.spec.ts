@@ -8,6 +8,17 @@ import { GefButton } from './button.component.js';
 import { createStUiRegistry } from '../../platform/gnome-shell.js';
 import { createGtkUiRegistry } from '../../platform/gtk.js';
 
+function createRuntime<Node>() {
+  const element = vi.fn((_name: string, _attributes: Readonly<Record<string, unknown>>, _child: Node | undefined) => ({} as Node));
+  const text = vi.fn((_value: string | { readonly kind: 'binding'; readonly get: () => string }) => ({} as Node));
+  const bind = <T>(get: () => T) => ({ kind: 'binding' as const, get });
+  return {
+    runtime: { element, text, bind } as unknown as GtplRenderRuntime<Node>,
+    element,
+    text,
+  };
+}
+
 describe('GefButton', () => {
   it('declares its public input and output contract', () => {
     expect(getComponentMetadata(GefButton)).toMatchObject({
@@ -17,44 +28,61 @@ describe('GefButton', () => {
     });
   });
 
-  it('renders a native St button and forwards its click output', () => {
+  it('keeps St button properties and label reactive and forwards clicks', () => {
     const registry = createStUiRegistry();
     const definition = registry.match('GefButton', {});
     expect(definition).toBeDefined();
     const button = definition!.create(new Injector()) as GefButton;
     button.label = 'Save';
-    const element = vi.fn((_name: string, _attributes: Readonly<Record<string, unknown>>, _child: StActor | undefined) => ({} as StActor));
-    const text = vi.fn((_value: string) => ({} as StActor));
-    const runtime = { element, text } as unknown as GtplRenderRuntime<StActor>;
+    const { runtime, element, text } = createRuntime<StActor>();
     const clicked = vi.fn();
     button.clicked.subscribe(clicked);
 
     definition!.render(button, runtime);
 
     expect(element).toHaveBeenCalledWith('StButton', expect.objectContaining({
-      disabled: false,
+      disabled: expect.objectContaining({ kind: 'binding' }),
       clicked: expect.any(Function),
     }), expect.anything());
     const attributes = element.mock.calls[0]![1];
+    const disabled = attributes.disabled as { get(): boolean };
+    const label = text.mock.calls[0]![0] as { get(): string };
+    expect(disabled.get()).toBe(false);
+    expect(label.get()).toBe('Save');
+
+    button.disabled = true;
+    button.label = 'Saved';
+    expect(disabled.get()).toBe(true);
+    expect(label.get()).toBe('Saved');
+
     (attributes.clicked as () => void)();
     expect(clicked).toHaveBeenCalledOnce();
   });
 
-  it('renders a native GTK button using its sensitive property', () => {
+  it('keeps GTK sensitivity and label reactive', () => {
     const registry = createGtkUiRegistry();
     const definition = registry.match('GefButton', {});
     expect(definition).toBeDefined();
     const button = definition!.create(new Injector()) as GefButton;
+    button.label = 'Save';
     button.disabled = true;
-    const element = vi.fn((_name: string, _attributes: Readonly<Record<string, unknown>>, _child: GtkActor | undefined) => ({} as GtkActor));
-    const text = vi.fn((_value: string) => ({} as GtkActor));
-    const runtime = { element, text } as unknown as GtplRenderRuntime<GtkActor>;
+    const { runtime, element, text } = createRuntime<GtkActor>();
 
     definition!.render(button, runtime);
 
     expect(element).toHaveBeenCalledWith('GtkButton', expect.objectContaining({
-      sensitive: false,
+      sensitive: expect.objectContaining({ kind: 'binding' }),
       clicked: expect.any(Function),
     }), expect.anything());
+    const attributes = element.mock.calls[0]![1];
+    const sensitive = attributes.sensitive as { get(): boolean };
+    const label = text.mock.calls[0]![0] as { get(): string };
+    expect(sensitive.get()).toBe(false);
+    expect(label.get()).toBe('Save');
+
+    button.disabled = false;
+    button.label = 'Saved';
+    expect(sensitive.get()).toBe(true);
+    expect(label.get()).toBe('Saved');
   });
 });

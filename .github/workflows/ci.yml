@@ -53,6 +53,7 @@ jobs:
             'dist/compiler/src/index.d.ts',
             'dist/runtime/src/index.js',
             'dist/runtime/src/index.d.ts',
+            'scripts/package-appimage.mjs',
             'README.md',
           ];
 

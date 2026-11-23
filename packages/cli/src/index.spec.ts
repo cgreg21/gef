@@ -292,7 +292,7 @@ describe('GEF CLI', () => {
           '  enable() {}',
           '  disable() {}',
           '}',
-        ].join('\\n'),
+        ].join('\n'),
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
     expect(base.errors.join('\\n')).toContain('constructor contains GNOME resource or signal side effects');

@@ -15,3 +15,5 @@ export * from './layout/flex.js';
 export * from './components/switch/switch.component.js';
 
 export * from './components/search-input/search-input.component.js';
+
+export * from './components/slider/slider.component.js';

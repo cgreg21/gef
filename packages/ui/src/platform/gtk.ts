@@ -12,6 +12,7 @@ import { GefSelect } from '../components/select/select.component.js';
 import { GefTextArea } from '../components/textarea/textarea.component.js';
 import { GefPasswordInput } from '../components/password-input/password-input.component.js';
 import { GefSearchInput } from '../components/search-input/search-input.component.js';
+import { GefSlider } from '../components/slider/slider.component.js';
 
 export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
   const registry = new ComponentRegistry<GtkActor>();
@@ -51,6 +52,20 @@ export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
         textChange: (value: string) => {
           input.value = value;
           input.valueChange.emit(value);
+        },
+      },
+      undefined,
+    ),
+  });
+  registry.registerType(GefSlider, {
+    create: () => new GefSlider(),
+    render: (slider: GefSlider, runtime: GtplRenderRuntime<GtkActor>) => runtime.element(
+      'GtkScale',
+      {
+        value: runtime.bind(() => slider.value),
+        valueChange: (value: number) => {
+          slider.value = value;
+          slider.valueChange.emit(value);
         },
       },
       undefined,

@@ -14,6 +14,8 @@ export interface GtkActor {
   set_child?(child: GtkActor | null): void;
   set_property?(name: string, value: unknown): void;
   get_property?(name: string): unknown;
+  set_range?(lower: number, upper: number): void;
+  set_increments?(step: number, page: number): void;
   set_text?(text: string): void;
   setText?(text: string): void;
   connect?(signal: string, callback: (actor: GtkActor, ...args: unknown[]) => unknown): number;
@@ -76,6 +78,7 @@ export interface GtkNamespace {
   readonly TextView?: GtkWidgetConstructor;
   readonly PasswordEntry?: GtkWidgetConstructor;
   readonly SearchEntry?: GtkWidgetConstructor;
+  readonly Scale?: GtkWidgetConstructor;
 }
 
 export interface AdwNamespace {
@@ -271,6 +274,7 @@ export function createGtkRenderHost(
     ...(Gtk.TextView ? { GtkTextView: Gtk.TextView } : {}),
     ...(Gtk.PasswordEntry ? { GtkPasswordEntry: Gtk.PasswordEntry } : {}),
     ...(Gtk.SearchEntry ? { GtkSearchEntry: Gtk.SearchEntry } : {}),
+    ...(Gtk.Scale ? { GtkScale: Gtk.Scale } : {}),
     ...(options.adw?.PreferencesPage ? { AdwPreferencesPage: options.adw.PreferencesPage } : {}),
     ...(options.adw?.PreferencesGroup ? { AdwPreferencesGroup: options.adw.PreferencesGroup } : {}),
     ...(options.adw?.ActionRow ? { AdwActionRow: options.adw.ActionRow } : {}),
@@ -339,6 +343,9 @@ export function createGtkRenderHost(
       const isSelect = name === 'GtkDropDown' && Object.prototype.hasOwnProperty.call(attributes, 'options');
       const isTextArea = name === 'GtkTextView' && Object.prototype.hasOwnProperty.call(attributes, 'text');
       const isPasswordInput = name === 'GtkPasswordEntry' && Object.prototype.hasOwnProperty.call(attributes, 'text');
+      const isSlider = name === 'GtkScale' && Object.prototype.hasOwnProperty.call(attributes, 'value');
+      const sliderValue = isSlider ? attributes.value : undefined;
+      const sliderChange = isSlider ? attributes.valueChange : undefined;
       const selectOptions = isSelect ? attributes.options : undefined;
       const passwordValue = isPasswordInput ? attributes.text : undefined;
       const passwordChange = isPasswordInput ? attributes.textChange : undefined;
@@ -350,6 +357,7 @@ export function createGtkRenderHost(
         if (isSelect && ['options', 'value', 'valueChange'].includes(attribute)) continue;
         if (isTextArea && ['text', 'textChange'].includes(attribute)) continue;
         if (isPasswordInput && ['text', 'textChange'].includes(attribute)) continue;
+        if (isSlider && ['value', 'valueChange'].includes(attribute)) continue;
         if (attribute === 'class' || attribute === 'className') {
           if (isGtplBinding(value)) classBindings.push(value);
           else classes.push(...classNames(value));
@@ -386,6 +394,23 @@ export function createGtkRenderHost(
       if (name === 'Sidebar') properties.orientation ??= 1;
       const actor = new Constructor(properties);
       const scope = new ResourceScope();
+      if (isSlider) {
+        actor.set_range?.(0, 1);
+        actor.set_increments?.(0.01, 0.1);
+        let updating = false;
+        const syncValue = (): void => {
+          const value = isGtplBinding(sliderValue) ? sliderValue.get() : sliderValue;
+          if (typeof value !== 'number' || !Number.isFinite(value)) throw new Error('GtkScale value must be a finite number.');
+          updating = true;
+          try { setProperty(actor, 'value', Math.min(1, Math.max(0, value)), options.api ?? 'gjs'); }
+          finally { updating = false; }
+        };
+        if (isGtplBinding(sliderValue)) scope.add(effect(syncValue));
+        else syncValue();
+        if (typeof sliderChange === 'function') scope.add(connectSignal(actor, 'value-changed', () => {
+          if (!updating) sliderChange(readProperty(actor, 'value', options.api ?? 'gjs'));
+        }));
+      }
       if (isPasswordInput) {
         let updating = false;
         const readText = (): string => {

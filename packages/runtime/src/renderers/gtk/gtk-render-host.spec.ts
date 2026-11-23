@@ -187,6 +187,7 @@ function createGtk(): GtkNamespace {
     TextView: FakeTextView,
     PasswordEntry: FakePasswordEntry,
     SearchEntry: FakeWidget,
+    Scale: FakeWidget,
   };
 }
 
@@ -198,9 +199,30 @@ describe('createGtkRenderHost', () => {
         ExpanderRow: FakeWidget, ComboRow: FakeWidget, SpinRow: FakeWidget,
         Banner: FakeWidget, HeaderBar: FakeWidget, ToolbarView: FakeWidget },
     });
-    for (const name of ['GtkCheckButton', 'GtkDropDown', 'GtkSpinButton', 'GtkProgressBar', 'GtkSeparator', 'GtkListBox', 'GtkListBoxRow', 'GtkGrid', 'GtkStack', 'GtkRevealer', 'GtkTextView', 'GtkPasswordEntry', 'GtkSearchEntry', 'AdwSwitchRow', 'AdwEntryRow', 'AdwPasswordEntryRow', 'AdwExpanderRow', 'AdwComboRow', 'AdwSpinRow', 'AdwBanner', 'AdwHeaderBar', 'AdwToolbarView', 'HeaderBar', 'Sidebar']) {
+    for (const name of ['GtkCheckButton', 'GtkDropDown', 'GtkSpinButton', 'GtkProgressBar', 'GtkSeparator', 'GtkListBox', 'GtkListBoxRow', 'GtkGrid', 'GtkStack', 'GtkRevealer', 'GtkTextView', 'GtkPasswordEntry', 'GtkSearchEntry', 'GtkScale', 'AdwSwitchRow', 'AdwEntryRow', 'AdwPasswordEntryRow', 'AdwExpanderRow', 'AdwComboRow', 'AdwSpinRow', 'AdwBanner', 'AdwHeaderBar', 'AdwToolbarView', 'HeaderBar', 'Sidebar']) {
       expect(host.element(name, {}, undefined)).toBeInstanceOf(FakeWidget);
     }
+  });
+
+  it('binds GtkScale values and emits native value changes', () => {
+    const host = createGtkRenderHost(createGtk());
+    const value = signal(0.25);
+    const changed: number[] = [];
+    const scale = host.element('GtkScale', {
+      value: { kind: 'binding', get: () => value.get() },
+      valueChange: (next: number) => { changed.push(next); value.set(next); },
+    }, undefined) as FakeWidget;
+
+    expect(scale.properties.value).toBe(0.25);
+    value.set(0.75);
+    expect(scale.properties.value).toBe(0.75);
+    scale.properties.value = 0.5;
+    scale.emit('value-changed');
+    expect(changed).toEqual([0.5]);
+    expect(value.get()).toBe(0.5);
+    host.destroy(scale);
+    scale.emit('value-changed');
+    expect(changed).toEqual([0.5]);
   });
 
   it('binds GtkPasswordEntry through GtkEditable and emits changed text', () => {

@@ -82,6 +82,22 @@ Use `HeaderBar` and `Sidebar` directly in templates; no TypeScript layout config
 
 `HeaderBar` uses `Adw.HeaderBar` when supplied, otherwise `Gtk.HeaderBar` or a horizontal `Gtk.Box` on GTK; GNOME Shell uses a horizontal `St.BoxLayout`. Native header bars receive children in their start slot. `Sidebar` uses a vertical `Gtk.Box` or `St.BoxLayout`. They remain ordinary GTPL containers, so child ordering, bindings and lifecycle follow the normal GTPL rules. `orientation` can override the box fallback and sidebar orientation.
 
+## GTPL Flex container
+
+Use the native `Flex` container directly in a template:
+
+```html
+<Flex direction="column" gap="8">
+  <Label>Title</Label>
+  <Flex direction="row" gap="12">
+    <Button>Cancel</Button>
+    <Button>Save</Button>
+  </Flex>
+</Flex>
+```
+
+`direction` accepts `row` or `column`; `gap` is a non-negative number of pixels. Both renderers map these attributes to their native box orientation and spacing, and `direction` supports reactive GTPL bindings. The container is deliberately minimal: wrapping, grow/shrink and justification are not yet part of the GTPL API.
+
 ## Flex layout
 
 `FlexLayout` calculates row or column layouts, distributes free space with `grow`, shrinks overflowing items with `shrink`, and optionally wraps items. Direction, wrapping, gap, justification and alignment accept responsive values:

@@ -30,7 +30,7 @@ describe('FlexLayout', () => {
     const wide = flex.layout(800, 100, items);
     expect(wide.direction).toBe('row');
     expect(wide.lines).toBe(1);
-    expect(wide.items[1]!x).toBe(70);
+    expect(wide.items[1]!.x).toBe(70);
   });
 
   it('supports wrapping and alignment in a row', () => {

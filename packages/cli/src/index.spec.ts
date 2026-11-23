@@ -298,6 +298,63 @@ describe('GEF CLI', () => {
     expect(base.errors.join('\\n')).toContain('constructor contains GNOME resource or signal side effects');
   });
 
+  it('warns about GNOME side effects executed at module load time', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js')],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : [
+          "import St from 'gi://St';",
+          'const button = new St.Button();',
+          'export default class Demo { enable() {} disable() {} }',
+        ].join('\\n'),
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
+    expect(base.errors.join('\\n')).toContain('module-level code may create GNOME resources');
+  });
+
+  it('warns when enable creates resources without an obvious disable cleanup', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js')],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : [
+          "import St from 'gi://St';",
+          'export default class Demo {',
+          '  enable() {',
+          '    this.button = new St.Button();',
+          '  }',
+          '  disable() {}',
+          '}',
+        ].join('\\n'),
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
+    expect(base.errors.join('\\n')).toContain('enable() creates GNOME resources');
+  });
+
+  it('accepts an obvious resource cleanup in disable', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js')],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : [
+          "import St from 'gi://St';",
+          'export default class Demo {',
+          '  enable() { this.button = new St.Button(); }',
+          '  disable() { this.button.destroy(); }',
+          '}',
+        ].join('\\n'),
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
+    expect(base.errors.join('\\n')).not.toContain('no obvious cleanup call');
+  });
+
   it('warns about console.debug calls without failing the EGO check', async () => {
     const base = createIO('');
     const io: CliIO = {

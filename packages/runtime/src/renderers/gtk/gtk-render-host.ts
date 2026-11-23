@@ -164,6 +164,8 @@ export function createGtkRenderHost(
 ): GtplRenderHost<GtkActor> {
   const constructors: Readonly<Record<string, GtkWidgetConstructor>> = {
     GtkBox: Gtk.Box,
+    HeaderBar: Gtk.Box,
+    Sidebar: Gtk.Box,
     GtkLabel: Gtk.Label,
     GtkButton: Gtk.Button,
     GtkEntry: Gtk.Entry,
@@ -255,6 +257,8 @@ export function createGtkRenderHost(
         else properties[propertyName(attribute, options.api)] = value;
       }
 
+      if (name === 'HeaderBar') properties.orientation ??= 0;
+      if (name === 'Sidebar') properties.orientation ??= 1;
       const actor = new Constructor(properties);
       const scope = new ResourceScope();
       own(actor, scope);

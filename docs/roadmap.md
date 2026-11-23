@@ -38,6 +38,10 @@
 - [ ] Configure the npm package trusted publisher and complete the first public alpha release.
 - [ ] Run the final alpha candidate through the GNOME Shell 51 real-host enable/disable harness before publishing.
 
+## Cross-platform compatibility
+- [x] Keep CLI EGO-check fixtures and path assertions portable across Windows and POSIX hosts.
+- [x] Run TypeScript checks and the complete unit test suite on Windows CI.
+
 ## Foundation
 - [x] Repository baseline and GNOME Shell 51 target.
 - [x] Canonical .gtpl templates and initial parser.

@@ -132,8 +132,8 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
       if (typeof schemaId !== 'string' || !/^[A-Za-z](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:[.][A-Za-z](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/.test(schemaId)) {
         errors.push('metadata.json: settings-schema must be a valid dotted GSettings schema ID.');
       } else {
-        const schemaFiles = files.filter((file) => file.includes('/schemas/') && file.endsWith('.gschema.xml'));
-        if (schemaFiles.length === 0 && !files.some((file) => file.endsWith('/schemas/gschemas.compiled'))) {
+        const schemaFiles = files.filter((file) => relative(directory, file).replaceAll('\\', '/').split('/').includes('schemas') && file.endsWith('.gschema.xml'));
+        if (schemaFiles.length === 0 && !files.some((file) => relative(directory, file).replaceAll('\\', '/').endsWith('schemas/gschemas.compiled'))) {
           errors.push('metadata.json: settings-schema is set but no GSettings schema is packaged.');
         } else if (schemaFiles.length > 0) {
           let found = false;
@@ -233,7 +233,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
       }
     }
     const resourceFiles = files.filter((file) => /\.(?:css|svg|png|jpe?g|webp|gif|woff2?|ttf|otf|gschema\.xml|gresource\.xml)$/i.test(file)
-      || file.endsWith('/schemas/gschemas.compiled'));
+      || relative(directory, file).replaceAll('\\', '/').endsWith('schemas/gschemas.compiled'));
     const resourceSources = [...javascriptSources.values()];
     for (const file of files.filter((path) => path.endsWith('.css'))) {
       try { resourceSources.push(await io.readFile(file)); } catch { /* A failed optional asset read is reported as a possible unused resource. */ }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { runCli, type CliIO } from './index.js';
 
 function createIO(source: string, commandStatus = 0) {
@@ -38,7 +38,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
         : 'export default class Demo { enable() {} disable() {} }',
@@ -53,7 +53,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/helper.js'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js'), resolve('/tmp/demo/helper.js')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
         : path.endsWith('extension.js')
@@ -68,7 +68,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/unused.png'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js'), resolve('/tmp/demo/unused.png')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
         : 'export default class Demo {}',
@@ -130,8 +130,8 @@ describe('GEF CLI', () => {
     const { io, directories, writes } = createIO('<StLabel>Hello</StLabel>');
     expect(await runCli(['compile', 'view.gtpl', 'dist/generated/view.js'], io)).toBe(0);
     expect(directories).toContain(resolve('dist/generated'));
-    expect(writes.some((item) => item.path.endsWith('dist/generated/view.js'))).toBe(true);
-    expect(writes.some((item) => item.path.endsWith('dist/generated/view.js.map'))).toBe(true);
+    expect(writes.some((item) => item.path.endsWith(resolve('dist/generated/view.js')))).toBe(true);
+    expect(writes.some((item) => item.path.endsWith(resolve('dist/generated/view.js.map')))).toBe(true);
   });
 
   it('creates a minimal extension project', async () => {
@@ -146,11 +146,11 @@ describe('GEF CLI', () => {
     const projectPackage = JSON.parse(writes.find((item) => item.path.endsWith('package.json'))?.content ?? '{}') as { dependencies?: Record<string, string> };
     expect(projectPackage.dependencies?.['gnome-extension-framework']).toBe('^0.1.0-alpha.1');
     expect(extension).not.toContain('StButton');
-    const packageScript = writes.find((item) => item.path.endsWith('scripts/package.mjs'))?.content ?? '';
+    const packageScript = writes.find((item) => item.path.endsWith(join('scripts', 'package.mjs')))?.content ?? '';
     expect(packageScript).toContain("import { spawnSync } from 'node:child_process'");
     expect(packageScript).not.toContain("await import('node:child_process')");
     expect(extension).toContain('Do NOT upload to extensions.gnome.org');
-    expect(directories).toEqual(expect.arrayContaining([expect.stringContaining('out/scripts')]));
+    expect(directories).toEqual(expect.arrayContaining([expect.stringContaining(join('out', 'scripts'))]));
     expect(output[0]).toContain('Created extension project');
   });
 
@@ -192,7 +192,7 @@ describe('GEF CLI', () => {
     const base = createIO(JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] }));
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/src.ts'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js'), resolve('/tmp/demo/src.ts')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
         : 'export default class Demo {}',
@@ -205,7 +205,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json')],
       readFile: async () => JSON.stringify({
         uuid: 'demo@example.com',
         name: 'Demo',
@@ -223,7 +223,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/orphan.js'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js'), resolve('/tmp/demo/orphan.js')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
         : 'export default class Demo { enable() {} disable() {} }',
@@ -236,7 +236,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json')],
       readFile: async () => JSON.stringify({ uuid: 'demo@@example..com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] }),
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
@@ -248,7 +248,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
         : 'export default class Demo {}',
@@ -262,7 +262,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
         : "import St from 'gi://St';\\nexport default class Demo { constructor() { this.button = new St.Button(); this.button.connect('clicked', () => {}); } enable() {} disable() {} }",
@@ -277,7 +277,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/helper.js'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js'), resolve('/tmp/demo/helper.js')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
         : path.endsWith('extension.js')
@@ -293,7 +293,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/prefs.js'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/prefs.js')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
         : "import St from 'gi://St';",
@@ -306,7 +306,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/prefs.js', '/tmp/demo/lib/prefs-helper.js'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js'), resolve('/tmp/demo/prefs.js'), resolve('/tmp/demo/lib/prefs-helper.js')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
         : path.endsWith('prefs.js') ? "import './lib/prefs-helper.js';"
@@ -320,7 +320,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/lib/shell-helper.js'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js'), resolve('/tmp/demo/lib/shell-helper.js')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
         : path.endsWith('extension.js') ? "import './lib/shell-helper.js';"
@@ -334,7 +334,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/schemas/demo.gschema.xml'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js'), resolve('/tmp/demo/schemas/demo.gschema.xml')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org..demo' })
         : '<schemalist><schema id="org..demo" path="/org/demo/"></schema></schemalist>',
@@ -347,7 +347,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/schemas/demo.gschema.xml'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js'), resolve('/tmp/demo/schemas/demo.gschema.xml')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org.example.demo-extension' })
         : '<schemalist><schema id="org.example.other" path="/org/example/other/"><key name="note" type="s"><default>"org.example.demo-extension"</default></key></schema></schemalist>',
@@ -360,7 +360,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org.example.demo-extension' })
         : '',
@@ -373,7 +373,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/schemas/org.example.demo-extension.gschema.xml'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js'), resolve('/tmp/demo/schemas/org.example.demo-extension.gschema.xml')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'], 'settings-schema': 'org.example.demo-extension' })
         : path.endsWith('.gschema.xml') ? '<schemalist><schema id="org.example.demo-extension" path="/org/example/demo/"></schema></schemalist>' : 'export default class Demo { enable() {} disable() {} }',
@@ -385,7 +385,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/stylesheet.css'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js'), resolve('/tmp/demo/stylesheet.css')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
         : path.endsWith('stylesheet.css')
@@ -400,7 +400,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/stylesheet.css', '/tmp/demo/icons/unused.png', '/tmp/demo/icons/used.svg'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js'), resolve('/tmp/demo/stylesheet.css'), resolve('/tmp/demo/icons/unused.png'), resolve('/tmp/demo/icons/used.svg')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
         : path.endsWith('extension.js')
@@ -417,7 +417,7 @@ describe('GEF CLI', () => {
     const base = createIO('');
     const io: CliIO = {
       ...base.io,
-      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/stylesheet.css'],
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js'), resolve('/tmp/demo/stylesheet.css')],
       readFile: async (path) => path.endsWith('metadata.json')
         ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
         : 'export default class Demo { enable() {} disable() {} }',

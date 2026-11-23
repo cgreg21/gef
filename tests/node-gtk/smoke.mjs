@@ -15,12 +15,20 @@ const runtime = createGtplRenderRuntime(host);
 const title = signal('before');
 const iconName = signal('document-save-symbolic');
 const fraction = signal(0.25);
+const selectOptions = signal(['Red', 'Green', 'Blue']);
+const selectedValue = signal('Green');
+let selectedEvent = '';
 const label = host.element('GtkLabel', {
   label: runtime.bind(() => title.get()),
   'use-underline': true,
 }, undefined);
 const icon = host.element('GtkImage', {
   'icon-name': runtime.bind(() => iconName.get()),
+}, undefined);
+const dropdown = host.element('GtkDropDown', {
+  options: runtime.bind(() => selectOptions.get()),
+  value: runtime.bind(() => selectedValue.get()),
+  valueChange: (value) => { selectedEvent = value; selectedValue.set(value); },
 }, undefined);
 const progress = host.element('GtkProgressBar', {
   fraction: runtime.bind(() => fraction.get()),
@@ -38,7 +46,7 @@ const gefSwitch = componentRuntime.element('GefSwitch', {
   active: componentRuntime.bind(() => switchState.get()),
   activeChange: (value) => switchState.set(value),
 }, undefined);
-const root = host.fragment([button, toggle, icon, progress, gefSwitch]);
+const root = host.fragment([button, toggle, icon, progress, dropdown, gefSwitch]);
 let clicks = 0;
 let active;
 
@@ -46,6 +54,14 @@ assert.equal(label.label, 'before');
 assert.equal(label.useUnderline, true);
 assert.equal(icon.iconName, 'document-save-symbolic');
 assert.equal(progress.fraction, 0.25);
+assert.equal(dropdown.model.get_n_items(), 3);
+assert.equal(dropdown.selected, 1);
+dropdown.selected = 2;
+assert.equal(selectedEvent, 'Blue');
+assert.equal(selectedValue.get(), 'Blue');
+selectOptions.set(['Blue', 'Green']);
+assert.equal(dropdown.model.get_n_items(), 2);
+assert.equal(dropdown.selected, 0);
 assert.equal(gefSwitch.active, false);
 switchState.set(true);
 assert.equal(gefSwitch.active, true);

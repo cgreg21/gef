@@ -137,7 +137,7 @@ describe('GEF CLI', () => {
   it('creates a minimal extension project', async () => {
     const { io, output, writes, directories } = createIO('');
     expect(await runCli(['new', 'hello-world', 'out'], io)).toBe(0);
-    expect(writes.map((item) => item.path)).toEqual(expect.arrayContaining([expect.stringContaining('metadata.json'), expect.stringContaining('extension.ts'), expect.stringContaining('package.json'), expect.stringContaining('tsconfig.json'), expect.stringContaining('scripts/package.mjs')]));
+    expect(writes.map((item) => item.path)).toEqual(expect.arrayContaining([expect.stringContaining('metadata.json'), expect.stringContaining('extension.ts'), expect.stringContaining('package.json'), expect.stringContaining('tsconfig.json'), expect.stringContaining(join('scripts', 'package.mjs'))]));
     const extension = writes.find((item) => item.path.endsWith('extension.ts'))?.content ?? '';
     expect(extension).toContain('override enable(): void');
     expect(extension).toContain('Main.panel.addToStatusArea');

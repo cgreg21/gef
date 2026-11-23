@@ -246,7 +246,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         const schema = await io.readFile(file).catch(() => '');
         const id = schema.match(/<schema\b[^>]*\bid=["']([^"']+)["']/)?.[1];
         used = Boolean(id && (metadata['settings-schema'] === id || [...javascriptSources.values()].some((source) => source.includes(id))));
-      } else if (file.endsWith('/schemas/gschemas.compiled')) {
+      } else if (relative(directory, file).replaceAll('\\', '/').endsWith('schemas/gschemas.compiled')) {
         used = typeof schemaId === 'string';
       } else {
         const name = basename(file);

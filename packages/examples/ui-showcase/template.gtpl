@@ -18,10 +18,10 @@
   <GtkLabel label="Progress" xalign="0" />
   <GtkProgressBar fraction="0.65" show-text="true" text="65%" />
   <GtkLabel label="Layout: Flex and Grid are available as GTPL containers." xalign="0" />
-  <GtkGrid column-spacing="8" row-spacing="8">
+  <Grid columns="2" gap="8">
     <GtkButton label="General" />
     <GtkButton label="Appearance" />
     <GtkButton label="Network" />
     <GtkButton label="About" />
-  </GtkGrid>
+  </Grid>
 </GtkBox>

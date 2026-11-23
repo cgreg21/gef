@@ -248,9 +248,9 @@ export function createGtkRenderHost(
         if (attribute === 'class' || attribute === 'className') {
           if (isGtplBinding(value)) classBindings.push(value);
           else classes.push(...classNames(value));
-        } else if (isGtplBinding(value)) bindings.push([propertyName(attribute), value]);
+        } else if (isGtplBinding(value)) bindings.push([attribute, value]);
         else if (typeof value === 'function') events.push([attribute, value as (...args: unknown[]) => unknown]);
-        else properties[propertyName(attribute)] = value;
+        else properties[propertyName(attribute, options.api)] = value;
       }
 
       const actor = new Constructor(properties);

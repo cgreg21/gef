@@ -29,7 +29,16 @@ npm run build
 
 ## 2. Create a starter extension
 
-Use the alpha CLI without a global install:
+The first public npm release is not yet available. From a GEF source checkout, build and run the CLI locally:
+
+```sh
+npm install
+npm run build
+npm run gef -- new hello-world
+cd hello-world
+```
+
+After the alpha package is published, the equivalent command is:
 
 ```sh
 npx --yes --package gnome-extension-framework@next gef new hello-world
@@ -37,16 +46,9 @@ cd hello-world
 npm install
 ```
 
-The generator creates `metadata.json`, `extension.ts`, a minimal GJS type
-declaration file, `tsconfig.json`, `package.json`, a README and a packaging
-script. The generated example adds a panel button in `enable()` and destroys
-it in `disable()`.
+The generator creates `metadata.json`, `extension.ts`, a minimal GJS type declaration file, `tsconfig.json`, `package.json`, a README and a packaging script. The generated example adds a panel button in `enable()` and destroys it in `disable()`.
 
-The generated UUID is a placeholder (`hello-world@example.com`). Replace it
-with a stable UUID you control before packaging. Update the extension name,
-description and supported Shell versions in `metadata.json` as appropriate.
-Do not claim compatibility with a Shell version you have not tested.
-
+The generated project declares the framework dependency as `^0.1.0-alpha.1`; install it from npm after that package version has been published. The generated UUID is a placeholder (`hello-world@example.com`). Replace it with a stable UUID you control before packaging. Update the extension name, description and supported Shell versions in `metadata.json` as appropriate. Do not claim compatibility with a Shell version you have not tested.
 ## 3. Build and package
 
 The starter project defines its own build and package scripts. Run:

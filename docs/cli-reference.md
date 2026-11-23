@@ -1,15 +1,12 @@
 # CLI reference
 
-The executable is named `gef`. It is included in the
-`gnome-extension-framework` npm package.
+The executable is named `gef`. It is included in the `gnome-extension-framework` npm package. The first public npm release is not yet available; from a source checkout, build with `npm run build` and run commands with `npm run gef -- <command>`.
 
-Run it through npm without a global installation:
+After the alpha is published, run it without a global installation:
 
 ```sh
 npx --yes --package gnome-extension-framework@next gef --help
 ```
-
-In a source checkout, run the built CLI with `npm run gef -- <command>`.
 The CLI requires Node.js 22 or newer. Commands that compile SCSS also require
 the project Sass dependency; packaging and environment checks use native
 GNOME tools.

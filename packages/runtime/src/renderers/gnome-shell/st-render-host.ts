@@ -34,8 +34,30 @@ export interface StNamespace {
   readonly ComboBox?: StWidgetConstructor;
 }
 
+export interface StPopupMenu {
+  readonly actor: StActor;
+  addMenuItem(item: StActor): void;
+  removeAll?(): void;
+  open(options?: { animate?: boolean }): void;
+  close(options?: { animate?: boolean }): void;
+}
+
+export interface StPopupMenuManager {
+  addMenu(menu: StPopupMenu): void;
+  removeMenu?(menu: StPopupMenu): void;
+}
+
+export interface StPopupMenuNamespace {
+  readonly PopupMenu: new (source: StActor, alignment: number, side: number) => StPopupMenu;
+  readonly PopupMenuItem: new (label: string) => StActor;
+  readonly PopupMenuManager: new (source: StActor) => StPopupMenuManager;
+  readonly uiGroup: StActor;
+  readonly sideTop: number;
+}
+
 export interface StRenderHostOptions {
   readonly components?: Readonly<Record<string, StWidgetConstructor>>;
+  readonly popupMenu?: StPopupMenuNamespace;
   /** Optional Clutter.Orientation value for fragment and repeat containers. */
   readonly fragmentOrientation?: unknown;
 }
@@ -191,7 +213,7 @@ export function createStRenderHost(
       });
     },
     element(name, attributes, children) {
-      const Constructor = constructors[name];
+      const Constructor = name === 'StSelect' ? St.Button : constructors[name];
       if (!Constructor) throw new Error(`Unknown GNOME Shell component "${name}". Register a St widget constructor.`);
       const properties: Record<string, unknown> = {};
       const events: Array<[string, (...args: unknown[]) => unknown]> = [];
@@ -199,7 +221,11 @@ export function createStRenderHost(
       let flexHomogeneous: boolean | undefined;
       let gridColumns = 2;
       let gridGap = 0;
+      const selectOptions = name === 'StSelect' ? attributes.options : undefined;
+      const selectValue = name === 'StSelect' ? attributes.value : undefined;
+      const selectChange = name === 'StSelect' ? attributes.valueChange : undefined;
       for (const [attribute, value] of Object.entries(attributes)) {
+        if (name === 'StSelect' && ['options', 'value', 'valueChange'].includes(attribute)) continue;
         if (name === 'Grid' && attribute === 'columns') {
           gridColumns = typeof value === 'number' ? value : Number(value);
           if (!Number.isInteger(gridColumns) || gridColumns < 1) throw new Error('Grid columns must be a positive integer.');
@@ -246,10 +272,54 @@ export function createStRenderHost(
       if (name === 'Grid') { properties.orientation = 1; properties.spacing = gridGap; }
       if (name === 'HeaderBar') properties.orientation ??= 0;
       if (name === 'Sidebar') properties.orientation ??= 1;
+      if (name === 'StSelect' && !options.popupMenu) throw new Error('StSelect requires GNOME Shell PopupMenu and Main.uiGroup dependencies.');
       const actor = new Constructor(properties);
       const resources = new ResourceScope();
       actor.connect('destroy', () => { destroyed.add(actor); resources.dispose(); });
       try {
+        if (name === 'StSelect') {
+          const popup = options.popupMenu!;
+          const menu = new popup.PopupMenu(actor, 0.0, popup.sideTop);
+          const manager = new popup.PopupMenuManager(actor);
+          popup.uiGroup.add_child?.(menu.actor);
+          manager.addMenu(menu);
+          const label = new St.Label({ text: '' });
+          actor.add_child?.(label);
+          const readOptions = (): string[] => {
+            const value = isGtplBinding(selectOptions) ? selectOptions.get() : selectOptions;
+            if (!Array.isArray(value) || !value.every((item) => typeof item === 'string')) throw new Error('StSelect options must be an array of strings.');
+            return value;
+          };
+          const syncValue = (): void => {
+            const value = isGtplBinding(selectValue) ? selectValue.get() : selectValue;
+            label.set_property('text', typeof value === 'string' ? value : '');
+          };
+          const rebuildMenu = (): void => {
+            menu.removeAll?.();
+            for (const option of readOptions()) {
+              const item = new popup.PopupMenuItem(option);
+              const id = item.connect('activate', () => {
+                label.set_property('text', option);
+                menu.close({ animate: false });
+                if (typeof selectChange === 'function') selectChange(option);
+              });
+              resources.add(() => item.disconnect(id));
+              menu.addMenuItem(item);
+            }
+            syncValue();
+          };
+          if (isGtplBinding(selectOptions)) resources.add(effect(rebuildMenu));
+          else rebuildMenu();
+          if (isGtplBinding(selectValue)) resources.add(effect(syncValue));
+          const clicked = actor.connect('clicked', () => menu.open());
+          resources.add(() => actor.disconnect(clicked));
+          resources.add(() => {
+            menu.close({ animate: false });
+            manager.removeMenu?.(menu);
+            popup.uiGroup.remove_child?.(menu.actor);
+            menu.actor.destroy();
+          });
+        }
         for (const [signal, handler] of events) {
           const property = twoWayProperty(signal);
           const id = actor.connect(property ? notifySignal(property) : signal, (_source, ...args) => {

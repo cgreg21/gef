@@ -62,6 +62,10 @@
       "types": "./dist/ui/src/index.d.ts",
       "import": "./dist/ui/src/index.js"
     }
+,    "./scripts/package-app.mjs": "./scripts/package-app.mjs",
+    "./scripts/package-appimage.mjs": "./scripts/package-appimage.mjs",
+    "./scripts/package-windows.mjs": "./scripts/package-windows.mjs",
+    "./scripts/package-macos.mjs": "./scripts/package-macos.mjs"
   },
   "dependencies": {
     "typescript": "^5.9.3"

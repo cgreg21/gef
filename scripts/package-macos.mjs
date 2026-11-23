@@ -8,6 +8,13 @@ const bundle = manifest.bundle;
 if (process.platform !== 'darwin') throw new Error('macOS packages must be built on a native macOS host.');
 if (!bundle?.name || !bundle?.id || !bundle?.entry) throw new Error('package.json bundle.name, bundle.id and bundle.entry are required.');
 
+async function copyContents(source, destination) {
+  await mkdir(destination, { recursive: true });
+  for (const entry of await readdir(source)) {
+    await cp(resolve(source, entry), resolve(destination, entry), { recursive: true, dereference: true, force: true });
+  }
+}
+
 function run(command, args) {
   const result = spawnSync(command, args, { encoding: 'utf8' });
   if (result.error) throw result.error;
@@ -50,18 +57,16 @@ for (const formula of formulas) {
   for (const directory of ['lib']) {
     try { await access(resolve(prefix, directory)); }
     catch { continue; }
-    for (const entry of await readdir(resolve(prefix, directory))) {
-      await cp(resolve(prefix, directory, entry), resolve(runtimeLib, entry), { recursive: true, dereference: true, force: true });
-    }
+    await copyContents(resolve(prefix, directory), runtimeLib);
   }
   for (const directory of ['share/glib-2.0', 'share/icons', 'share/themes', 'share/gtk-4.0', 'etc/gtk-4.0']) {
     try { await access(resolve(prefix, directory)); }
     catch { continue; }
-    await cp(resolve(prefix, directory), resolve(shareRoot, directory.replace(/^share\//, '').replace(/^etc\//, 'etc/')), { recursive: true, dereference: true, force: true });
+    await copyContents(resolve(prefix, directory), resolve(shareRoot, directory.replace(/^share\//, '').replace(/^etc\//, 'etc/')));
   }
 }
 const typelibDir = run('pkg-config', ['--variable=typelibdir', 'gobject-introspection-1.0']);
-await cp(typelibDir, typelibRoot, { recursive: true, dereference: true, force: true });
+await copyContents(typelibDir, typelibRoot);
 const dylibs = await readdir(runtimeLib, { recursive: true });
 const copiedLibraryCount = dylibs.filter((path) => String(path).endsWith('.dylib')).length;
 if (copiedLibraryCount === 0) throw new Error('No Homebrew GTK dylibs were copied; refusing to create a non-portable app.');
@@ -78,6 +83,8 @@ const launcher = [
   'export DYLD_FALLBACK_LIBRARY_PATH="$CONTENTS/Frameworks/lib${DYLD_FALLBACK_LIBRARY_PATH:+:$DYLD_FALLBACK_LIBRARY_PATH}"',
   'export GI_TYPELIB_PATH="$RES/girepository-1.0${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"',
   'export XDG_DATA_DIRS="$RES/runtime/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"',
+  'export GTK_DATA_PREFIX="$RES/runtime"',
+  'export GDK_PIXBUF_MODULEDIR="$CONTENTS/Frameworks/lib/gdk-pixbuf-2.0/2.10.0/loaders"',
   'export GSETTINGS_SCHEMA_DIR="$RES/runtime/share/glib-2.0/schemas"',
   'cd "$RES/app"',
   `exec "$RES/runtime/node" --import node-gtk/register "${bundle.entry}" "$@"`,

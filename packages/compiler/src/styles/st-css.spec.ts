@@ -37,6 +37,17 @@ describe('validateStCss', () => {
     });
   });
 
+  it.each(['\\r\\n', '\\r'])('tracks declaration positions with %j line endings', (newline) => {
+    const source = ['.panel {', '  display: flex;', '}'].join(newline);
+    expect(validateStCss(source)[0]).toMatchObject({
+      code: 'GEFCSS1003',
+      line: 2,
+      column: 3,
+      start: source.indexOf('display'),
+    });
+    expect(validateStCss(source).find((item) => item.code === 'GEFCSS1001')).toBeUndefined();
+  });
+
   it('ignores declaration-like text inside quoted strings, including embedded semicolons', () => {
     expect(validateStCss('.panel { content: "safe; display: flex"; background: url("data:text/plain;display:grid"); }')).toEqual([]);
   });

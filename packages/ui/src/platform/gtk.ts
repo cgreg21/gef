@@ -22,6 +22,7 @@ export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
     render: (label: GefLabel, runtime: GtplRenderRuntime<GtkActor>) => runtime.element(
       'GtkLabel',
       { label: runtime.bind(() => label.text) },
+      undefined,
     ),
   });
   return registry;

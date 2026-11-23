@@ -2,8 +2,8 @@ import Gtk from 'gi://Gtk';
 import {
   createGtkRenderHost,
   mountGtplTemplate,
-} from '../../runtime/src/index.js';
-import renderShowcase from './template.js';
+} from '../../../dist/runtime/src/index.js';
+import renderShowcase from '../../../dist/examples/ui-showcase/template.js';
 
 const application = new Gtk.Application({
   application_id: 'org.gnome.GEF.UIShowcase',

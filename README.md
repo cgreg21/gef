@@ -48,7 +48,7 @@ npx --yes --package gnome-extension-framework@next gef new my-extension
 npx --yes --package gnome-extension-framework@next gef new my-app --type application
 ```
 
-The `new` command creates a project with an Angular-style `gef.json` workspace file. Use `--type extension` (the default) for a GNOME Shell 51 extension, or `--type application` for a Node-GTK GTK4/libadwaita desktop application. Review the generated files before building or publishing; the starter is intentionally small and is not a promise that every project-specific build step is configured. Node-GTK application projects include a `bundle` configuration with the application ID, compiled entry point and GTK 4 target; `gef package` runs the project's package script. The upstream Node-GTK portable bundler currently targets Linux.
+The `new` command creates a project with an Angular-style `gef.json` workspace file. Use `--type extension` (the default) for a GNOME Shell 51 extension, or `--type application` for a Node-GTK GTK4/libadwaita desktop application. Review the generated files before building or publishing; the starter is intentionally small and is not a promise that every project-specific build step is configured. Node-GTK application projects include a `bundle` configuration with the application ID, compiled entry point and GTK 4 target. Their build compiles GTPL templates and mounts them through the GEF GTK renderer's Node-GTK mode. The upstream Node-GTK portable bundler currently targets Linux.
 
 For the full first-project walkthrough, see [Getting started](docs/getting-started.md). For command syntax and behavior, see the [CLI reference](docs/cli-reference.md).
 ## CLI

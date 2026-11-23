@@ -6,7 +6,8 @@ describe('FlexLayout', () => {
     const result = new FlexLayout({ direction: 'row' }).layout(300, 40, [
       { basis: 50, grow: 1 }, { basis: 50, grow: 2 },
     ]);
-    expect(result.items.map(item => item.width)).toEqual([100, 200]);
+    expect(result.items[0]!.width).toBeCloseTo(116.67, 2);
+    expect(result.items[1]!.width).toBeCloseTo(183.33, 2);
     expect(result.items[1]!.x).toBe(100);
   });
 

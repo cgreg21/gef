@@ -136,7 +136,7 @@ GTPL provides two simple application-shell containers on both GNOME Shell and GT
 
 GTK uses `Gtk.Grid` cell attachment. GNOME Shell 51 uses a vertical `St.BoxLayout` containing horizontal row boxes, since St 51 does not expose a native grid widget. The current GTPL grid uses a fixed column count; responsive column changes are not yet wired to native allocation events.
 
-`Flex` is a native box container on both renderers. Its GTPL attributes are `direction="row|column"` and `gap="N"`; `direction` can also be bound reactively. `gap` maps to the native box spacing. This first GTPL version intentionally exposes only these common properties; it is not a CSS Flexbox implementation (wrapping, grow/shrink and justification are not yet supported).
+`Flex` is a native box container on both renderers. Its GTPL attributes are `direction="row|column"`, `gap="N"` and `homogeneous="true|false"`. `direction` and `homogeneous` can be bound reactively. `gap` maps to native box spacing; `homogeneous` asks the native box to distribute the same size to each child. This is intentionally not a CSS Flexbox implementation: wrapping, grow/shrink and justification are not yet supported.
 
 ## Security and correctness
 

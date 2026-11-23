@@ -130,4 +130,4 @@ jobs:
       - name: GTK4 and libadwaita runtime smoke test
         run: npm run test:gtk
       - name: Node-GTK renderer smoke test
-        run: npm run build && GTK_A11Y=none xvfb-run -a node --import node-gtk/register tests/node-gtk/smoke.mjs
+        run: npm run build && node dist/cli/src/index.js compile tests/node-gtk/smoke.gtpl dist/node-gtk-view.js && GTK_A11Y=none xvfb-run -a node --import node-gtk/register tests/node-gtk/smoke.mjs

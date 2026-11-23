@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { getComponentMetadata } from '../../../../shared/src/components/metadata.js';
 import { Injector } from '../../../../runtime/src/di/injector.js';
+import { effect } from '../../../../runtime/src/reactivity/signal.js';
 import type { GtplRenderRuntime } from '../../../../runtime/src/rendering/gtpl-runtime.js';
 import type { StActor } from '../../../../runtime/src/renderers/gnome-shell/st-render-host.js';
 import type { GtkActor } from '../../../../runtime/src/renderers/gtk/gtk-render-host.js';
@@ -26,7 +27,7 @@ describe('GefInput', () => {
   it.each([
     ['GNOME Shell', createStUiRegistry, 'StEntry', 'text'],
     ['GTK4', createGtkUiRegistry, 'GtkEntry', 'text'],
-  ])('renders a reactive native input on %s', (_platform, createRegistry, nativeName, property) => {
+  ])('keeps the native input synchronized on %s', (_platform, createRegistry, nativeName, property) => {
     const definition = createRegistry().match('GefInput', {});
     expect(definition).toBeDefined();
     const input = definition!.create(new Injector()) as GefInput;
@@ -43,11 +44,16 @@ describe('GefInput', () => {
     }), undefined);
     const attributes = element.mock.calls[0]![1];
     const binding = attributes[property] as { get(): string };
-    expect(binding.get()).toBe('initial');
+    let rendered = '';
+    const stop = effect(() => { rendered = binding.get(); });
+    expect(rendered).toBe('initial');
+
     input.value = 'updated';
-    expect(binding.get()).toBe('updated');
+    expect(rendered).toBe('updated');
     (attributes.textChange as (value: string) => void)('typed');
     expect(input.value).toBe('typed');
+    expect(rendered).toBe('typed');
     expect(changed).toHaveBeenCalledWith('typed');
+    stop();
   });
 });

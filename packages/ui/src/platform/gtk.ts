@@ -8,6 +8,7 @@ import { GefIcon } from '../components/icon/icon.component.js';
 import { GefInput } from '../components/input/input.component.js';
 import { GefLabel } from '../components/label/label.component.js';
 import { GefProgressBar } from '../components/progress-bar/progress-bar.component.js';
+import { GefSelect } from '../components/select/select.component.js';
 
 export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
   const registry = new ComponentRegistry<GtkActor>();
@@ -69,6 +70,21 @@ export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
         activeChange: (value: boolean) => {
           checkbox.checked = value;
           checkbox.checkedChange.emit(value);
+        },
+      },
+      undefined,
+    ),
+  });
+  registry.registerType(GefSelect, {
+    create: () => new GefSelect(),
+    render: (select: GefSelect, runtime: GtplRenderRuntime<GtkActor>) => runtime.element(
+      'GtkDropDown',
+      {
+        options: runtime.bind(() => select.options),
+        value: runtime.bind(() => select.value),
+        valueChange: (value: string) => {
+          select.value = value;
+          select.selectedChange.emit(value);
         },
       },
       undefined,

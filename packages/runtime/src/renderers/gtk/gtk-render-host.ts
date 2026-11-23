@@ -325,11 +325,12 @@ export function createGtkRenderHost(
       const classes: string[] = [];
       const classBindings: GtplBinding<unknown>[] = [];
       let gridColumns = 2;
-      const selectOptions = name === 'GtkDropDown' ? attributes.options : undefined;
-      const selectValue = name === 'GtkDropDown' ? attributes.value : undefined;
-      const selectChange = name === 'GtkDropDown' ? attributes.valueChange : undefined;
+      const isSelect = name === 'GtkDropDown' && Object.prototype.hasOwnProperty.call(attributes, 'options');
+      const selectOptions = isSelect ? attributes.options : undefined;
+      const selectValue = isSelect ? attributes.value : undefined;
+      const selectChange = isSelect ? attributes.valueChange : undefined;
       for (const [attribute, value] of Object.entries(attributes)) {
-        if (name === 'GtkDropDown' && ['options', 'value', 'valueChange'].includes(attribute)) continue;
+        if (isSelect && ['options', 'value', 'valueChange'].includes(attribute)) continue;
         if (attribute === 'class' || attribute === 'className') {
           if (isGtplBinding(value)) classBindings.push(value);
           else classes.push(...classNames(value));
@@ -366,7 +367,7 @@ export function createGtkRenderHost(
       if (name === 'Sidebar') properties.orientation ??= 1;
       const actor = new Constructor(properties);
       const scope = new ResourceScope();
-      if (name === 'GtkDropDown') {
+      if (isSelect) {
         if (!Gtk.StringList) throw new Error('GtkDropDown requires Gtk.StringList to provide a native options model.');
         const readOptions = (): string[] => {
           const value = isGtplBinding(selectOptions) ? selectOptions.get() : selectOptions;

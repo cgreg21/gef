@@ -188,6 +188,21 @@ describe('createGtkRenderHost', () => {
     expect((host.element('Sidebar', {}, undefined) as FakeWidget).properties.orientation).toBe(1);
   });
 
+  it('maps GTPL Flex direction and gap to native GTK box properties', () => {
+    const host = createGtkRenderHost(createGtk());
+    const direction = signal('row');
+    const flex = host.element('Flex', {
+      direction: { kind: 'binding', get: () => direction.get() },
+      gap: '12',
+    }, undefined) as FakeWidget;
+
+    expect(flex.properties).toMatchObject({ orientation: 0, spacing: 12 });
+    direction.set('column');
+    expect(flex.properties.orientation).toBe(1);
+    host.destroy(flex);
+    expect(() => host.element('Flex', { direction: 'diagonal' }, undefined)).toThrow(/Flex direction/);
+  });
+
   it('removes libadwaita action-row suffix children with the matching GTK API', () => {
     const host = createGtkRenderHost(createGtk(), {
       adw: { ActionRow: FakeActionRow },

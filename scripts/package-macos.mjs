@@ -112,8 +112,6 @@ const plist = [
 ].join('');
 await writeFile(resolve(contents, 'Info.plist'), plist);
 run('plutil', ['-lint', resolve(contents, 'Info.plist')]);
-run('codesign', ['--force', '--deep', '--sign', '-', app]);
-run('codesign', ['--verify', '--deep', '--strict', app]);
 run('hdiutil', ['create', '-volname', bundle.name, '-srcfolder', app, '-ov', '-format', 'UDZO', dmg]);
 await access(dmg);
-process.stdout.write(`Created macOS package: ${dmg} (unsigned for public distribution; ad-hoc signed)\n`);
+process.stdout.write(`Created macOS package: ${dmg} (unsigned; requires Developer ID signing and notarization for public distribution)\n`);

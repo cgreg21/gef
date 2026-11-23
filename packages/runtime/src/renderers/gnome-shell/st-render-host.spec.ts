@@ -128,19 +128,24 @@ describe('createStRenderHost', () => {
     expect(() => host.element('Grid', { columns: '0' }, undefined)).toThrow(/positive integer/);
   });
 
-  it('maps GTPL Flex direction and gap to native St box properties', () => {
+  it('maps GTPL Flex direction, gap and homogeneous to native St box properties', () => {
     const host = createStRenderHost(createSt());
     const direction = signal('column');
+    const homogeneous = signal('true');
     const flex = host.element('Flex', {
       direction: { kind: 'binding', get: () => direction.get() },
       gap: 8,
+      homogeneous: { kind: 'binding', get: () => homogeneous.get() },
     }, undefined) as FakeActor;
 
-    expect(flex.properties).toMatchObject({ orientation: 1, spacing: 8 });
+    expect(flex.properties).toMatchObject({ orientation: 1, spacing: 8, homogeneous: true });
     direction.set('row');
+    homogeneous.set('false');
     expect(flex.properties.orientation).toBe(0);
+    expect(flex.properties.homogeneous).toBe(false);
     host.destroy(flex);
     expect(() => host.element('Flex', { gap: -1 }, undefined)).toThrow(/Flex gap/);
+    expect(() => host.element('Flex', { homogeneous: 'yes' }, undefined)).toThrow(/Flex homogeneous/);
   });
 
   it('does not add synthetic empty containers to leaf widgets', () => {

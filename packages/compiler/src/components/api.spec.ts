@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { EventEmitter } from './events/event-emitter.js';
 import { Component, Directive, getComponentMetadata, getDirectiveMetadata, getPipeMetadata, HostBinding, HostListener, Input, Output, Pipe } from './api.js';
 

@@ -30,9 +30,6 @@ describe('compileGtplComponent', () => {
   });
 
   it('validates known child component input and output contracts', () => {
-    @Component({ selector: 'GefChild', template: '<StLabel />' })
-    class ChildComponent {}
-
     @Component({ selector: 'GefParent', template: '<GefChild [title]="title" (closed)="close()" />' })
     class ParentComponent {
       title = 'hello';

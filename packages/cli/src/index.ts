@@ -309,7 +309,6 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
   }
 
   if (command === 'build' || command === 'test' || command === 'package' || command === 'watch') {
-    let projectType: 'application' | 'extension' | undefined;
     try {
       const config = JSON.parse(await io.readFile(resolve('gef.json'))) as {
         defaultProject?: string;
@@ -322,7 +321,6 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
       if (project.projectType !== 'application' && project.projectType !== 'extension') {
         throw new Error('gef.json projectType must be "application" or "extension".');
       }
-      projectType = project.projectType;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
         io.stderr(`Invalid project configuration: ${error instanceof Error ? error.message : String(error)}`);

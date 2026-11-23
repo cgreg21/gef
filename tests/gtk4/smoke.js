@@ -11,7 +11,6 @@ import {
   loadGtkStylesheet,
   signal,
 } from '../../dist/runtime/src/index.js';
-import renderTwoWay from '../../dist/two-way.js';
 import renderPreferences from '../../dist/examples/preferences/template.js';
 
 Gtk.init();
@@ -104,7 +103,7 @@ for (let cycle = 1; cycle <= 3; cycle += 1) {
   const preferencesContext = Object.defineProperty({}, 'enabled', {
     enumerable: true,
     get: () => cycleEnabled.get(),
-    set: (value) => cycleEnabled.set(Boolean(value)),
+    set: (value) => { cycleEnabled.set(Boolean(value)); },
   });
   const preferencesHost = createGtkRenderHost(Gtk, {
     adw: Adw,

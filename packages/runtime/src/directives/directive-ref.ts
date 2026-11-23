@@ -34,7 +34,7 @@ export interface DirectiveOutput {
   readonly member: string;
 }
 
-export interface DirectiveDefinition<Instance, Node> {
+export interface DirectiveDefinition<Instance, _Node> {
   readonly inputs?: readonly DirectiveInput[];
   readonly outputs?: readonly DirectiveOutput[];
   readonly create: (injector: Injector) => Instance;

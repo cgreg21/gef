@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import type { GtplNode, SwitchBlockNode } from '../ast/types.js';
+import type { GtplNode } from '../ast/types.js';
 import type { ExpressionNode } from '../ast/expression.js';
 import type { SourceSpan } from '../source/span.js';
 import type { Diagnostic } from '../diagnostics/diagnostic.js';

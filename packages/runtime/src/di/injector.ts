@@ -2,7 +2,7 @@ import { ResourceScope } from '../resources/resource-scope.js';
 
 export type Constructor<T> = new (...args: any[]) => T;
 
-export class InjectionToken<T> {
+export class InjectionToken<_T> {
   constructor(readonly description: string) {}
 }
 

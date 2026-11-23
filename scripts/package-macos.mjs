@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { access, cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { extname, resolve } from 'node:path';
 
 const root = process.cwd();
@@ -44,27 +44,25 @@ await cp(resolve(root, 'package.json'), resolve(appRoot, 'package.json'));
 await cp(process.execPath, resolve(runtime, 'node'));
 
 const formulaOutput = run('brew', ['deps', '--installed', '--formula', 'gtk4', 'libadwaita', 'adwaita-icon-theme']);
-const formulas = new Set(['gtk4', 'libadwaita', 'adwaita-icon-theme', ...formulaOutput.split(/\\s+/).filter(Boolean)]);
-const copiedLibraries = 0;
+const formulas = new Set(['gtk4', 'libadwaita', 'adwaita-icon-theme', ...formulaOutput.split(/\s+/).filter(Boolean)]);
 for (const formula of formulas) {
   const prefix = run('brew', ['--prefix', formula]);
   for (const directory of ['lib']) {
     try { await access(resolve(prefix, directory)); }
     catch { continue; }
-    await cp(resolve(prefix, directory), runtimeLib, { recursive: true, dereference: true, force: true });
+    for (const entry of await readdir(resolve(prefix, directory))) {
+      await cp(resolve(prefix, directory, entry), resolve(runtimeLib, entry), { recursive: true, dereference: true, force: true });
+    }
   }
   for (const directory of ['share/glib-2.0', 'share/icons', 'share/themes', 'share/gtk-4.0', 'etc/gtk-4.0']) {
     try { await access(resolve(prefix, directory)); }
     catch { continue; }
-    await cp(resolve(prefix, directory), resolve(shareRoot, directory.replace(/^share\\//, '').replace(/^etc\\//, 'etc/')), { recursive: true, dereference: true, force: true });
+    await cp(resolve(prefix, directory), resolve(shareRoot, directory.replace(/^share\//, '').replace(/^etc\//, 'etc/')), { recursive: true, dereference: true, force: true });
   }
 }
 const typelibDir = run('pkg-config', ['--variable=typelibdir', 'gobject-introspection-1.0']);
 await cp(typelibDir, typelibRoot, { recursive: true, dereference: true, force: true });
-const dylibs = await (async () => {
-  try { return (await import('node:fs/promises')).readdir(runtimeLib, { recursive: true }); }
-  catch { return []; }
-})();
+const dylibs = await readdir(runtimeLib, { recursive: true });
 const copiedLibraryCount = dylibs.filter((path) => String(path).endsWith('.dylib')).length;
 if (copiedLibraryCount === 0) throw new Error('No Homebrew GTK dylibs were copied; refusing to create a non-portable app.');
 await access(resolve(runtimeLib, 'libgtk-4.1.dylib')).catch(() => {
@@ -98,7 +96,7 @@ const plist = [
   `<key>CFBundleIdentifier</key><string>${bundle.id}</string>`,
   `<key>CFBundleVersion</key><string>${manifest.version}</string>`,
   '<key>CFBundlePackageType</key><string>APPL</string>',
-  '<key>CFBundleExecutable</key><string>${bundle.name}</string>',
+  `<key>CFBundleExecutable</key><string>${bundle.name}</string>`,
   ...(icon && extname(icon).toLowerCase() === '.icns' ? ['<key>CFBundleIconFile</key><string>AppIcon</string>'] : []),
   '</dict></plist>',
   '',

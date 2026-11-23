@@ -154,6 +154,22 @@ describe('createStRenderHost', () => {
     expect(() => host.element('Flex', { homogeneous: 'yes' }, undefined)).toThrow(/Flex homogeneous/);
   });
 
+  it('maps static and reactive GTPL Flex alignment to St alignment properties', () => {
+    const host = createStRenderHost(createSt());
+    const aligned = host.element('Flex', { align: 'center' }, undefined) as FakeActor;
+    expect(aligned.properties).toMatchObject({ x_align: 2, y_align: 2 });
+
+    const value = signal('start');
+    const reactive = host.element('Flex', {
+      align: { kind: 'binding', get: () => value.get() },
+    }, undefined) as FakeActor;
+    expect(reactive.properties).toMatchObject({ x_align: 1, y_align: 1 });
+    value.set('end');
+    expect(reactive.properties).toMatchObject({ x_align: 3, y_align: 3 });
+    host.destroy(reactive);
+    expect(() => host.element('Flex', { align: 'middle' }, undefined)).toThrow(/Flex align/);
+  });
+
   it('maps static and reactive GTPL expand to both St expansion axes', () => {
     const host = createStRenderHost(createSt());
     const expanded = host.element('StButton', { expand: 'true' }, undefined) as FakeActor;

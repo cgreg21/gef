@@ -101,6 +101,14 @@ function booleanValue(attribute: string, value: unknown): boolean {
   throw new Error(`${attribute} must be "true" or "false".`);
 }
 
+function alignValue(value: unknown): number {
+  const alignments: Record<string, number> = { fill: 0, start: 1, end: 2, center: 3 };
+  if (typeof value !== 'string' || !(value in alignments)) {
+    throw new Error('Flex align must be "fill", "start", "center" or "end".');
+  }
+  return alignments[value];
+}
+
 function flexValue(attribute: string, value: unknown): unknown {
   if (attribute === 'direction') {
     if (value === 'row') return 0;
@@ -307,6 +315,15 @@ export function createGtkRenderHost(
         if (attribute === 'class' || attribute === 'className') {
           if (isGtplBinding(value)) classBindings.push(value);
           else classes.push(...classNames(value));
+          continue;
+        }
+        if (name === 'Flex' && attribute === 'align') {
+          for (const property of ['halign', 'valign']) {
+            if (isGtplBinding(value)) bindings.push([property, {
+              kind: 'binding', get: () => alignValue(value.get()),
+            } satisfies GtplBinding<unknown>]);
+            else properties[property] = alignValue(value);
+          }
           continue;
         }
         if (attribute === 'expand') {

@@ -55,6 +55,14 @@ function booleanValue(attribute: string, value: unknown): boolean {
   throw new Error(`${attribute} must be "true" or "false".`);
 }
 
+function alignValue(value: unknown): number {
+  const alignments: Record<string, number> = { fill: 0, start: 1, center: 2, end: 3 };
+  if (typeof value !== 'string' || !(value in alignments)) {
+    throw new Error('Flex align must be "fill", "start", "center" or "end".');
+  }
+  return alignments[value];
+}
+
 function flexValue(attribute: string, value: unknown): unknown {
   if (attribute === 'direction') {
     if (value === 'row') return 0;
@@ -206,6 +214,15 @@ export function createStRenderHost(
             get: () => flexValue(attribute, value.get()),
           } satisfies GtplBinding<unknown>]);
           else flexHomogeneous = flexValue(attribute, value) as boolean;
+          continue;
+        }
+        if (name === 'Flex' && attribute === 'align') {
+          for (const property of ['x_align', 'y_align']) {
+            if (isGtplBinding(value)) bindings.push([property, {
+              kind: 'binding', get: () => alignValue(value.get()),
+            } satisfies GtplBinding<unknown>]);
+            else properties[property] = alignValue(value);
+          }
           continue;
         }
         if (attribute === 'expand') {

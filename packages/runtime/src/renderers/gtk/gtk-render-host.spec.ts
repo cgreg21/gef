@@ -230,6 +230,22 @@ describe('createGtkRenderHost', () => {
     expect(() => host.element('Flex', { homogeneous: 'yes' }, undefined)).toThrow(/Flex homogeneous/);
   });
 
+  it('maps static and reactive GTPL Flex alignment to GTK alignment properties', () => {
+    const host = createGtkRenderHost(createGtk());
+    const aligned = host.element('Flex', { align: 'center' }, undefined) as FakeWidget;
+    expect(aligned.properties).toMatchObject({ halign: 3, valign: 3 });
+
+    const value = signal('start');
+    const reactive = host.element('Flex', {
+      align: { kind: 'binding', get: () => value.get() },
+    }, undefined) as FakeWidget;
+    expect(reactive.properties).toMatchObject({ halign: 1, valign: 1 });
+    value.set('end');
+    expect(reactive.properties).toMatchObject({ halign: 2, valign: 2 });
+    host.destroy(reactive);
+    expect(() => host.element('Flex', { align: 'middle' }, undefined)).toThrow(/Flex align/);
+  });
+
   it('maps static and reactive GTPL expand to both GTK expansion axes', () => {
     const host = createGtkRenderHost(createGtk());
     const expanded = host.element('GtkButton', { expand: 'true' }, undefined) as FakeWidget;

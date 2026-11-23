@@ -124,6 +124,7 @@
 - [x] Add the initial GTPL `Flex` container with native row/column direction, spacing and reactive direction bindings on St and GTK4.
 - [x] Add GTPL `Flex` homogeneous sizing with reactive boolean bindings on St and GTK4.
 - [x] Add the cross-platform GTPL `expand` child attribute with reactive GTK4 and St expansion properties.
+- [x] Add reactive GTPL Flex container alignment using native GTK4 and St actor alignment properties.
 - [x] Add GTPL `Grid` with fixed column placement and spacing on GTK4 and GNOME Shell 51.
 - [ ] Connect GTPL grid columns to native width changes for responsive reflow on St and GTK4.
 - [x] Keep button labels and disabled/sensitive state reactive after component creation.

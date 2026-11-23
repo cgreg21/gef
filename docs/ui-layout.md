@@ -96,7 +96,7 @@ Use the native `Flex` container directly in a template:
 </Flex>
 ```
 
-`direction` accepts `row` or `column`; `gap` is a non-negative number of pixels; `homogeneous` accepts `true` or `false` and enables equal child sizing in the native box. Both renderers map these attributes to native properties. `direction` and `homogeneous` support reactive GTPL bindings. A child may set `expand="true"` to request extra space on both axes (GTK `hexpand`/`vexpand`, St `x_expand`/`y_expand`); the value can also be bound reactively. The container remains deliberately minimal: per-child grow weights, wrapping and justification are not yet part of the GTPL API.
+`direction` accepts `row` or `column`; `gap` is a non-negative number of pixels; `homogeneous` accepts `true` or `false` and enables equal child sizing in the native box; `align` accepts `fill`, `start`, `center` or `end`. Both renderers map these attributes to native properties. `direction` and `homogeneous` support reactive GTPL bindings. A child may set `expand="true"` to request extra space on both axes (GTK `hexpand`/`vexpand`, St `x_expand`/`y_expand`); the value can also be bound reactively. `align` controls the Flex container's own horizontal and vertical alignment in its parent, not the alignment of each child. Main-axis justification is not exposed because Gtk.Box and St.BoxLayout do not offer the same native justification property. Per-child grow weights and wrapping are also not yet part of the GTPL API.
 
 ## GTPL Grid container
 

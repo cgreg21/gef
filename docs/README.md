@@ -8,6 +8,11 @@ Use this index to find the guide for each part of the framework.
 - [CLI reference](cli-reference.md) — command syntax, behavior and exit statuses.
 - [Development roadmap](roadmap.md) — implemented work and remaining alpha tasks.
 
+## UI
+
+- [UI components — guide complet](ui-components.md) — catalogue illustré, propriétés, événements, exemples GTPL, conteneurs et compatibilité GTK4/GNOME Shell.
+- [UI layout](ui-layout.md) — Flex, Grid, breakpoints et calculs responsive.
+
 ## Language and compiler
 
 - [GTPL language](gtpl-language.md) — template syntax, expressions, control flow and source locations.

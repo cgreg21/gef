@@ -185,8 +185,8 @@ describe('GEF CLI', () => {
     expect(projectPackage.dependencies?.['gnome-extension-framework']).toBe('^0.1.0-alpha.2');
     expect(projectPackage.scripts?.build).toContain('gef compile src/main.gtpl');
     expect(projectPackage.scripts?.start).toContain('--import node-gtk/register');
-    expect(projectPackage.scripts?.package).toBe('npm run build && node-gtk bundle --archive && node scripts/package-appimage.mjs');
-    expect(writes.find((item) => item.path.endsWith(join('scripts', 'package-appimage.mjs')))?.content).toContain("gnome-extension-framework/scripts/package-appimage.mjs");
+    expect(projectPackage.scripts?.package).toBe('npm run build && node scripts/package.mjs');
+    expect(writes.find((item) => item.path.endsWith(join('scripts', 'package.mjs')))?.content).toContain("gnome-extension-framework/scripts/package-app.mjs");
     expect(projectPackage.bundle).toEqual({ name: 'DesktopApp', id: 'com.example.desktop.app', entry: 'dist/main.js', gtk: 4 });
     expect(directories).toContain(resolve('out/src'));
     expect(directories).toContain(resolve('out/scripts'));

@@ -440,8 +440,8 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     };
     try {
       await io.mkdir(directory);
-      if (projectType === 'extension') await io.mkdir(resolve(directory, 'scripts'));
-      else await io.mkdir(resolve(directory, 'src'));
+      await io.mkdir(resolve(directory, 'scripts'));
+      if (projectType === 'application') await io.mkdir(resolve(directory, 'src'));
       for (const [path, source] of Object.entries(files)) await io.writeFile(resolve(directory, path), source);
     } catch (error) {
       io.stderr(`Unable to generate project: ${error instanceof Error ? error.message : String(error)}`);

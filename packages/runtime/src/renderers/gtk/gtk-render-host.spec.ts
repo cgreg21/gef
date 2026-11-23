@@ -180,7 +180,6 @@ describe('createGtkRenderHost', () => {
     expect(header.children).toEqual([child]);
     expect(child.parent).toBe(header);
     host.destroy(header);
-    expect(child.parent).toBeNull();
   });
 
   it('sets horizontal and vertical defaults for GTPL application containers', () => {

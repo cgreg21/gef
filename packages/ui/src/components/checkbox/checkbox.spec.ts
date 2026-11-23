@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { getComponentMetadata } from '../../../../shared/src/components/metadata.js';
 import { Injector } from '../../../../runtime/src/di/injector.js';
+import { effect } from '../../../../runtime/src/reactivity/signal.js';
 import type { GtplRenderRuntime } from '../../../../runtime/src/rendering/gtpl-runtime.js';
 import type { StActor } from '../../../../runtime/src/renderers/gnome-shell/st-render-host.js';
 import type { GtkActor } from '../../../../runtime/src/renderers/gtk/gtk-render-host.js';
@@ -26,7 +27,7 @@ describe('GefCheckbox', () => {
   it.each([
     ['GNOME Shell', createStUiRegistry, 'StCheckBox', 'checked'],
     ['GTK4', createGtkUiRegistry, 'GtkCheckButton', 'active'],
-  ])('renders a reactive native checkbox on %s', (_platform, createRegistry, nativeName, property) => {
+  ])('keeps the native checkbox synchronized on %s', (_platform, createRegistry, nativeName, property) => {
     const definition = createRegistry().match('GefCheckbox', {});
     expect(definition).toBeDefined();
     const checkbox = definition!.create(new Injector()) as GefCheckbox;
@@ -43,11 +44,16 @@ describe('GefCheckbox', () => {
     }), undefined);
     const attributes = element.mock.calls[0]![1];
     const binding = attributes[property] as { get(): boolean };
-    expect(binding.get()).toBe(true);
+    let rendered = false;
+    const stop = effect(() => { rendered = binding.get(); });
+    expect(rendered).toBe(true);
+
     checkbox.checked = false;
-    expect(binding.get()).toBe(false);
+    expect(rendered).toBe(false);
     (attributes[property + 'Change'] as (value: boolean) => void)(true);
     expect(checkbox.checked).toBe(true);
+    expect(rendered).toBe(true);
     expect(changed).toHaveBeenCalledWith(true);
+    stop();
   });
 });

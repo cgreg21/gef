@@ -15,6 +15,7 @@
     "gef": "node dist/cli/src/index.js",
     "package:example": "node scripts/package-extension.mjs",
     "package:appimage": "node scripts/package-appimage.mjs",
+    "package:app": "node scripts/package-app.mjs",
     "styles": "node dist/cli/src/index.js styles packages/examples/hello-world/stylesheet.scss dist/styles.css",
     "dev:watch": "node scripts/dev-watch.mjs",
     "prepack": "npm run build",
@@ -39,7 +40,10 @@
   "types": "./dist/compiler/src/index.d.ts",
   "files": [
     "dist",
-    "scripts/package-appimage.mjs"
+    "scripts/package-appimage.mjs",
+    "scripts/package-app.mjs",
+    "scripts/package-windows.mjs",
+    "scripts/package-macos.mjs"
   ],
   "exports": {
     ".": {

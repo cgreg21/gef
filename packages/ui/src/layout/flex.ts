@@ -59,13 +59,13 @@ export class FlexLayout {
 
     for (const item of items) {
       this.validateItem(item);
-      const next = (lines[lines.length - 1].length ? gap : 0) + item.basis;
+      const next = (lines[lines.length - 1]!.length ? gap : 0) + item.basis;
       if (wrap && lines[lines.length - 1].length && used + next > mainLimit) {
         lines.push([]);
         used = 0;
       }
-      lines[lines.length - 1].push(item);
-      used += (lines[lines.length - 1].length > 1 ? gap : 0) + item.basis;
+      lines[lines.length - 1]!.push(item);
+      used += (lines[lines.length - 1]!.length > 1 ? gap : 0) + item.basis;
     }
 
     const result: FlexItemLayout[] = [];
@@ -93,7 +93,7 @@ export class FlexLayout {
         const crossSize = align === 'stretch' ? lineCross : Math.min(item.crossSize ?? lineCross, lineCross);
         const crossPosition = crossOffset + (align === 'center' ? (lineCross - crossSize) / 2
           : align === 'end' ? lineCross - crossSize : 0);
-        const mainSize = sizes[itemIndex];
+        const mainSize = sizes[itemIndex]!;
         const x = direction === 'row' ? mainOffset : crossPosition;
         const y = direction === 'row' ? crossPosition : mainOffset;
         result.push({

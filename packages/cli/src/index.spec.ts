@@ -44,7 +44,7 @@ describe('GEF CLI', () => {
         : 'export default class Demo { enable() {} disable() {} }',
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
-    expect(base.output[0]).toBe('EGO validation passed: 2 files, 1 JavaScript file, 0 warning(s).');
+    expect(base.output[0]).toBe('EGO validation passed: 2 files, 1 JavaScript file, 0 warnings.');
     expect(base.errors).toHaveLength(0);
   });
 
@@ -61,7 +61,7 @@ describe('GEF CLI', () => {
           : 'export const value = 1;',
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
-    expect(base.output[0]).toBe('EGO validation passed: 3 files, 2 JavaScript files, 0 warning(s).');
+    expect(base.output[0]).toBe('EGO validation passed: 3 files, 2 JavaScript files, 0 warnings.');
   });
 
   it('reports EGO error and warning totals when validation fails', async () => {
@@ -74,7 +74,7 @@ describe('GEF CLI', () => {
         : 'export default class Demo {}',
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
-    expect(base.errors.join('\\n')).toContain('EGO validation failed: 2 error(s), 1 warning(s).');
+    expect(base.errors.join('\\n')).toContain('EGO validation failed: 2 errors, 1 warning.');
   });
 
   it('validates a GTPL file', async () => {

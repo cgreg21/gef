@@ -254,11 +254,11 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     if (errors.length) {
       errors.forEach((error) => io.stderr(error));
       warnings.forEach((warning) => io.stderr(warning));
-      io.stderr(`EGO validation failed: ${errors.length} error(s), ${warnings.length} warning(s).`);
+      io.stderr(`EGO validation failed: ${errors.length} error${errors.length === 1 ? '' : 's'}, ${warnings.length} warning${warnings.length === 1 ? '' : 's'}.`);
       return 1;
     }
     warnings.forEach((warning) => io.stderr(warning));
-    io.stdout(`EGO validation passed: ${files.length} file${files.length === 1 ? '' : 's'}, ${javascriptSources.size} JavaScript file${javascriptSources.size === 1 ? '' : 's'}, ${warnings.length} warning(s).`);
+    io.stdout(`EGO validation passed: ${files.length} file${files.length === 1 ? '' : 's'}, ${javascriptSources.size} JavaScript file${javascriptSources.size === 1 ? '' : 's'}, ${warnings.length} warning${warnings.length === 1 ? '' : 's'}.`);
     return 0;
   }
 

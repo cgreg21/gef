@@ -175,10 +175,12 @@ describe('GEF CLI', () => {
     const projectPackage = JSON.parse(writes.find((item) => item.path.endsWith('package.json'))?.content ?? '{}') as {
       dependencies?: Record<string, string>;
       scripts?: Record<string, string>;
+      bundle?: { name: string; id: string; entry: string; gtk: number };
     };
     expect(projectPackage.dependencies?.['node-gtk']).toBe('^4.1.1');
     expect(projectPackage.scripts?.start).toContain('--import node-gtk/register');
     expect(projectPackage.scripts?.package).toBe('node-gtk bundle');
+    expect(projectPackage.bundle).toEqual({ name: 'DesktopApp', id: 'com.example.desktop.app', entry: 'dist/main.js', gtk: 4 });
     expect(directories).toContain(resolve('out/src'));
     expect(output[0]).toContain('Created application project');
   });
@@ -192,7 +194,7 @@ describe('GEF CLI', () => {
         : '',
     };
     expect(await runCli(['package'], io)).toBe(0);
-    expect(base.commands).toEqual([{ command: 'npx', args: ['--no-install', 'node-gtk', 'bundle'] }]);
+    expect(base.commands).toEqual([{ command: 'npm', args: ['run', 'package'] }]);
   });
 
   it('generates a component class and template', async () => {

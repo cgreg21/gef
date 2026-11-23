@@ -98,6 +98,21 @@ Use the native `Flex` container directly in a template:
 
 `direction` accepts `row` or `column`; `gap` is a non-negative number of pixels. Both renderers map these attributes to their native box orientation and spacing, and `direction` supports reactive GTPL bindings. The container is deliberately minimal: wrapping, grow/shrink and justification are not yet part of the GTPL API.
 
+## GTPL Grid container
+
+Declare a grid entirely in GTPL:
+
+```html
+<Grid columns="3" gap="12">
+  <Card>One</Card>
+  <Card>Two</Card>
+  <Card>Three</Card>
+  <Card>Four</Card>
+</Grid>
+```
+
+`columns` is a positive integer and `gap` is a non-negative pixel value applied to both axes. GTK uses `Gtk.Grid`; GNOME Shell 51 uses nested `St.BoxLayout` rows because St 51 has no native grid widget. The initial GTPL implementation uses fixed columns. The toolkit-independent `GridLayout` and responsive breakpoint APIs remain available for applications that need to calculate layouts from available width; native responsive reflow will be connected in a later step.
+
 ## Flex layout
 
 `FlexLayout` calculates row or column layouts, distributes free space with `grow`, shrinks overflowing items with `shrink`, and optionally wraps items. Direction, wrapping, gap, justification and alignment accept responsive values:

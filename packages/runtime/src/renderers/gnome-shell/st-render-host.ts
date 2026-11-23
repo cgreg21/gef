@@ -49,6 +49,12 @@ function notifySignal(property: string): string {
 }
 
 
+function booleanValue(attribute: string, value: unknown): boolean {
+  if (value === true || value === 'true') return true;
+  if (value === false || value === 'false') return false;
+  throw new Error(`${attribute} must be "true" or "false".`);
+}
+
 function flexValue(attribute: string, value: unknown): unknown {
   if (attribute === 'direction') {
     if (value === 'row') return 0;
@@ -200,6 +206,15 @@ export function createStRenderHost(
             get: () => flexValue(attribute, value.get()),
           } satisfies GtplBinding<unknown>]);
           else flexHomogeneous = flexValue(attribute, value) as boolean;
+          continue;
+        }
+        if (attribute === 'expand') {
+          for (const property of ['x_expand', 'y_expand']) {
+            if (isGtplBinding(value)) bindings.push([property, {
+              kind: 'binding', get: () => booleanValue('expand', value.get()),
+            } satisfies GtplBinding<unknown>]);
+            else properties[property] = booleanValue('expand', value);
+          }
           continue;
         }
         const [property, normalized] = layoutAttribute(name, attribute, value);

@@ -230,6 +230,22 @@ describe('createGtkRenderHost', () => {
     expect(() => host.element('Flex', { homogeneous: 'yes' }, undefined)).toThrow(/Flex homogeneous/);
   });
 
+  it('maps static and reactive GTPL expand to both GTK expansion axes', () => {
+    const host = createGtkRenderHost(createGtk());
+    const expanded = host.element('GtkButton', { expand: 'true' }, undefined) as FakeWidget;
+    expect(expanded.properties).toMatchObject({ hexpand: true, vexpand: true });
+
+    const value = signal('false');
+    const reactive = host.element('GtkButton', {
+      expand: { kind: 'binding', get: () => value.get() },
+    }, undefined) as FakeWidget;
+    expect(reactive.properties).toMatchObject({ hexpand: false, vexpand: false });
+    value.set('true');
+    expect(reactive.properties).toMatchObject({ hexpand: true, vexpand: true });
+    host.destroy(reactive);
+    expect(() => host.element('GtkButton', { expand: 'yes' }, undefined)).toThrow(/expand must/);
+  });
+
   it('removes libadwaita action-row suffix children with the matching GTK API', () => {
     const host = createGtkRenderHost(createGtk(), {
       adw: { ActionRow: FakeActionRow },

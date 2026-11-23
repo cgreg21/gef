@@ -95,6 +95,12 @@ function propertyName(name: string, api: 'gjs' | 'node-gtk' = 'gjs'): string {
 }
 
 
+function booleanValue(attribute: string, value: unknown): boolean {
+  if (value === true || value === 'true') return true;
+  if (value === false || value === 'false') return false;
+  throw new Error(`${attribute} must be "true" or "false".`);
+}
+
 function flexValue(attribute: string, value: unknown): unknown {
   if (attribute === 'direction') {
     if (value === 'row') return 0;
@@ -301,6 +307,15 @@ export function createGtkRenderHost(
         if (attribute === 'class' || attribute === 'className') {
           if (isGtplBinding(value)) classBindings.push(value);
           else classes.push(...classNames(value));
+          continue;
+        }
+        if (attribute === 'expand') {
+          for (const property of ['hexpand', 'vexpand']) {
+            if (isGtplBinding(value)) bindings.push([property, {
+              kind: 'binding', get: () => booleanValue('expand', value.get()),
+            } satisfies GtplBinding<unknown>]);
+            else properties[property] = booleanValue('expand', value);
+          }
           continue;
         }
         const [property, normalized] = layoutAttribute(name, attribute, value);

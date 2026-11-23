@@ -154,6 +154,22 @@ describe('createStRenderHost', () => {
     expect(() => host.element('Flex', { homogeneous: 'yes' }, undefined)).toThrow(/Flex homogeneous/);
   });
 
+  it('maps static and reactive GTPL expand to both St expansion axes', () => {
+    const host = createStRenderHost(createSt());
+    const expanded = host.element('StButton', { expand: 'true' }, undefined) as FakeActor;
+    expect(expanded.properties).toMatchObject({ x_expand: true, y_expand: true });
+
+    const value = signal('false');
+    const reactive = host.element('StButton', {
+      expand: { kind: 'binding', get: () => value.get() },
+    }, undefined) as FakeActor;
+    expect(reactive.properties).toMatchObject({ x_expand: false, y_expand: false });
+    value.set('true');
+    expect(reactive.properties).toMatchObject({ x_expand: true, y_expand: true });
+    host.destroy(reactive);
+    expect(() => host.element('StButton', { expand: 'yes' }, undefined)).toThrow(/expand must/);
+  });
+
   it('does not add synthetic empty containers to leaf widgets', () => {
     const host = createStRenderHost(createSt());
     const actor = host.element('StLabel', {}, undefined) as FakeActor;

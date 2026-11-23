@@ -65,6 +65,8 @@ jobs:
             'scripts/package-app.mjs',
             'scripts/package-windows.mjs',
             'scripts/package-macos.mjs',
+            'tests/packaging/windows-smoke.mjs',
+            'tests/packaging/macos-smoke.mjs',
             'README.md',
           ];
 
@@ -74,7 +76,7 @@ jobs:
           if (manifest.bin?.gef !== 'dist/cli/src/index.js') {
             throw new Error('The gef executable is missing or points to the wrong file.');
           }
-          for (const entry of ['.', './compiler', './runtime']) {
+          for (const entry of ['.', './compiler', './runtime', './scripts/package-app.mjs', './scripts/package-appimage.mjs', './scripts/package-windows.mjs', './scripts/package-macos.mjs']) {
             const target = manifest.exports?.[entry];
             if (!target?.import || !target?.types) throw new Error(`Missing ESM or type export: ${entry}`);
             for (const path of [target.import, target.types]) {

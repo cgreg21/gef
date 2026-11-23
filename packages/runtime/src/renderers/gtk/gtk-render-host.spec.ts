@@ -47,6 +47,14 @@ class FakeWidget implements GtkActor {
   }
 }
 
+class FakeGrid extends FakeWidget {
+  readonly cells: Array<{ child: GtkActor; column: number; row: number }> = [];
+  attach(child: GtkActor, column: number, row: number): void {
+    this.append(child);
+    this.cells.push({ child, column, row });
+  }
+}
+
 class FakeHeaderBar extends FakeWidget {
   pack_start(child: GtkActor): void { this.append(child); }
 }
@@ -148,7 +156,7 @@ function createGtk(): GtkNamespace {
     Separator: FakeWidget,
     ListBox: FakeWidget,
     ListBoxRow: FakeWidget,
-    Grid: FakeWidget,
+    Grid: FakeGrid,
     Stack: FakeWidget,
     Revealer: FakeWidget,
     TextView: FakeWidget,
@@ -186,6 +194,20 @@ describe('createGtkRenderHost', () => {
     const host = createGtkRenderHost(createGtk());
     expect((host.element('HeaderBar', {}, undefined) as FakeWidget).properties.orientation).toBe(0);
     expect((host.element('Sidebar', {}, undefined) as FakeWidget).properties.orientation).toBe(1);
+  });
+
+  it('places GTPL Grid children in native GTK grid cells', () => {
+    const host = createGtkRenderHost(createGtk());
+    const items = [host.text('A'), host.text('B'), host.text('C')];
+    const fragment = host.fragment(items);
+    const grid = host.element('Grid', { columns: '2', gap: '10' }, fragment) as FakeGrid;
+
+    expect(grid.properties).toMatchObject({ row_spacing: 10, column_spacing: 10 });
+    expect(grid.cells.map(({ column, row }) => [column, row])).toEqual([[0, 0], [1, 0], [0, 1]]);
+    expect(grid.children).toEqual(items);
+    expect(items.every((item) => (item as FakeWidget).parent === grid)).toBe(true);
+    host.destroy(grid);
+    expect(() => host.element('Grid', { columns: '0' }, undefined)).toThrow(/positive integer/);
   });
 
   it('maps GTPL Flex direction and gap to native GTK box properties', () => {

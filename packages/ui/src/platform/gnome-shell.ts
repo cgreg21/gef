@@ -5,6 +5,7 @@ import { GefButton } from '../components/button/button.component.js';
 import { GefIcon } from '../components/icon/icon.component.js';
 import { GefInput } from '../components/input/input.component.js';
 import { GefLabel } from '../components/label/label.component.js';
+import { GefProgressBar } from '../components/progress-bar/progress-bar.component.js';
 
 export function createStUiRegistry(): ComponentRegistry<StActor> {
   const registry = new ComponentRegistry<StActor>();
@@ -46,6 +47,14 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
           input.valueChange.emit(value);
         },
       },
+      undefined,
+    ),
+  });
+  registry.registerType(GefProgressBar, {
+    create: () => new GefProgressBar(),
+    render: (progress: GefProgressBar, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+      'StProgressBar',
+      { fraction: runtime.bind(() => progress.fraction) },
       undefined,
     ),
   });

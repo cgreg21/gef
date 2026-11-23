@@ -35,7 +35,7 @@ describe('GefInput', () => {
     const changed = vi.fn();
     input.valueChange.subscribe(changed);
 
-    definition!.render(input, runtime);
+    definition!.render(input, runtime as never);
 
     expect(element).toHaveBeenCalledWith(nativeName, expect.objectContaining({
       [property]: expect.objectContaining({ kind: 'binding' }),

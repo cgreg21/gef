@@ -151,6 +151,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
       }
     }
     const javascriptSources = new Map<string, string>();
+    const warnings: string[] = [];
     for (const file of files) {
       const relative = file.slice(directory.length + 1).replaceAll('\\', '/');
       if (/(^|\/)(node_modules|tests?|scripts|\.git)(\/|$)/.test(relative) || /\.(?:ts|map|md|lock)$/.test(relative) || /(^|\/)package\.json$/.test(relative)) {
@@ -160,7 +161,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         let source: string;
         try { source = await io.readFile(file); } catch { errors.push(`Unable to read JavaScript file: ${relative}`); continue; }
         javascriptSources.set(file, source);
-        if (/\\bconsole\\s*\\.\\s*debug\\s*\\(/.test(source)) {
+        if (/\bconsole\s*\.\s*debug\s*\(/.test(source)) {
           warnings.push(`${relative}: contains console.debug() logging; remove temporary debug output before submission.`);
         }
         if (relative === 'prefs.js' && /(?:gi:\/\/|from\s*['"])(?:St|Clutter|Meta|Shell)(?:['"/]|$)/.test(source)) {
@@ -171,7 +172,6 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         }
       }
     }
-    const warnings: string[] = [];
     const shellEntry = resolve(directory, 'extension.js');
     const shellSource = javascriptSources.get(shellEntry);
     if (shellSource !== undefined) {

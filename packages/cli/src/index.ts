@@ -389,8 +389,8 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
       io.stderr('Project type must be "application" or "extension".');
       return 2;
     }
-    const positional = args.slice(2).filter((_value, index, values) =>
-      values[index - 1] !== '--type' && values[index] !== '--type' && values[index] !== projectType);
+    const positional = args.slice(2).filter((_value, index) =>
+      typeIndex < 0 || (index + 2 !== typeIndex && index + 2 !== typeIndex + 1));
     const directory = resolve(positional[0] ?? name);
     const projectConfig = JSON.stringify({
       version: 1,

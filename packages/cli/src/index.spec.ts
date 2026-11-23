@@ -189,6 +189,7 @@ describe('GEF CLI', () => {
     expect(writes.find((item) => item.path.endsWith(join('scripts', 'package-appimage.mjs')))?.content).toContain("gnome-extension-framework/scripts/package-appimage.mjs");
     expect(projectPackage.bundle).toEqual({ name: 'DesktopApp', id: 'com.example.desktop.app', entry: 'dist/main.js', gtk: 4 });
     expect(directories).toContain(resolve('out/src'));
+    expect(directories).toContain(resolve('out/scripts'));
     expect(output[0]).toContain('Created application project');
   });
 

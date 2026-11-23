@@ -14,11 +14,6 @@ function compact(source: string): string {
   return source.replace(/\\s+/g, ' ');
 }
 
-/* REMOVE_DUPLICATE_HELPER */
-  const parsed = parseGtpl(source);
-  expect(parsed.diagnostics).toEqual([]);
-  return emitGtplTemplate(parsed.nodes, { componentMembers });
-}
 
 describe('emitGtplTemplate', () => {
   it('emits a v3 source map for top-level template nodes', () => {

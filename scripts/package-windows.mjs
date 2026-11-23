@@ -25,7 +25,7 @@ await mkdir(app, { recursive: true });
 await mkdir(runtime, { recursive: true });
 await mkdir(resolve(app, 'dist'), { recursive: true });
 for (const entry of await readdir(output, { withFileTypes: true })) {
-  if (entry.name === name || /\\.(?:zip|dmg|appimage|tar\\.gz)$/i.test(entry.name) || entry.name.endsWith('.app')) continue;
+  if (entry.name === name || /\.(?:zip|dmg|appimage|tar\.gz)$/i.test(entry.name) || entry.name.endsWith('.app')) continue;
   await cp(resolve(output, entry.name), resolve(app, 'dist', entry.name), { recursive: true, dereference: true });
 }
 await cp(resolve(root, 'node_modules'), resolve(app, 'node_modules'), { recursive: true, dereference: true });

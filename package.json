@@ -91,5 +91,13 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "bundle": {
+    "name": "kitchen-sink",
+    "id": "org.gef.KitchenSink",
+    "entry": "packages/examples/kitchen-sink/kitchen-sink-node.mjs",
+    "files": [
+      "packages/examples/kitchen-sink/kitchen-sink-node.mjs"
+    ]
   }
 }

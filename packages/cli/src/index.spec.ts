@@ -253,7 +253,7 @@ describe('GEF CLI', () => {
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
     expect(base.errors.join('\\n')).toContain('constructor contains GNOME resource or signal side effects');
-    expect(base.output.join('\\n')).toContain('EGO checks passed');
+    expect(base.output.join('\\n')).toContain('EGO validation passed:');
   });
 
   it('rejects Shell imports from preferences code', async () => {
@@ -377,7 +377,7 @@ describe('GEF CLI', () => {
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
     expect(base.errors.join('\\n')).toContain('Possibly unused package resource: icons/unused.png');
     expect(base.errors.join('\\n')).not.toContain('icons/used.svg');
-    expect(base.output[0]).toContain('EGO checks passed');
+    expect(base.output[0]).toContain('EGO validation passed:');
   });
 
   it('accepts a clean staged extension', async () => {
@@ -390,7 +390,7 @@ describe('GEF CLI', () => {
         : 'export default class Demo { enable() {} disable() {} }',
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
-    expect(base.output[0]).toContain('EGO checks passed');
+    expect(base.output[0]).toContain('EGO validation passed:');
   });
 
   it('checks compiler and native GNOME prerequisites', async () => {

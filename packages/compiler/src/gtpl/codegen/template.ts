@@ -119,7 +119,7 @@ function expression(
     const lines = prefix.split(/\r\n|\r|\n/);
     const line = sourcePosition.line + lines.length - 1;
     const column = lines.length === 1 ? sourcePosition.column + prefix.length : lines[lines.length - 1]!.length + 1;
-    mappings.push({ generatedColumn: 0, sourceLine: line - 1, sourceColumn: column - 1 });
+    mappings.push({ generatedLine: 0, generatedColumn: 0, sourceLine: line - 1, sourceColumn: column - 1 });
     return `/*__GEF_MAP_${marker}__*/`;
   });
 }
@@ -241,7 +241,7 @@ function emitGtplTemplateInternal(
 
   const renderNode = (node: GtplNode, locals: ReadonlySet<string>): string => {
     const marker = nodeMappings.length;
-    nodeMappings.push({ generatedColumn: 0, sourceLine: node.span.line - 1, sourceColumn: node.span.column - 1 });
+    nodeMappings.push({ generatedLine: 0, generatedColumn: 0, sourceLine: node.span.line - 1, sourceColumn: node.span.column - 1 });
     let rendered: string;
     switch (node.kind) {
       case 'text': rendered = renderText(node, locals); break;
@@ -290,10 +290,11 @@ function formatJavaScript(source: string): string {
     true,
     ts.ScriptKind.JS,
   );
-  if (file.parseDiagnostics.length > 0 || !ts.isVariableStatement(file.statements[0])) {
+  const statement = file.statements[0];
+  if (file.parseDiagnostics.length > 0 || !statement || !ts.isVariableStatement(statement)) {
     throw new Error('Cannot format generated GTPL JavaScript.');
   }
-  const declaration = file.statements[0].declarationList.declarations[0];
+  const declaration = statement.declarationList.declarations[0];
   if (!declaration?.initializer) throw new Error('Cannot format generated GTPL JavaScript.');
   return ts.createPrinter({ newLine: ts.NewLineKind.LineFeed }).printNode(
     ts.EmitHint.Expression,

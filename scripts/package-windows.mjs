@@ -45,6 +45,12 @@ try {
 } catch (error) {
   if (error.code !== 'ENOENT') throw error;
 }
+for (const file of bundle.files ?? []) {
+  const source = resolve(root, file);
+  const destination = resolve(app, file);
+  await mkdir(resolve(destination, '..'), { recursive: true });
+  await cp(source, destination);
+}
 await cp(resolve(root, 'package.json'), resolve(app, 'package.json'));
 await cp(process.execPath, resolve(runtime, 'node.exe'));
 

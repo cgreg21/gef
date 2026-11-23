@@ -25,6 +25,7 @@ export interface StNamespace {
   readonly Widget: StWidgetConstructor;
   readonly Entry?: StWidgetConstructor;
   readonly ScrollView?: StWidgetConstructor;
+  readonly Viewport?: StWidgetConstructor;
   readonly Frame?: StWidgetConstructor;
   readonly Switch?: StWidgetConstructor;
   readonly Slider?: StWidgetConstructor;
@@ -55,9 +56,14 @@ export interface StPopupMenuNamespace {
   readonly sideTop: number;
 }
 
+export interface StClutterNamespace {
+  readonly Text: StWidgetConstructor;
+}
+
 export interface StRenderHostOptions {
   readonly components?: Readonly<Record<string, StWidgetConstructor>>;
   readonly popupMenu?: StPopupMenuNamespace;
+  readonly clutter?: StClutterNamespace;
   /** Optional Clutter.Orientation value for fragment and repeat containers. */
   readonly fragmentOrientation?: unknown;
 }
@@ -167,6 +173,7 @@ export function createStRenderHost(
     StWidget: St.Widget,
     ...(St.Entry ? { StEntry: St.Entry } : {}),
     ...(St.ScrollView ? { StScrollView: St.ScrollView } : {}),
+    ...(St.Viewport ? { StViewport: St.Viewport } : {}),
     ...(St.Frame ? { StFrame: St.Frame } : {}),
     ...(St.Switch ? { StSwitch: St.Switch } : {}),
     ...(St.Slider ? { StSlider: St.Slider } : {}),
@@ -213,7 +220,7 @@ export function createStRenderHost(
       });
     },
     element(name, attributes, children) {
-      const Constructor = name === 'StSelect' ? St.Button : constructors[name];
+      const Constructor = name === 'StSelect' ? St.Button : name === 'StTextArea' ? St.ScrollView : constructors[name];
       if (!Constructor) throw new Error(`Unknown GNOME Shell component "${name}". Register a St widget constructor.`);
       const properties: Record<string, unknown> = {};
       const events: Array<[string, (...args: unknown[]) => unknown]> = [];
@@ -224,8 +231,11 @@ export function createStRenderHost(
       const selectOptions = name === 'StSelect' ? attributes.options : undefined;
       const selectValue = name === 'StSelect' ? attributes.value : undefined;
       const selectChange = name === 'StSelect' ? attributes.valueChange : undefined;
+      const textValue = name === 'StTextArea' ? attributes.text : undefined;
+      const textChange = name === 'StTextArea' ? attributes.textChange : undefined;
       for (const [attribute, value] of Object.entries(attributes)) {
         if (name === 'StSelect' && ['options', 'value', 'valueChange'].includes(attribute)) continue;
+        if (name === 'StTextArea' && ['text', 'textChange'].includes(attribute)) continue;
         if (name === 'Grid' && attribute === 'columns') {
           gridColumns = typeof value === 'number' ? value : Number(value);
           if (!Number.isInteger(gridColumns) || gridColumns < 1) throw new Error('Grid columns must be a positive integer.');
@@ -273,10 +283,48 @@ export function createStRenderHost(
       if (name === 'HeaderBar') properties.orientation ??= 0;
       if (name === 'Sidebar') properties.orientation ??= 1;
       if (name === 'StSelect' && !options.popupMenu) throw new Error('StSelect requires GNOME Shell PopupMenu and Main.uiGroup dependencies.');
+      if (name === 'StTextArea' && (!St.ScrollView || !St.Viewport || !options.clutter?.Text)) {
+        throw new Error('StTextArea requires St.ScrollView, St.Viewport and Clutter.Text for native multiline editing.');
+      }
       const actor = new Constructor(properties);
       const resources = new ResourceScope();
       actor.connect('destroy', () => { destroyed.add(actor); resources.dispose(); });
       try {
+        if (name === 'StTextArea') {
+          if (!actor.set_child) throw new Error('StTextArea requires St.ScrollView child management.');
+          const viewport = new St.Viewport!({ x_expand: true, y_expand: true });
+          const textActor = new options.clutter!.Text({
+            editable: true,
+            activatable: false,
+            single_line_mode: false,
+            line_wrap: true,
+            reactive: true,
+            text: typeof textValue === 'string' ? textValue : '',
+          });
+          if (!viewport.add_child) throw new Error('StTextArea requires St.Viewport child management.');
+          viewport.add_child(textActor);
+          actor.set_child(viewport);
+          let updating = false;
+          const readText = (): string => {
+            const value = readProperty(textActor, 'text');
+            return typeof value === 'string' ? value : '';
+          };
+          const syncText = (): void => {
+            const value = isGtplBinding(textValue) ? textValue.get() : textValue ?? '';
+            if (typeof value !== 'string') throw new Error('StTextArea text must be a string.');
+            updating = true;
+            try { textActor.set_property('text', value); }
+            finally { updating = false; }
+          };
+          if (isGtplBinding(textValue)) resources.add(effect(syncText));
+          else syncText();
+          if (typeof textChange === 'function') {
+            const changed = textActor.connect('text-changed', () => {
+              if (!updating) textChange(readText());
+            });
+            resources.add(() => textActor.disconnect(changed));
+          }
+        }
         if (name === 'StSelect') {
           const popup = options.popupMenu!;
           const menu = new popup.PopupMenu(actor, 0.0, popup.sideTop);

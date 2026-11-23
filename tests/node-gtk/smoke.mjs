@@ -17,6 +17,8 @@ const iconName = signal('document-save-symbolic');
 const fraction = signal(0.25);
 const selectOptions = signal(['Red', 'Green', 'Blue']);
 const selectedValue = signal('Green');
+const areaValue = signal('first line\nsecond line');
+let areaEvent = '';
 let selectedEvent = '';
 const label = host.element('GtkLabel', {
   label: runtime.bind(() => title.get()),
@@ -33,6 +35,10 @@ const dropdown = host.element('GtkDropDown', {
 const progress = host.element('GtkProgressBar', {
   fraction: runtime.bind(() => fraction.get()),
 }, undefined);
+const textArea = host.element('GtkTextView', {
+  text: runtime.bind(() => areaValue.get()),
+  textChange: (value) => { areaEvent = value; areaValue.set(value); },
+}, undefined);
 let clicks = 0;
 let active;
 const button = host.element('GtkButton', {
@@ -48,12 +54,18 @@ const gefSwitch = componentRuntime.element('GefSwitch', {
   active: componentRuntime.bind(() => switchState.get()),
   activeChange: (value) => switchState.set(value),
 }, undefined);
-const root = host.fragment([button, toggle, icon, progress, dropdown, gefSwitch]);
+const root = host.fragment([button, toggle, icon, progress, dropdown, gefSwitch, textArea]);
 
 assert.equal(label.label, 'before');
 assert.equal(label.useUnderline, true);
 assert.equal(icon.iconName, 'document-save-symbolic');
 assert.equal(progress.fraction, 0.25);
+assert.equal(textArea.buffer.text, 'first line\nsecond line');
+textArea.buffer.setText('edited\nby Node-GTK');
+assert.equal(areaEvent, 'edited\nby Node-GTK');
+assert.equal(areaValue.get(), 'edited\nby Node-GTK');
+areaValue.set('external update');
+assert.equal(textArea.buffer.text, 'external update');
 assert.equal(dropdown.model.getItem(2).getString(), 'Blue');
 assert.equal(dropdown.model.getItem(3), null);
 assert.equal(dropdown.selected, 1);
@@ -92,5 +104,6 @@ assert.equal(clicks, 1);
 assert.equal(label.label, 'after');
 assert.equal(icon.iconName, 'document-open-symbolic');
 assert.equal(progress.fraction, 0.75);
+assert.equal(textArea.buffer.text, 'external update');
 
 process.stdout.write('Node-GTK renderer smoke test passed.\n');

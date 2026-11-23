@@ -9,6 +9,7 @@ import { GefInput } from '../components/input/input.component.js';
 import { GefLabel } from '../components/label/label.component.js';
 import { GefProgressBar } from '../components/progress-bar/progress-bar.component.js';
 import { GefSelect } from '../components/select/select.component.js';
+import { GefTextArea } from '../components/textarea/textarea.component.js';
 
 export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
   const registry = new ComponentRegistry<GtkActor>();
@@ -48,6 +49,20 @@ export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
         textChange: (value: string) => {
           input.value = value;
           input.valueChange.emit(value);
+        },
+      },
+      undefined,
+    ),
+  });
+  registry.registerType(GefTextArea, {
+    create: () => new GefTextArea(),
+    render: (area: GefTextArea, runtime: GtplRenderRuntime<GtkActor>) => runtime.element(
+      'GtkTextView',
+      {
+        text: runtime.bind(() => area.value),
+        textChange: (value: string) => {
+          area.value = value;
+          area.valueChange.emit(value);
         },
       },
       undefined,

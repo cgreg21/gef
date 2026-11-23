@@ -148,6 +148,15 @@ class FakeStringList {
   }
 }
 
+class FakeTextBuffer extends FakeWidget {
+  text = '';
+  set_text(value: string): void { this.text = value; this.emit('changed'); }
+}
+
+class FakeTextView extends FakeWidget {
+  readonly buffer = new FakeTextBuffer();
+}
+
 function constructor(): GtkWidgetConstructor { return FakeWidget; }
 function createGtk(): GtkNamespace {
   return {
@@ -169,7 +178,7 @@ function createGtk(): GtkNamespace {
     Grid: FakeGrid,
     Stack: FakeWidget,
     Revealer: FakeWidget,
-    TextView: FakeWidget,
+    TextView: FakeTextView,
     PasswordEntry: FakeWidget,
     SearchEntry: FakeWidget,
   };
@@ -186,6 +195,26 @@ describe('createGtkRenderHost', () => {
     for (const name of ['GtkCheckButton', 'GtkDropDown', 'GtkSpinButton', 'GtkProgressBar', 'GtkSeparator', 'GtkListBox', 'GtkListBoxRow', 'GtkGrid', 'GtkStack', 'GtkRevealer', 'GtkTextView', 'GtkPasswordEntry', 'GtkSearchEntry', 'AdwSwitchRow', 'AdwEntryRow', 'AdwPasswordEntryRow', 'AdwExpanderRow', 'AdwComboRow', 'AdwSpinRow', 'AdwBanner', 'AdwHeaderBar', 'AdwToolbarView', 'HeaderBar', 'Sidebar']) {
       expect(host.element(name, {}, undefined)).toBeInstanceOf(FakeWidget);
     }
+  });
+
+  it('binds GtkTextView text through its native Gtk.TextBuffer', () => {
+    const host = createGtkRenderHost(createGtk());
+    const value = signal('first line\nsecond line');
+    const changed: string[] = [];
+    const view = host.element('GtkTextView', {
+      text: { kind: 'binding', get: () => value.get() },
+      textChange: (text: string) => { changed.push(text); value.set(text); },
+    }, undefined) as FakeTextView;
+
+    expect(view.buffer.text).toBe('first line\nsecond line');
+    value.set('external update');
+    expect(view.buffer.text).toBe('external update');
+    view.buffer.set_text('typed\nby user');
+    expect(changed).toEqual(['typed\nby user']);
+    expect(value.get()).toBe('typed\nby user');
+    host.destroy(view);
+    view.buffer.set_text('ignored');
+    expect(changed).toEqual(['typed\nby user']);
   });
 
   it('backs GtkDropDown with a reactive Gtk.StringList and emits the selected string', () => {

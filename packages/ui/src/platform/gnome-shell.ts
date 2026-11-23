@@ -9,6 +9,7 @@ import { GefInput } from '../components/input/input.component.js';
 import { GefLabel } from '../components/label/label.component.js';
 import { GefProgressBar } from '../components/progress-bar/progress-bar.component.js';
 import { GefSelect } from '../components/select/select.component.js';
+import { GefTextArea } from '../components/textarea/textarea.component.js';
 
 function progressText(fraction: number): string {
   const value = Number.isFinite(fraction) ? Math.min(1, Math.max(0, fraction)) : 0;
@@ -54,6 +55,20 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
         textChange: (value: string) => {
           input.value = value;
           input.valueChange.emit(value);
+        },
+      },
+      undefined,
+    ),
+  });
+  registry.registerType(GefTextArea, {
+    create: () => new GefTextArea(),
+    render: (area: GefTextArea, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+      'StTextArea',
+      {
+        text: runtime.bind(() => area.value),
+        textChange: (value: string) => {
+          area.value = value;
+          area.valueChange.emit(value);
         },
       },
       undefined,

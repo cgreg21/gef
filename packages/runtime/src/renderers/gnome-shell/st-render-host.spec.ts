@@ -114,7 +114,8 @@ function createSt(): StNamespace {
     Bin: FakeBin,
     Widget: constructor(),
     Entry: constructor(),
-    ScrollView: constructor(),
+    ScrollView: FakeBin,
+    Viewport: FakeBin,
     Frame: constructor(),
     Switch: constructor(),
     Slider: constructor(),
@@ -132,6 +133,41 @@ describe('createStRenderHost', () => {
     const actor = host.element('StLabel', { styleClass: 'title' }, child) as FakeActor;
     expect(actor.properties).toEqual({ style_class: 'title' });
     expect(actor.children).toEqual([child]);
+  });
+
+  it('creates a scrollable multiline StTextArea backed by editable Clutter.Text', () => {
+    const host = createStRenderHost(createSt(), { clutter: { Text: FakeActor } });
+    const value = signal('first line\nsecond line');
+    const changed: string[] = [];
+    const area = host.element('StTextArea', {
+      text: { kind: 'binding', get: () => value.get() },
+      textChange: (text: string) => { changed.push(text); value.set(text); },
+    }, undefined) as FakeBin;
+    const viewport = area.children[0] as FakeBin;
+    const text = viewport.children[0] as FakeActor;
+
+    expect(text.properties).toMatchObject({
+      editable: true,
+      activatable: false,
+      single_line_mode: false,
+      line_wrap: true,
+      text: 'first line\nsecond line',
+    });
+    value.set('external update');
+    expect(text.properties.text).toBe('external update');
+    text.properties.text = 'typed\nby user';
+    text.emit('text-changed');
+    expect(changed).toEqual(['typed\nby user']);
+    expect(value.get()).toBe('typed\nby user');
+    host.destroy(area);
+    text.emit('text-changed');
+    expect(changed).toEqual(['typed\nby user']);
+  });
+
+  it('requires the native Clutter.Text and St.Viewport APIs for StTextArea', () => {
+    const host = createStRenderHost(createSt());
+    expect(() => host.element('StTextArea', { text: '' }, undefined))
+      .toThrow(/requires St.ScrollView, St.Viewport and Clutter.Text/);
   });
 
   it('creates a native St button and PopupMenu select with reactive options and cleanup', () => {

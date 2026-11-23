@@ -31,6 +31,15 @@ export interface GtkActor {
 
 export type GtkWidgetConstructor = new (properties?: Record<string, unknown>) => GtkActor;
 
+export interface GtkTextBuffer extends GtkActor {
+  set_text?(text: string, length?: number): void;
+  setText?(text: string, length?: number): void;
+  get_bounds?(): unknown[];
+  getBounds?(): unknown[];
+  get_text?(start: unknown, end: unknown, includeHiddenChars: boolean): string;
+  getText?(start: unknown, end: unknown, includeHiddenChars: boolean): string;
+}
+
 export interface GtkStringList extends GtkActor {
   get_item?(position: number): { get_string?(): string; getString?(): string } | null;
   getItem?(position: number): { get_string?(): string; getString?(): string } | null;
@@ -326,11 +335,15 @@ export function createGtkRenderHost(
       const classBindings: GtplBinding<unknown>[] = [];
       let gridColumns = 2;
       const isSelect = name === 'GtkDropDown' && Object.prototype.hasOwnProperty.call(attributes, 'options');
+      const isTextArea = name === 'GtkTextView' && Object.prototype.hasOwnProperty.call(attributes, 'text');
       const selectOptions = isSelect ? attributes.options : undefined;
+      const textValue = isTextArea ? attributes.text : undefined;
+      const textChange = isTextArea ? attributes.textChange : undefined;
       const selectValue = isSelect ? attributes.value : undefined;
       const selectChange = isSelect ? attributes.valueChange : undefined;
       for (const [attribute, value] of Object.entries(attributes)) {
         if (isSelect && ['options', 'value', 'valueChange'].includes(attribute)) continue;
+        if (isTextArea && ['text', 'textChange'].includes(attribute)) continue;
         if (attribute === 'class' || attribute === 'className') {
           if (isGtplBinding(value)) classBindings.push(value);
           else classes.push(...classNames(value));
@@ -367,6 +380,41 @@ export function createGtkRenderHost(
       if (name === 'Sidebar') properties.orientation ??= 1;
       const actor = new Constructor(properties);
       const scope = new ResourceScope();
+      if (isTextArea) {
+        const buffer = readProperty(actor, 'buffer', options.api ?? 'gjs') as GtkTextBuffer | undefined;
+        if (!buffer) throw new Error('GtkTextView requires its native Gtk.TextBuffer.');
+        let updating = false;
+        const readText = (): string => {
+          const value = readProperty(buffer, 'text', options.api ?? 'gjs');
+          if (typeof value === 'string') return value;
+          const bounds = buffer.get_bounds?.() ?? buffer.getBounds?.();
+          if (Array.isArray(bounds) && bounds.length >= 2) {
+            return buffer.get_text?.(bounds[0], bounds[1], true)
+              ?? buffer.getText?.(bounds[0], bounds[1], true)
+              ?? '';
+          }
+          return '';
+        };
+        const syncText = (): void => {
+          const value = isGtplBinding(textValue) ? textValue.get() : textValue ?? '';
+          if (typeof value !== 'string') throw new Error('GtkTextView text must be a string.');
+          updating = true;
+          try {
+            if (buffer.set_text) buffer.set_text(value, -1);
+            else if (buffer.setText) buffer.setText(value, -1);
+            else setProperty(buffer, 'text', value, options.api ?? 'gjs');
+          } finally {
+            updating = false;
+          }
+        };
+        if (isGtplBinding(textValue)) scope.add(effect(syncText));
+        else syncText();
+        if (typeof textChange === 'function') {
+          scope.add(connectSignal(buffer, 'changed', () => {
+            if (!updating) textChange(readText());
+          }));
+        }
+      }
       if (isSelect) {
         if (!Gtk.StringList) throw new Error('GtkDropDown requires Gtk.StringList to provide a native options model.');
         const readOptions = (): string[] => {

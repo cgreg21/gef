@@ -46,7 +46,9 @@
 - [x] Generate a GTK4/libadwaita Node-GTK 4 application starter alongside GNOME Shell extension projects.
 - [x] Route application packaging to the node-gtk bundler and retain EGO packaging for extension projects.
 - [x] Generate Node-GTK portable bundle metadata (application ID, compiled entry point and GTK version) and delegate configured packaging through the project's npm script.
-- [ ] Reuse the GEF GTPL compiler and GTK renderer in the Node-GTK application runtime; validate the renderer against node-gtk's GObject API.
+- [x] Adapt the GTK renderer to Node-GTK camelCase GObject properties, `.on()` / `.off()` signals and GTK child APIs.
+- [x] Use the GEF GTPL compiler and GTK renderer in generated Node-GTK application projects.
+- [x] Verify compiled GTPL mounting, reactive bindings, widget properties, signals and teardown against the native Node-GTK 4.1.1 runtime in CI.
 
 ## Cross-platform compatibility
 - [x] Keep CLI EGO-check fixtures and path assertions portable across Windows and POSIX hosts.

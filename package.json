@@ -10,7 +10,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "check": "npm run typecheck && npm test",
+    "check": "npm run lint && npm run typecheck && npm test",
     "build": "tsc -p tsconfig.build.json",
     "gef": "node dist/cli/src/index.js",
     "package:example": "node scripts/package-extension.mjs",
@@ -25,13 +25,18 @@
     "build:ui-showcase": "npm run build && node dist/cli/src/index.js compile packages/examples/ui-showcase/template.gtpl dist/examples/ui-showcase/template.js",
     "build:kitchen-sink": "npm run build && node dist/cli/src/index.js compile packages/examples/kitchen-sink/template.gtpl dist/examples/kitchen-sink/template.js",
     "kitchen-sink": "node --import node-gtk/register packages/examples/kitchen-sink/kitchen-sink-node.mjs",
-    "test:node-gtk:availability": "node --import node-gtk/register tests/node-gtk/availability.mjs"
+    "test:node-gtk:availability": "node --import node-gtk/register tests/node-gtk/availability.mjs",
+    "lint": "eslint ."
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
     "vitest": "^3.2.4",
     "sass": "^1.89.2",
-    "node-gtk": "4.1.1"
+    "node-gtk": "4.1.1",
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "typescript-eslint": "^8.48.1"
   },
   "bin": {
     "gef": "dist/cli/src/index.js"

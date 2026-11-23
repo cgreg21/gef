@@ -121,6 +121,8 @@
 - [x] Add `GefSwitch` with a reactive active state and `activeChange` output, mapping St `state` and GTK4 `active` natively.
 - [x] Add `GefProgressBar` with a reactive fraction on GNOME Shell St and GTK4, including native Node-GTK smoke coverage.
 - [x] Add GTPL `HeaderBar` and `Sidebar` layout containers with platform-specific default orientations.
+- [x] Add the initial GTPL `Flex` container with native row/column direction, spacing and reactive direction bindings on St and GTK4.
+- [ ] Complete GTPL `Grid` child placement and responsive layout integration on St and GTK4.
 - [x] Keep button labels and disabled/sensitive state reactive after component creation.
 - [x] Add shared responsive breakpoints, mobile-first responsive values, breakpoint observation and responsive grid position calculation.
 

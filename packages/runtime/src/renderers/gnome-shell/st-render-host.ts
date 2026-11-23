@@ -1,6 +1,7 @@
 import { isGtplBinding, type GtplBinding, type GtplRenderHost, type GtplRepeatItem, type GtplRepeatState } from '../../rendering/gtpl-runtime.js';
 import { effect } from '../../reactivity/signal.js';
 import { ResourceScope } from '../../resources/resource-scope.js';
+import { classNames, styleDeclarations, styleText } from '../gtpl-bindings.js';
 
 export interface StActor {
   add_child?(child: StActor): void;
@@ -229,6 +230,9 @@ export function createStRenderHost(
       const events: Array<[string, (...args: unknown[]) => unknown]> = [];
       const bindings: Array<[string, GtplBinding<unknown>]> = [];
       let styleValue: unknown;
+      const classes: string[] = [];
+      const classBindings: Array<{ name?: string; binding: GtplBinding<unknown> }> = [];
+      const styleBindings: Array<{ name: string; unit?: string; binding: GtplBinding<unknown> }> = [];
       let flexHomogeneous: boolean | undefined;
       let gridColumns = 2;
       let gridGap = 0;
@@ -241,6 +245,25 @@ export function createStRenderHost(
       const passwordChange = name === 'StPasswordEntry' ? attributes.textChange : undefined;
       for (const [attribute, value] of Object.entries(attributes)) {
         if (attribute === 'style') { styleValue = value; continue; }
+        if (attribute === 'class' || attribute === 'className') {
+          if (isGtplBinding(value)) classBindings.push({ binding: value });
+          else classes.push(...classNames(value));
+          continue;
+        }
+        if (attribute.startsWith('class.')) {
+          if (isGtplBinding(value)) classBindings.push({ name: attribute.slice(6), binding: value });
+          else if (value) classes.push(attribute.slice(6));
+          continue;
+        }
+        if (attribute.startsWith('style.')) {
+          const parts = attribute.slice(6).split('.');
+          const unit = parts.length > 1 ? parts.pop() : undefined;
+          const name = (parts[0] ?? '').replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+          if (!name) throw new Error('GTPL style binding requires a CSS property name.');
+          if (isGtplBinding(value)) styleBindings.push({ name, unit, binding: value });
+          else if (value !== null && value !== undefined) styleBindings.push({ name, unit, binding: { kind: 'binding', get: () => value } });
+          continue;
+        }
         if (name === 'StSelect' && ['options', 'value', 'valueChange'].includes(attribute)) continue;
         if (name === 'StTextArea' && ['text', 'textChange'].includes(attribute)) continue;
         if (name === 'StPasswordEntry' && ['text', 'textChange'].includes(attribute)) continue;
@@ -298,16 +321,43 @@ export function createStRenderHost(
       const resources = new ResourceScope();
       actor.connect('destroy', () => { destroyed.add(actor); resources.dispose(); });
       try {
-        if (styleValue !== undefined) {
+        if (styleValue !== undefined || styleBindings.length) {
           if (!actor.set_style) throw new Error('This St widget does not support inline styles.');
           const syncStyle = (): void => {
-            const value = isGtplBinding(styleValue) ? styleValue.get() : styleValue;
-            if (typeof value !== 'string' || /[{}]/.test(value)) throw new Error('GTPL style must contain CSS declarations only (without braces).');
-            actor.set_style!(value);
+            const declarations = styleDeclarations(isGtplBinding(styleValue) ? styleValue.get() : styleValue);
+            for (const item of styleBindings) {
+              const value = item.binding.get();
+              if (value === null || value === undefined) declarations.delete(item.name);
+              else declarations.set(item.name, `${value}${item.unit ?? ''}`);
+            }
+            const css = styleText(declarations);
+            if (/[{}]/.test(css)) throw new Error('GTPL style must contain CSS declarations only (without braces).');
+            actor.set_style!(css);
           };
           if (isGtplBinding(styleValue)) resources.add(effect(syncStyle));
-          else syncStyle();
+          for (const item of styleBindings) resources.add(effect(syncStyle));
+          syncStyle();
         }
+        const activeClasses = new Set<string>();
+        const syncClasses = (): void => {
+          const next = new Set(classes);
+          for (const item of classBindings) {
+            const value = item.binding.get();
+            if (item.name ? Boolean(value) : true) {
+              for (const name of (item.name ? [item.name] : classNames(value))) next.add(name);
+            }
+          }
+          for (const name of activeClasses) if (!next.has(name)) actor.set_property('style_class', classNames(readProperty(actor, 'style-class') ?? '').filter((item) => item !== name).join(' '));
+          for (const name of next) if (!activeClasses.has(name)) {
+            const current = classNames(readProperty(actor, 'style-class') ?? '');
+            if (!current.includes(name)) current.push(name);
+            actor.set_property('style_class', current.join(' '));
+          }
+          activeClasses.clear();
+          for (const name of next) activeClasses.add(name);
+        };
+        for (const item of classBindings) resources.add(effect(syncClasses));
+        syncClasses();
         if (name === 'StPasswordEntry') {
           const textActor = (actor as StActor & { get_clutter_text?: () => StActor }).get_clutter_text?.()
             ?? readProperty(actor, 'clutter-text') as StActor | undefined;

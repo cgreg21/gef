@@ -1,6 +1,7 @@
 import { isGtplBinding, type GtplBinding, type GtplRenderHost, type GtplRepeatItem, type GtplRepeatState } from '../../rendering/gtpl-runtime.js';
 import { effect } from '../../reactivity/signal.js';
 import { ResourceScope } from '../../resources/resource-scope.js';
+import { classNames, styleDeclarations, styleText } from '../gtpl-bindings.js';
 
 export interface GtkActor {
   append?(child: GtkActor): void;
@@ -222,12 +223,6 @@ function connectSignal(
   throw new Error('This GTK widget does not support signal connections.');
 }
 
-function classNames(value: unknown): string[] {
-  if (typeof value === 'string') return value.split(/\s+/).filter(Boolean);
-  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === 'string' && item.length > 0);
-  return [];
-}
-
 function addChild(parent: GtkActor, child: GtkActor): void {
   if (typeof parent.set_child === 'function') parent.set_child(child);
   else if (typeof parent.setChild === 'function') parent.setChild(child);
@@ -350,7 +345,8 @@ export function createGtkRenderHost(
       const events: Array<[string, (...args: unknown[]) => unknown]> = [];
       const bindings: Array<[string, GtplBinding<unknown>]> = [];
       const classes: string[] = [];
-      const classBindings: GtplBinding<unknown>[] = [];
+      const classBindings: Array<{ name?: string; unit?: string; binding: GtplBinding<unknown> }> = [];
+      const styleBindings: Array<{ name: string; unit?: string; binding: GtplBinding<unknown> }> = [];
       let styleValue: unknown;
       let gridColumns = 2;
       const isSelect = name === 'GtkDropDown' && Object.prototype.hasOwnProperty.call(attributes, 'options');
@@ -373,8 +369,22 @@ export function createGtkRenderHost(
         if (isSlider && ['value', 'valueChange'].includes(attribute)) continue;
         if (attribute === 'style') { styleValue = value; continue; }
         if (attribute === 'class' || attribute === 'className') {
-          if (isGtplBinding(value)) classBindings.push(value);
+          if (isGtplBinding(value)) classBindings.push({ binding: value });
           else classes.push(...classNames(value));
+          continue;
+        }
+        if (attribute.startsWith('class.')) {
+          if (isGtplBinding(value)) classBindings.push({ name: attribute.slice(6), binding: value });
+          else if (value) classes.push(attribute.slice(6));
+          continue;
+        }
+        if (attribute.startsWith('style.')) {
+          const parts = attribute.slice(6).split('.');
+          const unit = parts.length > 1 ? parts.pop() : undefined;
+          const name = (parts[0] ?? '').replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+          if (!name) throw new Error('GTPL style binding requires a CSS property name.');
+          if (isGtplBinding(value)) styleBindings.push({ name, unit, binding: value });
+          else if (value !== null && value !== undefined) styleBindings.push({ name, unit, binding: { kind: 'binding', get: () => value } });
           continue;
         }
         if (name === 'Flex' && attribute === 'align') {
@@ -518,21 +528,43 @@ export function createGtkRenderHost(
       }
       own(actor, scope);
       try {
-        if (styleValue !== undefined) {
+        if (styleValue !== undefined || styleBindings.length) {
           const context = actor.get_style_context?.();
           if (!Gtk.CssProvider || !context) throw new Error('GTK style attributes require Gtk.CssProvider and Gtk.Widget.get_style_context().');
           const provider = new Gtk.CssProvider();
           const syncStyle = (): void => {
-            const value = isGtplBinding(styleValue) ? styleValue.get() : styleValue;
-            if (typeof value !== 'string' || /[{}]/.test(value)) throw new Error('GTPL style must contain CSS declarations only (without braces).');
-            provider.load_from_data(value.trim() ? `* { ${value} }` : '* {}');
+            const declarations = styleDeclarations(isGtplBinding(styleValue) ? styleValue.get() : styleValue);
+            for (const item of styleBindings) {
+              const value = item.binding.get();
+              if (value === null || value === undefined) declarations.delete(item.name);
+              else declarations.set(item.name, `${value}${item.unit ?? ''}`);
+            }
+            const css = styleText(declarations);
+            if (/[{}]/.test(css)) throw new Error('GTPL style must contain CSS declarations only (without braces).');
+            provider.load_from_data(css ? `* { ${css} }` : '* {}');
           };
           context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION ?? 600);
           scope.add(() => context.remove_provider(provider));
           if (isGtplBinding(styleValue)) scope.add(effect(syncStyle));
-          else syncStyle();
+          for (const item of styleBindings) scope.add(effect(syncStyle));
+          syncStyle();
         }
-        for (const name of classes) (actor.add_css_class ?? actor.addCssClass)?.call(actor, name);
+        const activeClasses = new Set<string>();
+        const syncClasses = (): void => {
+          const next = new Set(classes);
+          for (const item of classBindings) {
+            const value = item.binding.get();
+            if (item.name ? Boolean(value) : true) {
+              for (const name of (item.name ? [item.name] : classNames(value))) next.add(name);
+            }
+          }
+          for (const name of activeClasses) if (!next.has(name)) (actor.remove_css_class ?? actor.removeCssClass)?.call(actor, name);
+          for (const name of next) if (!activeClasses.has(name)) (actor.add_css_class ?? actor.addCssClass)?.call(actor, name);
+          activeClasses.clear();
+          for (const name of next) activeClasses.add(name);
+        };
+        for (const item of classBindings) scope.add(effect(syncClasses));
+        syncClasses();
         for (const [signal, handler] of events) {
           const property = twoWayProperty(signal);
           scope.add(connectSignal(actor, property ? notifySignal(property) : signal, (_source, ...args) =>

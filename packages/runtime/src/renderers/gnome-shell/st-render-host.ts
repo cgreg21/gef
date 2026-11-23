@@ -107,6 +107,7 @@ export function createStRenderHost(
     StBox: St.BoxLayout,
     StBoxLayout: St.BoxLayout,
     Flex: St.BoxLayout,
+    Grid: St.BoxLayout,
     HeaderBar: St.BoxLayout,
     Sidebar: St.BoxLayout,
     StLabel: St.Label,
@@ -126,6 +127,7 @@ export function createStRenderHost(
     ...options.components,
   };
   const destroyed = new WeakSet<StActor>();
+  const fragmentChildren = new WeakMap<StActor, readonly StActor[]>();
   const destroyActor = (actor: StActor): void => {
     if (destroyed.has(actor)) return;
     destroyed.add(actor);
@@ -166,7 +168,19 @@ export function createStRenderHost(
       const properties: Record<string, unknown> = {};
       const events: Array<[string, (...args: unknown[]) => unknown]> = [];
       const bindings: Array<[string, GtplBinding<unknown>]> = [];
+      let gridColumns = 2;
+      let gridGap = 0;
       for (const [attribute, value] of Object.entries(attributes)) {
+        if (name === 'Grid' && attribute === 'columns') {
+          gridColumns = typeof value === 'number' ? value : Number(value);
+          if (!Number.isInteger(gridColumns) || gridColumns < 1) throw new Error('Grid columns must be a positive integer.');
+          continue;
+        }
+        if (name === 'Grid' && attribute === 'gap') {
+          gridGap = typeof value === 'number' ? value : Number(value);
+          if (!Number.isFinite(gridGap) || gridGap < 0) throw new Error('Grid gap must be a non-negative number.');
+          continue;
+        }
         const [property, normalized] = layoutAttribute(name, attribute, value);
         if (isGtplBinding(normalized)) bindings.push([propertyName(property), normalized]);
         else if (typeof normalized === 'function') events.push([property, normalized as (...args: unknown[]) => unknown]);
@@ -174,6 +188,7 @@ export function createStRenderHost(
       }
 
       if (name === 'Flex') properties.orientation ??= 0;
+      if (name === 'Grid') { properties.orientation = 1; properties.spacing = gridGap; }
       if (name === 'HeaderBar') properties.orientation ??= 0;
       if (name === 'Sidebar') properties.orientation ??= 1;
       const actor = new Constructor(properties);
@@ -192,7 +207,22 @@ export function createStRenderHost(
         for (const [property, binding] of bindings) {
           resources.add(effect(() => actor.set_property(property, binding.get())));
         }
-        appendChildren(actor, children ? [children] : []);
+        if (name === 'Grid') {
+          const nested = children ? fragmentChildren.get(children) : undefined;
+          const nodes = children ? (nested ?? [children]) : [];
+          if (children && nested) {
+            for (const node of nodes) children.remove_child?.(node);
+            fragmentChildren.delete(children);
+            destroyActor(children);
+          }
+          for (let index = 0; index < nodes.length; index += gridColumns) {
+            const row = new St.BoxLayout({ orientation: 0, spacing: gridGap });
+            actor.add_child?.(row);
+            appendChildren(row, nodes.slice(index, index + gridColumns));
+          }
+        } else {
+          appendChildren(actor, children ? [children] : []);
+        }
         return actor;
       } catch (error) {
         destroyActor(actor);
@@ -262,7 +292,9 @@ export function createStRenderHost(
       }
     },
     fragment(children) {
-      return makeContainer(children);
+      const actor = makeContainer(children);
+      fragmentChildren.set(actor, children);
+      return actor;
     },
     repeat(state: GtplBinding<GtplRepeatState<StActor>>) {
       const actor = new St.BoxLayout(options.fragmentOrientation === undefined ? {} : { orientation: options.fragmentOrientation });

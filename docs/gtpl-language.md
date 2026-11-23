@@ -42,6 +42,12 @@ The names `StBox`, `StIcon`, `StLabel`, and `StButton` are proposed GEF renderer
 | `[style.opacity]="opacity"` | Dynamic style binding, if supported by target |
 | `#localName` | Local element reference |
 
+## Classes and inline styles
+
+Every native element can declare one or more CSS classes with `class` (or the compatibility alias `className`). A class binding such as `[class]="classNames"` accepts a whitespace-separated string and updates reactively.
+
+The `style` attribute accepts CSS declarations without an enclosing rule, for example `style="color: red; padding: 8px;"`. `[style]="styleText"` updates those declarations reactively. GTPL rejects non-string style values and braces; selectors and complete CSS rules belong in component stylesheets (`.scss`), not in an element attribute. GTK4 applies declarations through a widget-scoped `Gtk.CssProvider`; GNOME Shell applies them through the native St widget style API. The class and style attributes do not require browser DOM support.
+
 ## Expression language
 
 GTPL expressions are a restricted, statically analyzable language. They are not arbitrary JavaScript and are never evaluated using `eval` or `Function`.

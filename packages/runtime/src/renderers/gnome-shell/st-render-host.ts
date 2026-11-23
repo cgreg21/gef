@@ -7,6 +7,7 @@ export interface StActor {
   remove_child?(child: StActor): void;
   set_child?(child: StActor | null): void;
   set_property(name: string, value: unknown): void;
+  set_style?(style: string): void;
   get_property?(name: string): unknown;
   get_layout_manager?(): { set_homogeneous?(value: boolean): void };
   connect(signal: string, callback: (actor: StActor, ...args: unknown[]) => unknown): number;
@@ -227,6 +228,7 @@ export function createStRenderHost(
       const properties: Record<string, unknown> = {};
       const events: Array<[string, (...args: unknown[]) => unknown]> = [];
       const bindings: Array<[string, GtplBinding<unknown>]> = [];
+      let styleValue: unknown;
       let flexHomogeneous: boolean | undefined;
       let gridColumns = 2;
       let gridGap = 0;
@@ -238,6 +240,7 @@ export function createStRenderHost(
       const passwordValue = name === 'StPasswordEntry' ? attributes.text : undefined;
       const passwordChange = name === 'StPasswordEntry' ? attributes.textChange : undefined;
       for (const [attribute, value] of Object.entries(attributes)) {
+        if (attribute === 'style') { styleValue = value; continue; }
         if (name === 'StSelect' && ['options', 'value', 'valueChange'].includes(attribute)) continue;
         if (name === 'StTextArea' && ['text', 'textChange'].includes(attribute)) continue;
         if (name === 'StPasswordEntry' && ['text', 'textChange'].includes(attribute)) continue;
@@ -295,6 +298,16 @@ export function createStRenderHost(
       const resources = new ResourceScope();
       actor.connect('destroy', () => { destroyed.add(actor); resources.dispose(); });
       try {
+        if (styleValue !== undefined) {
+          if (!actor.set_style) throw new Error('This St widget does not support inline styles.');
+          const syncStyle = (): void => {
+            const value = isGtplBinding(styleValue) ? styleValue.get() : styleValue;
+            if (typeof value !== 'string' || /[{}]/.test(value)) throw new Error('GTPL style must contain CSS declarations only (without braces).');
+            actor.set_style!(value);
+          };
+          if (isGtplBinding(styleValue)) resources.add(effect(syncStyle));
+          else syncStyle();
+        }
         if (name === 'StPasswordEntry') {
           const textActor = (actor as StActor & { get_clutter_text?: () => StActor }).get_clutter_text?.()
             ?? readProperty(actor, 'clutter-text') as StActor | undefined;

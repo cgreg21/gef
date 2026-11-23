@@ -48,6 +48,8 @@ class FakeActor implements StActor {
     for (const child of children) child.destroy();
   }
 
+  set_style(style: string): void { this.properties.style = style; }
+
   set_property(name: string, value: unknown): void {
     this.properties[name] = value;
   }
@@ -151,6 +153,21 @@ describe('createStRenderHost', () => {
     const actor = host.element('StLabel', { styleClass: 'title' }, child) as FakeActor;
     expect(actor.properties).toEqual({ style_class: 'title' });
     expect(actor.children).toEqual([child]);
+  });
+
+
+  it('applies static and reactive inline styles to native St widgets', () => {
+    const host = createStRenderHost(createSt());
+    const style = signal('color: red;');
+    const actor = host.element('StLabel', {
+      class: 'heading',
+      style: { kind: 'binding', get: () => style.get() },
+    }, undefined) as FakeActor;
+    expect(actor.properties.style_class).toBe('heading');
+    expect(actor.properties.style).toBe('color: red;');
+    style.set('font-weight: bold;');
+    expect(actor.properties.style).toBe('font-weight: bold;');
+    host.destroy(actor);
   });
 
   it('binds StPasswordEntry through its native Clutter.Text actor', () => {

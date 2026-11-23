@@ -14,6 +14,7 @@ export interface GtkActor {
   set_child?(child: GtkActor | null): void;
   set_property?(name: string, value: unknown): void;
   get_property?(name: string): unknown;
+  get_style_context?(): GtkStyleContext;
   set_range?(lower: number, upper: number): void;
   set_increments?(step: number, page: number): void;
   set_text?(text: string): void;
@@ -55,7 +56,18 @@ export interface GtkStringListNamespace {
   readonly new: (strings: string[]) => GtkStringList;
 }
 
+export interface GtkStyleContext {
+  add_provider(provider: GtkCssProvider, priority: number): void;
+  remove_provider(provider: GtkCssProvider): void;
+}
+
+export interface GtkCssProvider {
+  load_from_data(data: string): void;
+}
+
 export interface GtkNamespace {
+  readonly CssProvider?: new () => GtkCssProvider;
+  readonly STYLE_PROVIDER_PRIORITY_APPLICATION?: number;
   readonly Box: GtkWidgetConstructor;
   readonly Label: GtkWidgetConstructor;
   readonly Button: GtkWidgetConstructor;
@@ -339,6 +351,7 @@ export function createGtkRenderHost(
       const bindings: Array<[string, GtplBinding<unknown>]> = [];
       const classes: string[] = [];
       const classBindings: GtplBinding<unknown>[] = [];
+      let styleValue: unknown;
       let gridColumns = 2;
       const isSelect = name === 'GtkDropDown' && Object.prototype.hasOwnProperty.call(attributes, 'options');
       const isTextArea = name === 'GtkTextView' && Object.prototype.hasOwnProperty.call(attributes, 'text');
@@ -358,6 +371,7 @@ export function createGtkRenderHost(
         if (isTextArea && ['text', 'textChange'].includes(attribute)) continue;
         if (isPasswordInput && ['text', 'textChange'].includes(attribute)) continue;
         if (isSlider && ['value', 'valueChange'].includes(attribute)) continue;
+        if (attribute === 'style') { styleValue = value; continue; }
         if (attribute === 'class' || attribute === 'className') {
           if (isGtplBinding(value)) classBindings.push(value);
           else classes.push(...classNames(value));
@@ -504,6 +518,20 @@ export function createGtkRenderHost(
       }
       own(actor, scope);
       try {
+        if (styleValue !== undefined) {
+          const context = actor.get_style_context?.();
+          if (!Gtk.CssProvider || !context) throw new Error('GTK style attributes require Gtk.CssProvider and Gtk.Widget.get_style_context().');
+          const provider = new Gtk.CssProvider();
+          const syncStyle = (): void => {
+            const value = isGtplBinding(styleValue) ? styleValue.get() : styleValue;
+            if (typeof value !== 'string' || /[{}]/.test(value)) throw new Error('GTPL style must contain CSS declarations only (without braces).');
+            provider.load_from_data(value.trim() ? `* { ${value} }` : '* {}');
+          };
+          context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION ?? 600);
+          scope.add(() => context.remove_provider(provider));
+          if (isGtplBinding(styleValue)) scope.add(effect(syncStyle));
+          else syncStyle();
+        }
         for (const name of classes) (actor.add_css_class ?? actor.addCssClass)?.call(actor, name);
         for (const [signal, handler] of events) {
           const property = twoWayProperty(signal);

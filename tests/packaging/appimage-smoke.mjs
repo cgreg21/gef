@@ -29,7 +29,7 @@ try {
     '  if [ "$1" = "--appdir" ]; then APPDIR="$2"; shift 2; else shift; fi',
     'done',
     'test -x "$APPDIR/AppRun" || exit 2',
-    'printf "\177ELF\002\001\001\000" > Demo-x86_64.AppImage',
+    "printf '\\x7fELF\\x02\\x01\\x01\\x00' > Demo-x86_64.AppImage",
     '',
   ].join('\n'));
   await chmod(resolve(bin, 'linuxdeploy'), 0o755);

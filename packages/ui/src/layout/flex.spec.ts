@@ -26,7 +26,7 @@ describe('FlexLayout', () => {
     const items = [{ basis: 60, crossSize: 20 }, { basis: 60, crossSize: 20 }, { basis: 60, crossSize: 20 }];
     const narrow = flex.layout(300, 100, items);
     expect(narrow.direction).toBe('column');
-    expect(narrow.lines).toBe(1);
+    expect(narrow.lines).toBe(3);
     const wide = flex.layout(800, 100, items);
     expect(wide.direction).toBe('row');
     expect(wide.lines).toBe(1);

@@ -101,7 +101,7 @@ Runs the current project's `npm test` script.
 ### `gef package`
 
 For either configured project type, runs its `npm run package` script when
-present. The generated Node-GTK application script invokes `node-gtk bundle --archive` and creates a Linux AppImage from that self-contained runtime bundle. The AppImage contains the bundled Node.js, GTK runtime, typelibs and application files; it does not require Node.js, GTK4, libadwaita or GEF to be installed on the target machine. AppImage creation requires `linuxdeploy` on the Linux build host. The project's `bundle` configuration supports `name`, `id` and an optional `icon` path. Without a project config, the GEF repository
+present. The generated GNOME Shell extension project creates the EGO-compatible `<uuid>.shell-extension.zip`; this package is Linux/GNOME-specific and is not a macOS or Windows application. A generated Node-GTK application uses the native build host: Linux creates a portable Node-GTK bundle, `.tar.gz` and AppImage (requires `linuxdeploy`); Windows creates a self-contained `.zip` with `node.exe` and the GTK DLL/typelib runtime shipped by the Node-GTK Windows prebuilt; macOS creates a self-contained `.app` and `.dmg` by collecting Homebrew GTK4/libadwaita runtime libraries and typelibs. Build each target on its native OS; cross-compilation is not supported. The macOS app is ad-hoc signed and still needs Developer ID signing and notarization for public distribution. The project's `bundle` configuration supports `name`, `id`, `entry` and an optional `icon` path. Without a project config, the GEF repository
 fallback runs `npm run build` followed by `npm run package:example`.
 
 ### `gef watch`

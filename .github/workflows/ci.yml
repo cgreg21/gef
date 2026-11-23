@@ -28,6 +28,8 @@ jobs:
           node-version: 24
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: ESLint
+        run: npm run lint
       - name: TypeScript typecheck
         run: npm run typecheck
       - name: Unit tests

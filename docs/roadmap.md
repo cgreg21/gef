@@ -41,6 +41,12 @@
 - [ ] Configure the npm package trusted publisher and verify an OIDC publication of a subsequent version.
 - [ ] Run the final alpha candidate through the GNOME Shell 51 real-host enable/disable harness before publishing.
 
+## Project configuration and Node-GTK
+- [x] Add an Angular-style `gef.json` workspace file with `projects`, `defaultProject` and `projectType` (`application` or `extension`).
+- [x] Generate a GTK4/libadwaita Node-GTK 4 application starter alongside GNOME Shell extension projects.
+- [x] Route application packaging to the node-gtk bundler and retain EGO packaging for extension projects.
+- [ ] Reuse the GEF GTPL compiler and GTK renderer in the Node-GTK application runtime; validate the renderer against node-gtk's GObject API.
+
 ## Cross-platform compatibility
 - [x] Keep CLI EGO-check fixtures and path assertions portable across Windows and POSIX hosts.
 - [x] Run TypeScript checks and the complete unit test suite on Windows CI.

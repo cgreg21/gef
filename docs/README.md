@@ -12,7 +12,8 @@ Use this index to find the guide for each part of the framework.
 
 - [UI components — guide complet](ui-components.md) — catalogue illustré, propriétés, événements, exemples GTPL, conteneurs et compatibilité GTK4/GNOME Shell.
 - [UI layout](ui-layout.md) — Flex, Grid, breakpoints et calculs responsive.
-- [GTK UI showcase](../packages/examples/ui-showcase/README.md) — application native de démonstration et capture d'écran générée par la CI.
+- [GEF Kitchen Sink](../packages/examples/kitchen-sink/README.md) — galerie GTK4 des widgets et conteneurs GTPL disponibles.
+- [GTK UI showcase](../packages/examples/ui-showcase/README.md) — démonstration native GTK4 minimale.
 
 ## Language and compiler
 

@@ -107,6 +107,12 @@ describe('createStRenderHost', () => {
     }
   });
 
+  it('sets horizontal and vertical defaults for GTPL shell containers', () => {
+    const host = createStRenderHost(createSt());
+    expect((host.element('HeaderBar', {}, undefined) as FakeActor).properties.orientation).toBe(0);
+    expect((host.element('Sidebar', {}, undefined) as FakeActor).properties.orientation).toBe(1);
+  });
+
   it('does not add synthetic empty containers to leaf widgets', () => {
     const host = createStRenderHost(createSt());
     const actor = host.element('StLabel', {}, undefined) as FakeActor;

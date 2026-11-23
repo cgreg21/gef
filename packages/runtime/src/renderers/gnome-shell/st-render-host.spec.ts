@@ -113,6 +113,21 @@ describe('createStRenderHost', () => {
     expect((host.element('Sidebar', {}, undefined) as FakeActor).properties.orientation).toBe(1);
   });
 
+  it('maps GTPL Flex direction and gap to native St box properties', () => {
+    const host = createStRenderHost(createSt());
+    const direction = signal('column');
+    const flex = host.element('Flex', {
+      direction: { kind: 'binding', get: () => direction.get() },
+      gap: 8,
+    }, undefined) as FakeActor;
+
+    expect(flex.properties).toMatchObject({ orientation: 1, spacing: 8 });
+    direction.set('row');
+    expect(flex.properties.orientation).toBe(0);
+    host.destroy(flex);
+    expect(() => host.element('Flex', { gap: -1 }, undefined)).toThrow(/Flex gap/);
+  });
+
   it('does not add synthetic empty containers to leaf widgets', () => {
     const host = createStRenderHost(createSt());
     const actor = host.element('StLabel', {}, undefined) as FakeActor;

@@ -48,6 +48,13 @@ describe('validateStCss', () => {
     expect(validateStCss(source).find((item) => item.code === 'GEFCSS1001')).toBeUndefined();
   });
 
+  it.each(['\n', '\r\n', '\r'])('tracks escaped string newlines with %j', (newline) => {
+    const source = ['content: "first' + String.fromCharCode(92), 'second"', '}'].join(newline);
+    expect(validateStCss(source)).toMatchObject([
+      { code: 'GEFCSS1002', line: 3, column: 1 },
+    ]);
+  });
+
   it('ignores declaration-like text inside quoted strings, including embedded semicolons', () => {
     expect(validateStCss('.panel { content: "safe; display: flex"; background: url("data:text/plain;display:grid"); }')).toEqual([]);
   });

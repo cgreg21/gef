@@ -153,6 +153,7 @@ describe('GEF CLI', () => {
     expect(extension).not.toContain('StButton');
     const packageScript = writes.find((item) => item.path.endsWith(join('scripts', 'package.mjs')))?.content ?? '';
     expect(packageScript).toContain("import { spawnSync } from 'node:child_process'");
+    expect(packageScript).toContain("process.platform !== 'linux'");
     expect(packageScript).not.toContain("await import('node:child_process')");
     expect(extension).toContain('Do NOT upload to extensions.gnome.org');
     expect(directories).toEqual(expect.arrayContaining([expect.stringContaining(join('out', 'scripts'))]));

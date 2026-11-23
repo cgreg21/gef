@@ -171,15 +171,21 @@ describe('GEF CLI', () => {
     const app = writes.find((item) => item.path.endsWith(join('src', 'main.ts')))?.content ?? '';
     expect(app).toContain("import Gtk from 'gi:Gtk-4.0'");
     expect(app).toContain("import Adw from 'gi:Adw-1'");
+    expect(app).toContain("createGtkRenderHost(Gtk, { api: 'node-gtk' })");
+    expect(app).toContain('mountGtplTemplate({}, renderMain, host)');
     expect(app).toContain('app.run([])');
+    const template = writes.find((item) => item.path.endsWith(join('src', 'main.gtpl')))?.content ?? '';
+    expect(template).toContain('<GtkLabel label="Hello from GEF and node-gtk!" />');
     const projectPackage = JSON.parse(writes.find((item) => item.path.endsWith('package.json'))?.content ?? '{}') as {
       dependencies?: Record<string, string>;
       scripts?: Record<string, string>;
       bundle?: { name: string; id: string; entry: string; gtk: number };
     };
     expect(projectPackage.dependencies?.['node-gtk']).toBe('^4.1.1');
+    expect(projectPackage.dependencies?.['gnome-extension-framework']).toBe('^0.1.0-alpha.2');
+    expect(projectPackage.scripts?.build).toContain('gef compile src/main.gtpl');
     expect(projectPackage.scripts?.start).toContain('--import node-gtk/register');
-    expect(projectPackage.scripts?.package).toBe('node-gtk bundle');
+    expect(projectPackage.scripts?.package).toBe('npm run build && node-gtk bundle');
     expect(projectPackage.bundle).toEqual({ name: 'DesktopApp', id: 'com.example.desktop.app', entry: 'dist/main.js', gtk: 4 });
     expect(directories).toContain(resolve('out/src'));
     expect(output[0]).toContain('Created application project');

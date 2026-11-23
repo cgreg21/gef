@@ -166,7 +166,7 @@ function readProperty(actor: GtkActor, property: string, api: 'gjs' | 'node-gtk'
   const name = propertyName(property, api);
   if (api === 'node-gtk') return target[name];
   if (property in target) return target[property];
-  return target[name];
+  return target[name] ?? actor.get_property?.(name);
 }
 
 function setProperty(actor: GtkActor, property: string, value: unknown, api: 'gjs' | 'node-gtk'): void {
@@ -370,8 +370,7 @@ export function createGtkRenderHost(
         if (!Gtk.StringList) throw new Error('GtkDropDown requires Gtk.StringList to provide a native options model.');
         const readOptions = (): string[] => {
           const value = isGtplBinding(selectOptions) ? selectOptions.get() : selectOptions;
-          if (!Array.isArray(value) || !value.some((item) => typeof item !== 'string')) {
-            if (Array.isArray(value) && value.length === 0) return [];
+          if (!Array.isArray(value) || !value.every((item) => typeof item === 'string')) {
             throw new Error('GtkDropDown options must be an array of strings.');
           }
           return value as string[];

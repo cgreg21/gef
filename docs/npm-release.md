@@ -22,6 +22,13 @@ suffix and `latest` for stable versions.
 
 ## One-time setup
 
+## Bootstrap status
+
+The first manual publication of `0.1.0-alpha.1` is complete. Do not publish that
+version again. The remaining one-time setup is to configure the npm GitHub
+Actions trusted publisher for future releases; verify that configuration with
+a new version before relying on automated OIDC publication.
+
 1. Check whether `gnome-extension-framework` is available:
    `npm view gnome-extension-framework name`. A successful result means the
    name is already registered; a 404 means it appears unclaimed at the time of

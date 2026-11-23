@@ -86,6 +86,8 @@ The published package exposes the `gef` executable and the compiler/runtime ESM 
 - [Getting started](docs/getting-started.md)
 - [CLI reference](docs/cli-reference.md)
 - [GTPL language](docs/gtpl-language.md)
+- [UI components — guide complet](docs/ui-components.md)
+- [UI layout](docs/ui-layout.md)
 - [Components, directives and pipes](docs/components.md)
 - [Semantic analysis](docs/semantic-analysis.md)
 - [Architecture](docs/architecture.md)

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import Gtk from 'gi:Gtk-4.0';
-import { createGtplRenderRuntime, createGtkRenderHost, mountGtplTemplate, signal } from '../../dist/runtime/src/index.js';
+import { createGtplRenderRuntime, createGtkRenderHost, Injector, mountGtplTemplate, signal } from '../../dist/runtime/src/index.js';
+import { createGtkUiRegistry } from '../../dist/ui/src/index.js';
 import renderSmoke from '../../dist/node-gtk-view.js';
 
 Gtk.init();
@@ -31,7 +32,13 @@ const toggle = host.element('GtkSwitch', {
   active: false,
   activeChange: (value) => { active = value; },
 }, undefined);
-const root = host.fragment([button, toggle, icon, progress]);
+const componentRuntime = createGtplRenderRuntime(host, undefined, undefined, new Injector(), createGtkUiRegistry());
+const switchState = signal(false);
+const gefSwitch = componentRuntime.element('GefSwitch', {
+  active: componentRuntime.bind(() => switchState.get()),
+  activeChange: (value) => switchState.set(value),
+}, undefined);
+const root = host.fragment([button, toggle, icon, progress, gefSwitch]);
 let clicks = 0;
 let active;
 
@@ -39,6 +46,9 @@ assert.equal(label.label, 'before');
 assert.equal(label.useUnderline, true);
 assert.equal(icon.iconName, 'document-save-symbolic');
 assert.equal(progress.fraction, 0.25);
+assert.equal(gefSwitch.active, false);
+switchState.set(true);
+assert.equal(gefSwitch.active, true);
 button.emit('clicked');
 toggle.active = true;
 title.set('after');
@@ -49,11 +59,17 @@ assert.equal(active, true);
 assert.equal(label.label, 'after');
 assert.equal(icon.iconName, 'document-open-symbolic');
 assert.equal(progress.fraction, 0.75);
+gefSwitch.active = false;
+assert.equal(switchState.get(), false);
 
 host.destroy(root);
 button.emit('clicked');
 title.set('ignored');
 iconName.set('ignored');
+switchState.set(true);
+assert.equal(gefSwitch.active, false);
+gefSwitch.active = true;
+assert.equal(switchState.get(), true);
 assert.equal(clicks, 1);
 assert.equal(label.label, 'after');
 assert.equal(icon.iconName, 'document-open-symbolic');

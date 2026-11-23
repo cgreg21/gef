@@ -63,3 +63,27 @@ subscription.unsubscribe();
 ```
 
 The layout engine deliberately does not install browser APIs or guess a native widget lifecycle. The GNOME Shell / GTK view owns the size notification and calls the observer; this keeps the calculation identical on both renderers.
+
+## Flex layout
+
+`FlexLayout` calculates row or column layouts, distributes free space with `grow`, shrinks overflowing items with `shrink`, and optionally wraps items. Direction, wrapping, gap, justification and alignment accept responsive values:
+
+```ts
+import { FlexLayout } from 'gnome-extension-framework/ui';
+
+const flex = new FlexLayout({
+  direction: { base: 'column', md: 'row' },
+  wrap: true,
+  gap: { base: 8, md: 16 },
+  justify: 'space-between',
+  align: 'center',
+});
+
+const layout = flex.layout(containerWidth, containerHeight, [
+  { basis: 180, grow: 1, shrink: 1, crossSize: 40 },
+  { basis: 240, grow: 2, shrink: 1, crossSize: 40 },
+]);
+// Each item has x, y, width, height and line.
+```
+
+Supported alignment values are `start`, `center`, `end`, and `stretch`; justification supports `start`, `center`, `end`, and `space-between`. The calculation is toolkit-independent: connect its input dimensions to the native container's allocation and apply the returned item bounds in the platform renderer.

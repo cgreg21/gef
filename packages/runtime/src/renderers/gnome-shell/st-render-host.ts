@@ -47,6 +47,30 @@ function notifySignal(property: string): string {
   return `notify::${property.replace(/([A-Z])/g, '-$1').replace(/_/g, '-').toLowerCase()}`;
 }
 
+
+function flexValue(attribute: string, value: unknown): unknown {
+  if (attribute === 'direction') {
+    if (value === 'row') return 0;
+    if (value === 'column') return 1;
+    throw new Error('Flex direction must be "row" or "column".');
+  }
+  if (attribute === 'gap') {
+    const gap = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(gap) || gap < 0) throw new Error('Flex gap must be a non-negative number.');
+    return gap;
+  }
+  return value;
+}
+
+function layoutAttribute(name: string, attribute: string, value: unknown): [string, unknown] {
+  if (name !== 'Flex' || (attribute !== 'direction' && attribute !== 'gap')) return [attribute, value];
+  const property = attribute === 'direction' ? 'orientation' : 'spacing';
+  if (isGtplBinding(value)) {
+    return [property, { kind: 'binding', get: () => flexValue(attribute, value.get()) } satisfies GtplBinding<unknown>];
+  }
+  return [property, flexValue(attribute, value)];
+}
+
 function readProperty(actor: StActor, property: string): unknown {
   const target = actor as unknown as Record<string, unknown>;
   if (property in target) return target[property];
@@ -82,6 +106,7 @@ export function createStRenderHost(
   const constructors: Readonly<Record<string, StWidgetConstructor>> = {
     StBox: St.BoxLayout,
     StBoxLayout: St.BoxLayout,
+    Flex: St.BoxLayout,
     HeaderBar: St.BoxLayout,
     Sidebar: St.BoxLayout,
     StLabel: St.Label,
@@ -142,11 +167,13 @@ export function createStRenderHost(
       const events: Array<[string, (...args: unknown[]) => unknown]> = [];
       const bindings: Array<[string, GtplBinding<unknown>]> = [];
       for (const [attribute, value] of Object.entries(attributes)) {
-        if (isGtplBinding(value)) bindings.push([propertyName(attribute), value]);
-        else if (typeof value === 'function') events.push([attribute, value as (...args: unknown[]) => unknown]);
-        else properties[propertyName(attribute)] = value;
+        const [property, normalized] = layoutAttribute(name, attribute, value);
+        if (isGtplBinding(normalized)) bindings.push([propertyName(property), normalized]);
+        else if (typeof normalized === 'function') events.push([property, normalized as (...args: unknown[]) => unknown]);
+        else properties[propertyName(property)] = normalized;
       }
 
+      if (name === 'Flex') properties.orientation ??= 0;
       if (name === 'HeaderBar') properties.orientation ??= 0;
       if (name === 'Sidebar') properties.orientation ??= 1;
       const actor = new Constructor(properties);

@@ -54,22 +54,26 @@ gef styles src/theme.scss dist/theme.css
 This is an initial compatibility checker, not a complete validator for every
 St or GTK CSS property. Keep Shell and preferences styles separate.
 
-### `gef new <extension-name> [directory]`
+### `gef new <project-name> [directory] [--type application|extension]`
 
-Creates a minimal GNOME Shell 51 extension project. Names must start with a
-lowercase letter and contain lowercase letters, digits or hyphens. The
-directory defaults to the extension name.
+Creates a project and a root `gef.json` workspace configuration. The default
+type is `extension`, preserving the original command. Project names must start
+with a lowercase letter and contain lowercase letters, digits or hyphens.
 
 ```sh
 gef new hello-world
 gef new hello-world ./extensions/hello-world
+gef new desktop-app --type application
 ```
 
-Generated files include metadata, a TypeScript extension class, minimal GJS
-declarations, TypeScript configuration, package scripts and a packaging
-script. The generated UUID and metadata are examples; replace them before
-distribution. Review the generated AI-assisted-code notice and do not submit
-code you cannot understand and maintain.
+The generated `gef.json` follows Angular's workspace idea: it has a
+`projects` map, a `defaultProject`, and a `projectType` for each project.
+Supported types are `extension` (GJS / GNOME Shell) and `application`
+(Node.js / node-gtk). Extension projects include GNOME metadata and an EGO
+packaging script. Application projects include a GTK4/libadwaita starter,
+`node-gtk` dependency, TypeScript declarations and Node.js launch/bundle
+scripts. These are separate runtimes: Node-GTK application code does not run
+inside GNOME Shell, and GJS extension code does not run under Node.js.
 
 ### `gef generate component <Name> [directory]`
 
@@ -96,10 +100,11 @@ Runs the current project's `npm test` script.
 
 ### `gef package`
 
-If the current `package.json` defines a `package` script, runs that script.
-Otherwise it runs `npm run build` followed by
-`npm run package:example`. This fallback is intended for the GEF repository
-example; an extension project should define its own packaging script.
+If `gef.json` selects an `application` project, runs the local node-gtk
+bundler (`npx --no-install node-gtk bundle`). For an `extension` project, runs
+its `npm run package` script when present. Without a project config, the GEF
+repository fallback runs `npm run build` followed by
+`npm run package:example`.
 
 ### `gef watch`
 

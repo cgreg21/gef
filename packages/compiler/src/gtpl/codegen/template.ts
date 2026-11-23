@@ -1,4 +1,3 @@
-import * as ts from 'typescript';
 import type {
   ElementNode,
   ForBlockNode,
@@ -160,9 +159,9 @@ function emitGtplTemplateInternal(
     const contentPrefix = rendered.length > 1 ? 'runtime.fragment([' : '';
     const content = rendered.length === 0
       ? 'runtime.fragment([])'
-      : rendered.length === 1 ? rendered[0]! : contentPrefix + rendered.join(', ') + '])';
-    const statementPrefix = statements.length === 0 ? '' : '(() => { ' + statements.join(' ') + ' return ';
-    return statementPrefix + content + (statements.length === 0 ? '' : ' })()');
+      : rendered.length === 1 ? rendered[0]! : contentPrefix + '\n  ' + rendered.join(',\n  ') + '\n])';
+    const statementPrefix = statements.length === 0 ? '' : '(() => {\n  ' + statements.join('\n  ') + '\n  return ';
+    return statementPrefix + content + (statements.length === 0 ? '' : '\n})()');
   };
 
   const renderText = (node: TextNode, locals: ReadonlySet<string>): string => {
@@ -198,7 +197,10 @@ function emitGtplTemplateInternal(
       attributes.push(`${JSON.stringify(attribute.name)}: ${value}`);
     }
     const children = node.children.length > 0 ? renderNodes(node.children, locals) : 'undefined';
-    return `runtime.element(${JSON.stringify(node.name)}, { ${attributes.join(', ')} }, ${children})`;
+    const attributeObject = attributes.length === 0
+      ? '{}'
+      : `{\n  ${attributes.join(',\n  ')}\n}`;
+    return `runtime.element(${JSON.stringify(node.name)}, ${attributeObject}, ${children})`;
   };
 
   const renderIf = (node: IfBlockNode, locals: ReadonlySet<string>): string => {
@@ -221,11 +223,29 @@ function emitGtplTemplateInternal(
   const renderFor = (node: ForBlockNode, locals: ReadonlySet<string>): string => {
     const loopLocals = new Set([...locals, node.item, '$index', '$count', '$first', '$last', '$even', '$odd', ...node.aliases.map((alias) => alias.name)]);
     const aliases = node.aliases.map((alias) => `const ${alias.name} = ${alias.context};`).join(' ');
+    const aliasLines = aliases ? `${aliases}\n    ` : '';
     const body = renderNodes(node.children, loopLocals);
     const empty = renderNodes(node.empty, locals);
     const collection = expression(node.parsedCollection, locals, options, nodeMappings, node.collectionSpan, node.collection);
     const track = expression(node.parsedTrack, loopLocals, options, nodeMappings, node.trackSpan, node.track);
-    return `runtime.for(runtime.bind(() => ${collection}), (${node.item}, $index, $count) => { const $first = $index === 0; const $last = $index === $count - 1; const $even = $index % 2 === 0; const $odd = !$even; ${aliases} return ${body}; }, (${node.item}, $index, $count) => { const $first = $index === 0; const $last = $index === $count - 1; const $even = $index % 2 === 0; const $odd = !$even; ${aliases} return ${track}; }, () => ${empty})`;
+    return `runtime.for(
+  runtime.bind(() => ${collection}),
+  (${node.item}, $index, $count) => {
+    const $first = $index === 0;
+    const $last = $index === $count - 1;
+    const $even = $index % 2 === 0;
+    const $odd = !$even;
+    ${aliasLines}return ${body};
+  },
+  (${node.item}, $index, $count) => {
+    const $first = $index === 0;
+    const $last = $index === $count - 1;
+    const $even = $index % 2 === 0;
+    const $odd = !$even;
+    ${aliasLines}return ${track};
+  },
+  () => ${empty}
+)`;
   };
 
   const renderSwitch = (node: SwitchBlockNode, locals: ReadonlySet<string>): string => {
@@ -254,8 +274,8 @@ function emitGtplTemplateInternal(
     return `/*__GEF_MAP_${marker}__*/${rendered}`;
   };
 
-  const markedCode = '(ctx, runtime) => { return ' + renderNodes(nodes, new Set()) + '; }';
-  const formattedCode = formatJavaScript(markedCode);
+  const markedCode = '(ctx, runtime) => {\n  return ' + renderNodes(nodes, new Set()) + ';\n}';
+  const formattedCode = markedCode;
   let result = '';
   let cursor = 0;
   let generatedLine = 0;
@@ -285,50 +305,7 @@ function emitGtplTemplateInternal(
   return { code: result, nodeMappings };
 }
 
-function formatJavaScript(source: string): string {
-  const fileName = '/generated.js';
-  const host: ts.LanguageServiceHost = {
-    getCompilationSettings: () => ({ allowJs: true }),
-    getScriptFileNames: () => [fileName],
-    getScriptVersion: () => '0',
-    getScriptSnapshot: (name) => name === fileName ? ts.ScriptSnapshot.fromString(source) : undefined,
-    getCurrentDirectory: () => '/',
-    getDefaultLibFileName: ts.getDefaultLibFilePath,
-    fileExists: (name) => name === fileName,
-    readFile: (name) => name === fileName ? source : undefined,
-    readDirectory: () => [],
-  };
-  const service = ts.createLanguageService(host);
-  try {
-    const edits = service.getFormattingEditsForDocument(fileName, {
-      indentSize: 2,
-      tabSize: 2,
-      newLineCharacter: '\n',
-      convertTabsToSpaces: true,
-      indentStyle: ts.IndentStyle.Smart,
-      insertSpaceAfterCommaDelimiter: true,
-      insertSpaceAfterSemicolonInForStatements: true,
-      insertSpaceBeforeAndAfterBinaryOperators: true,
-      insertSpaceAfterKeywordsInControlFlowStatements: true,
-      insertSpaceAfterFunctionKeywordForAnonymousFunctions: true,
-      insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis: false,
-      insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: true,
-      insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets: false,
-      insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces: true,
-      placeOpenBraceOnNewLineForFunctions: false,
-      placeOpenBraceOnNewLineForControlBlocks: false,
-    });
-    let formatted = source;
-    for (const edit of [...edits].sort((left, right) => right.span.start - left.span.start)) {
-      formatted = formatted.slice(0, edit.span.start)
-        + edit.newText
-        + formatted.slice(edit.span.start + edit.span.length);
-    }
-    return formatted;
-  } finally {
-    service.dispose();
-  }
-}
+
 
 function encodeVlq(value: number): string {
   const signed = value < 0 ? (-value << 1) | 1 : value << 1;

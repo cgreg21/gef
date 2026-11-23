@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1040" viewBox="0 0 1440 1040" role="img" aria-labelledby="title desc">
+<title id="title">Galerie illustrative des composants GEF</title>
+<desc id="desc">Planche de documentation présentant bouton, label, icône, champ texte, case à cocher, interrupteur et barre de progression dans une fenêtre GNOME fictive.</desc>
+<defs>
+ <linearGradient id="bg" x2="0" y2="1"><stop stop-color="#f8f9fa"/><stop offset="1" stop-color="#e9edf2"/></linearGradient>
+ <linearGradient id="blue" x2="0" y2="1"><stop stop-color="#3584e4"/><stop offset="1" stop-color="#1c71d8"/></linearGradient>
+ <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#17212b" flood-opacity=".12"/></filter>
+</defs>
+<rect width="1440" height="1040" fill="url(#bg)"/>
+<rect x="80" y="54" width="1280" height="930" rx="20" fill="#fff" filter="url(#shadow)"/>
+<path d="M100 54h1240a20 20 0 0 1 20 20v54H80V74a20 20 0 0 1 20-20" fill="#f1f3f5"/>
+<circle cx="111" cy="91" r="7" fill="#e01b24"/><circle cx="136" cy="91" r="7" fill="#f6d32d"/><circle cx="161" cy="91" r="7" fill="#33d17a"/>
+<text x="720" y="98" font-family="Cantarell,Arial,sans-serif" font-size="17" text-anchor="middle" fill="#3d4650" font-weight="600">GEF · Galerie des composants UI</text>
+<text x="126" y="170" font-family="Cantarell,Arial,sans-serif" font-size="30" font-weight="700" fill="#20252b">Composants natifs</text>
+<text x="126" y="201" font-family="Cantarell,Arial,sans-serif" font-size="16" fill="#66717d">Aperçu illustratif · les widgets réels suivent le thème de la plateforme</text>
+<!-- cards -->
+<g font-family="Cantarell,Arial,sans-serif">
+ <g transform="translate(120 244)"><rect width="570" height="190" rx="14" fill="#fff" stroke="#d8dee5"/><text x="26" y="38" font-size="18" font-weight="700" fill="#20252b">GefButton</text><text x="26" y="62" font-size="13" fill="#66717d">Action principale et action secondaire</text>
+ <rect x="28" y="94" width="166" height="48" rx="9" fill="url(#blue)"/><text x="111" y="124" text-anchor="middle" font-size="15" fill="#fff" font-weight="600">Enregistrer</text>
+ <rect x="212" y="94" width="144" height="48" rx="9" fill="#f3f5f7" stroke="#cbd2da"/><text x="284" y="124" text-anchor="middle" font-size="15" fill="#27313b">Annuler</text>
+ <rect x="374" y="94" width="164" height="48" rx="9" fill="#e8ebef"/><text x="456" y="124" text-anchor="middle" font-size="15" fill="#929ba5">Désactivé</text></g>
+ <g transform="translate(750 244)"><rect width="570" height="190" rx="14" fill="#fff" stroke="#d8dee5"/><text x="26" y="38" font-size="18" font-weight="700" fill="#20252b">GefLabel &amp; GefIcon</text><text x="26" y="62" font-size="13" fill="#66717d">Texte et icône du thème</text>
+ <text x="28" y="119" font-size="22" fill="#20252b" font-weight="700">Paramètres</text><text x="28" y="148" font-size="14" fill="#66717d">Gérez les options de votre extension.</text>
+ <rect x="384" y="88" width="68" height="68" rx="14" fill="#f0f4f8"/><path d="M418 103v38M399 122h38" stroke="#3584e4" stroke-width="5" stroke-linecap="round"/><text x="468" y="126" font-size="13" fill="#66717d">preferences</text></g>
+ <g transform="translate(120 466)"><rect width="570" height="190" rx="14" fill="#fff" stroke="#d8dee5"/><text x="26" y="38" font-size="18" font-weight="700" fill="#20252b">GefInput</text><text x="26" y="62" font-size="13" fill="#66717d">Saisie texte avec valeur synchronisée</text>
+ <rect x="28" y="91" width="500" height="54" rx="9" fill="#fff" stroke="#8b98a7" stroke-width="1.5"/><text x="48" y="124" font-size="15" fill="#27313b">Rechercher une préférence…</text><path d="M493 109l10 10-10 10" stroke="#66717d" stroke-width="2" fill="none"/></g>
+ <g transform="translate(750 466)"><rect width="570" height="190" rx="14" fill="#fff" stroke="#d8dee5"/><text x="26" y="38" font-size="18" font-weight="700" fill="#20252b">GefCheckbox &amp; GefSwitch</text><text x="26" y="62" font-size="13" fill="#66717d">Contrôles booléens</text>
+ <rect x="30" y="95" width="22" height="22" rx="5" fill="#3584e4"/><path d="M35 106l5 5 9-11" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><text x="68" y="112" font-size="15" fill="#27313b">Activer les notifications</text>
+ <rect x="32" y="135" width="50" height="28" rx="14" fill="#3584e4"/><circle cx="66" cy="149" r="10" fill="#fff"/><text x="99" y="155" font-size="15" fill="#27313b">Synchronisation active</text></g>
+ <g transform="translate(120 688)"><rect width="1200" height="220" rx="14" fill="#fff" stroke="#d8dee5"/><text x="26" y="40" font-size="18" font-weight="700" fill="#20252b">GefProgressBar</text><text x="26" y="66" font-size="13" fill="#66717d">Progression déterminée · fraction comprise entre 0 et 1</text>
+ <rect x="30" y="105" width="900" height="18" rx="9" fill="#e6e9ed"/><rect x="30" y="105" width="585" height="18" rx="9" fill="#3584e4"/><text x="950" y="120" font-size="17" font-weight="700" fill="#27313b">65 %</text>
+ <text x="30" y="166" font-size="14" fill="#66717d">GTK4 : Gtk.ProgressBar · GNOME Shell : St.ProgressBar</text></g>
+</g>
+<text x="126" y="950" font-family="Cantarell,Arial,sans-serif" font-size="13" fill="#8a949e">Illustration documentaire — ne représente pas un screenshot d'exécution de GNOME Shell ou GTK.</text>
+</svg>

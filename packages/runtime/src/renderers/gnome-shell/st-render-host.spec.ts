@@ -73,12 +73,13 @@ class FakeBin extends FakeActor {
 }
 
 class FakePopupMenu {
+  static latest: FakePopupMenu | undefined;
   readonly actor = new FakeActor();
   readonly items: FakeActor[] = [];
   opened = false;
-  constructor(readonly source: StActor, readonly alignment: number, readonly side: number) {}
-  addMenuItem(item: StActor): void { this.items.push(item as FakeActor); }
-  removeAll(): void { this.items.length = 0; }
+  constructor(readonly source: StActor, readonly alignment: number, readonly side: number) { FakePopupMenu.latest = this; }
+  addMenuItem(item: StActor): void { this.items.push(item as FakeActor); this.actor.add_child(item); }
+  removeAll(): void { for (const item of [...this.items]) this.actor.remove_child(item); this.items.length = 0; }
   open(): void { this.opened = true; }
   close(): void { this.opened = false; }
 }
@@ -145,19 +146,22 @@ describe('createStRenderHost', () => {
       valueChange: (next: string) => { changed.push(next); value.set(next); },
     }, undefined) as FakeActor;
     const label = select.children[0] as FakeActor;
+    const menu = FakePopupMenu.latest!;
     expect(label.properties.text).toBe('Medium');
-    expect((popupMenu.uiGroup.children[0] as FakeActor)).toBeInstanceOf(FakeActor);
+    expect(menu.items.map((item) => item.properties.text)).toEqual(['Small', 'Medium', 'Large']);
     select.emit('clicked');
-    const menu = (popupMenu.uiGroup.children[0] as FakeActor);
-    expect(menu).toBeInstanceOf(FakeActor);
+    expect(menu.opened).toBe(true);
     options.set(['Small', 'Large']);
-    const activate = select.signals;
-    expect(activate.size).toBeGreaterThan(0);
+    expect(menu.items.map((item) => item.properties.text)).toEqual(['Small', 'Large']);
+    menu.items[1]!.emit('activate');
+    expect(changed).toEqual(['Large']);
+    expect(label.properties.text).toBe('Large');
+    expect(menu.opened).toBe(false);
     host.destroy(select);
     expect(popupMenu.uiGroup.children).toHaveLength(0);
     expect(select.destroyed).toBe(true);
-    value.set('Large');
-    expect(label.properties.text).toBe('Medium');
+    value.set('Small');
+    expect(label.properties.text).toBe('Large');
   });
 
   it('requires the injected PopupMenu API for the composite StSelect control', () => {

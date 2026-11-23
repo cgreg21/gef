@@ -1,10 +1,15 @@
 import assert from 'node:assert/strict';
 import Gtk from 'gi:Gtk-4.0';
-import { createGtplRenderRuntime, createGtkRenderHost, signal } from '../../dist/runtime/src/index.js';
+import { createGtplRenderRuntime, createGtkRenderHost, mountGtplTemplate, signal } from '../../dist/runtime/src/index.js';
+import renderSmoke from '../../dist/node-gtk-view.js';
 
 Gtk.init();
 
 const host = createGtkRenderHost(Gtk, { api: 'node-gtk' });
+const compiledView = mountGtplTemplate({}, renderSmoke, host);
+assert.equal(compiledView.node.label, 'Hello from compiled GTPL and Node-GTK!');
+compiledView.dispose();
+
 const runtime = createGtplRenderRuntime(host);
 const title = signal('before');
 const label = host.element('GtkLabel', {
@@ -37,4 +42,4 @@ title.set('ignored');
 assert.equal(clicks, 1);
 assert.equal(label.label, 'after');
 
-process.stdout.write('Node-GTK renderer smoke test passed.\\n');
+process.stdout.write('Node-GTK renderer smoke test passed.\n');

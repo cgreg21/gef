@@ -2,6 +2,7 @@ import { ComponentRegistry } from '../../../runtime/src/components/component-reg
 import type { GtplRenderRuntime } from '../../../runtime/src/rendering/gtpl-runtime.js';
 import type { StActor } from '../../../runtime/src/renderers/gnome-shell/st-render-host.js';
 import { GefButton } from '../components/button/button.component.js';
+import { GefIcon } from '../components/icon/icon.component.js';
 import { GefLabel } from '../components/label/label.component.js';
 
 export function createStUiRegistry(): ComponentRegistry<StActor> {
@@ -22,6 +23,14 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
     render: (label: GefLabel, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StLabel',
       { text: runtime.bind(() => label.text) },
+      undefined,
+    ),
+  });
+  registry.registerType(GefIcon, {
+    create: () => new GefIcon(),
+    render: (icon: GefIcon, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+      'StIcon',
+      { 'icon-name': runtime.bind(() => icon.iconName) },
       undefined,
     ),
   });

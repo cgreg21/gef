@@ -9,6 +9,12 @@ import { GefSlider } from './slider.component.js';
 import { createStUiRegistry } from '../../platform/gnome-shell.js';
 import { createGtkUiRegistry } from '../../platform/gtk.js';
 
+function createRuntime<Node>() {
+  const element = vi.fn((_name: string, _attributes: Readonly<Record<string, unknown>>, _child: Node | undefined) => ({} as Node));
+  const bind = <T>(get: () => T) => ({ kind: 'binding' as const, get });
+  return { runtime: { element, bind } as unknown as GtplRenderRuntime<Node>, element };
+}
+
 describe('GefSlider', () => {
   it('declares a bounded value input and valueChange output', () => {
     expect(getComponentMetadata(GefSlider)).toMatchObject({
@@ -32,27 +38,30 @@ describe('GefSlider', () => {
     expect(definition).toBeDefined();
     const slider = definition!.create(new Injector()) as GefSlider;
     slider.value = 0.25;
-    const element = vi.fn((_name: string, _attributes: Readonly<Record<string, unknown>>, _child: StActor | GtkActor | undefined) => ({} as StActor | GtkActor));
-    const bind = <T>(get: () => T) => ({ kind: 'binding' as const, get });
-    const runtime = { element, bind } as unknown as GtplRenderRuntime<StActor | GtkActor>;
     const changed = vi.fn();
     slider.valueChange.subscribe(changed);
-    definition!.render(slider, runtime);
 
-    expect(element).toHaveBeenCalledWith(nativeName, expect.objectContaining({
-      value: expect.objectContaining({ kind: 'binding' }),
-      valueChange: expect.any(Function),
-    }), undefined);
-    const attributes = element.mock.calls[0]![1];
-    const binding = attributes.value as { get(): number };
-    let rendered = 0;
-    const stop = effect(() => { rendered = binding.get(); });
-    expect(rendered).toBe(0.25);
-    slider.value = 0.8;
-    expect(rendered).toBe(0.8);
-    (attributes.valueChange as (value: number) => void)(0.6);
-    expect(slider.value).toBe(0.6);
-    expect(changed).toHaveBeenCalledWith(0.6);
-    stop();
+    const verify = <Node extends StActor | GtkActor>() => {
+      const { runtime, element } = createRuntime<Node>();
+      definition!.render(slider, runtime as never);
+      expect(element).toHaveBeenCalledWith(nativeName, expect.objectContaining({
+        value: expect.objectContaining({ kind: 'binding' }),
+        valueChange: expect.any(Function),
+      }), undefined);
+      const attributes = element.mock.calls[0]![1];
+      const binding = attributes.value as { get(): number };
+      let rendered = 0;
+      const stop = effect(() => { rendered = binding.get(); });
+      expect(rendered).toBe(0.25);
+      slider.value = 0.8;
+      expect(rendered).toBe(0.8);
+      (attributes.valueChange as (value: number) => void)(0.6);
+      expect(slider.value).toBe(0.6);
+      expect(changed).toHaveBeenCalledWith(0.6);
+      stop();
+    };
+
+    verify<StActor>();
+    verify<GtkActor>();
   });
 });

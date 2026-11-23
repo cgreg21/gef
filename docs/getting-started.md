@@ -46,9 +46,24 @@ cd hello-world
 npm install
 ```
 
-The generator creates `metadata.json`, `extension.ts`, a minimal GJS type declaration file, `tsconfig.json`, `package.json`, a README and a packaging script. The generated example adds a panel button in `enable()` and destroys it in `disable()`.
+The generator also writes `gef.json`, which records the project under `projects` and sets `projectType` to `extension`. It creates `metadata.json`, `extension.ts`, minimal GJS declarations, TypeScript configuration, package scripts and an EGO packaging script. The generated example adds a panel button in `enable()` and destroys it in `disable()`.
 
-The generated project declares the framework dependency as `^0.1.0-alpha.1`; install it from npm after that package version has been published. The generated UUID is a placeholder (`hello-world@example.com`). Replace it with a stable UUID you control before packaging. Update the extension name, description and supported Shell versions in `metadata.json` as appropriate. Do not claim compatibility with a Shell version you have not tested.
+The generated project declares the framework dependency as `^0.1.0-alpha.2`. The generated UUID is a placeholder (`hello-world@example.com`). Replace it with a stable UUID you control before packaging. Update the extension name, description and supported Shell versions in `metadata.json` as appropriate. Do not claim compatibility with a Shell version you have not tested.
+
+### Create a Node-GTK application
+
+GEF can also scaffold a native Node.js desktop application using node-gtk 4:
+
+```sh
+gef new desktop-app --type application
+cd desktop-app
+npm install
+gef build
+npm start
+gef package
+```
+
+This creates `gef.json` with `projectType: "application"`, a GTK4/libadwaita entry point using `gi:` imports, and Node-GTK launch and bundle scripts. Node-GTK 4 runs with `node --import node-gtk/register`; install the native GTK4 and libadwaita libraries required by your platform. The app uses node-gtk's own `bundle` command for distribution.
 ## 3. Build and package
 
 The starter project defines its own build and package scripts. Run:

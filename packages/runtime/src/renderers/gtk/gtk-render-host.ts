@@ -8,6 +8,7 @@ export interface GtkActor {
   add_suffix?(child: GtkActor): void;
   pack_start?(child: GtkActor): void;
   packStart?(child: GtkActor): void;
+  attach?(child: GtkActor, column: number, row: number, width: number, height: number): void;
   remove_suffix?(child: GtkActor): void;
   remove?(child: GtkActor): void;
   set_child?(child: GtkActor | null): void;
@@ -109,6 +110,16 @@ function flexValue(attribute: string, value: unknown): unknown {
 }
 
 function layoutAttribute(name: string, attribute: string, value: unknown): [string, unknown] {
+  if (name === 'Grid' && attribute === 'columns') {
+    const columns = typeof value === 'number' ? value : Number(value);
+    if (!Number.isInteger(columns) || columns < 1) throw new Error('Grid columns must be a positive integer.');
+    return [attribute, columns];
+  }
+  if (name === 'Grid' && attribute === 'gap') {
+    const gap = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(gap) || gap < 0) throw new Error('Grid gap must be a non-negative number.');
+    return ['column-spacing', gap];
+  }
   if (name !== 'Flex' || (attribute !== 'direction' && attribute !== 'gap')) return [attribute, value];
   const property = attribute === 'direction' ? 'orientation' : 'spacing';
   if (isGtplBinding(value)) {
@@ -194,6 +205,7 @@ export function createGtkRenderHost(
   const constructors: Readonly<Record<string, GtkWidgetConstructor>> = {
     GtkBox: Gtk.Box,
     Flex: Gtk.Box,
+    ...(Gtk.Grid ? { Grid: Gtk.Grid } : {}),
     HeaderBar: options.adw?.HeaderBar ?? Gtk.HeaderBar ?? Gtk.Box,
     Sidebar: Gtk.Box,
     GtkLabel: Gtk.Label,
@@ -278,6 +290,8 @@ export function createGtkRenderHost(
       const bindings: Array<[string, GtplBinding<unknown>]> = [];
       const classes: string[] = [];
       const classBindings: GtplBinding<unknown>[] = [];
+      let gridColumns = 2;
+      let gridGap = 0;
       for (const [attribute, value] of Object.entries(attributes)) {
         if (attribute === 'class' || attribute === 'className') {
           if (isGtplBinding(value)) classBindings.push(value);
@@ -285,6 +299,8 @@ export function createGtkRenderHost(
           continue;
         }
         const [property, normalized] = layoutAttribute(name, attribute, value);
+        if (name === 'Grid' && attribute === 'columns') { gridColumns = normalized as number; continue; }
+        if (name === 'Grid' && attribute === 'gap') { gridGap = normalized as number; properties.row_spacing = normalized; properties.column_spacing = normalized; continue; }
         if (isGtplBinding(normalized)) bindings.push([property, normalized]);
         else if (typeof normalized === 'function') events.push([property, normalized as (...args: unknown[]) => unknown]);
         else properties[propertyName(property, options.api)] = normalized;
@@ -315,7 +331,17 @@ export function createGtkRenderHost(
             previousDynamicClasses = nextClasses;
           }));
         }
-        if (child) {
+        if (name === 'Grid') {
+          if (typeof actor.attach !== 'function') throw new Error('This GTK Grid widget does not support child placement.');
+          const nodes = child ? (children.get(child) ?? [child]) : [];
+          if (child && nodes !== [child]) {
+            for (const node of nodes) removeChild(child, node);
+            children.set(child, []);
+            disposeWidget(child);
+          }
+          nodes.forEach((node, index) => actor.attach?.(node, index % gridColumns, Math.floor(index / gridColumns), 1, 1));
+          children.set(actor, nodes);
+        } else if (child) {
           addChild(actor, child);
           children.set(actor, [child]);
         } else {

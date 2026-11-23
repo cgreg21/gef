@@ -135,7 +135,16 @@ jobs:
           npm run build:kitchen-sink
           npm run test:node-gtk:availability
       - name: Package and launch standalone Windows application
-        run: node tests/packaging/windows-smoke.mjs
+        run: |
+          node tests/packaging/windows-smoke.mjs
+          node scripts/package-windows.mjs
+      - name: Upload Kitchen Sink executable
+        uses: actions/upload-artifact@v6
+        with:
+          name: kitchen-sink-windows-${{ runner.arch }}
+          path: dist/kitchen-sink-windows-*/
+          if-no-files-found: error
+          retention-days: 14
 
   macos:
     name: macOS standalone application package

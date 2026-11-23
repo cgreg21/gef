@@ -286,8 +286,6 @@ export function createStRenderHost(
           }
           popup.uiGroup.add_child(menu.actor);
           manager.addMenu(menu);
-          const label = new St.Label({ text: '' });
-          actor.add_child(label);
           const readOptions = (): string[] => {
             const value = isGtplBinding(selectOptions) ? selectOptions.get() : selectOptions;
             if (!Array.isArray(value) || !value.every((item) => typeof item === 'string')) throw new Error('StSelect options must be an array of strings.');
@@ -296,7 +294,7 @@ export function createStRenderHost(
           let menuItemCleanups: Array<() => void> = [];
           const syncValue = (): void => {
             const value = isGtplBinding(selectValue) ? selectValue.get() : selectValue;
-            label.set_property('text', typeof value === 'string' ? value : '');
+            actor.set_property('label', typeof value === 'string' ? value : '');
           };
           const rebuildMenu = (): void => {
             for (const cleanup of menuItemCleanups) cleanup();
@@ -306,7 +304,7 @@ export function createStRenderHost(
             for (const option of readOptions()) {
               const item = new popup.PopupMenuItem(option);
               const id = item.connect('activate', () => {
-                label.set_property('text', option);
+                actor.set_property('label', option);
                 menu.close({ animate: false });
                 if (typeof selectChange === 'function') selectChange(option);
               });

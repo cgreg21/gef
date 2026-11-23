@@ -64,6 +64,24 @@ subscription.unsubscribe();
 
 The layout engine deliberately does not install browser APIs or guess a native widget lifecycle. The GNOME Shell / GTK view owns the size notification and calls the observer; this keeps the calculation identical on both renderers.
 
+## GTPL application containers
+
+Use `HeaderBar` and `Sidebar` directly in templates; no TypeScript layout configuration is needed:
+
+```html
+<HeaderBar>
+  <Label text="My application" />
+  <Button>Menu</Button>
+</HeaderBar>
+
+<Sidebar width="220">
+  <Button>Overview</Button>
+  <Button>Settings</Button>
+</Sidebar>
+```
+
+`HeaderBar` defaults to horizontal orientation and `Sidebar` to vertical orientation on both native renderers. They remain ordinary layout containers, so child ordering, bindings and lifecycle follow the normal GTPL rules. The defaults can be overridden with `orientation`.
+
 ## Flex layout
 
 `FlexLayout` calculates row or column layouts, distributes free space with `grow`, shrinks overflowing items with `shrink`, and optionally wraps items. Direction, wrapping, gap, justification and alignment accept responsive values:

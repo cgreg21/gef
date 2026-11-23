@@ -189,6 +189,23 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
       if (/\b(?:connect|connectObject|timeout_add|idle_add)\s*\(|\bnew\s+(?:St|Clutter|Meta|Shell)\./.test(constructorBody)) {
         warnings.push('extension.js: constructor contains GNOME resource or signal side effects; move them into enable() and release them in disable().');
       }
+      const classStart = shellSource.indexOf('export default class');
+      const moduleSetup = classStart < 0 ? shellSource : shellSource.slice(0, classStart);
+      if (/\bnew\s+(?:St|Clutter|Meta|Shell)\.|\b(?:connect|connectObject|timeout_add|idle_add)\s*\(/.test(moduleSetup)) {
+        warnings.push('extension.js: module-level code may create GNOME resources or connect signals before enable(); move setup into enable().');
+      }
+      const methodBody = (method: string): string => {
+        const pattern = new RegExp('\\b' + method + '\\s*\\([^)]*\\)\\s*\\{([\\s\\S]*?)(?=\\n {2}(?:async\\s+)?[A-Za-z_$][\\w$]*\\s*\\()/');
+        return shellSource.match(pattern)?.[1]
+          ?? shellSource.match(new RegExp('\\b' + method + '\\s*\\([^)]*\\)\\s*\\{([^}]*)\\}'))?.[1]
+          ?? '';
+      };
+      const enableBody = methodBody('enable');
+      const disableBody = methodBody('disable');
+      if (/\b(?:connect|connectObject|timeout_add|idle_add)\s*\(|\bnew\s+(?:St|Clutter|Meta|Shell)\./.test(enableBody)
+        && !/\b(?:destroy|disconnect|clear|remove|dispose|release)\s*\(/.test(disableBody)) {
+        warnings.push('extension.js: enable() creates GNOME resources or connections but disable() has no obvious cleanup call.');
+      }
     }
     const inspectImports = (entry: string, forbidden: RegExp, message: string): Set<string> => {
       const pending = [resolve(directory, entry)];

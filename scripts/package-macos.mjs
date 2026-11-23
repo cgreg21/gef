@@ -25,23 +25,23 @@ const resources = resolve(contents, 'Resources');
 const appRoot = resolve(resources, 'app');
 const frameworks = resolve(contents, 'Frameworks');
 const runtimeLib = resolve(frameworks, 'lib');
-const shareRoot = resolve(resources, 'runtime/share');
+const runtime = resolve(resources, 'runtime');
+const shareRoot = resolve(runtime, 'share');
 const typelibRoot = resolve(resources, 'girepository-1.0');
 const dmg = resolve(output, `${base}.dmg`);
 
 await rm(app, { recursive: true, force: true });
 await rm(dmg, { force: true });
-for (const path of [macOS, appRoot, runtimeLib, shareRoot, typelibRoot]) await mkdir(path, { recursive: true });
+for (const path of [macOS, runtime, appRoot, runtimeLib, shareRoot, typelibRoot]) await mkdir(path, { recursive: true });
 
 await cp(resolve(root, 'dist'), resolve(appRoot, 'dist'), { recursive: true, dereference: true });
 await cp(resolve(root, 'node_modules'), resolve(appRoot, 'node_modules'), { recursive: true, dereference: true });
 await cp(resolve(root, 'package.json'), resolve(appRoot, 'package.json'));
-await cp(process.execPath, resolve(macOS, bundle.name));
+await cp(process.execPath, resolve(runtime, 'node'));
 
-const brew = run('brew', ['--prefix']);
 const formulaOutput = run('brew', ['deps', '--installed', '--formula', 'gtk4', 'libadwaita', 'adwaita-icon-theme']);
 const formulas = new Set(['gtk4', 'libadwaita', 'adwaita-icon-theme', ...formulaOutput.split(/\\s+/).filter(Boolean)]);
-let copiedLibraries = 0;
+const copiedLibraries = 0;
 for (const formula of formulas) {
   const prefix = run('brew', ['--prefix', formula]);
   for (const directory of ['lib']) {
@@ -61,8 +61,8 @@ const dylibs = await (async () => {
   try { return (await import('node:fs/promises')).readdir(runtimeLib, { recursive: true }); }
   catch { return []; }
 })();
-copiedLibraries = dylibs.filter((path) => String(path).endsWith('.dylib')).length;
-if (copiedLibraries === 0) throw new Error('No Homebrew GTK dylibs were copied; refusing to create a non-portable app.');
+const copiedLibraryCount = dylibs.filter((path) => String(path).endsWith('.dylib')).length;
+if (copiedLibraryCount === 0) throw new Error('No Homebrew GTK dylibs were copied; refusing to create a non-portable app.');
 await access(resolve(runtimeLib, 'libgtk-4.1.dylib')).catch(() => {
   if (!dylibs.some((path) => String(path).includes('libgtk-4'))) throw new Error('GTK4 dylib is missing from the application bundle.');
 });
@@ -78,7 +78,7 @@ const launcher = [
   'export XDG_DATA_DIRS="$RES/runtime/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"',
   'export GSETTINGS_SCHEMA_DIR="$RES/runtime/share/glib-2.0/schemas"',
   'cd "$RES/app"',
-  `exec "$HERE/${bundle.name}" --import node-gtk/register "${bundle.entry}" "$@"`,
+  `exec "$RES/runtime/node" --import node-gtk/register "${bundle.entry}" "$@"`,
   '',
 ].join('\n');
 await writeFile(resolve(macOS, bundle.name), launcher, { mode: 0o755 });
@@ -89,10 +89,10 @@ const plist = [
   '<?xml version="1.0" encoding="UTF-8"?>',
   '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">',
   '<plist version="1.0"><dict>',
-  '<key>CFBundleName</key><string>${bundle.name}</string>',
-  '<key>CFBundleDisplayName</key><string>${bundle.name}</string>',
-  '<key>CFBundleIdentifier</key><string>${bundle.id}</string>',
-  '<key>CFBundleVersion</key><string>${manifest.version}</string>',
+  `<key>CFBundleName</key><string>${bundle.name}</string>`,
+  `<key>CFBundleDisplayName</key><string>${bundle.name}</string>`,
+  `<key>CFBundleIdentifier</key><string>${bundle.id}</string>`,
+  `<key>CFBundleVersion</key><string>${manifest.version}</string>`,
   '<key>CFBundlePackageType</key><string>APPL</string>',
   '<key>CFBundleExecutable</key><string>${bundle.name}</string>',
   ...(icon && extname(icon).toLowerCase() === '.icns' ? ['<key>CFBundleIconFile</key><string>AppIcon</string>'] : []),

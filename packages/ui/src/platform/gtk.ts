@@ -3,6 +3,7 @@ import type { GtplRenderRuntime } from '../../../runtime/src/rendering/gtpl-runt
 import type { GtkActor } from '../../../runtime/src/renderers/gtk/gtk-render-host.js';
 import { GefButton } from '../components/button/button.component.js';
 import { GefIcon } from '../components/icon/icon.component.js';
+import { GefInput } from '../components/input/input.component.js';
 import { GefLabel } from '../components/label/label.component.js';
 
 export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
@@ -31,6 +32,20 @@ export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
     render: (icon: GefIcon, runtime: GtplRenderRuntime<GtkActor>) => runtime.element(
       'GtkImage',
       { 'icon-name': runtime.bind(() => icon.iconName) },
+      undefined,
+    ),
+  });
+  registry.registerType(GefInput, {
+    create: () => new GefInput(),
+    render: (input: GefInput, runtime: GtplRenderRuntime<GtkActor>) => runtime.element(
+      'GtkEntry',
+      {
+        text: runtime.bind(() => input.value),
+        textChange: (value: string) => {
+          input.value = value;
+          input.valueChange.emit(value);
+        },
+      },
       undefined,
     ),
   });

@@ -93,6 +93,30 @@ function propertyName(name: string, api: 'gjs' | 'node-gtk' = 'gjs'): string {
     : camelCase.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`).replace(/^_/, '');
 }
 
+
+function flexValue(attribute: string, value: unknown): unknown {
+  if (attribute === 'direction') {
+    if (value === 'row') return 0;
+    if (value === 'column') return 1;
+    throw new Error('Flex direction must be "row" or "column".');
+  }
+  if (attribute === 'gap') {
+    const gap = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(gap) || gap < 0) throw new Error('Flex gap must be a non-negative number.');
+    return gap;
+  }
+  return value;
+}
+
+function layoutAttribute(name: string, attribute: string, value: unknown): [string, unknown] {
+  if (name !== 'Flex' || (attribute !== 'direction' && attribute !== 'gap')) return [attribute, value];
+  const property = attribute === 'direction' ? 'orientation' : 'spacing';
+  if (isGtplBinding(value)) {
+    return [property, { kind: 'binding', get: () => flexValue(attribute, value.get()) } satisfies GtplBinding<unknown>];
+  }
+  return [property, flexValue(attribute, value)];
+}
+
 function readProperty(actor: GtkActor, property: string, api: 'gjs' | 'node-gtk'): unknown {
   const target = actor as unknown as Record<string, unknown>;
   const name = propertyName(property, api);
@@ -169,6 +193,7 @@ export function createGtkRenderHost(
 ): GtplRenderHost<GtkActor> {
   const constructors: Readonly<Record<string, GtkWidgetConstructor>> = {
     GtkBox: Gtk.Box,
+    Flex: Gtk.Box,
     HeaderBar: options.adw?.HeaderBar ?? Gtk.HeaderBar ?? Gtk.Box,
     Sidebar: Gtk.Box,
     GtkLabel: Gtk.Label,
@@ -257,11 +282,15 @@ export function createGtkRenderHost(
         if (attribute === 'class' || attribute === 'className') {
           if (isGtplBinding(value)) classBindings.push(value);
           else classes.push(...classNames(value));
-        } else if (isGtplBinding(value)) bindings.push([attribute, value]);
-        else if (typeof value === 'function') events.push([attribute, value as (...args: unknown[]) => unknown]);
-        else properties[propertyName(attribute, options.api)] = value;
+          continue;
+        }
+        const [property, normalized] = layoutAttribute(name, attribute, value);
+        if (isGtplBinding(normalized)) bindings.push([property, normalized]);
+        else if (typeof normalized === 'function') events.push([property, normalized as (...args: unknown[]) => unknown]);
+        else properties[propertyName(property, options.api)] = normalized;
       }
 
+      if (name === 'Flex') properties.orientation ??= 0;
       if (name === 'HeaderBar' && Constructor === Gtk.Box) properties.orientation ??= 0;
       if (name === 'Sidebar') properties.orientation ??= 1;
       const actor = new Constructor(properties);

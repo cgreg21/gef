@@ -166,6 +166,12 @@ describe('createGtkRenderHost', () => {
     }
   });
 
+  it('sets horizontal and vertical defaults for GTPL application containers', () => {
+    const host = createGtkRenderHost(createGtk());
+    expect((host.element('HeaderBar', {}, undefined) as FakeWidget).properties.orientation).toBe(0);
+    expect((host.element('Sidebar', {}, undefined) as FakeWidget).properties.orientation).toBe(1);
+  });
+
   it('removes libadwaita action-row suffix children with the matching GTK API', () => {
     const host = createGtkRenderHost(createGtk(), {
       adw: { ActionRow: FakeActionRow },

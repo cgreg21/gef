@@ -55,7 +55,12 @@ export function validateStCss(source: string): readonly StCssDiagnostic[] {
       if (stack.length === 0) diagnostics.push({ code: 'GEFCSS1002', message: 'Unexpected closing brace.', line, column, start: index, end: index + 1 });
       else stack.pop();
     }
-    if (char === '\n') { line += 1; column = 1; } else column += 1;
+    if (char === '\r') {
+      line += 1;
+      column = 1;
+      if (next === '\n') index += 1;
+    } else if (char === '\n') { line += 1; column = 1; }
+    else column += 1;
   }
   if (quoteStart) diagnostics.push({
     code: 'GEFCSS1006', message: 'Unterminated CSS string.', ...quoteStart, end: quoteStart.start + 1,
@@ -109,13 +114,11 @@ export function validateStCss(source: string): readonly StCssDiagnostic[] {
     if (!rule) continue;
     const raw = match[1] ?? '';
     const start = (match.index ?? 0) + match[0].indexOf(raw);
-    const before = source.slice(0, start);
-    const lines = before.split('\n');
+    const position = getPosition(source, start);
     diagnostics.push({
       code: rule.code,
       message: rule.message,
-      line: lines.length,
-      column: (lines.at(-1)?.length ?? 0) + 1,
+      ...position,
       start,
       end: start + raw.trimEnd().length,
     });

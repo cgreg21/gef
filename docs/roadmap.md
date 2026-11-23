@@ -112,6 +112,10 @@
 - [ ] Full preferences-window integration tests and remaining renderer coverage.
 - [ ] Native GJS code generation and source maps.
 
+## Native UI components
+- [x] Add the initial cross-platform `GefButton` component for GNOME Shell St and GTK4.
+- [x] Keep button labels and disabled/sensitive state reactive after component creation.
+
 ## Styles and developer tools
 - [x] SCSS compilation through the Sass CLI.
 - [x] Initial GNOME theme CSS validation for unsupported browser layout declarations and block balance.

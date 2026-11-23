@@ -34,8 +34,12 @@ jobs:
         run: npm test
       - name: Build packages
         run: npm run build
-      - name: Validate AppImage packager syntax
-        run: node --check scripts/package-appimage.mjs
+      - name: Validate platform packager syntax
+        run: |
+          node --check scripts/package-app.mjs
+          node --check scripts/package-appimage.mjs
+          node --check scripts/package-windows.mjs
+          node --check scripts/package-macos.mjs
       - name: Smoke test AppImage staging
         run: node tests/packaging/appimage-smoke.mjs
       - name: Install archive tools
@@ -58,6 +62,9 @@ jobs:
             'dist/runtime/src/index.js',
             'dist/runtime/src/index.d.ts',
             'scripts/package-appimage.mjs',
+            'scripts/package-app.mjs',
+            'scripts/package-windows.mjs',
+            'scripts/package-macos.mjs',
             'README.md',
           ];
 
@@ -118,6 +125,28 @@ jobs:
         run: |
           npm run build:kitchen-sink
           npm run test:node-gtk:availability
+      - name: Package and launch standalone Windows application
+        run: node tests/packaging/windows-smoke.mjs
+
+  macos:
+    name: macOS standalone application package
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: Install GTK4 and libadwaita
+        run: brew install gtk4 libadwaita adwaita-icon-theme gobject-introspection pkg-config
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck and unit tests
+        run: npm run check
+      - name: Build and launch standalone macOS application
+        run: node tests/packaging/macos-smoke.mjs
 
   gtk-integration:
     name: GTK4 and libadwaita integration

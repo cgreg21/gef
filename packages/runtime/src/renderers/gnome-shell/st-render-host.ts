@@ -59,12 +59,17 @@ function flexValue(attribute: string, value: unknown): unknown {
     if (!Number.isFinite(gap) || gap < 0) throw new Error('Flex gap must be a non-negative number.');
     return gap;
   }
+  if (attribute === 'homogeneous') {
+    if (value === true || value === 'true') return true;
+    if (value === false || value === 'false') return false;
+    throw new Error('Flex homogeneous must be "true" or "false".');
+  }
   return value;
 }
 
 function layoutAttribute(name: string, attribute: string, value: unknown): [string, unknown] {
-  if (name !== 'Flex' || (attribute !== 'direction' && attribute !== 'gap')) return [attribute, value];
-  const property = attribute === 'direction' ? 'orientation' : 'spacing';
+  if (name !== 'Flex' || !['direction', 'gap', 'homogeneous'].includes(attribute)) return [attribute, value];
+  const property = attribute === 'direction' ? 'orientation' : attribute === 'gap' ? 'spacing' : 'homogeneous';
   if (isGtplBinding(value)) {
     return [property, { kind: 'binding', get: () => flexValue(attribute, value.get()) } satisfies GtplBinding<unknown>];
   }

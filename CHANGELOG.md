@@ -3,7 +3,7 @@
 All notable changes to GEF are documented here. GEF uses Semantic Versioning;
 pre-1.0 releases may introduce breaking changes between minor versions.
 
-## 0.1.0-alpha.1 - Prepared 2026-11-22
+## 0.1.0-alpha.1 - Published 2026-11-23
 
 First alpha candidate for GNOME Shell 51 extension development.
 

@@ -9,6 +9,12 @@ import { GefInput } from '../components/input/input.component.js';
 import { GefLabel } from '../components/label/label.component.js';
 import { GefProgressBar } from '../components/progress-bar/progress-bar.component.js';
 
+function progressText(fraction: number): string {
+  const value = Number.isFinite(fraction) ? Math.min(1, Math.max(0, fraction)) : 0;
+  const filled = Math.round(value * 10);
+  return `${'█'.repeat(filled)}${'░'.repeat(10 - filled)}`;
+}
+
 export function createStUiRegistry(): ComponentRegistry<StActor> {
   const registry = new ComponentRegistry<StActor>();
   registry.registerType(GefButton, {
@@ -55,8 +61,8 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
   registry.registerType(GefProgressBar, {
     create: () => new GefProgressBar(),
     render: (progress: GefProgressBar, runtime: GtplRenderRuntime<StActor>) => runtime.element(
-      'StProgressBar',
-      { fraction: runtime.bind(() => progress.fraction) },
+      'StLabel',
+      { text: runtime.bind(() => progressText(progress.fraction)) },
       undefined,
     ),
   });

@@ -25,7 +25,8 @@ describe('responsive utilities', () => {
     const subscription = observer.subscribe(changed);
     observer.update(400);
     observer.update(700);
-    observer.update(740);
+    observer.update(800);
+    observer.update(900);
     observer.update(1000);
     expect(changed.mock.calls.map(([change]) => change.breakpoint)).toEqual(['sm', 'md', 'lg']);
     expect(observer.current).toBe('lg');

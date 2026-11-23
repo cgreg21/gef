@@ -148,7 +148,7 @@ describe('emitGtplTemplate', () => {
 @switch (state) { @case ("ready") { Ready } @default { Wait } }`, ['heading', 'visible', 'items', 'state']);
     expect(compact(output)).toContain('const title = ctx.heading');
     expect(compact(output)).toContain('runtime.if(runtime.bind(() => ctx.visible)');
-    expect(compact(output)).toContain('runtime.for(runtime.bind(() => ctx.items)');
+    expect(compact(output)).toContain('runtime.for( runtime.bind(() => ctx.items)');
     expect(compact(output)).toContain('return (item.id)');
     expect(compact(output)).toContain('runtime.switch(runtime.bind(() => ctx.state)');
   });

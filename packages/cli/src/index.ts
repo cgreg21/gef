@@ -258,7 +258,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
       return 1;
     }
     warnings.forEach((warning) => io.stderr(warning));
-    io.stdout(`EGO validation passed: ${files.length} files, ${javascriptSources.size} JavaScript files, ${warnings.length} warning(s).`);
+    io.stdout(`EGO validation passed: ${files.length} file${files.length === 1 ? '' : 's'}, ${javascriptSources.size} JavaScript file${javascriptSources.size === 1 ? '' : 's'}, ${warnings.length} warning(s).`);
     return 0;
   }
 

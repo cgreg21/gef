@@ -22,6 +22,7 @@
 - [ ] Bundle only required runtime files; exclude build tools, scripts, development files and unused assets.
 - [ ] Check generated code for unsupported APIs, excessive logging, unnecessary subprocesses and review-hostile output.
 - [x] Provide an EGO pre-submission validation command with concise file, JavaScript, warning and error totals (static checks only; not EGO approval).
+- [x] Format EGO summary file counts with correct singular and plural wording.
 - [x] Generate a UUID-named EGO ZIP with extension files at the archive root; verify archive integrity, required files and absence of development-only paths.
 - [x] Add a GNOME Shell 51 harness that installs the final EGO ZIP and verifies two real enable/disable cycles through `gnome-extensions`.
 

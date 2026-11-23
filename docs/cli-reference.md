@@ -136,7 +136,7 @@ gef ego-check dist/extension
 The command validates a staged directory; it does not create or inspect the
 ZIP archive itself. The packaging pipeline separately checks archive
 integrity, required files and development-only paths. A successful result is
-A successful check prints file, JavaScript and warning totals; a failed check prints error and warning totals. It is not a guarantee of EGO approval.
+A successful check prints file, JavaScript and warning totals; a failed check prints error and warning totals. File counts use singular or plural wording as appropriate. It is not a guarantee of EGO approval.
 
 ## Exit status
 

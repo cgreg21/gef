@@ -44,8 +44,24 @@ describe('GEF CLI', () => {
         : 'export default class Demo { enable() {} disable() {} }',
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
-    expect(base.output[0]).toBe('EGO validation passed: 2 files, 1 JavaScript files, 0 warning(s).');
+    expect(base.output[0]).toBe('EGO validation passed: 2 files, 1 JavaScript file, 0 warning(s).');
     expect(base.errors).toHaveLength(0);
+  });
+
+
+  it('uses plural JavaScript wording when multiple modules are packaged', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/helper.js'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : path.endsWith('extension.js')
+          ? "import './helper.js'; export default class Demo { enable() {} disable() {} }"
+          : 'export const value = 1;',
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
+    expect(base.output[0]).toBe('EGO validation passed: 3 files, 2 JavaScript files, 0 warning(s).');
   });
 
   it('reports EGO error and warning totals when validation fails', async () => {

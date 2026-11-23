@@ -6,6 +6,7 @@ export * from './components/label/label.component.js';
 export * from './platform/gnome-shell.js';
 export * from './platform/gtk.js';
 export * from './components/progress-bar/progress-bar.component.js';
+export * from './components/select/select.component.js';
 export * from './layout/grid.js';
 export * from './layout/responsive.js';
 export * from './layout/flex.js';

@@ -546,7 +546,7 @@ export function createGtkRenderHost(
           context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION ?? 600);
           scope.add(() => context.remove_provider(provider));
           if (isGtplBinding(styleValue)) scope.add(effect(syncStyle));
-          for (const item of styleBindings) scope.add(effect(syncStyle));
+          for (const _item of styleBindings) scope.add(effect(syncStyle));
           syncStyle();
         }
         const activeClasses = new Set<string>();
@@ -563,7 +563,7 @@ export function createGtkRenderHost(
           activeClasses.clear();
           for (const name of next) activeClasses.add(name);
         };
-        for (const item of classBindings) scope.add(effect(syncClasses));
+        for (const _item of classBindings) scope.add(effect(syncClasses));
         syncClasses();
         for (const [signal, handler] of events) {
           const property = twoWayProperty(signal);

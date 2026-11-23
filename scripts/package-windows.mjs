@@ -23,11 +23,14 @@ await rm(stage, { recursive: true, force: true });
 await rm(resolve(output, `${name}.zip`), { force: true });
 await mkdir(app, { recursive: true });
 await mkdir(runtime, { recursive: true });
-for (const path of ['dist', 'node_modules', 'assets']) {
-  try { await access(resolve(root, path)); }
-  catch { if (path === 'dist' || path === 'node_modules') throw new Error(`Missing required application directory: ${path}`); else continue; }
-  await cp(resolve(root, path), resolve(app, path), { recursive: true, dereference: true });
+await mkdir(resolve(app, 'dist'), { recursive: true });
+for (const entry of await readdir(output, { withFileTypes: true })) {
+  if (entry.name === name || /\\.(?:zip|dmg|appimage|tar\\.gz)$/i.test(entry.name) || entry.name.endsWith('.app')) continue;
+  await cp(resolve(output, entry.name), resolve(app, 'dist', entry.name), { recursive: true, dereference: true });
 }
+await cp(resolve(root, 'node_modules'), resolve(app, 'node_modules'), { recursive: true, dereference: true });
+try { await cp(resolve(root, 'assets'), resolve(app, 'assets'), { recursive: true, dereference: true }); }
+catch (error) { if (error.code !== 'ENOENT') throw error; }
 await cp(resolve(root, 'package.json'), resolve(app, 'package.json'));
 await cp(process.execPath, resolve(runtime, 'node.exe'));
 

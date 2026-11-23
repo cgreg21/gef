@@ -60,7 +60,7 @@ export class FlexLayout {
     for (const item of items) {
       this.validateItem(item);
       const next = (lines[lines.length - 1]!.length ? gap : 0) + item.basis;
-      if (wrap && lines[lines.length - 1].length && used + next > mainLimit) {
+      if (wrap && lines[lines.length - 1]!.length && used + next > mainLimit) {
         lines.push([]);
         used = 0;
       }

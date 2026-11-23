@@ -120,6 +120,10 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 24
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: TypeScript typecheck and unit tests

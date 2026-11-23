@@ -281,10 +281,13 @@ export function createStRenderHost(
           const popup = options.popupMenu!;
           const menu = new popup.PopupMenu(actor, 0.0, popup.sideTop);
           const manager = new popup.PopupMenuManager(actor);
-          popup.uiGroup.add_child?.(menu.actor);
+          if (!actor.add_child || !popup.uiGroup.add_child || !popup.uiGroup.remove_child) {
+            throw new Error('StSelect requires St actor child management and Main.uiGroup attachment.');
+          }
+          popup.uiGroup.add_child(menu.actor);
           manager.addMenu(menu);
           const label = new St.Label({ text: '' });
-          actor.add_child?.(label);
+          actor.add_child(label);
           const readOptions = (): string[] => {
             const value = isGtplBinding(selectOptions) ? selectOptions.get() : selectOptions;
             if (!Array.isArray(value) || !value.every((item) => typeof item === 'string')) throw new Error('StSelect options must be an array of strings.');
@@ -322,7 +325,7 @@ export function createStRenderHost(
             menuItemCleanups = [];
             menu.close({ animate: false });
             manager.removeMenu?.(menu);
-            popup.uiGroup.remove_child?.(menu.actor);
+            popup.uiGroup.remove_child!(menu.actor);
             menu.actor.destroy();
           });
         }

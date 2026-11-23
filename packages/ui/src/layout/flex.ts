@@ -52,6 +52,8 @@ export class FlexLayout {
 
     const mainLimit = direction === 'row' ? width : height;
     const crossLimit = direction === 'row' ? height : width;
+    if (items.length === 0) return { direction, lines: 0, items: [] };
+
     const lines: FlexItem[][] = [[]];
     let used = 0;
 
@@ -83,8 +85,8 @@ export class FlexLayout {
         : 0;
       const between = justify === 'space-between' && line.length > 1
         ? gap + remaining / (line.length - 1) : gap;
-      const lineCross = align === 'stretch' ? Math.max(0, crossLimit - crossOffset)
-        : Math.max(0, ...line.map(item => item.crossSize ?? 0));
+      const naturalCross = Math.max(0, ...line.map(item => item.crossSize ?? 0));
+      const lineCross = naturalCross || (lines.length === 1 ? crossLimit : crossLimit / lines.length);
 
       let mainOffset = offset;
       line.forEach((item, itemIndex) => {

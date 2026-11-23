@@ -40,17 +40,22 @@ try {
   run(process.execPath, [packageScript], { cwd: project });
   await readFile(archive);
   run('tar.exe', ['-xf', archive, '-C', unpacked]);
-  const launcher = resolve(unpacked, packageName, 'GEFSmoke.cmd');
-  await readFile(launcher);
+  const executable = resolve(unpacked, packageName, 'GEFSmoke.exe');
+  await readFile(executable);
   const systemRoot = process.env.SystemRoot ?? 'C:\\Windows';
-  const result = spawnSync(process.env.ComSpec ?? 'cmd.exe', ['/d', '/c', launcher], {
+  const result = spawnSync(executable, [], {
     cwd: unpacked,
     encoding: 'utf8',
-    env: { SystemRoot: systemRoot, PATH: resolve(systemRoot, 'System32') },
+    env: {
+      SystemRoot: systemRoot,
+      PATH: resolve(systemRoot, 'System32'),
+      TEMP: process.env.TEMP ?? tmpdir(),
+      TMP: process.env.TMP ?? tmpdir(),
+    },
   });
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.match(result.stdout, /Windows packaged GTK4 runtime loaded/);
-  process.stdout.write('Windows standalone ZIP runtime smoke test passed.\n');
+  process.stdout.write('Windows standalone EXE runtime smoke test passed.\n');
 } finally {
   await rm(temp, { recursive: true, force: true });
 }

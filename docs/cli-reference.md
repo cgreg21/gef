@@ -101,11 +101,7 @@ Runs the current project's `npm test` script.
 ### `gef package`
 
 For either configured project type, runs its `npm run package` script when
-present. The generated Node-GTK application script invokes `node-gtk bundle`
-and its `package.json` includes the bundler configuration (application ID,
-compiled entry point and GTK major version). Node-GTK currently documents
-portable bundles for Linux; see its upstream bundling guide before relying on
-this output on another platform. Without a project config, the GEF repository
+present. The generated Node-GTK application script invokes `node-gtk bundle --archive` and creates a Linux AppImage from that self-contained runtime bundle. The AppImage contains the bundled Node.js, GTK runtime, typelibs and application files; it does not require Node.js, GTK4, libadwaita or GEF to be installed on the target machine. AppImage creation requires `linuxdeploy` on the Linux build host. The project's `bundle` configuration supports `name`, `id` and an optional `icon` path. Without a project config, the GEF repository
 fallback runs `npm run build` followed by `npm run package:example`.
 
 ### `gef watch`

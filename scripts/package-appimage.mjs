@@ -58,6 +58,10 @@ await writeFile(resolve(appDir, 'AppRun'), [
 const chmod = spawnSync('chmod', ['+x', resolve(appDir, 'AppRun')], { cwd: root, stdio: 'inherit' });
 if (chmod.status !== 0) throw new Error('Unable to make AppRun executable.');
 
+for (const name of (await readdir(root)).filter((entry) => entry.startsWith(bundle.name) && entry.endsWith('.AppImage'))) {
+  await rm(resolve(root, name), { force: true });
+}
+
 const result = spawnSync(process.env.LINUXDEPLOY ?? 'linuxdeploy', [
   '--appdir', appDir,
   '--desktop-file', desktopFile,
@@ -68,7 +72,7 @@ if (result.error) throw result.error;
 if (result.status !== 0) throw new Error('linuxdeploy failed to create the AppImage.');
 
 const artifacts = (await readdir(root))
-  .filter((name) => name.endsWith('.AppImage'))
+  .filter((name) => name.startsWith(bundle.name) && name.endsWith('.AppImage'))
   .map((name) => resolve(root, name))
   .filter((path) => path !== appImage);
 const artifact = artifacts[0];

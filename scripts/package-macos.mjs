@@ -7,6 +7,8 @@ const manifest = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'
 const bundle = manifest.bundle;
 if (process.platform !== 'darwin') throw new Error('macOS packages must be built on a native macOS host.');
 if (!bundle?.name || !bundle?.id || !bundle?.entry) throw new Error('package.json bundle.name, bundle.id and bundle.entry are required.');
+const binding = resolve(root, 'node_modules/node-gtk/lib/binding', `node-v${process.versions.modules}-darwin-${process.arch}`);
+await access(resolve(binding, 'node_gtk.node'));
 
 async function copyContents(source, destination) {
   await mkdir(destination, { recursive: true });
@@ -109,7 +111,9 @@ const plist = [
   '',
 ].join('');
 await writeFile(resolve(contents, 'Info.plist'), plist);
+run('plutil', ['-lint', resolve(contents, 'Info.plist')]);
 run('codesign', ['--force', '--deep', '--sign', '-', app]);
+run('codesign', ['--verify', '--deep', '--strict', app]);
 run('hdiutil', ['create', '-volname', bundle.name, '-srcfolder', app, '-ov', '-format', 'UDZO', dmg]);
 await access(dmg);
 process.stdout.write(`Created macOS package: ${dmg} (unsigned for public distribution; ad-hoc signed)\n`);

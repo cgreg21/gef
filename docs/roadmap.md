@@ -117,6 +117,7 @@
 - [x] Add `GefLabel` with reactive text on GNOME Shell St and GTK4.
 - [x] Add `GefIcon` with reactive icon names on GNOME Shell St and GTK4, including a Node-GTK native smoke check.
 - [x] Add `GefInput` with a reactive value and `valueChange` output on GNOME Shell St and GTK4.
+- [x] Add `GefCheckbox` with a reactive checked state and `checkedChange` output on GNOME Shell St and GTK4.
 - [x] Add `GefProgressBar` with a reactive fraction on GNOME Shell St and GTK4, including native Node-GTK smoke coverage.
 - [x] Keep button labels and disabled/sensitive state reactive after component creation.
 

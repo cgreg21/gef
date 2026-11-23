@@ -87,7 +87,9 @@ class NodeGtkWidget implements GtkActor {
     this.handlers.set(signal, handlers);
   }
   off(signal: string, callback: (...args: unknown[]) => unknown): void {
-    this.handlers.get(signal)?.delete(callback);
+    const handlers = this.handlers.get(signal);
+    handlers?.delete(callback);
+    if (handlers?.size === 0) this.handlers.delete(signal);
   }
   emit(signal: string, ...args: unknown[]): void {
     for (const callback of this.handlers.get(signal) ?? []) callback(...args);

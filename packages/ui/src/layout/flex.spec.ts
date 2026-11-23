@@ -8,7 +8,7 @@ describe('FlexLayout', () => {
     ]);
     expect(result.items[0]!.width).toBeCloseTo(116.67, 2);
     expect(result.items[1]!.width).toBeCloseTo(183.33, 2);
-    expect(result.items[1]!.x).toBe(100);
+    expect(result.items[1]!.x).toBeCloseTo(116.67, 2);
   });
 
   it('shrinks items proportionally when the line overflows', () => {

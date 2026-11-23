@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
-import { access, cp, extname, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { access, cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { extname, resolve } from 'node:path';
 
 const root = process.cwd();
 const dist = resolve(root, 'dist');

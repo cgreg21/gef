@@ -8,6 +8,7 @@ import { GefIcon } from '../components/icon/icon.component.js';
 import { GefInput } from '../components/input/input.component.js';
 import { GefLabel } from '../components/label/label.component.js';
 import { GefProgressBar } from '../components/progress-bar/progress-bar.component.js';
+import { GefSelect } from '../components/select/select.component.js';
 
 function progressText(fraction: number): string {
   const value = Number.isFinite(fraction) ? Math.min(1, Math.max(0, fraction)) : 0;
@@ -75,6 +76,21 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
         checkedChange: (value: boolean) => {
           checkbox.checked = value;
           checkbox.checkedChange.emit(value);
+        },
+      },
+      undefined,
+    ),
+  });
+  registry.registerType(GefSelect, {
+    create: () => new GefSelect(),
+    render: (select: GefSelect, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+      'StSelect',
+      {
+        options: runtime.bind(() => select.options),
+        value: runtime.bind(() => select.value),
+        valueChange: (value: string) => {
+          select.value = value;
+          select.selectedChange.emit(value);
         },
       },
       undefined,

@@ -97,6 +97,29 @@ This is a grammar sketch, not yet the complete formal grammar. The parser reject
 
 No template or expression parsing should occur in the installed extension runtime.
 
+## Native layout containers
+
+GTPL provides two simple application-shell containers on both GNOME Shell and GTK4:
+
+```html
+<HeaderBar>
+  <Label text="My application" />
+  <Button>Settings</Button>
+</HeaderBar>
+
+<Flex direction="row" gap="12">
+  <Sidebar width="220">
+    <Button>Overview</Button>
+    <Button>Preferences</Button>
+  </Sidebar>
+  <Flex direction="column" grow="1">
+    <Label>Page content</Label>
+  </Flex>
+</Flex>
+```
+
+`HeaderBar` is a horizontal container and `Sidebar` is a vertical container. Both accept the same child elements and bindings as other GTPL containers. They are layout containers, not window decorations: attach the header bar to the application's window/title area when the platform requires it. Their default orientations can be overridden with the normal `orientation` attribute.
+
 ## Security and correctness
 
 - Do not use `eval`, `Function`, or dynamic code evaluation for expressions.

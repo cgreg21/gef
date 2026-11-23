@@ -8,6 +8,7 @@ export interface StActor {
   set_child?(child: StActor | null): void;
   set_property(name: string, value: unknown): void;
   get_property?(name: string): unknown;
+  get_layout_manager?(): { set_homogeneous?(value: boolean): void };
   connect(signal: string, callback: (actor: StActor, ...args: unknown[]) => unknown): number;
   disconnect(id: number): void;
   destroy(): void;
@@ -173,6 +174,7 @@ export function createStRenderHost(
       const properties: Record<string, unknown> = {};
       const events: Array<[string, (...args: unknown[]) => unknown]> = [];
       const bindings: Array<[string, GtplBinding<unknown>]> = [];
+      let flexHomogeneous: boolean | undefined;
       let gridColumns = 2;
       let gridGap = 0;
       for (const [attribute, value] of Object.entries(attributes)) {
@@ -184,6 +186,14 @@ export function createStRenderHost(
         if (name === 'Grid' && attribute === 'gap') {
           gridGap = typeof value === 'number' ? value : Number(value);
           if (!Number.isFinite(gridGap) || gridGap < 0) throw new Error('Grid gap must be a non-negative number.');
+          continue;
+        }
+        if (name === 'Flex' && attribute === 'homogeneous') {
+          if (isGtplBinding(value)) bindings.push(['homogeneous', {
+            kind: 'binding',
+            get: () => flexValue(attribute, value.get()),
+          } satisfies GtplBinding<unknown>]);
+          else flexHomogeneous = flexValue(attribute, value) as boolean;
           continue;
         }
         const [property, normalized] = layoutAttribute(name, attribute, value);
@@ -209,8 +219,21 @@ export function createStRenderHost(
           });
           resources.add(() => actor.disconnect(id));
         }
+        if (flexHomogeneous !== undefined) {
+          const layout = actor.get_layout_manager?.();
+          if (!layout?.set_homogeneous) throw new Error('This St Flex widget does not support homogeneous sizing.');
+          layout.set_homogeneous(flexHomogeneous);
+        }
         for (const [property, binding] of bindings) {
-          resources.add(effect(() => actor.set_property(property, binding.get())));
+          resources.add(effect(() => {
+            if (name === 'Flex' && property === 'homogeneous') {
+              const layout = actor.get_layout_manager?.();
+              if (!layout?.set_homogeneous) throw new Error('This St Flex widget does not support homogeneous sizing.');
+              layout.set_homogeneous(binding.get() as boolean);
+            } else {
+              actor.set_property(property, binding.get());
+            }
+          }));
         }
         if (name === 'Grid') {
           const nested = children ? fragmentChildren.get(children) : undefined;

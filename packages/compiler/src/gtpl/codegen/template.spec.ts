@@ -10,6 +10,16 @@ function emit(source: string, componentMembers: string[] = []): string {
   return emitGtplTemplate(parsed.nodes, { componentMembers });
 }
 
+function compact(source: string): string {
+  return source.replace(/\\s+/g, ' ');
+}
+
+/* REMOVE_DUPLICATE_HELPER */
+  const parsed = parseGtpl(source);
+  expect(parsed.diagnostics).toEqual([]);
+  return emitGtplTemplate(parsed.nodes, { componentMembers });
+}
+
 describe('emitGtplTemplate', () => {
   it('emits a v3 source map for top-level template nodes', () => {
     const source = '<StLabel />\n<StButton />';
@@ -127,13 +137,13 @@ describe('emitGtplTemplate', () => {
     const output = emit('<label class="title">Hello {{name}}</label>', ['name']);
     expect(output).toContain('runtime.element("label"');
     expect(output).toContain('"class": "title"');
-    expect(output).toContain(`runtime.text(runtime.bind(() => "Hello " + String(ctx.name ?? '')))`);
+    expect(compact(output)).toContain(`runtime.text(runtime.bind(() => "Hello " + String(ctx.name ?? '')))`);
   });
 
   it('emits property bindings and event callbacks', () => {
     const output = emit('<button [sensitive]="enabled" (clicked)="activate()">Go</button>', ['enabled', 'activate']);
-    expect(output).toContain('"sensitive": runtime.bind(() => ctx.enabled)');
-    expect(output).toContain('"clicked": ($event) => (ctx.activate())');
+    expect(compact(output)).toContain('"sensitive": runtime.bind(() => ctx.enabled)');
+    expect(compact(output)).toContain('"clicked": ($event) => (ctx.activate())');
   });
 
   it('emits if/else, for/empty, switch and let control flow', () => {
@@ -141,11 +151,11 @@ describe('emitGtplTemplate', () => {
 @if (visible; as shown) { <label>{{shown}}</label> } @else { <label>Hidden</label> }
 @for (item of items; track item.id; let i = $index) { <label>{{item.name}} {{i}}</label> } @empty { Empty }
 @switch (state) { @case ("ready") { Ready } @default { Wait } }`, ['heading', 'visible', 'items', 'state']);
-    expect(output).toContain('const title = ctx.heading');
-    expect(output).toContain('runtime.if(runtime.bind(() => ctx.visible)');
-    expect(output).toContain('runtime.for(runtime.bind(() => ctx.items)');
-    expect(output).toContain('return (item.id)');
-    expect(output).toContain('runtime.switch(runtime.bind(() => ctx.state)');
+    expect(compact(output)).toContain('const title = ctx.heading');
+    expect(compact(output)).toContain('runtime.if(runtime.bind(() => ctx.visible)');
+    expect(compact(output)).toContain('runtime.for(runtime.bind(() => ctx.items)');
+    expect(compact(output)).toContain('return (item.id)');
+    expect(compact(output)).toContain('runtime.switch(runtime.bind(() => ctx.state)');
   });
 
   it('evaluates an aliased if condition once and renders only the selected branch', () => {
@@ -171,8 +181,8 @@ describe('emitGtplTemplate', () => {
     const lowered = lowerGtplStructuralDirectives(parsed.nodes);
     expect(lowered.diagnostics).toEqual([]);
     const output = emitGtplTemplate(lowered.nodes, { componentMembers: ['volume'] });
-    expect(output).toContain('"value": runtime.bind(() => ctx.volume)');
-    expect(output).toContain('"valueChange": ($event) => (ctx.volume = $event)');
+    expect(compact(output)).toContain('"value": runtime.bind(() => ctx.volume)');
+    expect(compact(output)).toContain('"valueChange": ($event) => (ctx.volume = $event)');
   });
 
   it('runs generated template source through the runtime and host', () => {
@@ -212,6 +222,6 @@ describe('emitGtplTemplate', () => {
   it('qualifies component members but preserves local variables and globals', () => {
     const output = emit('<label>{{name}} {{Math.max(count, 1)}}</label>', ['name', 'count']);
     expect(output).toContain('ctx.name');
-    expect(output).toContain('(Math.max)(ctx.count, 1)');
+    expect(compact(output)).toContain('(Math.max)(ctx.count, 1)');
   });
 });

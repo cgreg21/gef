@@ -263,7 +263,9 @@ function emitGtplTemplateInternal(
   const markerPattern = /\/\*__GEF_MAP_(\d+)__\*\//g;
   for (const match of formattedCode.matchAll(markerPattern)) {
     const offset = match.index!;
-    const before = formattedCode.slice(cursor, offset);
+    let before = formattedCode.slice(cursor, offset);
+    if (before.endsWith('  ')) before = before.replace(/ +$/, ' ');
+    if (before.endsWith(' ') && /[([{]$/.test(before.trimEnd())) before = before.slice(0, -1);
     result += before;
     const lines = before.split('\n');
     if (lines.length > 1) {
@@ -277,30 +279,55 @@ function emitGtplTemplateInternal(
     mapping.generatedLine = generatedLine;
     mapping.generatedColumn = generatedColumn;
     cursor = offset + match[0].length;
+    while (formattedCode[cursor] === ' ' || formattedCode[cursor] === '\\t') cursor += 1;
   }
   result += formattedCode.slice(cursor);
   return { code: result, nodeMappings };
 }
 
 function formatJavaScript(source: string): string {
-  const file = ts.createSourceFile(
-    'generated.js',
-    `const __gef = ${source};`,
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.JS,
-  );
-  const statement = file.statements[0];
-  if (!statement || !ts.isVariableStatement(statement)) {
-    throw new Error('Cannot format generated GTPL JavaScript.');
+  const fileName = '/generated.js';
+  const host: ts.LanguageServiceHost = {
+    getCompilationSettings: () => ({ allowJs: true }),
+    getScriptFileNames: () => [fileName],
+    getScriptVersion: () => '0',
+    getScriptSnapshot: (name) => name === fileName ? ts.ScriptSnapshot.fromString(source) : undefined,
+    getCurrentDirectory: () => '/',
+    getDefaultLibFileName: ts.getDefaultLibFilePath,
+    fileExists: (name) => name === fileName,
+    readFile: (name) => name === fileName ? source : undefined,
+    readDirectory: () => [],
+  };
+  const service = ts.createLanguageService(host);
+  try {
+    const edits = service.getFormattingEditsForDocument(fileName, {
+      indentSize: 2,
+      tabSize: 2,
+      newLineCharacter: '\n',
+      convertTabsToSpaces: true,
+      indentStyle: ts.IndentStyle.Smart,
+      insertSpaceAfterCommaDelimiter: true,
+      insertSpaceAfterSemicolonInForStatements: true,
+      insertSpaceBeforeAndAfterBinaryOperators: true,
+      insertSpaceAfterKeywordsInControlFlowStatements: true,
+      insertSpaceAfterFunctionKeywordForAnonymousFunctions: true,
+      insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis: false,
+      insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: true,
+      insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets: false,
+      insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces: true,
+      placeOpenBraceOnNewLineForFunctions: false,
+      placeOpenBraceOnNewLineForControlBlocks: false,
+    });
+    let formatted = source;
+    for (const edit of [...edits].sort((left, right) => right.span.start - left.span.start)) {
+      formatted = formatted.slice(0, edit.span.start)
+        + edit.newText
+        + formatted.slice(edit.span.start + edit.span.length);
+    }
+    return formatted;
+  } finally {
+    service.dispose();
   }
-  const declaration = statement.declarationList.declarations[0];
-  if (!declaration?.initializer) throw new Error('Cannot format generated GTPL JavaScript.');
-  return ts.createPrinter({ newLine: ts.NewLineKind.LineFeed }).printNode(
-    ts.EmitHint.Expression,
-    declaration.initializer,
-    file,
-  );
 }
 
 function encodeVlq(value: number): string {

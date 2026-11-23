@@ -272,6 +272,23 @@ describe('GEF CLI', () => {
     expect(base.output.join('\\n')).toContain('EGO validation passed:');
   });
 
+
+  it('warns about console.debug calls without failing the EGO check', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/helper.js'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : path.endsWith('extension.js')
+          ? "import './helper.js'; export default class Demo { enable() {} disable() {} }"
+          : "console.debug('temporary diagnostic');",
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
+    expect(base.errors.join('\\n')).toContain('helper.js: contains console.debug() logging');
+    expect(base.output[0]).toContain('1 warning.');
+  });
+
   it('rejects Shell imports from preferences code', async () => {
     const base = createIO('');
     const io: CliIO = {

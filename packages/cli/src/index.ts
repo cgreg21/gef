@@ -160,6 +160,9 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         let source: string;
         try { source = await io.readFile(file); } catch { errors.push(`Unable to read JavaScript file: ${relative}`); continue; }
         javascriptSources.set(file, source);
+        if (/\\bconsole\\s*\\.\\s*debug\\s*\\(/.test(source)) {
+          warnings.push(`${relative}: contains console.debug() logging; remove temporary debug output before submission.`);
+        }
         if (relative === 'prefs.js' && /(?:gi:\/\/|from\s*['"])(?:St|Clutter|Meta|Shell)(?:['"/]|$)/.test(source)) {
           errors.push('prefs.js: preferences code must not import Shell-only libraries.');
         }

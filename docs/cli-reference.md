@@ -127,7 +127,7 @@ Validates a staged extension directory. Current checks include:
 - Shell/preferences process boundaries across static local JavaScript imports.
 - Unreachable JavaScript files and common development-only paths.
 - Relative CSS `url()` references to packaged files.
-- Advisory warnings for constructor side effects and possibly unused assets.
+- Advisory warnings for constructor side effects, `console.debug()` calls and possibly unused assets.
 
 ```sh
 gef ego-check dist/extension
@@ -135,8 +135,7 @@ gef ego-check dist/extension
 
 The command validates a staged directory; it does not create or inspect the
 ZIP archive itself. The packaging pipeline separately checks archive
-integrity, required files and development-only paths. A successful result is
-A successful check prints file, JavaScript and warning totals; a failed check prints error and warning totals. File, JavaScript, warning and error counts use singular or plural wording as appropriate. It is not a guarantee of EGO approval.
+integrity, required files and development-only paths. A successful check prints file, JavaScript and warning totals; a failed check prints error and warning totals. File, JavaScript, warning and error counts use singular or plural wording as appropriate. It is not a guarantee of EGO approval.
 
 ## Exit status
 

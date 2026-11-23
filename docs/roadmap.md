@@ -21,6 +21,7 @@
 - [x] Warn about potentially unused CSS, image, font, resource and schema files without rejecting dynamic runtime references.
 - [ ] Bundle only required runtime files; exclude build tools, scripts, development files and unused assets.
 - [ ] Check generated code for unsupported APIs, excessive logging, unnecessary subprocesses and review-hostile output.
+- [x] Warn about `console.debug()` calls in packaged JavaScript without blocking the EGO check.
 - [x] Provide an EGO pre-submission validation command with concise file, JavaScript, warning and error totals (static checks only; not EGO approval).
 - [x] Format EGO summary file, JavaScript, warning and error counts with correct singular and plural wording.
 - [x] Generate a UUID-named EGO ZIP with extension files at the archive root; verify archive integrity, required files and absence of development-only paths.

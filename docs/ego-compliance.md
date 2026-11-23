@@ -31,6 +31,7 @@ with GNOME reviewers.
 - The local validator warns when it detects actor creation, signal connections
   or GLib timers inside the extension constructor. This is an advisory static
   check; it does not prove that all module-level side effects are absent.
+- The local validator also warns about `console.debug()` calls in packaged JavaScript. Remove temporary debug output before submission; this advisory check does not attempt to judge normal application logging.
 - Require the Shell entry point to default-export an extension class with `enable()` and `disable()` methods.
 - Create runtime objects and connect signals in `enable()`. The GNOME Shell 51 integration harness installs the packaged ZIP and asks the running Shell to enable and disable the generated extension twice. Its GJS fixture separately verifies that St host signal handlers and reactive effects are released when actors are destroyed; the harness does not inspect every Shell-owned resource directly.
 - Destroy created objects, disconnect signals and remove sources in

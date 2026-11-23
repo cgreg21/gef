@@ -121,6 +121,21 @@ GTPL provides two simple application-shell containers on both GNOME Shell and GT
 
 `HeaderBar` uses the supplied `Adw.HeaderBar` when available, otherwise `Gtk.HeaderBar`, then falls back to a horizontal `Gtk.Box`; on GNOME Shell it uses a horizontal `St.BoxLayout`. `Sidebar` is a vertical `Gtk.Box` or `St.BoxLayout`. Children are packed into the native header bar using its start slot. Both accept the same child elements and bindings as other GTPL containers. They are layout containers, not window decorations: attach the header bar to the application's window/title area when the platform requires it. The `orientation` attribute applies to the box fallback and to `Sidebar`.
 
+
+
+`Grid` arranges its direct template children in rows and columns. Use `columns` (a positive integer) and `gap` (a non-negative pixel value):
+
+```html
+<Grid columns="3" gap="12">
+  <Card>One</Card>
+  <Card>Two</Card>
+  <Card>Three</Card>
+  <Card>Four</Card>
+</Grid>
+```
+
+GTK uses `Gtk.Grid` cell attachment. GNOME Shell 51 uses a vertical `St.BoxLayout` containing horizontal row boxes, since St 51 does not expose a native grid widget. The current GTPL grid uses a fixed column count; responsive column changes are not yet wired to native allocation events.
+
 `Flex` is a native box container on both renderers. Its GTPL attributes are `direction="row|column"` and `gap="N"`; `direction` can also be bound reactively. `gap` maps to the native box spacing. This first GTPL version intentionally exposes only these common properties; it is not a CSS Flexbox implementation (wrapping, grow/shrink and justification are not yet supported).
 
 ## Security and correctness

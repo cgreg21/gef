@@ -57,16 +57,16 @@ export interface GtkStringListNamespace {
 }
 
 export interface GtkStyleContext {
-  add_provider(provider: GtkCssProvider, priority: number): void;
-  remove_provider(provider: GtkCssProvider): void;
+  add_provider(provider: GtkInlineCssProvider, priority: number): void;
+  remove_provider(provider: GtkInlineCssProvider): void;
 }
 
-export interface GtkCssProvider {
+export interface GtkInlineCssProvider {
   load_from_data(data: string): void;
 }
 
 export interface GtkNamespace {
-  readonly CssProvider?: new () => GtkCssProvider;
+  readonly CssProvider?: new () => GtkInlineCssProvider;
   readonly STYLE_PROVIDER_PRIORITY_APPLICATION?: number;
   readonly Box: GtkWidgetConstructor;
   readonly Label: GtkWidgetConstructor;

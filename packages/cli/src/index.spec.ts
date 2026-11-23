@@ -25,6 +25,7 @@ describe('GEF CLI', () => {
     const { io, output } = createIO('');
     expect(await runCli(['--help'], io)).toBe(0);
     expect(output[0]).toContain('gef check');
+    expect(output[0]).toContain('gef ego-check <staged-extension-directory>');
   });
 
   it('prints doctor and ego-check as separate help commands', async () => {
@@ -99,6 +100,8 @@ describe('GEF CLI', () => {
     expect(extension).toContain('Main.panel.addToStatusArea');
     expect(extension).toContain('this.indicator?.destroy()');
     expect(extension).toContain('InstanceType<typeof St.Button>');
+    const projectPackage = JSON.parse(writes.find((item) => item.path.endsWith('package.json'))?.content ?? '{}') as { dependencies?: Record<string, string> };
+    expect(projectPackage.dependencies?.['gnome-extension-framework']).toBe('^0.1.0-alpha.1');
     expect(extension).not.toContain('StButton');
     const packageScript = writes.find((item) => item.path.endsWith('scripts/package.mjs'))?.content ?? '';
     expect(packageScript).toContain("import { spawnSync } from 'node:child_process'");

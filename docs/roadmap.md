@@ -2,6 +2,7 @@
 
 ## Documentation
 - [x] Add a documentation index, first-extension walkthrough and complete CLI command reference.
+- [x] Keep the CLI help synopsis, generated alpha dependency range and npm availability notes aligned with the actual scaffold.
 - [x] Link the documentation set from the repository README and keep alpha limitations explicit.
 
 ## EGO publication compliance

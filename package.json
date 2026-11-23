@@ -2,7 +2,7 @@
   "name": "gnome-extension-framework",
   "version": "0.1.0-alpha.2",
   "private": false,
-  "description": "A TypeScript framework for GNOME Shell 51 extensions.",
+  "description": "A TypeScript framework and native UI component library for GNOME Shell 51 and GTK4.",
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -46,6 +46,10 @@
     "./runtime": {
       "types": "./dist/runtime/src/index.d.ts",
       "import": "./dist/runtime/src/index.js"
+    },
+    "./ui": {
+      "types": "./dist/ui/src/index.d.ts",
+      "import": "./dist/ui/src/index.js"
     }
   },
   "dependencies": {

@@ -113,6 +113,21 @@ describe('createStRenderHost', () => {
     expect((host.element('Sidebar', {}, undefined) as FakeActor).properties.orientation).toBe(1);
   });
 
+  it('places GTPL Grid children into native horizontal rows', () => {
+    const host = createStRenderHost(createSt());
+    const items = [host.text('A'), host.text('B'), host.text('C')];
+    const fragment = host.fragment(items);
+    const grid = host.element('Grid', { columns: '2', gap: '10' }, fragment) as FakeActor;
+
+    expect(grid.properties).toMatchObject({ orientation: 1, spacing: 10 });
+    expect(grid.children).toHaveLength(2);
+    expect((grid.children[0] as FakeActor).properties).toMatchObject({ orientation: 0, spacing: 10 });
+    expect((grid.children[0] as FakeActor).children).toEqual(items.slice(0, 2));
+    expect((grid.children[1] as FakeActor).children).toEqual(items.slice(2));
+    host.destroy(grid);
+    expect(() => host.element('Grid', { columns: '0' }, undefined)).toThrow(/positive integer/);
+  });
+
   it('maps GTPL Flex direction and gap to native St box properties', () => {
     const host = createStRenderHost(createSt());
     const direction = signal('column');

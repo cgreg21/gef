@@ -399,7 +399,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         [name]: {
           projectType,
           root: '.',
-          sourceRoot: 'src',
+          sourceRoot: projectType === 'application' ? 'src' : '.',
           entryPoint: projectType === 'application' ? 'src/main.ts' : 'extension.ts',
           outputPath: 'dist',
         },

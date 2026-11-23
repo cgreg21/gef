@@ -2,6 +2,7 @@ import { ComponentRegistry } from '../../../runtime/src/components/component-reg
 import type { GtplRenderRuntime } from '../../../runtime/src/rendering/gtpl-runtime.js';
 import type { GtkActor } from '../../../runtime/src/renderers/gtk/gtk-render-host.js';
 import { GefButton } from '../components/button/button.component.js';
+import { GefLabel } from '../components/label/label.component.js';
 
 export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
   const registry = new ComponentRegistry<GtkActor>();
@@ -14,6 +15,13 @@ export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
         clicked: () => button.clicked.emit(undefined),
       },
       runtime.text(runtime.bind(() => button.label)),
+    ),
+  });
+  registry.registerType(GefLabel, {
+    create: () => new GefLabel(),
+    render: (label: GefLabel, runtime: GtplRenderRuntime<GtkActor>) => runtime.element(
+      'GtkLabel',
+      { label: runtime.bind(() => label.text) },
     ),
   });
   return registry;

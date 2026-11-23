@@ -95,7 +95,7 @@ function createPopupMenu() {
     uiGroup,
     sideTop: 0,
     PopupMenu: FakePopupMenu,
-    PopupMenuItem: class extends FakeActor { constructor(readonly label: string) { super(); } },
+    PopupMenuItem: class extends FakeActor { constructor(label: string) { super({ text: label }); } },
     PopupMenuManager: FakePopupMenuManager,
   };
 }
@@ -142,7 +142,7 @@ describe('createStRenderHost', () => {
     const select = host.element('StSelect', {
       options: { kind: 'binding', get: () => options.get() },
       value: { kind: 'binding', get: () => value.get() },
-      valueChange: (next: string) => changed.push(next),
+      valueChange: (next: string) => { changed.push(next); value.set(next); },
     }, undefined) as FakeActor;
     const label = select.children[0] as FakeActor;
     expect(label.properties.text).toBe('Medium');

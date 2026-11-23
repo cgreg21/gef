@@ -52,6 +52,10 @@ class FakeActor implements StActor {
     this.properties[name] = value;
   }
 
+  get_property(name: string): unknown {
+    return this.properties[name];
+  }
+
   get_layout_manager(): { set_homogeneous(value: boolean): void } {
     return this.layoutManager;
   }

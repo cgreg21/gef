@@ -309,10 +309,10 @@ describe('GEF CLI', () => {
           "import St from 'gi://St';",
           'const button = new St.Button();',
           'export default class Demo { enable() {} disable() {} }',
-        ].join('\\n'),
+        ].join('\n'),
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
-    expect(base.errors.join('\\n')).toContain('module-level code may create GNOME resources');
+    expect(base.errors.join('\n')).toContain('module-level code may create GNOME resources');
   });
 
   it('warns when enable creates resources without an obvious disable cleanup', async () => {
@@ -330,10 +330,10 @@ describe('GEF CLI', () => {
           '  }',
           '  disable() {}',
           '}',
-        ].join('\\n'),
+        ].join('\n'),
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
-    expect(base.errors.join('\\n')).toContain('enable() creates GNOME resources');
+    expect(base.errors.join('\n')).toContain('enable() creates GNOME resources');
   });
 
   it('accepts an obvious resource cleanup in disable', async () => {
@@ -349,10 +349,10 @@ describe('GEF CLI', () => {
           '  enable() { this.button = new St.Button(); }',
           '  disable() { this.button.destroy(); }',
           '}',
-        ].join('\\n'),
+        ].join('\n'),
     };
     expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
-    expect(base.errors.join('\\n')).not.toContain('no obvious cleanup call');
+    expect(base.errors.join('\n')).not.toContain('no obvious cleanup call');
   });
 
   it('warns about console.debug calls without failing the EGO check', async () => {

@@ -37,7 +37,7 @@ describe('validateStCss', () => {
     });
   });
 
-  it.each(['\\r\\n', '\\r'])('tracks declaration positions with %j line endings', (newline) => {
+  it.each(['\r\n', '\r'])('tracks declaration positions with %j line endings', (newline) => {
     const source = ['.panel {', '  display: flex;', '}'].join(newline);
     expect(validateStCss(source)[0]).toMatchObject({
       code: 'GEFCSS1003',

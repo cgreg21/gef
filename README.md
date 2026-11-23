@@ -6,6 +6,7 @@ GEF is a TypeScript and GTPL framework for native GNOME desktop projects. It sup
 
 ## Requirements
 
+- .NET SDK 8.0+ on Windows build hosts (only to compile the standalone launcher; not required on target machines)
 - Node.js 22+ for compiler, CLI, build tooling and Node-GTK GTK4 applications (Node-GTK prebuilt binaries target Node.js 22, 24 and 26)
 - GNOME Shell 51 and GJS for the extension runtime
 - GTK4 and libadwaita for preferences UI

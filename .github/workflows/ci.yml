@@ -65,6 +65,8 @@ jobs:
             'scripts/package-app.mjs',
             'scripts/package-windows.mjs',
             'scripts/package-macos.mjs',
+            'scripts/windows-launcher/Program.cs',
+            'scripts/windows-launcher/Launcher.csproj',
             'README.md',
           ];
 
@@ -120,6 +122,10 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 24
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: TypeScript typecheck and unit tests
@@ -129,7 +135,16 @@ jobs:
           npm run build:kitchen-sink
           npm run test:node-gtk:availability
       - name: Package and launch standalone Windows application
-        run: node tests/packaging/windows-smoke.mjs
+        run: |
+          node tests/packaging/windows-smoke.mjs
+          node scripts/package-windows.mjs
+      - name: Upload Kitchen Sink executable
+        uses: actions/upload-artifact@v6
+        with:
+          name: kitchen-sink-windows-${{ runner.arch }}
+          path: dist/kitchen-sink-windows-*/
+          if-no-files-found: error
+          retention-days: 14
 
   macos:
     name: macOS standalone application package

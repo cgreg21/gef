@@ -122,7 +122,8 @@
 - [x] Add `GefProgressBar` with a reactive fraction on GNOME Shell St and GTK4, including native Node-GTK smoke coverage.
 - [x] Add GTPL `HeaderBar` and `Sidebar` layout containers with platform-specific default orientations.
 - [x] Add the initial GTPL `Flex` container with native row/column direction, spacing and reactive direction bindings on St and GTK4.
-- [ ] Complete GTPL `Grid` child placement and responsive layout integration on St and GTK4.
+- [x] Add GTPL `Grid` with fixed column placement and spacing on GTK4 and GNOME Shell 51.
+- [ ] Connect GTPL grid columns to native width changes for responsive reflow on St and GTK4.
 - [x] Keep button labels and disabled/sensitive state reactive after component creation.
 - [x] Add shared responsive breakpoints, mobile-first responsive values, breakpoint observation and responsive grid position calculation.
 

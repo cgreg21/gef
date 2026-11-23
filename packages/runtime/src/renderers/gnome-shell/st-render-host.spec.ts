@@ -72,6 +72,34 @@ class FakeBin extends FakeActor {
   }
 }
 
+class FakePopupMenu {
+  readonly actor = new FakeActor();
+  readonly items: FakeActor[] = [];
+  opened = false;
+  constructor(readonly source: StActor, readonly alignment: number, readonly side: number) {}
+  addMenuItem(item: StActor): void { this.items.push(item as FakeActor); }
+  removeAll(): void { this.items.length = 0; }
+  open(): void { this.opened = true; }
+  close(): void { this.opened = false; }
+}
+
+class FakePopupMenuManager {
+  readonly menus: FakePopupMenu[] = [];
+  addMenu(menu: FakePopupMenu): void { this.menus.push(menu); }
+  removeMenu(menu: FakePopupMenu): void { const index = this.menus.indexOf(menu); if (index >= 0) this.menus.splice(index, 1); }
+}
+
+function createPopupMenu() {
+  const uiGroup = new FakeActor();
+  return {
+    uiGroup,
+    sideTop: 0,
+    PopupMenu: FakePopupMenu,
+    PopupMenuItem: class extends FakeActor { constructor(readonly label: string) { super(); } },
+    PopupMenuManager: FakePopupMenuManager,
+  };
+}
+
 function constructor(): StWidgetConstructor {
   return FakeActor;
 }
@@ -103,6 +131,38 @@ describe('createStRenderHost', () => {
     const actor = host.element('StLabel', { styleClass: 'title' }, child) as FakeActor;
     expect(actor.properties).toEqual({ style_class: 'title' });
     expect(actor.children).toEqual([child]);
+  });
+
+  it('creates a native St button and PopupMenu select with reactive options and cleanup', () => {
+    const popupMenu = createPopupMenu();
+    const host = createStRenderHost(createSt(), { popupMenu });
+    const options = signal(['Small', 'Medium', 'Large']);
+    const value = signal('Medium');
+    const changed: string[] = [];
+    const select = host.element('StSelect', {
+      options: { kind: 'binding', get: () => options.get() },
+      value: { kind: 'binding', get: () => value.get() },
+      valueChange: (next: string) => changed.push(next),
+    }, undefined) as FakeActor;
+    const label = select.children[0] as FakeActor;
+    expect(label.properties.text).toBe('Medium');
+    expect((popupMenu.uiGroup.children[0] as FakeActor)).toBeInstanceOf(FakeActor);
+    select.emit('clicked');
+    const menu = (popupMenu.uiGroup.children[0] as FakeActor);
+    expect(menu).toBeInstanceOf(FakeActor);
+    options.set(['Small', 'Large']);
+    const activate = select.signals;
+    expect(activate.size).toBeGreaterThan(0);
+    host.destroy(select);
+    expect(popupMenu.uiGroup.children).toHaveLength(0);
+    expect(select.destroyed).toBe(true);
+    value.set('Large');
+    expect(label.properties.text).toBe('Medium');
+  });
+
+  it('requires the injected PopupMenu API for the composite StSelect control', () => {
+    const host = createStRenderHost(createSt());
+    expect(() => host.element('StSelect', { options: [], value: '' }, undefined)).toThrow(/requires GNOME Shell PopupMenu/);
   });
 
   it('registers the common GNOME Shell St widget constructors', () => {

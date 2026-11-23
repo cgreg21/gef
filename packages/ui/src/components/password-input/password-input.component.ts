@@ -7,7 +7,15 @@ export class GefPasswordInput {
 
   readonly valueChange = new EventEmitter<string>();
 
-  showPeekIcon = true;
+  readonly #showPeekIcon = signal(true);
+
+  get showPeekIcon(): boolean {
+    return this.#showPeekIcon.get();
+  }
+
+  set showPeekIcon(value: boolean) {
+    this.#showPeekIcon.set(value);
+  }
 
   get value(): string {
     return this.#value.get();

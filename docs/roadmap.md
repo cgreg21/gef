@@ -53,6 +53,10 @@
 ## Cross-platform compatibility
 - [x] Keep CLI EGO-check fixtures and path assertions portable across Windows and POSIX hosts.
 - [x] Run TypeScript checks and the complete unit test suite on Windows CI.
+- [x] Add native-host Windows ZIP packaging using the Node-GTK prebuilt's bundled DLL and typelib runtime.
+- [x] Add native-host macOS `.app`/`.dmg` packaging with bundled Homebrew GTK4/libadwaita libraries and typelibs.
+- [ ] Validate Windows and macOS packages on clean machines without development tools installed; CI smoke tests currently validate package extraction and runtime loading on native runners.
+- [ ] Add optional Developer ID signing and notarization for macOS release builds.
 
 ## Foundation
 - [x] Repository baseline and GNOME Shell 51 target.

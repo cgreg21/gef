@@ -33,6 +33,8 @@ const dropdown = host.element('GtkDropDown', {
 const progress = host.element('GtkProgressBar', {
   fraction: runtime.bind(() => fraction.get()),
 }, undefined);
+let clicks = 0;
+let active;
 const button = host.element('GtkButton', {
   clicked: () => { clicks += 1; },
 }, label);
@@ -47,20 +49,20 @@ const gefSwitch = componentRuntime.element('GefSwitch', {
   activeChange: (value) => switchState.set(value),
 }, undefined);
 const root = host.fragment([button, toggle, icon, progress, dropdown, gefSwitch]);
-let clicks = 0;
-let active;
 
 assert.equal(label.label, 'before');
 assert.equal(label.useUnderline, true);
 assert.equal(icon.iconName, 'document-save-symbolic');
 assert.equal(progress.fraction, 0.25);
-assert.equal(dropdown.model.get_n_items(), 3);
+assert.equal(dropdown.model.getItem(2).getString(), 'Blue');
+assert.equal(dropdown.model.getItem(3), null);
 assert.equal(dropdown.selected, 1);
 dropdown.selected = 2;
 assert.equal(selectedEvent, 'Blue');
 assert.equal(selectedValue.get(), 'Blue');
 selectOptions.set(['Blue', 'Green']);
-assert.equal(dropdown.model.get_n_items(), 2);
+assert.equal(dropdown.model.getItem(1).getString(), 'Green');
+assert.equal(dropdown.model.getItem(2), null);
 assert.equal(dropdown.selected, 0);
 assert.equal(gefSwitch.active, false);
 switchState.set(true);

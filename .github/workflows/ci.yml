@@ -65,8 +65,6 @@ jobs:
             'scripts/package-app.mjs',
             'scripts/package-windows.mjs',
             'scripts/package-macos.mjs',
-            'tests/packaging/windows-smoke.mjs',
-            'tests/packaging/macos-smoke.mjs',
             'README.md',
           ];
 

@@ -21,6 +21,8 @@ npm run build
 npm run package:example
 # Native GTK4/libadwaita smoke test (also runs in CI):
 npm run test:gtk
+# Build the UI showcase template:
+npm run build:ui-showcase
 # On a host with GNOME Shell 51, GJS, dbus-run-session and Xvfb:
 npm run test:gnome
 ```
@@ -50,7 +52,7 @@ npx --yes --package gnome-extension-framework@next gef new my-app --type applica
 
 The `new` command creates a project with an Angular-style `gef.json` workspace file. Use `--type extension` (the default) for a GNOME Shell 51 extension, or `--type application` for a Node-GTK GTK4/libadwaita desktop application. Review the generated files before building or publishing; the starter is intentionally small and is not a promise that every project-specific build step is configured. Node-GTK application projects include a `bundle` configuration with the application ID, compiled entry point and GTK 4 target. Their build compiles GTPL templates and mounts them through the GEF GTK renderer's Node-GTK mode. The upstream Node-GTK portable bundler currently targets Linux.
 
-For the full first-project walkthrough, see [Getting started](docs/getting-started.md). For command syntax and behavior, see the [CLI reference](docs/cli-reference.md).
+For the UI component guide and examples, see [GEF UI documentation](docs/ui-components.md) and the [native GTK showcase](packages/examples/ui-showcase/README.md). For the full first-project walkthrough, see [Getting started](docs/getting-started.md). For command syntax and behavior, see the [CLI reference](docs/cli-reference.md).
 ## CLI
 
 From a source checkout, use `npm run gef -- <command>`. After installing the published package in a project, use `npx gef <command>` or the local `node_modules/.bin/gef` executable.

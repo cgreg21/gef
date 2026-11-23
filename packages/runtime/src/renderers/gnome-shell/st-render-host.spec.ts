@@ -10,6 +10,7 @@ class FakeActor implements StActor {
   readonly properties: Record<string, unknown>;
   readonly children: StActor[] = [];
   readonly signals = new Map<number, { name: string; callback: (actor: StActor, ...args: unknown[]) => unknown }>();
+  readonly layoutManager = { homogeneous: false, set_homogeneous: (value: boolean) => { this.layoutManager.homogeneous = value; } };
   destroyed = false;
   destroyCount = 0;
   private nextSignal = 1;
@@ -49,6 +50,10 @@ class FakeActor implements StActor {
 
   set_property(name: string, value: unknown): void {
     this.properties[name] = value;
+  }
+
+  get_layout_manager(): { set_homogeneous(value: boolean): void } {
+    return this.layoutManager;
   }
 
   emit(name: string, ...args: unknown[]): unknown {
@@ -138,11 +143,12 @@ describe('createStRenderHost', () => {
       homogeneous: { kind: 'binding', get: () => homogeneous.get() },
     }, undefined) as FakeActor;
 
-    expect(flex.properties).toMatchObject({ orientation: 1, spacing: 8, homogeneous: true });
+    expect(flex.properties).toMatchObject({ orientation: 1, spacing: 8 });
+    expect(flex.layoutManager.homogeneous).toBe(true);
     direction.set('row');
     homogeneous.set('false');
     expect(flex.properties.orientation).toBe(0);
-    expect(flex.properties.homogeneous).toBe(false);
+    expect(flex.layoutManager.homogeneous).toBe(false);
     host.destroy(flex);
     expect(() => host.element('Flex', { gap: -1 }, undefined)).toThrow(/Flex gap/);
     expect(() => host.element('Flex', { homogeneous: 'yes' }, undefined)).toThrow(/Flex homogeneous/);

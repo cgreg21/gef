@@ -290,12 +290,16 @@ export function createStRenderHost(
             if (!Array.isArray(value) || !value.every((item) => typeof item === 'string')) throw new Error('StSelect options must be an array of strings.');
             return value;
           };
+          let menuItemCleanups: Array<() => void> = [];
           const syncValue = (): void => {
             const value = isGtplBinding(selectValue) ? selectValue.get() : selectValue;
             label.set_property('text', typeof value === 'string' ? value : '');
           };
           const rebuildMenu = (): void => {
-            menu.removeAll?.();
+            for (const cleanup of menuItemCleanups) cleanup();
+            menuItemCleanups = [];
+            if (!menu.removeAll) throw new Error('The GNOME Shell PopupMenu implementation must support removeAll().');
+            menu.removeAll();
             for (const option of readOptions()) {
               const item = new popup.PopupMenuItem(option);
               const id = item.connect('activate', () => {
@@ -303,7 +307,7 @@ export function createStRenderHost(
                 menu.close({ animate: false });
                 if (typeof selectChange === 'function') selectChange(option);
               });
-              resources.add(() => item.disconnect(id));
+              menuItemCleanups.push(() => item.disconnect(id));
               menu.addMenuItem(item);
             }
             syncValue();
@@ -314,6 +318,8 @@ export function createStRenderHost(
           const clicked = actor.connect('clicked', () => menu.open());
           resources.add(() => actor.disconnect(clicked));
           resources.add(() => {
+            for (const cleanup of menuItemCleanups) cleanup();
+            menuItemCleanups = [];
             menu.close({ animate: false });
             manager.removeMenu?.(menu);
             popup.uiGroup.remove_child?.(menu.actor);

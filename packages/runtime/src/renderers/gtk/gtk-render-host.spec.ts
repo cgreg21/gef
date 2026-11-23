@@ -47,6 +47,10 @@ class FakeWidget implements GtkActor {
   }
 }
 
+class FakeHeaderBar extends FakeWidget {
+  pack_start(child: GtkActor): void { this.append(child); }
+}
+
 class FakeSingleChild extends FakeWidget {
   set_child(child: GtkActor | null): void {
     for (const previous of [...this.children]) this.remove(previous);
@@ -164,6 +168,19 @@ describe('createGtkRenderHost', () => {
     for (const name of ['GtkCheckButton', 'GtkDropDown', 'GtkSpinButton', 'GtkProgressBar', 'GtkSeparator', 'GtkListBox', 'GtkListBoxRow', 'GtkGrid', 'GtkStack', 'GtkRevealer', 'GtkTextView', 'GtkPasswordEntry', 'GtkSearchEntry', 'AdwSwitchRow', 'AdwEntryRow', 'AdwPasswordEntryRow', 'AdwExpanderRow', 'AdwComboRow', 'AdwSpinRow', 'AdwBanner', 'AdwHeaderBar', 'AdwToolbarView', 'HeaderBar', 'Sidebar']) {
       expect(host.element(name, {}, undefined)).toBeInstanceOf(FakeWidget);
     }
+  });
+
+  it('uses the supplied libadwaita header bar and packs template children into it', () => {
+    const host = createGtkRenderHost(createGtk(), { adw: { HeaderBar: FakeHeaderBar } });
+    const child = host.element('GtkButton', {}, undefined) as FakeWidget;
+    const header = host.element('HeaderBar', {}, child) as FakeHeaderBar;
+
+    expect(header).toBeInstanceOf(FakeHeaderBar);
+    expect(header.properties.orientation).toBeUndefined();
+    expect(header.children).toEqual([child]);
+    expect(child.parent).toBe(header);
+    host.destroy(header);
+    expect(child.parent).toBeNull();
   });
 
   it('sets horizontal and vertical defaults for GTPL application containers', () => {

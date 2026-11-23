@@ -183,15 +183,16 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
           errors.push('extension.js: extension class must implement ' + hook + '().');
         }
       }
+      const hasLifecycleSideEffects = /\\b(?:connect|connectObject|timeout_add|idle_add)\\s*\\(|\\bnew\\s+(?:St|Clutter|Meta|Shell)\\./;
       const constructorBody = shellSource.match(/\bconstructor\s*\([^)]*\)\s*\{([\s\S]*?)(?=\n {2}(?:async\s+)?[A-Za-z_$][\w$]*\s*\()/)?.[1]
         ?? shellSource.match(/\bconstructor\s*\([^)]*\)\s*\{([\s\S]*?)\}/)?.[1]
         ?? '';
-      if (/\b(?:connect|connectObject|timeout_add|idle_add)\s*\(|\bnew\s+(?:St|Clutter|Meta|Shell)\./.test(constructorBody)) {
+      if (hasLifecycleSideEffects.test(constructorBody)) {
         warnings.push('extension.js: constructor contains GNOME resource or signal side effects; move them into enable() and release them in disable().');
       }
       const classStart = shellSource.indexOf('export default class');
       const moduleSetup = classStart < 0 ? shellSource : shellSource.slice(0, classStart);
-      if (/\bnew\s+(?:St|Clutter|Meta|Shell)\.|\b(?:connect|connectObject|timeout_add|idle_add)\s*\(/.test(moduleSetup)) {
+      if (hasLifecycleSideEffects.test(moduleSetup)) {
         warnings.push('extension.js: module-level code may create GNOME resources or connect signals before enable(); move setup into enable().');
       }
       const methodBody = (method: string): string => {
@@ -202,7 +203,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
       };
       const enableBody = methodBody('enable');
       const disableBody = methodBody('disable');
-      if (/\b(?:connect|connectObject|timeout_add|idle_add)\s*\(|\bnew\s+(?:St|Clutter|Meta|Shell)\./.test(enableBody)
+      if (hasLifecycleSideEffects.test(enableBody)
         && !/\b(?:destroy|disconnect|disconnectObject|clear|remove|source_remove|dispose|release)\s*\(/.test(disableBody)) {
         warnings.push('extension.js: enable() creates GNOME resources or connections but disable() has no obvious cleanup call.');
       }

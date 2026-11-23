@@ -22,6 +22,7 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
     render: (label: GefLabel, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StLabel',
       { text: runtime.bind(() => label.text) },
+      undefined,
     ),
   });
   return registry;

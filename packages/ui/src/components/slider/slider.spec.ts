@@ -57,6 +57,6 @@ describe('GefSlider', () => {
     (attributes.valueChange as (value: number) => void)(0.6);
     expect(slider.value).toBe(0.6);
     expect(changed).toHaveBeenCalledWith(0.6);
-    stop();;
+    stop();
   });
 });

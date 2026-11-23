@@ -31,8 +31,7 @@ gef check src/view.gtpl
 
 Validates a template and writes a JavaScript render-function module. If the
 output path is omitted, the CLI uses `<input>.js`. Missing parent directories
-are created. A linked Source Map v3 file is written beside the JavaScript
-output as `<output.js>.map`.
+are created. The generated JavaScript is formatted as readable multi-line source. A linked Source Map v3 file with generated line and column positions is written beside the JavaScript output as `<output.js>.map`.
 
 ```sh
 gef compile src/view.gtpl dist/view.js

@@ -12,7 +12,7 @@ with GNOME reviewers.
 
 ## Generated JavaScript
 
-- Emit readable, consistently formatted JavaScript.
+- Emit readable, consistently formatted JavaScript. The GTPL compiler uses the existing TypeScript printer and preserves line/column-aware Source Map v3 mappings.
 - Never minify, obfuscate, or hide generated logic behind opaque bundles.
 - Keep modules small and split code by responsibility.
 - Preserve useful source locations and diagnostics.

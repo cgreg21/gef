@@ -1,3 +1,4 @@
+import * as ts from 'typescript';
 import type {
   ElementNode,
   ForBlockNode,
@@ -37,6 +38,7 @@ export interface GtplTemplateWithSourceMap {
 }
 
 interface NodeMapping {
+  generatedLine: number;
   generatedColumn: number;
   readonly sourceLine: number;
   readonly sourceColumn: number;
@@ -118,7 +120,7 @@ function expression(
     const line = sourcePosition.line + lines.length - 1;
     const column = lines.length === 1 ? sourcePosition.column + prefix.length : lines[lines.length - 1]!.length + 1;
     mappings.push({ generatedColumn: 0, sourceLine: line - 1, sourceColumn: column - 1 });
-    return `__GEF_MAP_${marker}__`;
+    return `/*__GEF_MAP_${marker}__*/`;
   });
 }
 
@@ -249,17 +251,55 @@ function emitGtplTemplateInternal(
       case 'switch-block': rendered = renderSwitch(node, locals); break;
       case 'let-declaration': rendered = 'runtime.fragment([])'; break;
     }
-    return `__GEF_MAP_${marker}__${rendered}`;
+    return `/*__GEF_MAP_${marker}__*/${rendered}`;
   };
 
-  const markedCode = '(ctx, runtime) => ' + renderNodes(nodes, new Set());
-  let removedLength = 0;
-  const result = markedCode.replace(/__GEF_MAP_(\d+)__/g, (marker, index: string, offset: number) => {
-    nodeMappings[Number(index)]!.generatedColumn = offset - removedLength;
-    removedLength += marker.length;
-    return '';
-  });
+  const markedCode = '(ctx, runtime) => { return ' + renderNodes(nodes, new Set()) + '; }';
+  const formattedCode = formatJavaScript(markedCode);
+  let result = '';
+  let cursor = 0;
+  let generatedLine = 0;
+  let generatedColumn = 0;
+  const markerPattern = /\/\*__GEF_MAP_(\d+)__\*\//g;
+  for (const match of formattedCode.matchAll(markerPattern)) {
+    const offset = match.index!;
+    const before = formattedCode.slice(cursor, offset);
+    result += before;
+    const lines = before.split('\n');
+    if (lines.length > 1) {
+      generatedLine += lines.length - 1;
+      generatedColumn = lines[lines.length - 1]!.length;
+    } else {
+      generatedColumn += before.length;
+    }
+    const mapping = nodeMappings[Number(match[1])];
+    if (!mapping) throw new Error('Cannot generate GTPL source map: unknown mapping marker.');
+    mapping.generatedLine = generatedLine;
+    mapping.generatedColumn = generatedColumn;
+    cursor = offset + match[0].length;
+  }
+  result += formattedCode.slice(cursor);
   return { code: result, nodeMappings };
+}
+
+function formatJavaScript(source: string): string {
+  const file = ts.createSourceFile(
+    'generated.js',
+    `const __gef = ${source};`,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.JS,
+  );
+  if (file.parseDiagnostics.length > 0 || !ts.isVariableStatement(file.statements[0])) {
+    throw new Error('Cannot format generated GTPL JavaScript.');
+  }
+  const declaration = file.statements[0].declarationList.declarations[0];
+  if (!declaration?.initializer) throw new Error('Cannot format generated GTPL JavaScript.');
+  return ts.createPrinter({ newLine: ts.NewLineKind.LineFeed }).printNode(
+    ts.EmitHint.Expression,
+    declaration.initializer,
+    file,
+  );
 }
 
 function encodeVlq(value: number): string {
@@ -276,21 +316,29 @@ function encodeVlq(value: number): string {
 }
 
 function createMappings(mappings: readonly NodeMapping[]): string {
+  const lines: string[][] = [];
+  let previousGeneratedLine = -1;
   let previousGeneratedColumn = 0;
   let previousSourceLine = 0;
   let previousSourceColumn = 0;
-  return [...mappings].sort((left, right) => left.generatedColumn - right.generatedColumn).map((mapping) => {
-    const segment = [
+  for (const mapping of [...mappings].sort((left, right) =>
+    left.generatedLine - right.generatedLine || left.generatedColumn - right.generatedColumn)) {
+    if (mapping.generatedLine !== previousGeneratedLine) {
+      previousGeneratedLine = mapping.generatedLine;
+      previousGeneratedColumn = 0;
+      lines[previousGeneratedLine] ??= [];
+    }
+    lines[previousGeneratedLine]!.push([
       encodeVlq(mapping.generatedColumn - previousGeneratedColumn),
       encodeVlq(0),
       encodeVlq(mapping.sourceLine - previousSourceLine),
       encodeVlq(mapping.sourceColumn - previousSourceColumn),
-    ].join('');
+    ].join(''));
     previousGeneratedColumn = mapping.generatedColumn;
     previousSourceLine = mapping.sourceLine;
     previousSourceColumn = mapping.sourceColumn;
-    return segment;
-  }).join(',');
+  }
+  return lines.map((segments) => (segments ?? []).join(',')).join(';');
 }
 
 /** Emits a render function and source mappings for every rendered GTPL node. */

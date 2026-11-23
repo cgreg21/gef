@@ -7,7 +7,7 @@
 
 ## EGO publication compliance
 - [x] Require the staged `extension.js` entry point and reject malformed UUID domain labels.
-- [ ] Emit readable, consistently formatted JavaScript without minification or obfuscation.
+- [x] Emit readable, consistently formatted JavaScript without minification or obfuscation, preserving generated line/column positions in Source Map v3.
 - [x] Check Shell and preferences entry points and their complete static JavaScript dependency graphs for process-specific GI imports.
 - [x] Require the default-exported Shell extension class to implement `enable()` and `disable()`.
 - [ ] Complete lifecycle validation: detect more pre-enable side effects and verify resource cleanup in `disable()`. The Shell 51 harness now installs the generated archive and exercises two real enable/disable cycles; runtime execution still requires a GNOME Shell 51 host.

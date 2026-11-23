@@ -28,10 +28,21 @@ describe('emitGtplTemplate', () => {
       sourcesContent: [source],
       names: [],
     });
-    expect(generated.map.mappings.split(',')).toHaveLength(2);
+    expect(generated.map.mappings.split(/[;,]/).filter(Boolean)).toHaveLength(2);
     expect(generated.map.mappings).not.toBe('');
   });
 
+
+  it('formats generated JavaScript across lines and maps the generated positions', () => {
+    const source = '<StBox><StLabel>{{name}}</StLabel></StBox>';
+    const parsed = parseGtpl(source);
+    expect(parsed.diagnostics).toEqual([]);
+    const generated = emitGtplTemplateWithSourceMap(parsed.nodes, { source: 'view.gtpl' });
+    expect(generated.code).toContain('\n');
+    expect(generated.code).toMatch(/=> \{\n\s+return/);
+    expect(generated.map.mappings.split(';').length).toBeGreaterThan(1);
+    expect(generated.code).not.toContain('__GEF_MAP_');
+  });
 
   it('maps nested elements and their text nodes', () => {
     const source = `<StBox>
@@ -40,7 +51,7 @@ describe('emitGtplTemplate', () => {
     const parsed = parseGtpl(source);
     expect(parsed.diagnostics).toEqual([]);
     const generated = emitGtplTemplateWithSourceMap(parsed.nodes, { source: 'view.gtpl' });
-    expect(generated.map.mappings.split(',')).toHaveLength(4);
+    expect(generated.map.mappings.split(/[;,]/).filter(Boolean)).toHaveLength(4);
     expect(generated.code).not.toContain('__GEF_MAP_');
     expect(generated.map.mappings).not.toBe('');
   });
@@ -52,7 +63,7 @@ describe('emitGtplTemplate', () => {
     expect(parsed.diagnostics).toEqual([]);
     const generated = emitGtplTemplateWithSourceMap(parsed.nodes, { source: 'view.gtpl' });
     // Element, text node, three binding AST nodes and two interpolation AST nodes.
-    expect(generated.map.mappings.split(',')).toHaveLength(7);
+    expect(generated.map.mappings.split(/[;,]/).filter(Boolean)).toHaveLength(7);
     expect(generated.code).not.toContain('__GEF_MAP_');
   });
 
@@ -63,7 +74,7 @@ describe('emitGtplTemplate', () => {
     expect(parsed.diagnostics).toEqual([]);
     const generated = emitGtplTemplateWithSourceMap(parsed.nodes, { source: 'view.gtpl' });
     // Four block expressions, two interpolations, and their rendered template nodes.
-    expect(generated.map.mappings.split(',').length).toBeGreaterThanOrEqual(10);
+    expect(generated.map.mappings.split(/[;,]/).filter(Boolean).length).toBeGreaterThanOrEqual(10);
     expect(generated.code).not.toContain('__GEF_MAP_');
   });
 
@@ -72,7 +83,7 @@ describe('emitGtplTemplate', () => {
     const parsed = parseGtpl(source);
     expect(parsed.diagnostics).toEqual([]);
     const generated = emitGtplTemplateWithSourceMap(parsed.nodes, { source: 'view.gtpl' });
-    expect(generated.map.mappings.split(',').length).toBeGreaterThan(10);
+    expect(generated.map.mappings.split(/[;,]/).filter(Boolean).length).toBeGreaterThan(10);
     expect(generated.code).not.toContain('__GEF_MAP_');
   });
 

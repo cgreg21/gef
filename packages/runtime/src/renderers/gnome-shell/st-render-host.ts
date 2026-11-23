@@ -77,6 +77,12 @@ function layoutAttribute(name: string, attribute: string, value: unknown): [stri
   return [property, flexValue(attribute, value)];
 }
 
+function setFlexHomogeneous(actor: StActor, value: boolean): void {
+  const layout = actor.get_layout_manager?.();
+  if (!layout?.set_homogeneous) throw new Error('This St Flex widget does not support homogeneous sizing.');
+  layout.set_homogeneous(value);
+}
+
 function readProperty(actor: StActor, property: string): unknown {
   const target = actor as unknown as Record<string, unknown>;
   if (property in target) return target[property];
@@ -219,17 +225,11 @@ export function createStRenderHost(
           });
           resources.add(() => actor.disconnect(id));
         }
-        if (flexHomogeneous !== undefined) {
-          const layout = actor.get_layout_manager?.();
-          if (!layout?.set_homogeneous) throw new Error('This St Flex widget does not support homogeneous sizing.');
-          layout.set_homogeneous(flexHomogeneous);
-        }
+        if (flexHomogeneous !== undefined) setFlexHomogeneous(actor, flexHomogeneous);
         for (const [property, binding] of bindings) {
           resources.add(effect(() => {
             if (name === 'Flex' && property === 'homogeneous') {
-              const layout = actor.get_layout_manager?.();
-              if (!layout?.set_homogeneous) throw new Error('This St Flex widget does not support homogeneous sizing.');
-              layout.set_homogeneous(binding.get() as boolean);
+              setFlexHomogeneous(actor, binding.get() as boolean);
             } else {
               actor.set_property(property, binding.get());
             }

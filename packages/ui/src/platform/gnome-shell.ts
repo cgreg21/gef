@@ -2,6 +2,7 @@ import { ComponentRegistry } from '../../../runtime/src/components/component-reg
 import type { GtplRenderRuntime } from '../../../runtime/src/rendering/gtpl-runtime.js';
 import type { StActor } from '../../../runtime/src/renderers/gnome-shell/st-render-host.js';
 import { GefCheckbox } from '../components/checkbox/checkbox.component.js';
+import { GefSwitch } from '../components/switch/switch.component.js';
 import { GefButton } from '../components/button/button.component.js';
 import { GefIcon } from '../components/icon/icon.component.js';
 import { GefInput } from '../components/input/input.component.js';
@@ -68,6 +69,20 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
         checkedChange: (value: boolean) => {
           checkbox.checked = value;
           checkbox.checkedChange.emit(value);
+        },
+      },
+      undefined,
+    ),
+  });
+  registry.registerType(GefSwitch, {
+    create: () => new GefSwitch(),
+    render: (toggle: GefSwitch, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+      'StSwitch',
+      {
+        state: runtime.bind(() => toggle.active),
+        stateChange: (value: boolean) => {
+          toggle.active = value;
+          toggle.activeChange.emit(value);
         },
       },
       undefined,

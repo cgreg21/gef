@@ -65,6 +65,8 @@ jobs:
             'scripts/package-app.mjs',
             'scripts/package-windows.mjs',
             'scripts/package-macos.mjs',
+            'scripts/windows-launcher/Program.cs',
+            'scripts/windows-launcher/Launcher.csproj',
             'README.md',
           ];
 

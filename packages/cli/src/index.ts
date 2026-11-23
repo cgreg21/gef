@@ -343,10 +343,12 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         scripts = [['npm', 'run', 'build'], ['npm', 'run', 'package:example']];
       }
     }
-    for (const [executable, ...args] of scripts) {
+    for (const script of scripts) {
+      const executable = script[0]!;
+      const scriptArgs = script.slice(1);
       const result = executable === 'node-gtk'
-        ? io.run('npx', ['--no-install', 'node-gtk', ...args])
-        : io.run(executable === 'npm' ? executable : 'npm', executable === 'npm' ? args : ['run', executable]);
+        ? io.run('npx', ['--no-install', 'node-gtk', ...scriptArgs])
+        : io.run(executable === 'npm' ? executable : 'npm', executable === 'npm' ? scriptArgs : ['run', executable]);
       if (result.output) io.stdout(result.output.trimEnd());
       if (result.status !== 0) return 1;
     }

@@ -36,14 +36,13 @@ export function resolveResponsiveValue<T>(
 ): T {
   if (typeof value !== 'object' || value === null) return value as T;
   const responsive = value as Readonly<{ base: T }> & Partial<Readonly<Record<Breakpoint, T>>>;
-  const active = getBreakpoint(width, breakpoints);
   const entries = (Object.entries(breakpoints) as Array<[Breakpoint, number]>).sort((a, b) => a[1] - b[1]);
   let resolved = responsive.base;
   for (const [name, minWidth] of entries) {
     if (minWidth > width) break;
     if (responsive[name] !== undefined) resolved = responsive[name] as T;
   }
-  return resolved ?? (responsive[active] as T);
+  return resolved;
 }
 
 /** Tracks width changes and notifies subscribers only when the breakpoint changes. */

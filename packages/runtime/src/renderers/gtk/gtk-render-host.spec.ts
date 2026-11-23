@@ -8,6 +8,11 @@ import { Injector } from '../../di/injector.js';
 import { EventEmitter } from '../../../../shared/src/events/event-emitter.js';
 
 class FakeWidget implements GtkActor {
+  readonly styleContext = {
+    providers: new Set<FakeCssProvider>(),
+    add_provider(provider: FakeCssProvider): void { this.providers.add(provider); },
+    remove_provider(provider: FakeCssProvider): void { this.providers.delete(provider); },
+  };
   readonly properties: Record<string, unknown>;
   readonly children: GtkActor[] = [];
   readonly classes = new Set<string>();
@@ -27,6 +32,7 @@ class FakeWidget implements GtkActor {
   }
   set_property(name: string, value: unknown): void { this.properties[name] = value; }
   get_property(name: string): unknown { return this.properties[name]; }
+  get_style_context(): typeof this.styleContext { return this.styleContext; }
   connect(name: string, callback: (actor: GtkActor, ...args: unknown[]) => unknown): number {
     const id = this.nextSignal++;
     this.signals.set(id, { name, callback });
@@ -139,6 +145,11 @@ class FailingBox extends FakeWidget {
   }
 }
 
+class FakeCssProvider {
+  data = '';
+  load_from_data(data: string): void { this.data = data; }
+}
+
 class FakeStringList {
   readonly items: string[];
   constructor(items: string[]) { this.items = [...items]; }
@@ -166,6 +177,7 @@ class FakePasswordEntry extends FakeWidget {
 function constructor(): GtkWidgetConstructor { return FakeWidget; }
 function createGtk(): GtkNamespace {
   return {
+    CssProvider: FakeCssProvider,
     Box: constructor(),
     Label: constructor(),
     Button: FakeSingleChild,
@@ -202,6 +214,23 @@ describe('createGtkRenderHost', () => {
     for (const name of ['GtkCheckButton', 'GtkDropDown', 'GtkSpinButton', 'GtkProgressBar', 'GtkSeparator', 'GtkListBox', 'GtkListBoxRow', 'GtkGrid', 'GtkStack', 'GtkRevealer', 'GtkTextView', 'GtkPasswordEntry', 'GtkSearchEntry', 'GtkScale', 'AdwSwitchRow', 'AdwEntryRow', 'AdwPasswordEntryRow', 'AdwExpanderRow', 'AdwComboRow', 'AdwSpinRow', 'AdwBanner', 'AdwHeaderBar', 'AdwToolbarView', 'HeaderBar', 'Sidebar']) {
       expect(host.element(name, {}, undefined)).toBeInstanceOf(FakeWidget);
     }
+  });
+
+
+  it('applies static and reactive inline styles to GTK widgets and releases providers', () => {
+    const host = createGtkRenderHost(createGtk());
+    const style = signal('color: red;');
+    const widget = host.element('GtkLabel', {
+      class: 'heading',
+      style: { kind: 'binding', get: () => style.get() },
+    }, undefined) as FakeWidget;
+    expect([...widget.classes]).toEqual(['heading']);
+    const provider = [...widget.styleContext.providers][0];
+    expect(provider?.data).toBe('* { color: red; }');
+    style.set('font-weight: bold;');
+    expect(provider?.data).toBe('* { font-weight: bold; }');
+    host.destroy(widget);
+    expect(widget.styleContext.providers.size).toBe(0);
   });
 
   it('binds GtkScale values and emits native value changes', () => {

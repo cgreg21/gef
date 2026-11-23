@@ -120,6 +120,7 @@
 - [x] Add `GefCheckbox` with a reactive checked state and `checkedChange` output on GNOME Shell St and GTK4.
 - [x] Add `GefProgressBar` with a reactive fraction on GNOME Shell St and GTK4, including native Node-GTK smoke coverage.
 - [x] Keep button labels and disabled/sensitive state reactive after component creation.
+- [x] Add shared responsive breakpoints, mobile-first responsive values, breakpoint observation and responsive grid position calculation.
 
 ## Styles and developer tools
 - [x] SCSS compilation through the Sass CLI.

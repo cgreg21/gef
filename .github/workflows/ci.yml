@@ -124,42 +124,14 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Install GTK4 integration dependencies
-        run: sudo apt-get update && sudo apt-get install -y gjs gir1.2-gtk-4.0 gir1.2-adw-1 libglib2.0-bin libgirepository-1.0-1 gir1.2-girepository-2.0 xvfb imagemagick xdotool
+        run: sudo apt-get update && sudo apt-get install -y gjs gir1.2-gtk-4.0 gir1.2-adw-1 libglib2.0-bin libgirepository-1.0-1 gir1.2-girepository-2.0 xvfb
       - name: Install Node-GTK runtime
         run: npm install --no-save --package-lock=false node-gtk@4.1.1 --no-audit --no-fund
       - name: GTK4 and libadwaita runtime smoke test
         run: npm run test:gtk
-      - name: Build and capture GEF Kitchen Sink
+      - name: Build and smoke test GEF Kitchen Sink
         run: |
           npm run build:kitchen-sink
-          GDK_BACKEND=x11 GTK_A11Y=none xvfb-run -a dbus-run-session -- bash -euo pipefail -c '
-            gjs -m packages/examples/kitchen-sink/kitchen-sink.js > dist/kitchen-sink.log 2>&1 &
-            app_pid=$!
-            trap "kill $app_pid 2>/dev/null || true" EXIT
-            window_id=""
-            for attempt in $(seq 1 40); do
-              if ! kill -0 "$app_pid" 2>/dev/null; then cat dist/kitchen-sink.log; exit 1; fi
-              window_id=$(xdotool search --name "GEF Kitchen Sink" 2>/dev/null | head -n 1 || true)
-              if [ -n "$window_id" ]; then break; fi
-              sleep 0.25
-            done
-            if [ -z "$window_id" ]; then
-              cat dist/kitchen-sink.log
-              xdotool search --name ".*" 2>/dev/null || true
-              exit 1
-            fi
-            import -window "$window_id" dist/kitchen-sink.png
-            dimensions=$(identify -format "%w %h" dist/kitchen-sink.png)
-            read -r width height <<< "$dimensions"
-            test "$width" -ge 600
-            test "$height" -ge 500
-            test "$(stat -c%s dist/kitchen-sink.png)" -gt 5000
-          '
-      - name: Upload GEF Kitchen Sink screenshot
-        uses: actions/upload-artifact@v4
-        with:
-          name: gef-kitchen-sink-gtk4
-          path: dist/kitchen-sink.png
-          if-no-files-found: error
+          GTK_A11Y=none xvfb-run -a gjs -m tests/gtk4/kitchen-sink-smoke.js
       - name: Node-GTK renderer smoke test
         run: npm run build && node dist/cli/src/index.js compile tests/node-gtk/smoke.gtpl dist/node-gtk-view.js && GTK_A11Y=none xvfb-run -a node --import node-gtk/register tests/node-gtk/smoke.mjs

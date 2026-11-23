@@ -39,7 +39,7 @@ export interface GtkStringList extends GtkActor {
 }
 
 export interface GtkStringListNamespace {
-  new(strings: string[]): GtkStringList;
+  readonly new: (strings: string[]) => GtkStringList;
 }
 
 export interface GtkNamespace {

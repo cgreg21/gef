@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { access, cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const root = process.cwd();
 const manifest = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'));
@@ -46,7 +47,7 @@ try {
 await cp(resolve(root, 'package.json'), resolve(app, 'package.json'));
 await cp(process.execPath, resolve(runtime, 'node.exe'));
 
-const launcherProject = resolve(root, 'scripts/windows-launcher');
+const launcherProject = resolve(fileURLToPath(new URL('.', import.meta.url)), 'windows-launcher');
 const launcherBuild = resolve(stage, '.launcher-build');
 await mkdir(launcherBuild, { recursive: true });
 const launcherSource = (await readFile(resolve(launcherProject, 'Program.cs'), 'utf8'))

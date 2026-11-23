@@ -41,7 +41,7 @@ Usage:
   gef check <template.gtpl>
   gef compile <template.gtpl> [output.js]
   gef styles <input.scss> [output.css]
-  gef new <extension-name> [directory]
+  gef new <project-name> [directory] [--type application|extension]
   gef generate component <Name> [directory]
   gef build
   gef test
@@ -55,7 +55,7 @@ Commands:
   check      Parse, lower and validate a GTPL template.
   compile    Emit a JavaScript render-function module.
   styles     Compile SCSS and validate GNOME theme CSS compatibility.
-  new        Create a minimal GNOME Shell 51 extension project.
+  new        Create a Node-GTK application or GNOME Shell extension project.
   generate   Generate a component class and GTPL template.
   build      Build the current project.
   test       Run the current project test suite.
@@ -309,20 +309,44 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
   }
 
   if (command === 'build' || command === 'test' || command === 'package' || command === 'watch') {
+    let projectType: 'application' | 'extension' | undefined;
+    try {
+      const config = JSON.parse(await io.readFile(resolve('gef.json'))) as {
+        defaultProject?: string;
+        projects?: Record<string, { projectType?: string }>;
+      };
+      const names = Object.keys(config.projects ?? {});
+      const selected = config.defaultProject ?? (names.length === 1 ? names[0] : undefined);
+      const project = selected ? config.projects?.[selected] : undefined;
+      if (!project) throw new Error('gef.json must define a defaultProject or exactly one project.');
+      if (project.projectType !== 'application' && project.projectType !== 'extension') {
+        throw new Error('gef.json projectType must be "application" or "extension".');
+      }
+      projectType = project.projectType;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        io.stderr(`Invalid project configuration: ${error instanceof Error ? error.message : String(error)}`);
+        return 2;
+      }
+    }
+
     let scripts: string[][];
     if (command === 'build') scripts = [['build']];
     else if (command === 'test') scripts = [['test']];
     else if (command === 'watch') scripts = [['dev:watch']];
+    else if (projectType === 'application') scripts = [['node-gtk', 'bundle']];
     else {
       try {
         const project = JSON.parse(await io.readFile(resolve('package.json'))) as { scripts?: { package?: string } };
-        scripts = project.scripts?.package ? [['package']] : [['build'], ['package:example']];
+        scripts = project.scripts?.package ? [['npm', 'run', 'package']] : [['npm', 'run', 'build'], ['npm', 'run', 'package:example']];
       } catch {
-        scripts = [['build'], ['package:example']];
+        scripts = [['npm', 'run', 'build'], ['npm', 'run', 'package:example']];
       }
     }
-    for (const [script] of scripts) {
-      const result = io.run('npm', ['run', script!]);
+    for (const [executable, ...args] of scripts) {
+      const result = executable === 'node-gtk'
+        ? io.run('npx', ['--no-install', 'node-gtk', ...args])
+        : io.run(executable === 'npm' ? executable : 'npm', executable === 'npm' ? args : ['run', executable]);
       if (result.output) io.stdout(result.output.trimEnd());
       if (result.status !== 0) return 1;
     }
@@ -356,29 +380,63 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
   if (command === 'new') {
     const name = inputArg;
     if (!name || !/^[a-z][a-z0-9-]*$/.test(name)) {
-      io.stderr('Extension name must use lowercase letters, digits and hyphens.');
+      io.stderr('Project name must use lowercase letters, digits and hyphens.');
       return 2;
     }
-    const directory = resolve(outputArg ?? name);
-    const className = name.split('-').map((part) => part[0]!.toUpperCase() + part.slice(1)).join('');
-    const files: Readonly<Record<string, string>> = {
+    const typeIndex = args.indexOf('--type');
+    const projectType = typeIndex >= 0 ? args[typeIndex + 1] : 'extension';
+    if (projectType !== 'application' && projectType !== 'extension') {
+      io.stderr('Project type must be "application" or "extension".');
+      return 2;
+    }
+    const positional = args.slice(2).filter((_value, index, values) =>
+      values[index - 1] !== '--type' && values[index] !== '--type' && values[index] !== projectType);
+    const directory = resolve(positional[0] ?? name);
+    const projectConfig = JSON.stringify({
+      version: 1,
+      defaultProject: name,
+      projects: {
+        [name]: {
+          projectType,
+          root: '.',
+          sourceRoot: 'src',
+          entryPoint: projectType === 'application' ? 'src/main.ts' : 'extension.ts',
+          outputPath: 'dist',
+        },
+      },
+    }, null, 2) + '\n';
+    const files: Readonly<Record<string, string>> = projectType === 'extension' ? {
+      'gef.json': projectConfig,
       'metadata.json': JSON.stringify({ uuid: `${name}@example.com`, name, description: `A GEF extension: ${name}`, 'shell-version': ['51'], version: 1 }, null, 2) + '\n',
-      'extension.ts': `// Generated with AI for personal use.\n// Do NOT upload to extensions.gnome.org (EGO) unless you understand JavaScript\n// and can maintain this code.\nimport St from 'gi://St';\nimport Main from 'resource:///org/gnome/shell/ui/main.js';\nimport { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';\n\nexport default class ${className}Extension extends Extension {\n  private indicator: InstanceType<typeof St.Button> | undefined;\n\n  override enable(): void {\n    const indicator = new St.Button({\n      style_class: 'panel-button',\n      reactive: true,\n      can_focus: true,\n      track_hover: true,\n    });\n    indicator.set_child(new St.Label({ text: '${name}' }));\n    Main.panel.addToStatusArea('${name}', indicator);\n    this.indicator = indicator;\n  }\n\n  override disable(): void {\n    this.indicator?.destroy();\n    this.indicator = undefined;\n  }\n}\n`,
-      'gjs.d.ts': `declare module 'gi://St' {\n  export class Button {\n    constructor(properties?: Record<string, unknown>);\n    set_child(child: Label): void;\n    destroy(): void;\n  }\n  export class Label { constructor(properties?: Record<string, unknown>); }\n  const St: { Button: typeof Button; Label: typeof Label };\n  export default St;\n}\n\ndeclare module 'resource:///org/gnome/shell/ui/main.js' {\n  const Main: { panel: { addToStatusArea(name: string, actor: unknown): void } };\n  export default Main;\n}\n\ndeclare module 'resource:///org/gnome/shell/extensions/extension.js' {\n  export class Extension { enable(): void; disable(): void; }\n}\n\n`,
+      'extension.ts': `// Generated with AI for personal use.\n// Do NOT upload to extensions.gnome.org (EGO) unless you understand JavaScript\n// and can maintain this code.\nimport St from 'gi://St';\nimport Main from 'resource:///org/gnome/shell/ui/main.js';\nimport { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';\n\nexport default class ${name.split('-').map((part) => part[0]!.toUpperCase() + part.slice(1)).join('')}Extension extends Extension {\n  private indicator: InstanceType<typeof St.Button> | undefined;\n\n  override enable(): void {\n    const indicator = new St.Button({ style_class: 'panel-button', reactive: true, can_focus: true, track_hover: true });\n    indicator.set_child(new St.Label({ text: '${name}' }));\n    Main.panel.addToStatusArea('${name}', indicator);\n    this.indicator = indicator;\n  }\n\n  override disable(): void {\n    this.indicator?.destroy();\n    this.indicator = undefined;\n  }\n}\n`,
+      'gjs.d.ts': `declare module 'gi://St' {\n  export class Button { constructor(properties?: Record<string, unknown>); set_child(child: Label): void; destroy(): void; }\n  export class Label { constructor(properties?: Record<string, unknown>); }\n  const St: { Button: typeof Button; Label: typeof Label };\n  export default St;\n}\ndeclare module 'resource:///org/gnome/shell/ui/main.js' { const Main: { panel: { addToStatusArea(name: string, actor: unknown): void } }; export default Main; }\ndeclare module 'resource:///org/gnome/shell/extensions/extension.js' { export class Extension { enable(): void; disable(): void; } }\n`,
       'tsconfig.json': JSON.stringify({ compilerOptions: { target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', experimentalDecorators: true, useDefineForClassFields: false, strict: true, skipLibCheck: true, rootDir: '.', outDir: 'dist', types: [] }, include: ['**/*.ts', '**/*.d.ts'], exclude: ['node_modules', 'dist'] }, null, 2) + '\n',
-      'package.json': JSON.stringify({ name, version: '1.0.0', private: true, type: 'module', scripts: { build: 'tsc -p tsconfig.json', package: 'npm run build && node scripts/package.mjs' }, dependencies: { 'gnome-extension-framework': '^0.1.0-alpha.1' }, devDependencies: { typescript: '^5.9.3' } }, null, 2) + '\n',
+      'package.json': JSON.stringify({ name, version: '1.0.0', private: true, type: 'module', scripts: { build: 'tsc -p tsconfig.json', package: 'npm run build && node scripts/package.mjs' }, dependencies: { 'gnome-extension-framework': '^0.1.0-alpha.2' }, devDependencies: { typescript: '^5.9.3' } }, null, 2) + '\n',
       'README.md': `# ${name}\n\nA GNOME Shell 51 extension generated by GEF.\n\nInstall dependencies with \`npm install\`, build with \`gef build\`, and package with \`gef package\`.\n`,
       'scripts/package.mjs': `import { cp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';\nimport { spawnSync } from 'node:child_process';\nimport { dirname, relative, resolve } from 'node:path';\n\nconst root = process.cwd();\nconst output = resolve(root, 'dist');\nconst framework = resolve(root, 'node_modules/gnome-extension-framework/dist');\nawait mkdir(resolve(output, 'runtime'), { recursive: true });\nawait cp(resolve(framework, 'runtime/src'), resolve(output, 'runtime/src'), { recursive: true });\nawait cp(resolve(framework, 'shared/src'), resolve(output, 'shared/src'), { recursive: true });\nawait cp(resolve(root, 'metadata.json'), resolve(output, 'metadata.json'));\n\nasync function visit(directory) {\n  const entries = await readdir(directory, { withFileTypes: true });\n  for (const entry of entries) {\n    const path = resolve(directory, entry.name);\n    if (entry.isDirectory()) await visit(path);\n    else if (path.endsWith('.js')) {\n      const specifier = relative(dirname(path), resolve(output, 'runtime/src/index.js')).split('\\\\').join('/');\n      const importPath = specifier.startsWith('.') ? specifier : './' + specifier;\n      const source = await readFile(path, 'utf8');\n      await writeFile(path, source.replaceAll('gnome-extension-framework/runtime', importPath), 'utf8');\n    }\n  }\n}\nawait visit(output);\nconst result = spawnSync('gnome-extensions', ['pack', output], { cwd: root, stdio: 'inherit' });\nif (result.status !== 0) process.exitCode = 1;\n`,
+    } : {
+      'gef.json': projectConfig,
+      'package.json': JSON.stringify({
+        name, version: '1.0.0', private: true, type: 'module', main: 'dist/main.js',
+        scripts: { build: 'tsc -p tsconfig.json', start: 'node --import node-gtk/register dist/main.js', test: 'node --test', package: 'node-gtk bundle' },
+        dependencies: { 'node-gtk': '^4.1.1' },
+        devDependencies: { typescript: '^5.9.3' },
+      }, null, 2) + '\n',
+      'tsconfig.json': JSON.stringify({ compilerOptions: { target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', strict: true, skipLibCheck: true, rootDir: 'src', outDir: 'dist', types: [] }, include: ['src/**/*.ts', 'src/**/*.d.ts'], exclude: ['node_modules', 'dist'] }, null, 2) + '\n',
+      'src/main.ts': `import Gtk from 'gi:Gtk-4.0';\nimport Adw from 'gi:Adw-1';\n\nconst app = new Adw.Application('com.example.${name.replaceAll('-', '.')}', 0);\n\napp.on('activate', () => {\n  const content = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 12 });\n  content.append(new Gtk.Label({ label: 'Hello from GEF and node-gtk!' }));\n\n  const window = new Adw.ApplicationWindow(app);\n  window.setTitle('${name}');\n  window.setDefaultSize(640, 480);\n  window.setContent(content);\n  window.present();\n});\n\napp.run([]);\n`,
+      'src/node-gtk.d.ts': `declare module 'gi:Gtk-4.0' { const Gtk: any; export default Gtk; }\ndeclare module 'gi:Adw-1' { const Adw: any; export default Adw; }\n`,
+      'README.md': `# ${name}\n\nA native GTK4/libadwaita application for Node.js, generated by GEF and powered by node-gtk 4.\n\nInstall dependencies with \`npm install\`, build with \`gef build\`, run with \`npm start\`, and create a portable bundle with \`gef package\`.\n\nThe app uses node-gtk's \`gi:` ESM imports and must run with \`node --import node-gtk/register\`.\n`,
     };
     try {
       await io.mkdir(directory);
-      await io.mkdir(resolve(directory, 'scripts'));
+      if (projectType === 'extension') await io.mkdir(resolve(directory, 'scripts'));
+      else await io.mkdir(resolve(directory, 'src'));
       for (const [path, source] of Object.entries(files)) await io.writeFile(resolve(directory, path), source);
     } catch (error) {
       io.stderr(`Unable to generate project: ${error instanceof Error ? error.message : String(error)}`);
       return 2;
     }
-    io.stdout(`Created extension project: ${directory}`);
+    io.stdout(`Created ${projectType} project: ${directory}`);
     return 0;
   }
 

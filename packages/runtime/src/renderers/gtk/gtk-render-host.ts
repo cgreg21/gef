@@ -106,7 +106,9 @@ function alignValue(value: unknown): number {
   if (typeof value !== 'string' || !(value in alignments)) {
     throw new Error('Flex align must be "fill", "start", "center" or "end".');
   }
-  return alignments[value];
+  const alignment = alignments[value];
+  if (alignment === undefined) throw new Error('Invalid Flex alignment.');
+  return alignment;
 }
 
 function flexValue(attribute: string, value: unknown): unknown {

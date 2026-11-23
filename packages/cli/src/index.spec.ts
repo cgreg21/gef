@@ -273,6 +273,31 @@ describe('GEF CLI', () => {
   });
 
 
+  it('detects constructor side effects after nested blocks', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js')],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : [
+          "import St from 'gi://St';",
+          'export default class Demo {',
+          '  constructor() {',
+          '    if (true) {',
+          '      this.ready = true;',
+          '    }',
+          '    this.button = new St.Button();',
+          '  }',
+          '  enable() {}',
+          '  disable() {}',
+          '}',
+        ].join('\\n'),
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
+    expect(base.errors.join('\\n')).toContain('constructor contains GNOME resource or signal side effects');
+  });
+
   it('warns about console.debug calls without failing the EGO check', async () => {
     const base = createIO('');
     const io: CliIO = {

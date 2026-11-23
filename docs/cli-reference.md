@@ -15,7 +15,7 @@ GNOME tools.
 
 ### `gef --help`
 
-Prints usage and the command list, including \`ego-check\`. Unknown commands
+Prints usage and the command list, including `ego-check`. Unknown commands
 and invalid required arguments return a non-zero exit code.
 
 ### `gef check <template.gtpl>`

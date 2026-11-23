@@ -132,7 +132,7 @@ jobs:
       - name: Build and capture GEF Kitchen Sink
         run: |
           npm run build:kitchen-sink
-          GTK_A11Y=none xvfb-run -a dbus-run-session -- bash -euo pipefail -c '
+          GDK_BACKEND=x11 GTK_A11Y=none xvfb-run -a dbus-run-session -- bash -euo pipefail -c '
             gjs -m packages/examples/kitchen-sink/kitchen-sink.js > dist/kitchen-sink.log 2>&1 &
             app_pid=$!
             trap "kill $app_pid 2>/dev/null || true" EXIT

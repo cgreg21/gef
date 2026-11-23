@@ -29,13 +29,13 @@
 
 ## npm publication and CLI distribution
 - [x] Prepare the first alpha version as `0.1.0-alpha.1` and keep prereleases on npm's `next` dist-tag.
-- [ ] Confirm the public npm package name and publish the first alpha release.
-- [ ] Publish package metadata, compiler/runtime ESM exports and the `gef` executable.
+- [x] Confirm the public npm package name and publish the first alpha release.
+- [x] Publish package metadata, compiler/runtime ESM exports and the `gef` executable.
 - [x] Add CI coverage for npm manifest/export/tarball contents, clean installation, compiler/runtime ESM imports and CLI execution through `npx`.
 - [ ] Verify the first published alpha from the public npm registry and install it through `npx --package gnome-extension-framework@next gef --help`.
 - [x] Add a GitHub Release workflow with npm trusted publishing (OIDC), including an exact release-tag/package-version guard; never store credentials in source.
 - [x] Document the one-time manual npm package bootstrap, versioning, changelog and release recovery procedure.
-- [ ] Configure the npm package trusted publisher and complete the first public alpha release.
+- [ ] Configure the npm package trusted publisher and verify an OIDC publication of a subsequent version.
 - [ ] Run the final alpha candidate through the GNOME Shell 51 real-host enable/disable harness before publishing.
 
 ## Cross-platform compatibility

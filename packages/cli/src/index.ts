@@ -203,7 +203,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
       const enableBody = methodBody('enable');
       const disableBody = methodBody('disable');
       if (/\b(?:connect|connectObject|timeout_add|idle_add)\s*\(|\bnew\s+(?:St|Clutter|Meta|Shell)\./.test(enableBody)
-        && !/\b(?:destroy|disconnect|clear|remove|dispose|release)\s*\(/.test(disableBody)) {
+        && !/\b(?:destroy|disconnect|disconnectObject|clear|remove|source_remove|dispose|release)\s*\(/.test(disableBody)) {
         warnings.push('extension.js: enable() creates GNOME resources or connections but disable() has no obvious cleanup call.');
       }
     }

@@ -210,19 +210,24 @@ describe('createGtkRenderHost', () => {
     expect(() => host.element('Grid', { columns: '0' }, undefined)).toThrow(/positive integer/);
   });
 
-  it('maps GTPL Flex direction and gap to native GTK box properties', () => {
+  it('maps GTPL Flex direction, gap and homogeneous to native GTK box properties', () => {
     const host = createGtkRenderHost(createGtk());
     const direction = signal('row');
+    const homogeneous = signal('false');
     const flex = host.element('Flex', {
       direction: { kind: 'binding', get: () => direction.get() },
       gap: '12',
+      homogeneous: { kind: 'binding', get: () => homogeneous.get() },
     }, undefined) as FakeWidget;
 
-    expect(flex.properties).toMatchObject({ orientation: 0, spacing: 12 });
+    expect(flex.properties).toMatchObject({ orientation: 0, spacing: 12, homogeneous: false });
     direction.set('column');
+    homogeneous.set('true');
     expect(flex.properties.orientation).toBe(1);
+    expect(flex.properties.homogeneous).toBe(true);
     host.destroy(flex);
     expect(() => host.element('Flex', { direction: 'diagonal' }, undefined)).toThrow(/Flex direction/);
+    expect(() => host.element('Flex', { homogeneous: 'yes' }, undefined)).toThrow(/Flex homogeneous/);
   });
 
   it('removes libadwaita action-row suffix children with the matching GTK API', () => {

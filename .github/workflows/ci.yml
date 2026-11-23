@@ -124,7 +124,7 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Install GTK4 integration dependencies
-        run: sudo apt-get update && sudo apt-get install -y gjs gir1.2-gtk-4.0 gir1.2-adw-1 libglib2.0-bin libgirepository-1.0-1 gir1.2-girepository-2.0 xvfb imagemagick
+        run: sudo apt-get update && sudo apt-get install -y gjs gir1.2-gtk-4.0 gir1.2-adw-1 libglib2.0-bin libgirepository-1.0-1 gir1.2-girepository-2.0 xvfb imagemagick xdotool
       - name: Install Node-GTK runtime
         run: npm install --no-save --package-lock=false node-gtk@4.1.1 --no-audit --no-fund
       - name: GTK4 and libadwaita runtime smoke test
@@ -132,13 +132,23 @@ jobs:
       - name: Build and capture GTK UI showcase
         run: |
           npm run build:ui-showcase
-          GTK_A11Y=none xvfb-run -a bash -euo pipefail -c '
+          GTK_A11Y=none xvfb-run -a dbus-run-session -- bash -euo pipefail -c '
             gjs -m packages/examples/ui-showcase/showcase.js &
             app_pid=$!
             trap "kill $app_pid 2>/dev/null || true" EXIT
-            sleep 2
-            import -window root dist/ui-showcase.png
-            test -s dist/ui-showcase.png
+            window_id=""
+            for attempt in $(seq 1 20); do
+              window_id=$(xdotool search --onlyvisible --name "GEF UI Showcase" 2>/dev/null | head -n 1 || true)
+              if [ -n "$window_id" ]; then break; fi
+              sleep 0.25
+            done
+            test -n "$window_id"
+            import -window "$window_id" dist/ui-showcase.png
+            dimensions=$(identify -format "%w %h" dist/ui-showcase.png)
+            read -r width height <<< "$dimensions"
+            test "$width" -ge 600
+            test "$height" -ge 500
+            test "$(stat -c%s dist/ui-showcase.png)" -gt 5000
           '
       - name: Upload GTK UI showcase screenshot
         uses: actions/upload-artifact@v4

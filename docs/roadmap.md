@@ -116,7 +116,9 @@
 - [x] SCSS compilation through the Sass CLI.
 - [x] Initial GNOME theme CSS validation for unsupported browser layout declarations and block balance.
 - [x] Ignore comments and quoted strings (including embedded semicolons) when checking browser-only CSS declarations, while preserving diagnostic source offsets.
-- [x] Report unterminated CSS strings and comments with source positions.\n- [x] Preserve CSS diagnostic line and column positions for LF, CRLF and standalone CR line endings.\n- [ ] Complete St/GTK-specific CSS validation and style scoping.
+- [x] Report unterminated CSS strings and comments with source positions.
+- [x] Preserve CSS diagnostic line and column positions for LF, CRLF and standalone CR line endings.
+- [ ] Complete St/GTK-specific CSS validation and style scoping.
 - [x] CLI `check`, `compile` and `build` commands.
 - [x] CLI `new` and `doctor` commands.
 - [x] CLI `generate component` creates a decorated, input-driven component and matching GTPL template.

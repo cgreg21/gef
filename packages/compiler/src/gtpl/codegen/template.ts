@@ -279,7 +279,7 @@ function emitGtplTemplateInternal(
     mapping.generatedLine = generatedLine;
     mapping.generatedColumn = generatedColumn;
     cursor = offset + match[0].length;
-    while (formattedCode[cursor] === ' ' || formattedCode[cursor] === '\\t') cursor += 1;
+    while (formattedCode[cursor] === ' ' || formattedCode[cursor] === '\t') cursor += 1;
   }
   result += formattedCode.slice(cursor);
   return { code: result, nodeMappings };

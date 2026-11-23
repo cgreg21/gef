@@ -11,7 +11,7 @@ function emit(source: string, componentMembers: string[] = []): string {
 }
 
 function compact(source: string): string {
-  return source.replace(/\\s+/g, ' ');
+  return source.replace(/\s+/g, ' ');
 }
 
 

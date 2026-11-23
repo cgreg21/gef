@@ -6,7 +6,7 @@ GEF is a TypeScript and GTPL framework for native GNOME desktop projects. It sup
 
 ## Requirements
 
-- Node.js 22+ for compiler, CLI and build tooling
+- Node.js 22+ for compiler, CLI, build tooling and Node-GTK GTK4 applications (Node-GTK prebuilt binaries target Node.js 22, 24 and 26)
 - GNOME Shell 51 and GJS for the extension runtime
 - GTK4 and libadwaita for preferences UI
 - Sass (installed with the development dependencies) for SCSS compilation
@@ -21,8 +21,11 @@ npm run build
 npm run package:example
 # Native GTK4/libadwaita smoke test (also runs in CI):
 npm run test:gtk
-# Build the UI Kitchen Sink template:
+# Build and launch the GTK4 Kitchen Sink with Node-GTK (Windows/Linux/macOS):
 npm run build:kitchen-sink
+npm run kitchen-sink
+# Or use the GJS entry point on GNOME/Linux:
+# gjs -m packages/examples/kitchen-sink/kitchen-sink.js
 # Build the smaller UI showcase template:
 npm run build:ui-showcase
 # On a host with GNOME Shell 51, GJS, dbus-run-session and Xvfb:

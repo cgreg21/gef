@@ -145,9 +145,8 @@ describe('createStRenderHost', () => {
       value: { kind: 'binding', get: () => value.get() },
       valueChange: (next: string) => { changed.push(next); value.set(next); },
     }, undefined) as FakeActor;
-    const label = select.children[0] as FakeActor;
     const menu = FakePopupMenu.latest!;
-    expect(label.properties.text).toBe('Medium');
+    expect(select.properties.label).toBe('Medium');
     expect(menu.items.map((item) => item.properties.text)).toEqual(['Small', 'Medium', 'Large']);
     select.emit('clicked');
     expect(menu.opened).toBe(true);
@@ -155,13 +154,13 @@ describe('createStRenderHost', () => {
     expect(menu.items.map((item) => item.properties.text)).toEqual(['Small', 'Large']);
     menu.items[1]!.emit('activate');
     expect(changed).toEqual(['Large']);
-    expect(label.properties.text).toBe('Large');
+    expect(select.properties.label).toBe('Large');
     expect(menu.opened).toBe(false);
     host.destroy(select);
     expect(popupMenu.uiGroup.children).toHaveLength(0);
     expect(select.destroyed).toBe(true);
     value.set('Small');
-    expect(label.properties.text).toBe('Large');
+    expect(select.properties.label).toBe('Large');
   });
 
   it('requires the injected PopupMenu API for the composite StSelect control', () => {

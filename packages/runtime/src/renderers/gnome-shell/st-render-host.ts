@@ -296,7 +296,8 @@ export function createStRenderHost(
       actor.connect('destroy', () => { destroyed.add(actor); resources.dispose(); });
       try {
         if (name === 'StPasswordEntry') {
-          const textActor = readProperty(actor, 'clutter-text') as StActor | undefined;
+          const textActor = (actor as StActor & { get_clutter_text?: () => StActor }).get_clutter_text?.()
+            ?? readProperty(actor, 'clutter-text') as StActor | undefined;
           if (!textActor) throw new Error('StPasswordEntry requires its native Clutter.Text actor.');
           let updating = false;
           const readText = (): string => {

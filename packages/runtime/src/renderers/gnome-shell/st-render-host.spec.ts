@@ -80,8 +80,9 @@ class FakePasswordEntry extends FakeActor {
   readonly textActor = new FakeActor();
   constructor(properties: Record<string, unknown> = {}) {
     super(properties);
-    this.properties['clutter-text'] = this.textActor;
+    this.properties.clutterText = this.textActor;
   }
+  get_clutter_text(): FakeActor { return this.textActor; }
   set_property(name: string, value: unknown): void {
     super.set_property(name, value);
     if (name === 'text') this.textActor.set_property('text', value);

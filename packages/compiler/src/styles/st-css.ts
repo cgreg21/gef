@@ -1,3 +1,19 @@
+function getPosition(source: string, offset: number): { line: number; column: number } {
+  let line = 1;
+  let column = 1;
+  for (let index = 0; index < offset; index += 1) {
+    if (source[index] === '\\r') {
+      line += 1;
+      column = 1;
+      if (source[index + 1] === '\\n') index += 1;
+    } else if (source[index] === '\\n') {
+      line += 1;
+      column = 1;
+    } else column += 1;
+  }
+  return { line, column };
+}
+
 export interface StCssDiagnostic {
   readonly code: string;
   readonly message: string;

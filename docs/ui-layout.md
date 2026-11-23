@@ -96,7 +96,7 @@ Use the native `Flex` container directly in a template:
 </Flex>
 ```
 
-`direction` accepts `row` or `column`; `gap` is a non-negative number of pixels. Both renderers map these attributes to their native box orientation and spacing, and `direction` supports reactive GTPL bindings. The container is deliberately minimal: wrapping, grow/shrink and justification are not yet part of the GTPL API.
+`direction` accepts `row` or `column`; `gap` is a non-negative number of pixels; `homogeneous` accepts `true` or `false` and enables equal child sizing in the native box. Both renderers map these attributes to native properties. `direction` and `homogeneous` support reactive GTPL bindings. The container is deliberately minimal: wrapping, grow/shrink and justification are not yet part of the GTPL API.
 
 ## GTPL Grid container
 

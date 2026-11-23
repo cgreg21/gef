@@ -291,7 +291,6 @@ export function createGtkRenderHost(
       const classes: string[] = [];
       const classBindings: GtplBinding<unknown>[] = [];
       let gridColumns = 2;
-      let gridGap = 0;
       for (const [attribute, value] of Object.entries(attributes)) {
         if (attribute === 'class' || attribute === 'className') {
           if (isGtplBinding(value)) classBindings.push(value);
@@ -300,7 +299,7 @@ export function createGtkRenderHost(
         }
         const [property, normalized] = layoutAttribute(name, attribute, value);
         if (name === 'Grid' && attribute === 'columns') { gridColumns = normalized as number; continue; }
-        if (name === 'Grid' && attribute === 'gap') { gridGap = normalized as number; properties.row_spacing = normalized; properties.column_spacing = normalized; continue; }
+        if (name === 'Grid' && attribute === 'gap') { properties.row_spacing = normalized; properties.column_spacing = normalized; continue; }
         if (isGtplBinding(normalized)) bindings.push([property, normalized]);
         else if (typeof normalized === 'function') events.push([property, normalized as (...args: unknown[]) => unknown]);
         else properties[propertyName(property, options.api)] = normalized;
@@ -333,8 +332,9 @@ export function createGtkRenderHost(
         }
         if (name === 'Grid') {
           if (typeof actor.attach !== 'function') throw new Error('This GTK Grid widget does not support child placement.');
-          const nodes = child ? (children.get(child) ?? [child]) : [];
-          if (child && nodes !== [child]) {
+          const fragmentNodes = child ? children.get(child) : undefined;
+          const nodes = child ? (fragmentNodes ?? [child]) : [];
+          if (child && fragmentNodes) {
             for (const node of nodes) removeChild(child, node);
             children.set(child, []);
             disposeWidget(child);

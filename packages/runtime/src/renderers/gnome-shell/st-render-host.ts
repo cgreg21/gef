@@ -407,7 +407,7 @@ export function createStRenderHost(
             actor.add_child?.(row);
             appendChildren(row, nodes.slice(index, index + gridColumns));
           }
-        } else {
+        } else if (name !== 'StTextArea') {
           appendChildren(actor, children ? [children] : []);
         }
         return actor;

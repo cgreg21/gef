@@ -37,10 +37,18 @@ describe('GefTextArea', () => {
 
     definition!.render(area, runtime as never);
 
-    expect(element).toHaveBeenCalledWith(nativeName, expect.objectContaining({
-      text: expect.objectContaining({ kind: 'binding' }),
-      textChange: expect.any(Function),
-    }), undefined);
+    if (nativeName === 'GtkTextView') {
+      expect(element).toHaveBeenNthCalledWith(1, 'GtkTextView', expect.objectContaining({
+        text: expect.objectContaining({ kind: 'binding' }),
+        textChange: expect.any(Function),
+      }), undefined);
+      expect(element).toHaveBeenNthCalledWith(2, 'GtkScrolledWindow', { hexpand: true, vexpand: true }, expect.anything());
+    } else {
+      expect(element).toHaveBeenCalledWith(nativeName, expect.objectContaining({
+        text: expect.objectContaining({ kind: 'binding' }),
+        textChange: expect.any(Function),
+      }), undefined);
+    }
     const attributes = element.mock.calls[0]![1];
     expect((attributes.text as { get(): string }).get()).toBe('first\nsecond');
     (attributes.textChange as (value: string) => void)('updated');

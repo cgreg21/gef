@@ -20,5 +20,5 @@ Input()(GefTextArea.prototype, 'value');
 Output()(GefTextArea.prototype, 'valueChange');
 Component({
   selector: 'GefTextArea',
-  template: '<GtkTextView></GtkTextView>',
+  template: '<GtkScrolledWindow><GtkTextView></GtkTextView></GtkScrolledWindow>',
 })(GefTextArea);

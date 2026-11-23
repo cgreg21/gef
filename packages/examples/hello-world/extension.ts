@@ -1,3 +1,4 @@
+import Clutter from 'gi://Clutter';
 import St from 'gi://St';
 import Main from 'resource:///org/gnome/shell/ui/main.js';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
@@ -6,6 +7,7 @@ import {
   bindGSettingsBoolean,
   createStRenderHost,
   mountGtplTemplate,
+  type StClutterNamespace,
   type StNamespace,
   loadStStylesheet,
 } from '../../runtime/src/index.js';
@@ -26,7 +28,7 @@ export default class GefHelloWorldExtension extends Extension {
       const settingsScope = new ResourceScope();
       scope.add(() => settingsScope.dispose());
       const enabled = bindGSettingsBoolean(this.getSettings(), 'enabled', settingsScope);
-      const host = createStRenderHost(St as StNamespace);
+      const host = createStRenderHost(St as StNamespace, { clutter: Clutter as StClutterNamespace });
       const view = mountGtplTemplate({ enabled }, renderTemplate, host);
       scope.add(() => view.dispose());
 

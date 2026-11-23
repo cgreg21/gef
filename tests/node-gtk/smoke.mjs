@@ -61,7 +61,7 @@ assert.equal(label.useUnderline, true);
 assert.equal(icon.iconName, 'document-save-symbolic');
 assert.equal(progress.fraction, 0.25);
 assert.equal(textArea.buffer.text, 'first line\nsecond line');
-textArea.buffer.setText('edited\nby Node-GTK');
+textArea.buffer.setText('edited\nby Node-GTK', -1);
 assert.equal(areaEvent, 'edited\nby Node-GTK');
 assert.equal(areaValue.get(), 'edited\nby Node-GTK');
 areaValue.set('external update');

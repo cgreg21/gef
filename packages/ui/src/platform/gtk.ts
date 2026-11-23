@@ -57,15 +57,19 @@ export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
   registry.registerType(GefTextArea, {
     create: () => new GefTextArea(),
     render: (area: GefTextArea, runtime: GtplRenderRuntime<GtkActor>) => runtime.element(
-      'GtkTextView',
-      {
-        text: runtime.bind(() => area.value),
-        textChange: (value: string) => {
-          area.value = value;
-          area.valueChange.emit(value);
+      'GtkScrolledWindow',
+      { hexpand: true, vexpand: true },
+      runtime.element(
+        'GtkTextView',
+        {
+          text: runtime.bind(() => area.value),
+          textChange: (value: string) => {
+            area.value = value;
+            area.valueChange.emit(value);
+          },
         },
-      },
-      undefined,
+        undefined,
+      ),
     ),
   });
   registry.registerType(GefProgressBar, {

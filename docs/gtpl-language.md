@@ -118,7 +118,7 @@ GTPL provides two simple application-shell containers on both GNOME Shell and GT
 </Flex>
 ```
 
-`HeaderBar` is a horizontal container and `Sidebar` is a vertical container. Both accept the same child elements and bindings as other GTPL containers. They are layout containers, not window decorations: attach the header bar to the application's window/title area when the platform requires it. Their default orientations can be overridden with the normal `orientation` attribute.
+`HeaderBar` uses the supplied `Adw.HeaderBar` when available, otherwise `Gtk.HeaderBar`, then falls back to a horizontal `Gtk.Box`; on GNOME Shell it uses a horizontal `St.BoxLayout`. `Sidebar` is a vertical `Gtk.Box` or `St.BoxLayout`. Children are packed into the native header bar using its start slot. Both accept the same child elements and bindings as other GTPL containers. They are layout containers, not window decorations: attach the header bar to the application's window/title area when the platform requires it. The `orientation` attribute applies to the box fallback and to `Sidebar`.
 
 ## Security and correctness
 

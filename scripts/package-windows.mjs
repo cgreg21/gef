@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { access, cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const root = process.cwd();
@@ -48,28 +49,30 @@ await cp(resolve(root, 'package.json'), resolve(app, 'package.json'));
 await cp(process.execPath, resolve(runtime, 'node.exe'));
 
 const launcherProject = resolve(fileURLToPath(new URL('.', import.meta.url)), 'windows-launcher');
-const launcherBuild = resolve(stage, '.launcher-build');
-await mkdir(launcherBuild, { recursive: true });
-const launcherSource = (await readFile(resolve(launcherProject, 'Program.cs'), 'utf8'))
-  .replace('"__ENTRY__"', JSON.stringify(bundle.entry.replaceAll('\\\\', '/')));
-await writeFile(resolve(launcherBuild, 'Program.cs'), launcherSource);
-await cp(resolve(launcherProject, 'Launcher.csproj'), resolve(launcherBuild, 'Launcher.csproj'));
+const launcherBuild = await mkdtemp(resolve(tmpdir(), 'gef-windows-launcher-'));
+try {
+  const launcherSource = (await readFile(resolve(launcherProject, 'Program.cs'), 'utf8'))
+    .replace('"__ENTRY__"', JSON.stringify(bundle.entry.replaceAll('\\\\', '/')));
+  await writeFile(resolve(launcherBuild, 'Program.cs'), launcherSource);
+  await cp(resolve(launcherProject, 'Launcher.csproj'), resolve(launcherBuild, 'Launcher.csproj'));
 
-const runtimeIdentifier = architecture === 'arm64' ? 'win-arm64' : 'win-x64';
-run('dotnet', [
-  'publish',
-  resolve(launcherBuild, 'Launcher.csproj'),
-  '--configuration', 'Release',
-  '--runtime', runtimeIdentifier,
-  '--self-contained', 'true',
-  `-p:AssemblyName=${bundle.name}`,
-  '-p:PublishSingleFile=true',
-  '-p:IncludeNativeLibrariesForSelfExtract=true',
-  '-p:DebugType=None',
-  '-p:DebugSymbols=false',
-  '--output', stage,
-]);
-await rm(launcherBuild, { recursive: true, force: true });
+  const runtimeIdentifier = architecture === 'arm64' ? 'win-arm64' : 'win-x64';
+  run('dotnet', [
+    'publish',
+    resolve(launcherBuild, 'Launcher.csproj'),
+    '--configuration', 'Release',
+    '--runtime', runtimeIdentifier,
+    '--self-contained', 'true',
+    `-p:AssemblyName=${bundle.name}`,
+    '-p:PublishSingleFile=true',
+    '-p:IncludeNativeLibrariesForSelfExtract=true',
+    '-p:DebugType=None',
+    '-p:DebugSymbols=false',
+    '--output', stage,
+  ]);
+} finally {
+  await rm(launcherBuild, { recursive: true, force: true });
+}
 await access(executable);
 
 const archive = resolve(output, `${name}.zip`);

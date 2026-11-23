@@ -27,4 +27,4 @@ application.connect('activate', () => {
   window.present();
 });
 
-application.run([]);
+application.run(['gef-kitchen-sink']);

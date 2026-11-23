@@ -139,6 +139,15 @@ class FailingBox extends FakeWidget {
   }
 }
 
+class FakeStringList {
+  readonly items: string[];
+  constructor(items: string[]) { this.items = [...items]; }
+  get_item(index: number): { get_string(): string } | null {
+    const value = this.items[index];
+    return value === undefined ? null : { get_string: () => value };
+  }
+}
+
 function constructor(): GtkWidgetConstructor { return FakeWidget; }
 function createGtk(): GtkNamespace {
   return {
@@ -151,6 +160,7 @@ function createGtk(): GtkNamespace {
     Switch: FakeWidget,
     CheckButton: FakeWidget,
     DropDown: FakeWidget,
+    StringList: { new: (items: string[]) => new FakeStringList(items) },
     SpinButton: FakeWidget,
     ProgressBar: FakeWidget,
     Separator: FakeWidget,
@@ -176,6 +186,40 @@ describe('createGtkRenderHost', () => {
     for (const name of ['GtkCheckButton', 'GtkDropDown', 'GtkSpinButton', 'GtkProgressBar', 'GtkSeparator', 'GtkListBox', 'GtkListBoxRow', 'GtkGrid', 'GtkStack', 'GtkRevealer', 'GtkTextView', 'GtkPasswordEntry', 'GtkSearchEntry', 'AdwSwitchRow', 'AdwEntryRow', 'AdwPasswordEntryRow', 'AdwExpanderRow', 'AdwComboRow', 'AdwSpinRow', 'AdwBanner', 'AdwHeaderBar', 'AdwToolbarView', 'HeaderBar', 'Sidebar']) {
       expect(host.element(name, {}, undefined)).toBeInstanceOf(FakeWidget);
     }
+  });
+
+  it('backs GtkDropDown with a reactive Gtk.StringList and emits the selected string', () => {
+    const host = createGtkRenderHost(createGtk());
+    const options = signal(['Red', 'Green', 'Blue']);
+    const value = signal('Green');
+    const changed: string[] = [];
+    const dropdown = host.element('GtkDropDown', {
+      options: { kind: 'binding', get: () => options.get() },
+      value: { kind: 'binding', get: () => value.get() },
+      valueChange: (selected: string) => changed.push(selected),
+    }, undefined) as FakeWidget;
+
+    expect((dropdown.properties.model as FakeStringList).items).toEqual(['Red', 'Green', 'Blue']);
+    expect(dropdown.properties.selected).toBe(1);
+    options.set(['Blue', 'Green']);
+    expect((dropdown.properties.model as FakeStringList).items).toEqual(['Blue', 'Green']);
+    expect(dropdown.properties.selected).toBe(1);
+    value.set('Blue');
+    expect(dropdown.properties.selected).toBe(0);
+
+    dropdown.properties.selected = 1;
+    dropdown.emit('notify::selected');
+    expect(changed).toEqual(['Green']);
+    host.destroy(dropdown);
+    options.set(['One']);
+    expect((dropdown.properties.model as FakeStringList).items).toEqual(['Blue', 'Green']);
+  });
+
+  it('requires Gtk.StringList instead of silently creating a non-functional dropdown', () => {
+    const Gtk = createGtk();
+    const { StringList: _StringList, ...withoutStringList } = Gtk;
+    expect(() => createGtkRenderHost(withoutStringList).element('GtkDropDown', { options: [], value: '' }, undefined))
+      .toThrow(/requires Gtk.StringList/);
   });
 
   it('uses the supplied libadwaita header bar and packs template children into it', () => {

@@ -63,7 +63,7 @@ npm start
 gef package
 ```
 
-This creates `gef.json` with `projectType: "application"`, a GTK4/libadwaita entry point using `gi:` imports, and Node-GTK launch and bundle scripts. Node-GTK 4 runs with `node --import node-gtk/register`; install the native GTK4 and libadwaita libraries required by your platform. The app uses node-gtk's own `bundle` command for distribution.
+This creates `gef.json` with `projectType: "application"`, a GTK4/libadwaita entry point using `gi:` imports, and Node-GTK launch and bundle scripts. Its `package.json` also configures the portable bundle name, reverse-DNS application ID, compiled entry point and GTK 4 target. Node-GTK 4 runs with `node --import node-gtk/register`; install the native GTK4 and libadwaita libraries required by your platform. `gef package` runs the generated `npm run package` script, which delegates to `node-gtk bundle`. The upstream portable bundler currently targets Linux.
 ## 3. Build and package
 
 The starter project defines its own build and package scripts. Run:

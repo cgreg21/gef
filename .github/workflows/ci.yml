@@ -88,7 +88,7 @@ jobs:
             if (!files.has(path)) throw new Error(`Required npm package file is missing: ${path}`);
           }
           for (const path of files) {
-            if (/^(?:packages|scripts|tests|node_modules)\//.test(path) && path !== 'scripts/package-appimage.mjs') {
+            if (/^(?:packages|scripts|tests|node_modules)\//.test(path) && !['scripts/package-appimage.mjs', 'scripts/package-app.mjs', 'scripts/package-windows.mjs', 'scripts/package-macos.mjs'].includes(path)) {
               throw new Error(`Development-only file leaked into npm package: ${path}`);
             }
           }

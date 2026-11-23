@@ -31,6 +31,17 @@ export interface GtkActor {
 
 export type GtkWidgetConstructor = new (properties?: Record<string, unknown>) => GtkActor;
 
+export interface GtkStringList extends GtkActor {
+  get_item?(position: number): { get_string?(): string; getString?(): string } | null;
+  getItem?(position: number): { get_string?(): string; getString?(): string } | null;
+  get_string?(position: number): string | null;
+  getString?(position: number): string | null;
+}
+
+export interface GtkStringListNamespace {
+  new(strings: string[]): GtkStringList;
+}
+
 export interface GtkNamespace {
   readonly Box: GtkWidgetConstructor;
   readonly Label: GtkWidgetConstructor;
@@ -42,6 +53,7 @@ export interface GtkNamespace {
   readonly Switch?: GtkWidgetConstructor;
   readonly CheckButton?: GtkWidgetConstructor;
   readonly DropDown?: GtkWidgetConstructor;
+  readonly StringList?: GtkStringListNamespace;
   readonly SpinButton?: GtkWidgetConstructor;
   readonly ProgressBar?: GtkWidgetConstructor;
   readonly Separator?: GtkWidgetConstructor;
@@ -313,7 +325,11 @@ export function createGtkRenderHost(
       const classes: string[] = [];
       const classBindings: GtplBinding<unknown>[] = [];
       let gridColumns = 2;
+      const selectOptions = name === 'GtkDropDown' ? attributes.options : undefined;
+      const selectValue = name === 'GtkDropDown' ? attributes.value : undefined;
+      const selectChange = name === 'GtkDropDown' ? attributes.valueChange : undefined;
       for (const [attribute, value] of Object.entries(attributes)) {
+        if (name === 'GtkDropDown' && ['options', 'value', 'valueChange'].includes(attribute)) continue;
         if (attribute === 'class' || attribute === 'className') {
           if (isGtplBinding(value)) classBindings.push(value);
           else classes.push(...classNames(value));
@@ -350,6 +366,39 @@ export function createGtkRenderHost(
       if (name === 'Sidebar') properties.orientation ??= 1;
       const actor = new Constructor(properties);
       const scope = new ResourceScope();
+      if (name === 'GtkDropDown') {
+        if (!Gtk.StringList) throw new Error('GtkDropDown requires Gtk.StringList to provide a native options model.');
+        const readOptions = (): string[] => {
+          const value = isGtplBinding(selectOptions) ? selectOptions.get() : selectOptions;
+          if (!Array.isArray(value) || !value.some((item) => typeof item !== 'string')) {
+            if (Array.isArray(value) && value.length === 0) return [];
+            throw new Error('GtkDropDown options must be an array of strings.');
+          }
+          return value as string[];
+        };
+        let model = Gtk.StringList.new(readOptions());
+        const syncSelection = (): void => {
+          const value = isGtplBinding(selectValue) ? selectValue.get() : selectValue;
+          const index = readOptions().indexOf(typeof value === 'string' ? value : '');
+          setProperty(actor, 'selected', index < 0 ? 0xffffffff : index, options.api ?? 'gjs');
+        };
+        const setModel = (next: string[]): void => {
+          model = Gtk.StringList!.new(next);
+          setProperty(actor, 'model', model, options.api ?? 'gjs');
+          syncSelection();
+        };
+        const selectedValue = (): string => {
+          const selected = Number(readProperty(actor, 'selected', options.api ?? 'gjs'));
+          if (!Number.isInteger(selected) || selected < 0 || selected >= readOptions().length) return '';
+          const item = model.get_item?.(selected) ?? model.getItem?.(selected);
+          return item?.get_string?.() ?? item?.getString?.() ?? model.get_string?.(selected) ?? model.getString?.(selected) ?? '';
+        };
+        setProperty(actor, 'model', model, options.api ?? 'gjs');
+        if (isGtplBinding(selectOptions)) scope.add(effect(() => setModel(readOptions())));
+        if (isGtplBinding(selectValue)) scope.add(effect(syncSelection));
+        syncSelection();
+        if (typeof selectChange === 'function') scope.add(connectSignal(actor, notifySignal('selected'), () => selectChange(selectedValue())));
+      }
       own(actor, scope);
       try {
         for (const name of classes) (actor.add_css_class ?? actor.addCssClass)?.call(actor, name);

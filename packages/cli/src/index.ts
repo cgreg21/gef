@@ -183,7 +183,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
           errors.push('extension.js: extension class must implement ' + hook + '().');
         }
       }
-      const hasLifecycleSideEffects = /\b(?:connect|connectObject|timeout_add|idle_add)\\s*\\(|\\bnew\\s+(?:St|Clutter|Meta|Shell)\\./;
+      const hasLifecycleSideEffects = /\b(?:connect|connectObject|timeout_add|idle_add)\s*\(|\bnew\s+(?:St|Clutter|Meta|Shell)\./;
       const constructorBody = shellSource.match(/\bconstructor\s*\([^)]*\)\s*\{([\s\S]*?)(?=\n {2}(?:async\s+)?[A-Za-z_$][\w$]*\s*\()/)?.[1]
         ?? shellSource.match(/\bconstructor\s*\([^)]*\)\s*\{([\s\S]*?)\}/)?.[1]
         ?? '';

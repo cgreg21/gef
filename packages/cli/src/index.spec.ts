@@ -355,6 +355,30 @@ describe('GEF CLI', () => {
     expect(base.errors.join('\n')).not.toContain('no obvious cleanup call');
   });
 
+  it('recognizes GObject disconnectObject and GLib source_remove cleanup', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => [resolve('/tmp/demo/metadata.json'), resolve('/tmp/demo/extension.js')],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : [
+          "import GLib from 'gi://GLib';",
+          'export default class Demo {',
+          '  enable() {',
+          '    this._settings.connectObject("changed", () => {}, this);',
+          '    this._timer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, () => GLib.SOURCE_CONTINUE);',
+          '  }',
+          '  disable() {',
+          '    this._settings.disconnectObject(this);',
+          '    GLib.source_remove(this._timer);',
+          '  }',
+          '}',
+        ].join('\n'),
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
+    expect(base.errors.join('\n')).not.toContain('no obvious cleanup call');
+  });
   it('warns about console.debug calls without failing the EGO check', async () => {
     const base = createIO('');
     const io: CliIO = {

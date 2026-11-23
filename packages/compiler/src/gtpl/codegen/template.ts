@@ -291,7 +291,7 @@ function formatJavaScript(source: string): string {
     ts.ScriptKind.JS,
   );
   const statement = file.statements[0];
-  if (file.parseDiagnostics.length > 0 || !statement || !ts.isVariableStatement(statement)) {
+  if (!statement || !ts.isVariableStatement(statement)) {
     throw new Error('Cannot format generated GTPL JavaScript.');
   }
   const declaration = statement.declarationList.declarations[0];

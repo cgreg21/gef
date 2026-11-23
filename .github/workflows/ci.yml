@@ -109,6 +109,10 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: TypeScript typecheck and unit tests
         run: npm run check
+      - name: Build Kitchen Sink and verify Windows Node-GTK bindings
+        run: |
+          npm run build:kitchen-sink
+          npm run test:node-gtk:availability
 
   gtk-integration:
     name: GTK4 and libadwaita integration

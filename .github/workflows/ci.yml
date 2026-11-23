@@ -82,7 +82,7 @@ jobs:
             }
           }
           for (const entry of ['./scripts/package-app.mjs', './scripts/package-appimage.mjs', './scripts/package-windows.mjs', './scripts/package-macos.mjs']) {
-            if (!files.has(manifest.exports?.[entry])) throw new Error(`Packager export is absent from tarball: ${entry}`);
+            if (!files.has(manifest.exports?.[entry]?.replace(/^\\.\\//, ''))) throw new Error(`Packager export is absent from tarball: ${entry}`);
           }
           for (const path of required) {
             if (!files.has(path)) throw new Error(`Required npm package file is missing: ${path}`);

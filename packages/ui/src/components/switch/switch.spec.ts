@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { getComponentMetadata } from '../../../../shared/src/components/metadata.js';
 import { Injector } from '../../../../runtime/src/di/injector.js';
+import { effect } from '../../../../runtime/src/reactivity/signal.js';
 import type { GtplRenderRuntime } from '../../../../runtime/src/rendering/gtpl-runtime.js';
 import type { StActor } from '../../../../runtime/src/renderers/gnome-shell/st-render-host.js';
 import type { GtkActor } from '../../../../runtime/src/renderers/gtk/gtk-render-host.js';
@@ -43,9 +44,12 @@ describe('GefSwitch', () => {
     }), undefined);
     const attributes = element.mock.calls[0]![1];
     const binding = attributes[property] as { get(): boolean };
-    expect(binding.get()).toBe(true);
+    const rendered = { active: false };
+    const stop = effect(() => { rendered.active = binding.get(); });
+    expect(rendered.active).toBe(true);
     toggle.active = false;
-    expect(binding.get()).toBe(false);
+    expect(rendered.active).toBe(false);
+    stop();
     (attributes[property + 'Change'] as (value: boolean) => void)(true);
     expect(toggle.active).toBe(true);
     expect(changed).toHaveBeenCalledWith(true);

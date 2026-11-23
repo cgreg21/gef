@@ -244,6 +244,7 @@ export function createGtkRenderHost(
   const resources = new WeakMap<GtkActor, ResourceScope>();
   const children = new WeakMap<GtkActor, GtkActor[]>();
   const disposed = new WeakSet<GtkActor>();
+  const fragments = new WeakSet<GtkActor>();
 
   const own = (actor: GtkActor, scope: ResourceScope): void => {
     resources.set(actor, scope);
@@ -299,7 +300,7 @@ export function createGtkRenderHost(
         }
         const [property, normalized] = layoutAttribute(name, attribute, value);
         if (name === 'Grid' && attribute === 'columns') { gridColumns = normalized as number; continue; }
-        if (name === 'Grid' && attribute === 'gap') { properties.row_spacing = normalized; properties.column_spacing = normalized; continue; }
+        if (name === 'Grid' && attribute === 'gap') { properties[propertyName('row-spacing', options.api)] = normalized; properties[propertyName('column-spacing', options.api)] = normalized; continue; }
         if (isGtplBinding(normalized)) bindings.push([property, normalized]);
         else if (typeof normalized === 'function') events.push([property, normalized as (...args: unknown[]) => unknown]);
         else properties[propertyName(property, options.api)] = normalized;
@@ -332,7 +333,7 @@ export function createGtkRenderHost(
         }
         if (name === 'Grid') {
           if (typeof actor.attach !== 'function') throw new Error('This GTK Grid widget does not support child placement.');
-          const fragmentNodes = child ? children.get(child) : undefined;
+          const fragmentNodes = child && fragments.has(child) ? children.get(child) ?? [] : undefined;
           const nodes = child ? (fragmentNodes ?? [child]) : [];
           if (child && fragmentNodes) {
             for (const node of nodes) removeChild(child, node);
@@ -368,6 +369,7 @@ export function createGtkRenderHost(
       try {
         for (const node of nodes) { addChild(box, node); added.push(node); }
         children.set(box, added);
+        fragments.add(box);
         return box;
       } catch (error) {
         children.set(box, added);

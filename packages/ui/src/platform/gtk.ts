@@ -1,6 +1,7 @@
 import { ComponentRegistry } from '../../../runtime/src/components/component-registry.js';
 import type { GtplRenderRuntime } from '../../../runtime/src/rendering/gtpl-runtime.js';
 import type { GtkActor } from '../../../runtime/src/renderers/gtk/gtk-render-host.js';
+import { GefCheckbox } from '../components/checkbox/checkbox.component.js';
 import { GefButton } from '../components/button/button.component.js';
 import { GefIcon } from '../components/icon/icon.component.js';
 import { GefInput } from '../components/input/input.component.js';
@@ -55,6 +56,20 @@ export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
     render: (progress: GefProgressBar, runtime: GtplRenderRuntime<GtkActor>) => runtime.element(
       'GtkProgressBar',
       { fraction: runtime.bind(() => progress.fraction) },
+      undefined,
+    ),
+  });
+  registry.registerType(GefCheckbox, {
+    create: () => new GefCheckbox(),
+    render: (checkbox: GefCheckbox, runtime: GtplRenderRuntime<GtkActor>) => runtime.element(
+      'GtkCheckButton',
+      {
+        active: runtime.bind(() => checkbox.checked),
+        activeChange: (value: boolean) => {
+          checkbox.checked = value;
+          checkbox.checkedChange.emit(value);
+        },
+      },
       undefined,
     ),
   });

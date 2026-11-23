@@ -45,7 +45,18 @@ export function validateStCss(source: string): readonly StCssDiagnostic[] {
     if (comment) {
       if (char === '*' && next === '/') { comment = false; commentStart = undefined; index += 1; column += 2; continue; }
     } else if (quote) {
-      if (char === '\\') { index += 1; column += 2; continue; }
+      if (char === '\\') {
+        if (next === '\r') {
+          line += 1;
+          column = 1;
+          if (source[index + 2] === '\n') index += 1;
+        } else if (next === '\n') {
+          line += 1;
+          column = 1;
+        } else column += 2;
+        index += 1;
+        continue;
+      }
       if (char === quote) { quote = ''; quoteStart = undefined; }
     } else if (char === '/' && next === '*') {
       comment = true; commentStart = { line, column, start: index }; index += 1; column += 2; continue;

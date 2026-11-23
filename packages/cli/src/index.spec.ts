@@ -34,6 +34,33 @@ describe('GEF CLI', () => {
     expect(output[0]).toMatch(/^\s+doctor\s+Check Node\.js, Sass and native GNOME prerequisites\.\n\s+ego-check\s+Validate a staged extension against basic EGO requirements\./m);
   });
 
+  it('prints a concise EGO validation summary for a clean staged extension', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : 'export default class Demo { enable() {} disable() {} }',
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(0);
+    expect(base.output[0]).toBe('EGO validation passed: 2 files, 1 JavaScript files, 0 warning(s).');
+    expect(base.errors).toHaveLength(0);
+  });
+
+  it('reports EGO error and warning totals when validation fails', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      listFiles: async () => ['/tmp/demo/metadata.json', '/tmp/demo/extension.js', '/tmp/demo/unused.png'],
+      readFile: async (path) => path.endsWith('metadata.json')
+        ? JSON.stringify({ uuid: 'demo@example.com', name: 'Demo', description: 'A demo', 'shell-version': ['51'] })
+        : 'export default class Demo {}',
+    };
+    expect(await runCli(['ego-check', '/tmp/demo'], io)).toBe(1);
+    expect(base.errors.join('\\n')).toContain('EGO validation failed: 2 error(s), 1 warning(s).');
+  });
+
   it('validates a GTPL file', async () => {
     const { io, output, errors } = createIO('<StLabel>Hello</StLabel>');
     expect(await runCli(['check', 'view.gtpl'], io)).toBe(0);

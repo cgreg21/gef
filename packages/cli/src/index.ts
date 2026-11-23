@@ -253,10 +253,12 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     }
     if (errors.length) {
       errors.forEach((error) => io.stderr(error));
+      warnings.forEach((warning) => io.stderr(warning));
+      io.stderr(`EGO validation failed: ${errors.length} error(s), ${warnings.length} warning(s).`);
       return 1;
     }
     warnings.forEach((warning) => io.stderr(warning));
-    io.stdout(`EGO checks passed: ${directory}`);
+    io.stdout(`EGO validation passed: ${files.length} files, ${javascriptSources.size} JavaScript files, ${warnings.length} warning(s).`);
     return 0;
   }
 

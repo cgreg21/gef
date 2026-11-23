@@ -1,6 +1,7 @@
 import { ComponentRegistry } from '../../../runtime/src/components/component-registry.js';
 import type { GtplRenderRuntime } from '../../../runtime/src/rendering/gtpl-runtime.js';
 import type { StActor } from '../../../runtime/src/renderers/gnome-shell/st-render-host.js';
+import { GefCheckbox } from '../components/checkbox/checkbox.component.js';
 import { GefButton } from '../components/button/button.component.js';
 import { GefIcon } from '../components/icon/icon.component.js';
 import { GefInput } from '../components/input/input.component.js';
@@ -55,6 +56,20 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
     render: (progress: GefProgressBar, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StProgressBar',
       { fraction: runtime.bind(() => progress.fraction) },
+      undefined,
+    ),
+  });
+  registry.registerType(GefCheckbox, {
+    create: () => new GefCheckbox(),
+    render: (checkbox: GefCheckbox, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+      'StCheckBox',
+      {
+        checked: runtime.bind(() => checkbox.checked),
+        checkedChange: (value: boolean) => {
+          checkbox.checked = value;
+          checkbox.checkedChange.emit(value);
+        },
+      },
       undefined,
     ),
   });

@@ -80,7 +80,7 @@ Use `HeaderBar` and `Sidebar` directly in templates; no TypeScript layout config
 </Sidebar>
 ```
 
-`HeaderBar` defaults to horizontal orientation and `Sidebar` to vertical orientation on both native renderers. They remain ordinary layout containers, so child ordering, bindings and lifecycle follow the normal GTPL rules. The defaults can be overridden with `orientation`.
+`HeaderBar` uses `Adw.HeaderBar` when supplied, otherwise `Gtk.HeaderBar` or a horizontal `Gtk.Box` on GTK; GNOME Shell uses a horizontal `St.BoxLayout`. Native header bars receive children in their start slot. `Sidebar` uses a vertical `Gtk.Box` or `St.BoxLayout`. They remain ordinary GTPL containers, so child ordering, bindings and lifecycle follow the normal GTPL rules. `orientation` can override the box fallback and sidebar orientation.
 
 ## Flex layout
 

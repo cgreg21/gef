@@ -125,5 +125,9 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Install GTK4 integration dependencies
         run: sudo apt-get update && sudo apt-get install -y gjs gir1.2-gtk-4.0 gir1.2-adw-1 libglib2.0-bin xvfb
+      - name: Install Node-GTK runtime
+        run: npm install --no-save --package-lock=false node-gtk@4.1.1 --no-audit --no-fund
       - name: GTK4 and libadwaita runtime smoke test
         run: npm run test:gtk
+      - name: Node-GTK renderer smoke test
+        run: npm run build && GTK_A11Y=none xvfb-run -a node --import node-gtk/register tests/node-gtk/smoke.mjs

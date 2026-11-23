@@ -102,7 +102,7 @@ describe('createStRenderHost', () => {
 
   it('registers the common GNOME Shell St widget constructors', () => {
     const host = createStRenderHost(createSt());
-    for (const name of ['StEntry', 'StScrollView', 'StFrame', 'StSwitch', 'StSlider', 'StSpinner', 'StProgressBar', 'StCheckBox', 'StComboBox']) {
+    for (const name of ['StEntry', 'StScrollView', 'StFrame', 'StSwitch', 'StSlider', 'StSpinner', 'StProgressBar', 'StCheckBox', 'StComboBox', 'HeaderBar', 'Sidebar']) {
       expect(host.element(name, {}, undefined)).toBeInstanceOf(FakeActor);
     }
   });

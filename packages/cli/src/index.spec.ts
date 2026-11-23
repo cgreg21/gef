@@ -9,7 +9,10 @@ function createIO(source: string, commandStatus = 0) {
   const directories: string[] = [];
   const commands: Array<{ command: string; args: readonly string[] }> = [];
   const io: CliIO = {
-    readFile: async () => source,
+    readFile: async (path) => {
+      if (path.endsWith('gef.json')) throw Object.assign(new Error('missing'), { code: 'ENOENT' });
+      return source;
+    },
     writeFile: async (path, content) => { writes.push({ path, content }); },
     mkdir: async (path) => { directories.push(path); },
     listFiles: async () => [],
@@ -137,14 +140,16 @@ describe('GEF CLI', () => {
   it('creates a minimal extension project', async () => {
     const { io, output, writes, directories } = createIO('');
     expect(await runCli(['new', 'hello-world', 'out'], io)).toBe(0);
-    expect(writes.map((item) => item.path)).toEqual(expect.arrayContaining([expect.stringContaining('metadata.json'), expect.stringContaining('extension.ts'), expect.stringContaining('package.json'), expect.stringContaining('tsconfig.json'), expect.stringContaining(join('scripts', 'package.mjs'))]));
+    expect(writes.map((item) => item.path)).toEqual(expect.arrayContaining([expect.stringContaining('gef.json'), expect.stringContaining('metadata.json'), expect.stringContaining('extension.ts'), expect.stringContaining('package.json'), expect.stringContaining('tsconfig.json'), expect.stringContaining(join('scripts', 'package.mjs'))]));
     const extension = writes.find((item) => item.path.endsWith('extension.ts'))?.content ?? '';
     expect(extension).toContain('override enable(): void');
     expect(extension).toContain('Main.panel.addToStatusArea');
     expect(extension).toContain('this.indicator?.destroy()');
     expect(extension).toContain('InstanceType<typeof St.Button>');
     const projectPackage = JSON.parse(writes.find((item) => item.path.endsWith('package.json'))?.content ?? '{}') as { dependencies?: Record<string, string> };
-    expect(projectPackage.dependencies?.['gnome-extension-framework']).toBe('^0.1.0-alpha.1');
+    expect(projectPackage.dependencies?.['gnome-extension-framework']).toBe('^0.1.0-alpha.2');
+    const config = JSON.parse(writes.find((item) => item.path.endsWith('gef.json'))?.content ?? '{}') as { projects: Record<string, { projectType: string }> };
+    expect(config.projects['hello-world']?.projectType).toBe('extension');
     expect(extension).not.toContain('StButton');
     const packageScript = writes.find((item) => item.path.endsWith(join('scripts', 'package.mjs')))?.content ?? '';
     expect(packageScript).toContain("import { spawnSync } from 'node:child_process'");
@@ -152,6 +157,42 @@ describe('GEF CLI', () => {
     expect(extension).toContain('Do NOT upload to extensions.gnome.org');
     expect(directories).toEqual(expect.arrayContaining([expect.stringContaining(join('out', 'scripts'))]));
     expect(output[0]).toContain('Created extension project');
+  });
+
+  it('creates a Node-GTK application project with Angular-style project metadata', async () => {
+    const { io, output, writes, directories } = createIO('');
+    expect(await runCli(['new', 'desktop-app', 'out', '--type', 'application'], io)).toBe(0);
+    const config = JSON.parse(writes.find((item) => item.path.endsWith('gef.json'))?.content ?? '{}') as {
+      defaultProject: string;
+      projects: Record<string, { projectType: string; entryPoint: string }>;
+    };
+    expect(config.defaultProject).toBe('desktop-app');
+    expect(config.projects['desktop-app']).toMatchObject({ projectType: 'application', entryPoint: 'src/main.ts' });
+    const app = writes.find((item) => item.path.endsWith(join('src', 'main.ts')))?.content ?? '';
+    expect(app).toContain("import Gtk from 'gi:Gtk-4.0'");
+    expect(app).toContain("import Adw from 'gi:Adw-1'");
+    expect(app).toContain('app.run([])');
+    const projectPackage = JSON.parse(writes.find((item) => item.path.endsWith('package.json'))?.content ?? '{}') as {
+      dependencies?: Record<string, string>;
+      scripts?: Record<string, string>;
+    };
+    expect(projectPackage.dependencies?.['node-gtk']).toBe('^4.1.1');
+    expect(projectPackage.scripts?.start).toContain('--import node-gtk/register');
+    expect(projectPackage.scripts?.package).toBe('node-gtk bundle');
+    expect(directories).toContain(resolve('out/src'));
+    expect(output[0]).toContain('Created application project');
+  });
+
+  it('packages Node-GTK applications with the node-gtk bundler', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      readFile: async (path) => path.endsWith('gef.json')
+        ? JSON.stringify({ version: 1, defaultProject: 'app', projects: { app: { projectType: 'application' } } })
+        : '',
+    };
+    expect(await runCli(['package'], io)).toBe(0);
+    expect(base.commands).toEqual([{ command: 'npx', args: ['--no-install', 'node-gtk', 'bundle'] }]);
   });
 
   it('generates a component class and template', async () => {

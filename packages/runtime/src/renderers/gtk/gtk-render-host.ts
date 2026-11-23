@@ -9,13 +9,19 @@ export interface GtkActor {
   remove_suffix?(child: GtkActor): void;
   remove?(child: GtkActor): void;
   set_child?(child: GtkActor | null): void;
-  set_property(name: string, value: unknown): void;
+  set_property?(name: string, value: unknown): void;
   get_property?(name: string): unknown;
-  connect(signal: string, callback: (actor: GtkActor, ...args: unknown[]) => unknown): number;
-  disconnect(id: number): void;
+  connect?(signal: string, callback: (actor: GtkActor, ...args: unknown[]) => unknown): number;
+  disconnect?(id: number): void;
+  on?(signal: string, callback: (...args: unknown[]) => unknown): void;
+  off?(signal: string, callback: (...args: unknown[]) => unknown): void;
   get_parent?(): GtkActor | null;
-  add_css_class?(name: string): void;
-  remove_css_class?(name: string): void;
+  getParent?(): GtkActor | null;
+  setChild?(child: GtkActor | null): void;
+  addSuffix?(child: GtkActor): void;
+  removeSuffix?(child: GtkActor): void;
+  addCssClass?(name: string): void;
+  removeCssClass?(name: string): void;
 }
 
 export type GtkWidgetConstructor = new (properties?: Record<string, unknown>) => GtkActor;
@@ -63,6 +69,7 @@ export interface GtkRenderHostOptions {
   readonly adw?: AdwNamespace;
   readonly orientation?: unknown;
   readonly spacing?: number;
+  readonly api?: 'gjs' | 'node-gtk';
 }
 
 function twoWayProperty(event: string): string | undefined {
@@ -73,18 +80,47 @@ function notifySignal(property: string): string {
   return `notify::${property.replace(/([A-Z])/g, '-$1').replace(/_/g, '-').toLowerCase()}`;
 }
 
-function readProperty(actor: GtkActor, property: string): unknown {
-  const target = actor as unknown as Record<string, unknown>;
-  if (property in target) return target[property];
-  return target[propertyName(property)];
+function propertyName(name: string, api: 'gjs' | 'node-gtk' = 'gjs'): string {
+  if (name === 'class' || name === 'className') return api === 'node-gtk' ? 'cssClasses' : 'css_classes';
+  const camelCase = name.replace(/-([a-z])/g, (_match, letter: string) => letter.toUpperCase());
+  return api === 'node-gtk'
+    ? camelCase
+    : camelCase.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`).replace(/^_/, '');
 }
 
-function propertyName(name: string): string {
-  if (name === 'class' || name === 'className') return 'css_classes';
-  return name
-    .replace(/-([a-z])/g, (_match, letter: string) => letter.toUpperCase())
-    .replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
-    .replace(/^_/, '');
+function readProperty(actor: GtkActor, property: string, api: 'gjs' | 'node-gtk'): unknown {
+  const target = actor as unknown as Record<string, unknown>;
+  const name = propertyName(property, api);
+  if (api === 'node-gtk') return target[name];
+  if (property in target) return target[property];
+  return target[name];
+}
+
+function setProperty(actor: GtkActor, property: string, value: unknown, api: 'gjs' | 'node-gtk'): void {
+  if (api === 'node-gtk') {
+    (actor as unknown as Record<string, unknown>)[propertyName(property, api)] = value;
+  } else if (actor.set_property) {
+    actor.set_property(propertyName(property, api), value);
+  } else {
+    (actor as unknown as Record<string, unknown>)[propertyName(property, api)] = value;
+  }
+}
+
+function connectSignal(
+  actor: GtkActor,
+  signal: string,
+  callback: (actor: GtkActor, ...args: unknown[]) => unknown,
+): () => void {
+  if (actor.on && actor.off) {
+    const handler = (...args: unknown[]) => callback(actor, ...args);
+    actor.on(signal, handler);
+    return () => actor.off?.(signal, handler);
+  }
+  if (actor.connect && actor.disconnect) {
+    const id = actor.connect(signal, callback);
+    return () => actor.disconnect?.(id);
+  }
+  throw new Error('This GTK widget does not support signal connections.');
 }
 
 function classNames(value: unknown): string[] {
@@ -95,16 +131,20 @@ function classNames(value: unknown): string[] {
 
 function addChild(parent: GtkActor, child: GtkActor): void {
   if (typeof parent.set_child === 'function') parent.set_child(child);
+  else if (typeof parent.setChild === 'function') parent.setChild(child);
   else if (typeof parent.append === 'function') parent.append(child);
   else if (typeof parent.add_suffix === 'function') parent.add_suffix(child);
+  else if (typeof parent.addSuffix === 'function') parent.addSuffix(child);
   else if (typeof parent.add === 'function') parent.add(child);
   else throw new Error('This GTK widget cannot contain child widgets.');
 }
 
 function removeChild(parent: GtkActor, child: GtkActor): void {
   if (typeof parent.remove_suffix === 'function') parent.remove_suffix(child);
+  else if (typeof parent.removeSuffix === 'function') parent.removeSuffix(child);
   else if (typeof parent.remove === 'function') parent.remove(child);
   else if (typeof parent.set_child === 'function') parent.set_child(null);
+  else if (typeof parent.setChild === 'function') parent.setChild(null);
   else throw new Error('This GTK container cannot remove its child widget.');
 }
 
@@ -169,7 +209,7 @@ export function createGtkRenderHost(
     disposed.add(actor);
     for (const child of children.get(actor) ?? []) disposeWidget(child, false);
     resources.get(actor)?.dispose();
-    const parent = detach ? actor.get_parent?.() : null;
+    const parent = detach ? (actor.get_parent ?? actor.getParent)?.call(actor) : null;
     if (parent) removeChild(parent, actor);
     children.delete(actor);
     resources.delete(actor);
@@ -189,11 +229,8 @@ export function createGtkRenderHost(
   };
 
   return {
-    setProperty: (actor, property, value) => actor.set_property(propertyName(property), value),
-    listen: (actor, event, handler) => {
-      const id = actor.connect(event, (_source, ...args) => handler(...args));
-      return () => actor.disconnect(id);
-    },
+    setProperty: (actor, property, value) => setProperty(actor, property, value, options.api ?? 'gjs'),
+    listen: (actor, event, handler) => connectSignal(actor, event, (_source, ...args) => handler(...args)),
     onDestroy: (actor, callback) => {
       const scope = resources.get(actor);
       if (!scope) throw new Error('Cannot attach lifecycle cleanup to an unmanaged GTK widget.');
@@ -220,22 +257,21 @@ export function createGtkRenderHost(
       const scope = new ResourceScope();
       own(actor, scope);
       try {
-        for (const name of classes) actor.add_css_class?.(name);
+        for (const name of classes) (actor.add_css_class ?? actor.addCssClass)?.call(actor, name);
         for (const [signal, handler] of events) {
           const property = twoWayProperty(signal);
-          const id = actor.connect(property ? notifySignal(property) : signal, (_source, ...args) =>
-            property ? handler(readProperty(actor, property)) : handler(args.length <= 1 ? args[0] : args));
-          scope.add(() => actor.disconnect(id));
+          scope.add(connectSignal(actor, property ? notifySignal(property) : signal, (_source, ...args) =>
+            property ? handler(readProperty(actor, property, options.api ?? 'gjs')) : handler(args.length <= 1 ? args[0] : args)));
         }
         for (const [property, binding] of bindings) {
-          scope.add(effect(() => actor.set_property(property, binding.get())));
+          scope.add(effect(() => setProperty(actor, property, binding.get(), options.api ?? 'gjs')));
         }
         for (const binding of classBindings) {
           let previousDynamicClasses: string[] = [];
           scope.add(effect(() => {
             const nextClasses = classNames(binding.get());
-            for (const name of previousDynamicClasses) if (!nextClasses.includes(name)) actor.remove_css_class?.(name);
-            for (const name of nextClasses) if (!previousDynamicClasses.includes(name)) actor.add_css_class?.(name);
+            for (const name of previousDynamicClasses) if (!nextClasses.includes(name)) (actor.remove_css_class ?? actor.removeCssClass)?.call(actor, name);
+            for (const name of nextClasses) if (!previousDynamicClasses.includes(name)) (actor.add_css_class ?? actor.addCssClass)?.call(actor, name);
             previousDynamicClasses = nextClasses;
           }));
         }
@@ -255,7 +291,7 @@ export function createGtkRenderHost(
       const actor = new Gtk.Label({ label: isGtplBinding(value) ? value.get() : value });
       const scope = new ResourceScope();
       own(actor, scope);
-      if (isGtplBinding(value)) scope.add(effect(() => actor.set_property('label', value.get())));
+      if (isGtplBinding(value)) scope.add(effect(() => setProperty(actor, 'label', value.get(), options.api ?? 'gjs')));
       children.set(actor, []);
       return actor;
     },

@@ -17,8 +17,8 @@ class FakeWidget implements GtkActor {
 
   constructor(properties: Record<string, unknown> = {}) { this.properties = properties; }
   append(child: GtkActor): void { this.attachChild(child); }
-  add(child: GtkActor): void { this.attach(child); }
-  add_suffix(child: GtkActor): void { this.attach(child); }
+  add(child: GtkActor): void { this.attachChild(child); }
+  add_suffix(child: GtkActor): void { this.attachChild(child); }
   remove_suffix(child: GtkActor): void { this.remove(child); }
   remove(child: GtkActor): void {
     const index = this.children.indexOf(child);

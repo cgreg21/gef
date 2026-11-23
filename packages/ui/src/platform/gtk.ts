@@ -11,6 +11,7 @@ import { GefProgressBar } from '../components/progress-bar/progress-bar.componen
 import { GefSelect } from '../components/select/select.component.js';
 import { GefTextArea } from '../components/textarea/textarea.component.js';
 import { GefPasswordInput } from '../components/password-input/password-input.component.js';
+import { GefSearchInput } from '../components/search-input/search-input.component.js';
 
 export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
   const registry = new ComponentRegistry<GtkActor>();
@@ -46,6 +47,21 @@ export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
     render: (input: GefInput, runtime: GtplRenderRuntime<GtkActor>) => runtime.element(
       'GtkEntry',
       {
+        text: runtime.bind(() => input.value),
+        textChange: (value: string) => {
+          input.value = value;
+          input.valueChange.emit(value);
+        },
+      },
+      undefined,
+    ),
+  });
+  registry.registerType(GefSearchInput, {
+    create: () => new GefSearchInput(),
+    render: (input: GefSearchInput, runtime: GtplRenderRuntime<GtkActor>) => runtime.element(
+      'GtkSearchEntry',
+      {
+        'placeholder-text': runtime.bind(() => input.placeholder),
         text: runtime.bind(() => input.value),
         textChange: (value: string) => {
           input.value = value;

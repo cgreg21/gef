@@ -11,6 +11,7 @@ import { GefProgressBar } from '../components/progress-bar/progress-bar.componen
 import { GefSelect } from '../components/select/select.component.js';
 import { GefTextArea } from '../components/textarea/textarea.component.js';
 import { GefPasswordInput } from '../components/password-input/password-input.component.js';
+import { GefSearchInput } from '../components/search-input/search-input.component.js';
 
 function progressText(fraction: number): string {
   const value = Number.isFinite(fraction) ? Math.min(1, Math.max(0, fraction)) : 0;
@@ -52,6 +53,21 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
     render: (input: GefInput, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StEntry',
       {
+        text: runtime.bind(() => input.value),
+        textChange: (value: string) => {
+          input.value = value;
+          input.valueChange.emit(value);
+        },
+      },
+      undefined,
+    ),
+  });
+  registry.registerType(GefSearchInput, {
+    create: () => new GefSearchInput(),
+    render: (input: GefSearchInput, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+      'StEntry',
+      {
+        'hint-text': runtime.bind(() => input.placeholder),
         text: runtime.bind(() => input.value),
         textChange: (value: string) => {
           input.value = value;

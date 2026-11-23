@@ -4,6 +4,10 @@ Ce guide décrit la bibliothèque UI livrée avec GEF, ses composants natifs, le
 
 > **État du projet :** GEF est en alpha. Les composants présentés ici sont ceux effectivement exportés par `gnome-extension-framework/ui`. Les exemples GTPL utilisent les conteneurs natifs exposés par le renderer. Les composants `Gef*` sont des composants réutilisables à enregistrer dans le `ComponentRegistry` de la plateforme.
 
+## Démonstration native
+
+Une application GTK4 exécutable accompagne ce guide : [GEF UI Showcase](../packages/examples/ui-showcase/README.md). Elle monte un template GTPL dans le renderer GTK réel et présente boutons, saisie, cases à cocher, interrupteur, progression et grille. La CI exécute cette application sous Xvfb et publie une capture PNG comme artefact `gef-ui-showcase-gtk4` du workflow. Cette capture est issue du rendu GTK natif ; la galerie SVG ci-dessous reste une illustration.
+
 ## Aperçu visuel
 
 ![Galerie illustrative des composants GEF](assets/ui-components-gallery.svg)

@@ -16,7 +16,7 @@ class FakeWidget implements GtkActor {
   private nextSignal = 1;
 
   constructor(properties: Record<string, unknown> = {}) { this.properties = properties; }
-  append(child: GtkActor): void { this.attach(child); }
+  append(child: GtkActor): void { this.attachChild(child); }
   add(child: GtkActor): void { this.attach(child); }
   add_suffix(child: GtkActor): void { this.attach(child); }
   remove_suffix(child: GtkActor): void { this.remove(child); }
@@ -39,7 +39,7 @@ class FakeWidget implements GtkActor {
   emit(name: string, ...args: unknown[]): unknown {
     return [...this.signals.values()].find((entry) => entry.name === name)?.callback(this, ...args);
   }
-  private attach(child: GtkActor): void {
+  private attachChild(child: GtkActor): void {
     const widget = child as FakeWidget;
     widget.parent?.remove(widget);
     widget.parent = this;

@@ -10,10 +10,10 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
     render: (button: GefButton, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StButton',
       {
-        disabled: button.disabled,
+        disabled: runtime.bind(() => button.disabled),
         clicked: () => button.clicked.emit(undefined),
       },
-      runtime.text(button.label),
+      runtime.text(runtime.bind(() => button.label)),
     ),
   });
   return registry;

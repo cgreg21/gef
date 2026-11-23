@@ -1,3 +1,4 @@
+export * from './components/checkbox/checkbox.component.js';
 export * from './components/button/button.component.js';
 export * from './components/icon/icon.component.js';
 export * from './components/input/input.component.js';

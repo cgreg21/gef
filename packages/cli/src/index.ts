@@ -426,7 +426,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
           build: 'gef compile src/main.gtpl src/main-view.js && tsc -p tsconfig.json',
           start: 'node --import node-gtk/register dist/main.js',
           test: 'node --test',
-          package: 'npm run build && node-gtk bundle --archive && node scripts/package-appimage.mjs',
+          package: 'npm run build && node scripts/package.mjs',
         },
         dependencies: { 'gnome-extension-framework': '^0.1.0-alpha.2', 'node-gtk': '^4.1.1' },
         devDependencies: { typescript: '^5.9.3' },

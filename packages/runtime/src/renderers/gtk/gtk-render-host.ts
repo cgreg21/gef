@@ -6,6 +6,8 @@ export interface GtkActor {
   append?(child: GtkActor): void;
   add?(child: GtkActor): void;
   add_suffix?(child: GtkActor): void;
+  pack_start?(child: GtkActor): void;
+  packStart?(child: GtkActor): void;
   remove_suffix?(child: GtkActor): void;
   remove?(child: GtkActor): void;
   set_child?(child: GtkActor | null): void;
@@ -35,6 +37,7 @@ export interface GtkNamespace {
   readonly Entry: GtkWidgetConstructor;
   readonly Image: GtkWidgetConstructor;
   readonly ScrolledWindow: GtkWidgetConstructor;
+  readonly HeaderBar?: GtkWidgetConstructor;
   readonly Switch?: GtkWidgetConstructor;
   readonly CheckButton?: GtkWidgetConstructor;
   readonly DropDown?: GtkWidgetConstructor;
@@ -135,6 +138,8 @@ function addChild(parent: GtkActor, child: GtkActor): void {
   if (typeof parent.set_child === 'function') parent.set_child(child);
   else if (typeof parent.setChild === 'function') parent.setChild(child);
   else if (typeof parent.append === 'function') parent.append(child);
+  else if (typeof parent.pack_start === 'function') parent.pack_start(child);
+  else if (typeof parent.packStart === 'function') parent.packStart(child);
   else if (typeof parent.add_suffix === 'function') parent.add_suffix(child);
   else if (typeof parent.addSuffix === 'function') parent.addSuffix(child);
   else if (typeof parent.add === 'function') parent.add(child);
@@ -164,7 +169,7 @@ export function createGtkRenderHost(
 ): GtplRenderHost<GtkActor> {
   const constructors: Readonly<Record<string, GtkWidgetConstructor>> = {
     GtkBox: Gtk.Box,
-    HeaderBar: Gtk.Box,
+    HeaderBar: options.adw?.HeaderBar ?? Gtk.HeaderBar ?? Gtk.Box,
     Sidebar: Gtk.Box,
     GtkLabel: Gtk.Label,
     GtkButton: Gtk.Button,
@@ -257,7 +262,7 @@ export function createGtkRenderHost(
         else properties[propertyName(attribute, options.api)] = value;
       }
 
-      if (name === 'HeaderBar') properties.orientation ??= 0;
+      if (name === 'HeaderBar' && Constructor === Gtk.Box) properties.orientation ??= 0;
       if (name === 'Sidebar') properties.orientation ??= 1;
       const actor = new Constructor(properties);
       const scope = new ResourceScope();

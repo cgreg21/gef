@@ -34,7 +34,11 @@ await rm(app, { recursive: true, force: true });
 await rm(dmg, { force: true });
 for (const path of [macOS, runtime, appRoot, runtimeLib, shareRoot, typelibRoot]) await mkdir(path, { recursive: true });
 
-await cp(resolve(root, 'dist'), resolve(appRoot, 'dist'), { recursive: true, dereference: true });
+await mkdir(resolve(appRoot, 'dist'), { recursive: true });
+for (const entry of await readdir(output, { withFileTypes: true })) {
+  if (entry.name === `${bundle.name}.app` || /\\.(?:zip|dmg|appimage|tar\\.gz)$/i.test(entry.name) || entry.name.endsWith('.app')) continue;
+  await cp(resolve(output, entry.name), resolve(appRoot, 'dist', entry.name), { recursive: true, dereference: true });
+}
 await cp(resolve(root, 'node_modules'), resolve(appRoot, 'node_modules'), { recursive: true, dereference: true });
 await cp(resolve(root, 'package.json'), resolve(appRoot, 'package.json'));
 await cp(process.execPath, resolve(runtime, 'node'));

@@ -54,6 +54,57 @@ class FakeSingleChild extends FakeWidget {
   }
 }
 
+class NodeGtkWidget implements GtkActor {
+  readonly children: NodeGtkWidget[] = [];
+  readonly classes = new Set<string>();
+  readonly handlers = new Map<string, Set<(...args: unknown[]) => unknown>>();
+  parent: NodeGtkWidget | null = null;
+  [property: string]: unknown;
+
+  constructor(properties: Record<string, unknown> = {}) { Object.assign(this, properties); }
+  append(child: GtkActor): void {
+    const widget = child as NodeGtkWidget;
+    widget.parent?.remove(widget);
+    widget.parent = this;
+    this.children.push(widget);
+  }
+  remove(child: GtkActor): void {
+    const widget = child as NodeGtkWidget;
+    const index = this.children.indexOf(widget);
+    if (index !== -1) this.children.splice(index, 1);
+    widget.parent = null;
+  }
+  setChild(child: GtkActor | null): void {
+    for (const previous of [...this.children]) this.remove(previous);
+    if (child) this.append(child);
+  }
+  getParent(): GtkActor | null { return this.parent; }
+  addCssClass(name: string): void { this.classes.add(name); }
+  removeCssClass(name: string): void { this.classes.delete(name); }
+  on(signal: string, callback: (...args: unknown[]) => unknown): void {
+    const handlers = this.handlers.get(signal) ?? new Set();
+    handlers.add(callback);
+    this.handlers.set(signal, handlers);
+  }
+  off(signal: string, callback: (...args: unknown[]) => unknown): void {
+    this.handlers.get(signal)?.delete(callback);
+  }
+  emit(signal: string, ...args: unknown[]): void {
+    for (const callback of this.handlers.get(signal) ?? []) callback(...args);
+  }
+}
+
+function createNodeGtk(): GtkNamespace {
+  return {
+    Box: NodeGtkWidget,
+    Label: NodeGtkWidget,
+    Button: NodeGtkWidget,
+    Entry: NodeGtkWidget,
+    Image: NodeGtkWidget,
+    ScrolledWindow: NodeGtkWidget,
+  };
+}
+
 class FakeActionRow extends FakeWidget {
   override remove(_child: GtkActor): void {
     throw new Error('AdwActionRow requires remove_suffix for suffix children');
@@ -125,6 +176,43 @@ describe('createGtkRenderHost', () => {
     expect(row.children).toHaveLength(0);
     expect(child.parent).toBeNull();
     host.destroy(row);
+  });
+
+  it('supports Node-GTK camelCase properties, signals and child APIs', () => {
+    const host = createGtkRenderHost(createNodeGtk(), { api: 'node-gtk' });
+    const runtime = createGtplRenderRuntime(host);
+    const title = signal('before');
+    const label = host.element('GtkLabel', {
+      label: runtime.bind(() => title.get()),
+      'use-underline': true,
+    }, undefined) as NodeGtkWidget;
+    expect(label.label).toBe('before');
+    expect(label.useUnderline).toBe(true);
+
+    let clicks = 0;
+    let active: unknown;
+    const button = host.element('GtkButton', {
+      clicked: () => { clicks += 1; },
+      activeChange: (value: unknown) => { active = value; },
+    }, label) as NodeGtkWidget;
+    const root = host.element('GtkBox', {}, button) as NodeGtkWidget;
+    expect(button.children).toEqual([label]);
+    expect(label.parent).toBe(button);
+
+    button.emit('clicked');
+    button.active = true;
+    button.emit('notify::active');
+    title.set('after');
+    expect(clicks).toBe(1);
+    expect(active).toBe(true);
+    expect(label.label).toBe('after');
+
+    host.destroy(root);
+    button.emit('clicked');
+    title.set('ignored');
+    expect(clicks).toBe(1);
+    expect(button.handlers.size).toBe(0);
+    expect(label.label).toBe('after');
   });
 
   it('creates GTK widgets with normalized properties and optional children', () => {

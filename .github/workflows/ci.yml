@@ -124,10 +124,27 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Install GTK4 integration dependencies
-        run: sudo apt-get update && sudo apt-get install -y gjs gir1.2-gtk-4.0 gir1.2-adw-1 libglib2.0-bin libgirepository-1.0-1 gir1.2-girepository-2.0 xvfb
+        run: sudo apt-get update && sudo apt-get install -y gjs gir1.2-gtk-4.0 gir1.2-adw-1 libglib2.0-bin libgirepository-1.0-1 gir1.2-girepository-2.0 xvfb imagemagick
       - name: Install Node-GTK runtime
         run: npm install --no-save --package-lock=false node-gtk@4.1.1 --no-audit --no-fund
       - name: GTK4 and libadwaita runtime smoke test
         run: npm run test:gtk
+      - name: Build and capture GTK UI showcase
+        run: |
+          npm run build:ui-showcase
+          GTK_A11Y=none xvfb-run -a bash -euo pipefail -c '
+            gjs -m packages/examples/ui-showcase/showcase.js &
+            app_pid=$!
+            trap "kill $app_pid 2>/dev/null || true" EXIT
+            sleep 2
+            import -window root dist/ui-showcase.png
+            test -s dist/ui-showcase.png
+          '
+      - name: Upload GTK UI showcase screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: gef-ui-showcase-gtk4
+          path: dist/ui-showcase.png
+          if-no-files-found: error
       - name: Node-GTK renderer smoke test
         run: npm run build && node dist/cli/src/index.js compile tests/node-gtk/smoke.gtpl dist/node-gtk-view.js && GTK_A11Y=none xvfb-run -a node --import node-gtk/register tests/node-gtk/smoke.mjs

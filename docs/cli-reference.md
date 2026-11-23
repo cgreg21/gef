@@ -100,11 +100,13 @@ Runs the current project's `npm test` script.
 
 ### `gef package`
 
-If `gef.json` selects an `application` project, runs the local node-gtk
-bundler (`npx --no-install node-gtk bundle`). For an `extension` project, runs
-its `npm run package` script when present. Without a project config, the GEF
-repository fallback runs `npm run build` followed by
-`npm run package:example`.
+For either configured project type, runs its `npm run package` script when
+present. The generated Node-GTK application script invokes `node-gtk bundle`
+and its `package.json` includes the bundler configuration (application ID,
+compiled entry point and GTK major version). Node-GTK currently documents
+portable bundles for Linux; see its upstream bundling guide before relying on
+this output on another platform. Without a project config, the GEF repository
+fallback runs `npm run build` followed by `npm run package:example`.
 
 ### `gef watch`
 

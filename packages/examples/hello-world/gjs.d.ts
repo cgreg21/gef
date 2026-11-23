@@ -1,3 +1,10 @@
+declare module 'gi://Clutter' {
+  const Clutter: {
+    readonly Text: new (properties?: Record<string, unknown>) => unknown;
+  };
+  export default Clutter;
+}
+
 declare module 'gi://St' {
   const St: unknown;
   export default St;

@@ -62,6 +62,7 @@ export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
       runtime.element(
         'GtkTextView',
         {
+          'wrap-mode': 3,
           text: runtime.bind(() => area.value),
           textChange: (value: string) => {
             area.value = value;

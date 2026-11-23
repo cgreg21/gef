@@ -43,7 +43,8 @@
     "scripts/package-appimage.mjs",
     "scripts/package-app.mjs",
     "scripts/package-windows.mjs",
-    "scripts/package-macos.mjs"
+    "scripts/package-macos.mjs",
+    "scripts/windows-launcher"
   ],
   "exports": {
     ".": {

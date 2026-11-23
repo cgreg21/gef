@@ -174,8 +174,7 @@ describe('createStRenderHost', () => {
   });
 
   it('requires the native Clutter.Text actor for StPasswordEntry', () => {
-    const St = createSt();
-    St.PasswordEntry = constructor();
+    const St = { ...createSt(), PasswordEntry: constructor() };
     const host = createStRenderHost(St);
     expect(() => host.element('StPasswordEntry', { text: '' }, undefined))
       .toThrow(/requires its native Clutter.Text actor/);

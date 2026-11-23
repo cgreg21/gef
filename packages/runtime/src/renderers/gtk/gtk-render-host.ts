@@ -14,8 +14,6 @@ export interface GtkActor {
   set_child?(child: GtkActor | null): void;
   set_property?(name: string, value: unknown): void;
   get_property?(name: string): unknown;
-  get_text?(): string;
-  getText?(): string;
   set_text?(text: string): void;
   setText?(text: string): void;
   connect?(signal: string, callback: (actor: GtkActor, ...args: unknown[]) => unknown): number;
@@ -390,8 +388,10 @@ export function createGtkRenderHost(
       const scope = new ResourceScope();
       if (isPasswordInput) {
         let updating = false;
-        const readText = (): string => actor.get_text?.() ?? actor.getText?.()
-          ?? (readProperty(actor, 'text', options.api ?? 'gjs') as string | undefined) ?? '';
+        const readText = (): string => {
+          const value = readProperty(actor, 'text', options.api ?? 'gjs');
+          return typeof value === 'string' ? value : '';
+        };
         const syncText = (): void => {
           const value = isGtplBinding(passwordValue) ? passwordValue.get() : passwordValue ?? '';
           if (typeof value !== 'string') throw new Error('GtkPasswordEntry text must be a string.');

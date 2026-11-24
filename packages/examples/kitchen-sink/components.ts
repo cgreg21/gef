@@ -3,31 +3,18 @@ import { ComponentRegistry } from '../../runtime/src/components/component-regist
 import type { GtkActor } from '../../runtime/src/renderers/gtk/gtk-render-host.js';
 import type { GtplRenderRuntime } from '../../runtime/src/rendering/gtpl-runtime.js';
 
+@Component({ selector: 'GefMetricCard', template: '<GtkLabel />' })
 export class MetricCardComponent {
-  title = '';
-  value = '';
-  detail = '';
+  @Input() title = '';
+  @Input() value = '';
+  @Input() detail = '';
 }
 
-Input()(MetricCardComponent.prototype, 'title');
-Input()(MetricCardComponent.prototype, 'value');
-Input()(MetricCardComponent.prototype, 'detail');
-Component({
-  selector: 'GefMetricCard',
-  template: '<GtkLabel />',
-})(MetricCardComponent);
-
+@Component({ selector: 'GefSectionHeader', template: '<GtkLabel />' })
 export class SectionHeaderComponent {
-  title = '';
-  description = '';
+  @Input() title = '';
+  @Input() description = '';
 }
-
-Input()(SectionHeaderComponent.prototype, 'title');
-Input()(SectionHeaderComponent.prototype, 'description');
-Component({
-  selector: 'GefSectionHeader',
-  template: '<GtkLabel />',
-})(SectionHeaderComponent);
 
 function renderMetricCard(
   component: MetricCardComponent,
@@ -53,12 +40,6 @@ function renderSectionHeader(
 
 export function createKitchenSinkComponents(): ComponentRegistry<GtkActor> {
   return new ComponentRegistry<GtkActor>()
-    .registerType(MetricCardComponent, {
-      create: () => new MetricCardComponent(),
-      render: renderMetricCard,
-    })
-    .registerType(SectionHeaderComponent, {
-      create: () => new SectionHeaderComponent(),
-      render: renderSectionHeader,
-    });
+    .registerType(MetricCardComponent, renderMetricCard)
+    .registerType(SectionHeaderComponent, renderSectionHeader);
 }

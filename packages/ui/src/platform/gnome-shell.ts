@@ -22,9 +22,8 @@ function progressText(fraction: number): string {
 
 export function createStUiRegistry(): ComponentRegistry<StActor> {
   const registry = new ComponentRegistry<StActor>();
-  registry.registerType(GefButton, {
-    create: () => new GefButton(),
-    render: (button: GefButton, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+  registry.registerType(GefButton,
+    (button: GefButton, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StButton',
       {
         disabled: runtime.bind(() => button.disabled),
@@ -32,26 +31,23 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
       },
       runtime.text(runtime.bind(() => button.label)),
     ),
-  });
-  registry.registerType(GefLabel, {
-    create: () => new GefLabel(),
-    render: (label: GefLabel, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+  );
+  registry.registerType(GefLabel,
+    (label: GefLabel, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StLabel',
       { text: runtime.bind(() => label.text) },
       undefined,
     ),
-  });
-  registry.registerType(GefIcon, {
-    create: () => new GefIcon(),
-    render: (icon: GefIcon, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+  );
+  registry.registerType(GefIcon,
+    (icon: GefIcon, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StIcon',
       { 'icon-name': runtime.bind(() => icon.iconName) },
       undefined,
     ),
-  });
-  registry.registerType(GefInput, {
-    create: () => new GefInput(),
-    render: (input: GefInput, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+  );
+  registry.registerType(GefInput,
+    (input: GefInput, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StEntry',
       {
         text: runtime.bind(() => input.value),
@@ -62,10 +58,9 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
       },
       undefined,
     ),
-  });
-  registry.registerType(GefSlider, {
-    create: () => new GefSlider(),
-    render: (slider: GefSlider, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+  );
+  registry.registerType(GefSlider,
+    (slider: GefSlider, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StSlider',
       {
         value: runtime.bind(() => slider.value),
@@ -76,10 +71,9 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
       },
       undefined,
     ),
-  });
-  registry.registerType(GefSearchInput, {
-    create: () => new GefSearchInput(),
-    render: (input: GefSearchInput, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+  );
+  registry.registerType(GefSearchInput,
+    (input: GefSearchInput, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StEntry',
       {
         'hint-text': runtime.bind(() => input.placeholder),
@@ -91,10 +85,9 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
       },
       undefined,
     ),
-  });
-  registry.registerType(GefPasswordInput, {
-    create: () => new GefPasswordInput(),
-    render: (input: GefPasswordInput, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+  );
+  registry.registerType(GefPasswordInput,
+    (input: GefPasswordInput, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StPasswordEntry',
       {
         'show-peek-icon': runtime.bind(() => input.showPeekIcon),
@@ -106,10 +99,9 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
       },
       undefined,
     ),
-  });
-  registry.registerType(GefTextArea, {
-    create: () => new GefTextArea(),
-    render: (area: GefTextArea, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+  );
+  registry.registerType(GefTextArea,
+    (area: GefTextArea, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StTextArea',
       {
         text: runtime.bind(() => area.value),
@@ -120,18 +112,16 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
       },
       undefined,
     ),
-  });
-  registry.registerType(GefProgressBar, {
-    create: () => new GefProgressBar(),
-    render: (progress: GefProgressBar, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+  );
+  registry.registerType(GefProgressBar,
+    (progress: GefProgressBar, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StLabel',
       { text: runtime.bind(() => progressText(progress.fraction)) },
       undefined,
     ),
-  });
-  registry.registerType(GefCheckbox, {
-    create: () => new GefCheckbox(),
-    render: (checkbox: GefCheckbox, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+  );
+  registry.registerType(GefCheckbox,
+    (checkbox: GefCheckbox, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StCheckBox',
       {
         checked: runtime.bind(() => checkbox.checked),
@@ -142,10 +132,9 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
       },
       undefined,
     ),
-  });
-  registry.registerType(GefSelect, {
-    create: () => new GefSelect(),
-    render: (select: GefSelect, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+  );
+  registry.registerType(GefSelect,
+    (select: GefSelect, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StSelect',
       {
         options: runtime.bind(() => select.options),
@@ -157,10 +146,9 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
       },
       undefined,
     ),
-  });
-  registry.registerType(GefSwitch, {
-    create: () => new GefSwitch(),
-    render: (toggle: GefSwitch, runtime: GtplRenderRuntime<StActor>) => runtime.element(
+  );
+  registry.registerType(GefSwitch,
+    (toggle: GefSwitch, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StSwitch',
       {
         state: runtime.bind(() => toggle.active),
@@ -171,6 +159,6 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
       },
       undefined,
     ),
-  });
+  );
   return registry;
 }

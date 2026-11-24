@@ -84,12 +84,12 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 
 - [ ] Fiabiliser `gef new` et ses tests de bout en bout.
   Parsing strict des arguments et tests de rejet ajoutés ; la génération et compilation des deux squelettes restent couvertes par les tests E2E existants.
-- [x] Vérifier `gef generate component` : import des décorateurs, sélecteur kebab-case, template lié, syntaxe TypeScript et compilation du render module (test E2E ajouté ; CI à valider).
+- [x] Vérifier `gef generate component` : import des décorateurs, sélecteur kebab-case, template lié, syntaxe TypeScript et compilation du render module (test E2E, commit `b00c478`, CI `45436563175`, quatre jobs réussis).
 - [x] Générer des sélecteurs de composants en kebab-case à partir des noms PascalCase (CI `45409017580`).
 - [x] Générer les fichiers TypeScript et GTPL des composants en kebab-case, conformément aux conventions Angular (CI `45410666986`, tentative 2 : quatre jobs réussis).
 - [x] Ajouter les générateurs directive, service et pipe avec tests E2E TypeScript (commit `953d9de`, CI `45418969015`, quatre jobs réussis).
-- [ ] Améliorer la validation de configuration et les messages d'erreur.
-  Validation stricte de `gef.json` et tests des cas invalides ajoutés. La première CI a révélé un ancien fixture de test de packaging incomplet ; le fixture est réaligné sur le schéma requis avant validation finale.
+- [x] Améliorer la validation de configuration et les messages d'erreur.
+  Validation stricte de `gef.json` et tests des cas invalides ajoutés ; fixture de packaging réaligné sur le schéma requis (CI `45434415606`, quatre jobs réussis).
 - [ ] Vérifier les packages npm et les distributions autonomes sur leurs plateformes natives.
 - [ ] Définir les critères de sortie de l'alpha et préparer une version stable.
 

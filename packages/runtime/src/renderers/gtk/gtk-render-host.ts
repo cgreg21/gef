@@ -151,6 +151,34 @@ function booleanValue(attribute: string, value: unknown): boolean {
   throw new Error(`${attribute} must be "true" or "false".`);
 }
 
+function integerValue(attribute: string, value: unknown): number {
+  const number = floatValue(attribute, value);
+  if (!Number.isInteger(number)) throw new Error(`GTK ${attribute} must be an integer.`);
+  return number;
+}
+
+function normalizeGtkProperty(name: string, property: string, value: unknown): unknown {
+  if (['spacing', 'margin-top', 'margin-bottom', 'margin-start', 'margin-end',
+    'width-request', 'height-request', 'row-spacing', 'column-spacing'].includes(property)) {
+    return isGtplBinding(value)
+      ? { kind: 'binding', get: () => integerValue(property, value.get()) } satisfies GtplBinding<unknown>
+      : integerValue(property, value);
+  }
+  if (property === 'xalign' || property === 'yalign' || property === 'fraction'
+    || (property === 'value' && ['GtkSpinButton', 'GtkScale'].includes(name))) {
+    return isGtplBinding(value)
+      ? { kind: 'binding', get: () => floatValue(property, value.get()) } satisfies GtplBinding<unknown>
+      : floatValue(property, value);
+  }
+  if (['active', 'show-text', 'hexpand', 'vexpand', 'visible', 'sensitive',
+    'editable', 'wrap', 'use-underline', 'show-peek-icon'].includes(property)) {
+    return isGtplBinding(value)
+      ? { kind: 'binding', get: () => booleanValue(property, value.get()) } satisfies GtplBinding<unknown>
+      : booleanValue(property, value);
+  }
+  return value;
+}
+
 function alignValue(value: unknown): number {
   const alignments: Record<string, number> = { fill: 0, start: 1, end: 2, center: 3 };
   if (typeof value !== 'string' || !(value in alignments)) {
@@ -503,17 +531,10 @@ export function createGtkRenderHost(
         }
         if (name === 'Grid' && attribute === 'columns') { gridColumns = normalized as number; continue; }
         if (name === 'Grid' && attribute === 'gap') { properties[propertyName('row-spacing', options.api)] = normalized; properties[propertyName('column-spacing', options.api)] = normalized; continue; }
-        if (property === 'xalign' || property === 'yalign') {
-          if (isGtplBinding(normalized)) {
-            bindings.push([property, {
-              kind: 'binding', get: () => floatValue(property, normalized.get()),
-            } satisfies GtplBinding<unknown>]);
-          } else properties[propertyName(property, options.api)] = floatValue(property, normalized);
-          continue;
-        }
-        if (isGtplBinding(normalized)) bindings.push([property, normalized]);
-        else if (typeof normalized === 'function') events.push([property, normalized as (...args: unknown[]) => unknown]);
-        else properties[propertyName(property, options.api)] = normalized;
+        const typedValue = normalizeGtkProperty(name, property, normalized);
+        if (isGtplBinding(typedValue)) bindings.push([property, typedValue]);
+        else if (typeof typedValue === 'function') events.push([property, typedValue as (...args: unknown[]) => unknown]);
+        else properties[propertyName(property, options.api)] = typedValue;
       }
 
       if (name === 'Flex') properties.orientation ??= 0;

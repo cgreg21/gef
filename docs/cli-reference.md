@@ -88,6 +88,21 @@ gef generate component UserCard src/components
 The generated component has a `@Component` selector, a `@Input() title`
 property and a template that interpolates `title`.
 
+Other Angular-style artifacts are generated with the same command family:
+
+```sh
+gef generate directive Highlight src/directives
+gef generate service User src/services
+gef generate pipe Truncate src/pipes
+```
+
+A directive receives a kebab-case `.directive.ts` filename and an
+`@Directive` selector (`[appHighlight]`). Services use `.service.ts` and
+plain classes so dependency construction stays explicit. Pipes use
+`.pipe.ts`, `@Pipe` metadata and a minimal `transform` implementation.
+Names are PascalCase; the matching class suffix is added when omitted.
+The directory defaults to the current directory.
+
 ### `gef build`
 
 Runs the current project's `npm run build` script. The command does not

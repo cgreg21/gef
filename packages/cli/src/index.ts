@@ -43,6 +43,9 @@ Usage:
   gef styles <input.scss> [output.css]
   gef new <project-name> [directory] [--type application|extension]
   gef generate component <Name> [directory]
+  gef generate directive <Name> [directory]
+  gef generate service <Name> [directory]
+  gef generate pipe <Name> [directory]
   gef build
   gef test
   gef package
@@ -56,7 +59,7 @@ Commands:
   compile    Emit a JavaScript render-function module.
   styles     Compile SCSS and validate GNOME theme CSS compatibility.
   new        Create a Node-GTK application or GNOME Shell extension project.
-  generate   Generate a component class and GTPL template.
+  generate   Generate a component, directive, service or pipe.
   build      Build the current project.
   test       Run the current project test suite.
   package    Package the current extension or native application for this host.
@@ -496,22 +499,60 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
   }
 
   if (command === 'generate') {
-    if (inputArg !== 'component' || !outputArg || !/^[A-Z][A-Za-z0-9]*$/.test(outputArg)) {
-      io.stderr('Usage: gef generate component <PascalCaseName> [directory]');
+    const type = inputArg;
+    const name = outputArg;
+    const suffix = type === 'directive' ? 'Directive' : type === 'service' ? 'Service' : type === 'pipe' ? 'Pipe' : '';
+    const supported = type === 'component' || Boolean(suffix);
+    const baseName = suffix && name?.endsWith(suffix) ? name.slice(0, -suffix.length) : name;
+    if (!supported || !name || !baseName || !/^[A-Z][A-Za-z0-9]*$/.test(baseName)) {
+      io.stderr('Usage: gef generate <component|directive|service|pipe> <PascalCaseName> [directory]');
       return 2;
     }
-    const name = outputArg;
-    const fileName = name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+    const className = type === 'component' ? name : baseName + suffix;
+    const fileName = baseName.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
     const directory = resolve(args[3] ?? '.');
+    const files: Readonly<Record<string, string>> = type === 'component' ? {
+      [`${fileName}.ts`]: `import { Component, Input } from 'gnome-extension-framework/runtime';
+
+@Component({ selector: '${fileName}', templateUrl: './${fileName}.gtpl' })
+export class ${className} {
+  @Input() title = '${className}';
+}
+`,
+      [`${fileName}.gtpl`]: `<StBox>
+  <StLabel>{{ title }}</StLabel>
+</StBox>
+`,
+    } : type === 'directive' ? {
+      [`${fileName}.directive.ts`]: `import { Directive } from 'gnome-extension-framework/runtime';
+
+@Directive({ selector: '[app${baseName}]' })
+export class ${className} {}
+`,
+    } : type === 'service' ? {
+      [`${fileName}.service.ts`]: `export class ${className} {}
+`,
+    } : {
+      [`${fileName}.pipe.ts`]: `import { Pipe } from 'gnome-extension-framework/runtime';
+
+@Pipe({ name: '${baseName[0]!.toLowerCase() + baseName.slice(1)}' })
+export class ${className} {
+  transform(value: unknown): string {
+    return String(value);
+  }
+}
+`,
+    };
     try {
       await io.mkdir(directory);
-      await io.writeFile(resolve(directory, `${fileName}.ts`), `import { Component, Input } from 'gnome-extension-framework/runtime';\n\n@Component({ selector: '${fileName}', templateUrl: './${fileName}.gtpl' })\nexport class ${name} {\n  @Input() title = '${name}';\n}\n`);
-      await io.writeFile(resolve(directory, `${fileName}.gtpl`), `<StBox>\n  <StLabel>{{ title }}</StLabel>\n</StBox>\n`);
+      for (const [path, source] of Object.entries(files)) {
+        await io.writeFile(resolve(directory, path), source);
+      }
     } catch (error) {
-      io.stderr(`Unable to generate component: ${error instanceof Error ? error.message : String(error)}`);
+      io.stderr(`Unable to generate ${type}: ${error instanceof Error ? error.message : String(error)}`);
       return 2;
     }
-    io.stdout(`Generated component ${name} in ${directory}`);
+    io.stdout(`Generated ${type} ${className} in ${directory}`);
     return 0;
   }
 

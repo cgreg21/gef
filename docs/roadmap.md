@@ -86,6 +86,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [x] Générer des sélecteurs de composants en kebab-case à partir des noms PascalCase (CI `45409017580`).
 - [x] Générer les fichiers TypeScript et GTPL des composants en kebab-case, conformément aux conventions Angular (CI `45410666986`, tentative 2 : quatre jobs réussis).
 - [ ] Ajouter les générateurs directive, service et pipe.
+  Implémentations et tests E2E ajoutés dans cette passe ; case à cocher après validation de la CI.
 - [ ] Améliorer la validation de configuration et les messages d'erreur.
 - [ ] Vérifier les packages npm et les distributions autonomes sur leurs plateformes natives.
 - [ ] Définir les critères de sortie de l'alpha et préparer une version stable.

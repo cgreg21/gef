@@ -68,4 +68,35 @@ describe('generated project smoke tests', () => {
       await rm(root, { recursive: true, force: true });
     }
   });
+  it.each([
+    ['directive', 'Highlight', 'highlight.directive.ts'],
+    ['service', 'User', 'user.service.ts'],
+    ['pipe', 'Truncate', 'truncate.pipe.ts'],
+  ] as const)('generates and compiles a %s with Angular-style naming', async (type, name, fileName) => {
+    const root = await mkdtemp(join(tmpdir(), 'gef-generate-'));
+    try {
+      const output = join(root, 'src');
+      expect(await runCli(['generate', type, name, output])).toBe(0);
+      const source = await readFile(join(output, fileName), 'utf8');
+      const parsed = ts.createSourceFile(fileName, source, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS);
+      expect((parsed as ts.SourceFile & { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics).toHaveLength(0);
+      const result = ts.transpileModule(source, {
+        fileName,
+        reportDiagnostics: true,
+        compilerOptions: {
+          target: ts.ScriptTarget.ES2022,
+          module: ts.ModuleKind.ESNext,
+          experimentalDecorators: true,
+          useDefineForClassFields: false,
+        },
+      });
+      expect(result.diagnostics?.filter((item) => item.category === ts.DiagnosticCategory.Error)).toEqual([]);
+      if (type === 'directive') expect(source).toContain("@Directive({ selector: '[appHighlight]' })");
+      if (type === 'service') expect(source).toContain('export class UserService');
+      if (type === 'pipe') expect(source).toContain("@Pipe({ name: 'truncate' })");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
 });

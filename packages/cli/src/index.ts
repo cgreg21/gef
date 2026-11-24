@@ -420,15 +420,28 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
       io.stderr('Project name must use lowercase letters, digits and hyphens.');
       return 2;
     }
-    const typeIndex = args.indexOf('--type');
-    const projectType = typeIndex >= 0 ? args[typeIndex + 1] : 'extension';
-    if (projectType !== 'application' && projectType !== 'extension') {
-      io.stderr('Project type must be "application" or "extension".');
-      return 2;
+    let projectType: 'application' | 'extension' = 'extension';
+    let directoryArg: string | undefined;
+    let typeProvided = false;
+    for (let index = 2; index < args.length; index++) {
+      const argument = args[index]!;
+      if (argument === '--type') {
+        const value = args[index + 1];
+        if (typeProvided || value === undefined || (value !== 'application' && value !== 'extension')) {
+          io.stderr('Usage: gef new <project-name> [directory] [--type application|extension]');
+          return 2;
+        }
+        projectType = value;
+        typeProvided = true;
+        index++;
+      } else if (argument.startsWith('-') || directoryArg !== undefined) {
+        io.stderr(`Unexpected argument: ${argument}`);
+        return 2;
+      } else {
+        directoryArg = argument;
+      }
     }
-    const positional = args.slice(2).filter((_value, index) =>
-      typeIndex < 0 || (index + 2 !== typeIndex && index + 2 !== typeIndex + 1));
-    const directory = resolve(positional[0] ?? name);
+    const directory = resolve(directoryArg ?? name);
     const applicationId = `com.example.${name.replaceAll('-', '.')}`;
     const applicationTitle = name.split('-').map((part) => part[0]!.toUpperCase() + part.slice(1)).join('');
     const extensionClassName = applicationTitle;

@@ -138,6 +138,19 @@ describe('GEF CLI', () => {
     expect(writes.some((item) => item.path.endsWith(resolve('dist/generated/view.js.map')))).toBe(true);
   });
 
+  it.each([
+    [['new', 'demo', '--type'], 'Usage: gef new'],
+    [['new', 'demo', '--type', 'application', '--type', 'extension'], 'Usage: gef new'],
+    [['new', 'demo', '--unknown'], 'Unexpected argument: --unknown'],
+    [['new', 'demo', 'one', 'two'], 'Unexpected argument: two'],
+  ])('rejects malformed project creation arguments: %j', async (args, message) => {
+    const base = createIO('');
+    expect(await runCli(args, base.io)).toBe(2);
+    expect(base.errors[0]).toContain(message);
+    expect(base.writes).toHaveLength(0);
+    expect(base.directories).toHaveLength(0);
+  });
+
   it('creates a minimal extension project', async () => {
     const { io, output, writes, directories } = createIO('');
     expect(await runCli(['new', 'hello-world', 'out'], io)).toBe(0);

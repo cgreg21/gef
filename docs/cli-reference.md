@@ -57,7 +57,7 @@ St or GTK CSS property. Keep Shell and preferences styles separate.
 ### `gef new <project-name> [directory] [--type application|extension]`
 
 Creates a project and a root `gef.json` workspace configuration. The default
-type is `extension`, preserving the original command. Project names must start
+type is `extension`, preserving the original command. Only one optional output directory and one `--type` option are accepted; unknown or duplicate arguments are rejected. Project names must start
 with a lowercase letter and contain lowercase letters, digits or hyphens.
 
 ```sh

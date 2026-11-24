@@ -82,6 +82,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 ## P6 — CLI et distribution
 
 - [ ] Fiabiliser `gef new` et ses tests de bout en bout.
+  Parsing strict des arguments et tests de rejet ajoutés ; la génération et compilation des deux squelettes restent couvertes par les tests E2E existants.
 - [ ] Compléter `gef generate component` avec imports et tests cohérents.
 - [x] Générer des sélecteurs de composants en kebab-case à partir des noms PascalCase (CI `45409017580`).
 - [x] Générer les fichiers TypeScript et GTPL des composants en kebab-case, conformément aux conventions Angular (CI `45410666986`, tentative 2 : quatre jobs réussis).

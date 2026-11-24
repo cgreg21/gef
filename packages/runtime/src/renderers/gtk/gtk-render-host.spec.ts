@@ -487,6 +487,23 @@ describe('createGtkRenderHost', () => {
     expect(label.label).toBe('after');
   });
 
+  it('converts GTK float properties from GTPL string attributes', () => {
+    const host = createGtkRenderHost(createGtk());
+    const label = host.element('GtkLabel', { xalign: '0', yalign: '1' }, undefined) as FakeWidget;
+    expect(label.properties).toMatchObject({ xalign: 0, yalign: 1 });
+
+    const alignment = signal('0.25');
+    const reactive = host.element('GtkLabel', {
+      xalign: { kind: 'binding', get: () => alignment.get() },
+    }, undefined) as FakeWidget;
+    expect(reactive.properties.xalign).toBe(0.25);
+    alignment.set('0.75');
+    expect(reactive.properties.xalign).toBe(0.75);
+    expect(() => host.element('GtkLabel', { xalign: 'invalid' }, undefined)).toThrow('GTK xalign must be a finite number.');
+    host.destroy(label);
+    host.destroy(reactive);
+  });
+
   it('creates GTK widgets with normalized properties and optional children', () => {
     const host = createGtkRenderHost(createGtk());
     const label = host.element('GtkLabel', { label: 'Hello' }, undefined) as FakeWidget;

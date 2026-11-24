@@ -14,6 +14,7 @@ describe('component declaration API', () => {
       selector: 'GefButton', template: '<button>{{ label }}</button>',
       styles: ['button { color: white; }'], inputs: ['label', 'isDisabled'], outputs: ['clicked'],
       inputBindings: [{ publicName: 'label', member: 'label' }, { publicName: 'isDisabled', member: 'disabled' }],
+      hostBindings: [],
       outputBindings: [{ publicName: 'clicked', member: 'clicked' }],
     });
   });

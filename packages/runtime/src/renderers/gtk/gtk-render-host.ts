@@ -134,6 +134,16 @@ function propertyName(name: string, api: 'gjs' | 'node-gtk' = 'gjs'): string {
 }
 
 
+function floatValue(attribute: string, value: unknown): number {
+  const number = typeof value === 'number'
+    ? value
+    : typeof value === 'string' && value.trim() !== ''
+      ? Number(value)
+      : Number.NaN;
+  if (!Number.isFinite(number)) throw new Error(`GTK ${attribute} must be a finite number.`);
+  return number;
+}
+
 function booleanValue(attribute: string, value: unknown): boolean {
   if (value === true || value === 'true') return true;
   if (value === false || value === 'false') return false;
@@ -479,6 +489,14 @@ export function createGtkRenderHost(
         const [property, normalized] = layoutAttribute(name, attribute, value);
         if (name === 'Grid' && attribute === 'columns') { gridColumns = normalized as number; continue; }
         if (name === 'Grid' && attribute === 'gap') { properties[propertyName('row-spacing', options.api)] = normalized; properties[propertyName('column-spacing', options.api)] = normalized; continue; }
+        if (property === 'xalign' || property === 'yalign') {
+          if (isGtplBinding(normalized)) {
+            bindings.push([property, {
+              kind: 'binding', get: () => floatValue(property, normalized.get()),
+            } satisfies GtplBinding<unknown>]);
+          } else properties[propertyName(property, options.api)] = floatValue(property, normalized);
+          continue;
+        }
         if (isGtplBinding(normalized)) bindings.push([property, normalized]);
         else if (typeof normalized === 'function') events.push([property, normalized as (...args: unknown[]) => unknown]);
         else properties[propertyName(property, options.api)] = normalized;

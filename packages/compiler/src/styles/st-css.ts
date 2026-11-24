@@ -29,10 +29,11 @@ const UNSUPPORTED: readonly { pattern: RegExp; code: string; message: string }[]
   { pattern: /^position\s*:\s*(?:fixed|sticky)\b/i, code: 'GEFCSS1005', message: 'This browser positioning mode is not supported by the GNOME theme CSS engine.' },
 ];
 
-/** Checks common browser-only CSS features and basic block balance for St/GTK stylesheets. */
+/** Checks common browser-only CSS features and basic syntax balance for St/GTK stylesheets. */
 export function validateStCss(source: string): readonly StCssDiagnostic[] {
   const diagnostics: StCssDiagnostic[] = [];
   const stack: Array<{ line: number; column: number; start: number }> = [];
+  const delimiters: Array<{ char: '(' | '['; line: number; column: number; start: number }> = [];
   let line = 1;
   let column = 1;
   let quote = '';
@@ -65,6 +66,17 @@ export function validateStCss(source: string): readonly StCssDiagnostic[] {
     else if (char === '}') {
       if (stack.length === 0) diagnostics.push({ code: 'GEFCSS1002', message: 'Unexpected closing brace.', line, column, start: index, end: index + 1 });
       else stack.pop();
+    } else if (char === '(' || char === '[') {
+      delimiters.push({ char, line, column, start: index });
+    } else if (char === ')' || char === ']') {
+      const opening = delimiters.at(-1);
+      const expected = char === ')' ? '(' : '[';
+      if (opening?.char === expected) delimiters.pop();
+      else diagnostics.push({
+        code: char === ')' ? 'GEFCSS1008' : 'GEFCSS1010',
+        message: char === ')' ? 'Unexpected closing parenthesis.' : 'Unexpected closing bracket.',
+        line, column, start: index, end: index + 1,
+      });
     }
     if (char === '\r') {
       line += 1;
@@ -81,6 +93,11 @@ export function validateStCss(source: string): readonly StCssDiagnostic[] {
   });
   for (const opening of stack) diagnostics.push({
     code: 'GEFCSS1001', message: 'Unclosed CSS block.', line: opening.line, column: opening.column, start: opening.start, end: opening.start + 1,
+  });
+  for (const opening of delimiters) diagnostics.push({
+    code: opening.char === '(' ? 'GEFCSS1009' : 'GEFCSS1011',
+    message: opening.char === '(' ? 'Unclosed CSS parenthesis.' : 'Unclosed CSS bracket.',
+    line: opening.line, column: opening.column, start: opening.start, end: opening.start + 1,
   });
 
   const masked = source.split('');

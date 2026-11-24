@@ -55,6 +55,26 @@ describe('validateStCss', () => {
     ]);
   });
 
+  it('reports unbalanced parentheses and brackets outside strings and comments', () => {
+    const source = '.panel { padding: calc(1px; background: [red; color: blue); }';
+    expect(validateStCss(source).map((item) => item.code)).toEqual(['GEFCSS1009', 'GEFCSS1011', 'GEFCSS1008']);
+  });
+
+  it('ignores parentheses and brackets inside strings and comments', () => {
+    expect(validateStCss('.panel { content: "([)]"; /* ([ */ padding: calc(1px + 2px); }')).toEqual([]);
+  });
+
+  it('reports exact positions for unexpected closing delimiters', () => {
+    const source = '.panel { padding: 1px); }';
+    expect(validateStCss(source)[0]).toMatchObject({
+      code: 'GEFCSS1008',
+      line: 1,
+      column: source.indexOf(')') + 1,
+      start: source.indexOf(')'),
+      end: source.indexOf(')') + 1,
+    });
+  });
+
   it('ignores declaration-like text inside quoted strings, including embedded semicolons', () => {
     expect(validateStCss('.panel { content: "safe; display: flex"; background: url("data:text/plain;display:grid"); }')).toEqual([]);
   });

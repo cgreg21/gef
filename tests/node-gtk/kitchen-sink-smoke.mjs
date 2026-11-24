@@ -15,7 +15,9 @@ Gtk.init();
 const host = createGtkRenderHost(Gtk, { api: 'node-gtk' });
 const demos = [overview, actions, forms, preferences, layouts];
 const components = createKitchenSinkComponents();
-const views = demos.map((render) => mountGtplTemplate({}, render, host, undefined, undefined, undefined, components));
+const views = demos.map((render) => mountGtplTemplate(
+  {}, render, host, undefined, undefined, undefined, components,
+));
 assert.equal(views.length, 5);
 for (const view of views) {
   assert.ok(view.node, 'Each demo must mount a native GTK widget tree.');

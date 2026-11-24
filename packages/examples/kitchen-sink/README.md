@@ -1,46 +1,46 @@
 # GEF Kitchen Sink
 
-A native GTK4 application written in TypeScript. Its screens are GTPL templates rendered by GEF, with reusable TypeScript components registered through `ComponentRegistry`.
+Application GTK4 écrite en TypeScript. Elle présente les composants et les templates GTPL de GEF dans une vraie interface native.
 
-## Screens
+## Démonstrations
 
-- **Overview** — dashboard with reusable metric cards.
-- **Actions** — action groups and native controls.
-- **Forms** — text, search and password fields.
-- **Preferences** — switches, checkboxes and numeric settings.
-- **Layouts** — nested Flex, Sidebar and Grid layouts.
+- **Overview** — cartes de statistiques.
+- **Actions** — boutons, actions et contrôles natifs.
+- **Forms** — champs texte, recherche et mot de passe.
+- **Preferences** — interrupteurs, cases à cocher et valeurs numériques.
+- **Layouts** — mises en page Flex, Sidebar et Grid.
 
-## GEF components
+Chaque écran possède un bouton **View source** pour consulter son template GTPL.
 
-The app defines two GTK-oriented GEF components in `components.ts`:
+## Composants GEF
 
-- `GefSectionHeader` — reusable title and description.
-- `GefMetricCard` — reusable metric card with title, value and detail inputs.
+L'application déclare deux composants réutilisables dans `components.ts` :
 
-They declare their inputs with GEF metadata, register typed render functions in a `ComponentRegistry`, and are used directly in the GTPL screens. The same registry is passed to `mountGtplTemplate`, so the examples exercise the real component mounting and cleanup path rather than wrapping widgets only in the application shell.
+- `GefSectionHeader` — titre et description.
+- `GefMetricCard` — titre, valeur et détail.
 
-The GTK application shell, navigation and source viewer are TypeScript. **View source** opens the GTPL template for the active screen.
+Ils utilisent les décorateurs et métadonnées GEF, puis sont enregistrés dans un `ComponentRegistry`. Les templates les utilisent directement.
 
-## Run
+## Lancer l'application
 
-From the repository root:
+Depuis la racine du dépôt :
 
-```powershell
+```sh
 npm install
 npm run kitchen-sink
 ```
 
-Compile without launching the window:
+Pour compiler sans lancer l'application :
 
-```powershell
+```sh
 npm run build:kitchen-sink
 ```
 
-Requires Node.js 22+, the project's `node-gtk` dependency and GTK4 runtime libraries.
+Prérequis : Node.js 22+, GTK4 et la dépendance Node-GTK du projet.
 
-## Structure
+## Fichiers
 
-- `kitchen-sink.ts` — typed GTK application shell and GEF integration.
-- `components.ts` — reusable GEF component classes and registry.
-- `demos/*.gtpl` — screens composed from GEF components and GTK widgets.
-- `kitchen-sink.js` — separate GJS entry point.
+- `kitchen-sink.ts` — application et navigation.
+- `components.ts` — composants GEF de démonstration.
+- `demos/` — écrans GTPL.
+- `kitchen-sink.js` — point d'entrée GJS.

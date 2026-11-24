@@ -86,6 +86,22 @@ describe('parseGtplExpression', () => {
     });
   });
 
+  it('parses decimal, exponent and numeric-separator literals', () => {
+    for (const [source, value] of [
+      ['.5', 0.5],
+      ['1.', 1],
+      ['42.5', 42.5],
+      ['1_000', 1000],
+      ['1_2.5_0', 12.5],
+      ['2.5e2', 250],
+      ['1_000e-2', 10],
+    ] as const) {
+      const result = parseGtplExpression(source);
+      expect(result.diagnostics, source).toEqual([]);
+      expect(result.expression).toMatchObject({ kind: 'literal', value });
+    }
+  });
+
   it('parses arrays and unary expressions', () => {
     const result = parseGtplExpression('[!busy, -count, true]');
     expect(result.diagnostics).toHaveLength(0);

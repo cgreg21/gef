@@ -320,7 +320,7 @@ class ExpressionParser {
       this.advance();
       return {
         kind: 'literal',
-        value: Number(token.value),
+        value: Number(token.value.replaceAll('_', '')),
         raw: token.value,
         span: { start: token.start, end: token.end },
       };
@@ -371,14 +371,12 @@ class ExpressionParser {
       return { kind: 'identifier', value: this.source.slice(start, this.offset), start, end: this.offset };
     }
 
-    if (/[0-9]/.test(char)) {
-      this.offset += 1;
-      while (this.offset < this.source.length && /[0-9]/.test(this.source[this.offset] ?? '')) this.offset += 1;
-      if (this.source[this.offset] === '.' && /[0-9]/.test(this.source[this.offset + 1] ?? '')) {
-        this.offset += 1;
-        while (this.offset < this.source.length && /[0-9]/.test(this.source[this.offset] ?? '')) this.offset += 1;
+    if (/[0-9]/.test(char) || (char === '.' && /[0-9]/.test(this.source[this.offset + 1] ?? ''))) {
+      const match = /^(?:[0-9](?:_?[0-9])*(?:\\.(?:[0-9](?:_?[0-9])*)?)?|\\.[0-9](?:_?[0-9])*)(?:[eE][+-]?[0-9](?:_?[0-9])*)?/.exec(this.source.slice(start));
+      if (match) {
+        this.offset += match[0].length;
+        return { kind: 'number', value: match[0], start, end: this.offset };
       }
-      return { kind: 'number', value: this.source.slice(start, this.offset), start, end: this.offset };
     }
 
     if (char === '"' || char === "'") {

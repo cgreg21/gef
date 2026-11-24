@@ -16,6 +16,15 @@ export interface ResponsiveChange {
   readonly breakpoint: Breakpoint;
 }
 
+export interface NativeWidthWidget {
+  connect(signal: string, callback: () => void): number;
+  disconnect(id: number): void;
+  get_width?(): number;
+  getWidth?(): number;
+  get_property?(name: string): unknown;
+  readonly width?: number;
+}
+
 /** Returns the active breakpoint for a viewport or native widget width. */
 export function getBreakpoint(width: number, breakpoints: Breakpoints = DEFAULT_BREAKPOINTS): Breakpoint {
   if (!Number.isFinite(width) || width < 0) throw new RangeError('Responsive width must be a non-negative number.');
@@ -71,5 +80,18 @@ export class BreakpointObserver {
   subscribe(listener: (change: ResponsiveChange) => void): { unsubscribe(): void } {
     this.listeners.add(listener);
     return { unsubscribe: () => this.listeners.delete(listener) };
+  }
+
+  /** Tracks a GTK widget or GNOME Shell actor until the returned subscription is disposed. */
+  observe(widget: NativeWidthWidget): { unsubscribe(): void } {
+    const readWidth = (): number => {
+      const width = widget.get_width?.() ?? widget.getWidth?.() ?? widget.get_property?.('width') ?? widget.width;
+      if (typeof width !== 'number' || !Number.isFinite(width) || width < 0) return this.width;
+      return width;
+    };
+    const update = (): void => this.update(readWidth());
+    const id = widget.connect('notify::width', update);
+    update();
+    return { unsubscribe: () => widget.disconnect(id) };
   }
 }

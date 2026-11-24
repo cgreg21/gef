@@ -55,7 +55,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [x] Ajouter les conteneurs GTPL `Flex` et `Grid`.
 - [x] Ajouter les conteneurs `HeaderBar` et `Sidebar` avec rendu adapté à chaque plateforme.
 - [x] Ajouter les utilitaires responsive : breakpoints, résolution de valeurs, `BreakpointObserver`, `FlexLayout` et `GridLayout`.
-- [ ] Connecter automatiquement les changements de taille des widgets natifs aux layouts responsive.
+- [x] Connecter les changements de largeur natifs aux breakpoints via `BreakpointObserver.observe(widget)` ; écoute `notify::width` et libère le signal à la désinscription.
 - [ ] Étendre les options de layout GTPL : retour à la ligne, poids `grow` par enfant et justification cohérente entre GTK et St.
 - [ ] Enrichir la bibliothèque de composants uniquement selon les besoins démontrés par les exemples.
 

@@ -35,6 +35,31 @@ describe('responsive utilities', () => {
     expect(changed).toHaveBeenCalledTimes(3);
   });
 
+  it('tracks native widget width changes and disconnects on unsubscribe', () => {
+    let width = 500;
+    let callback: (() => void) | undefined;
+    let disconnected = false;
+    const widget = {
+      connect: (signal: string, listener: () => void) => {
+        expect(signal).toBe('notify::width');
+        callback = listener;
+        return 7;
+      },
+      disconnect: (id: number) => { expect(id).toBe(7); disconnected = true; },
+      get_width: () => width,
+    };
+    const observer = new BreakpointObserver();
+    const changed = vi.fn();
+    observer.subscribe(changed);
+    const subscription = observer.observe(widget);
+    expect(observer.currentWidth).toBe(500);
+    width = 800;
+    callback?.();
+    expect(changed.mock.calls.map(([change]) => change.breakpoint)).toEqual(['md']);
+    subscription.unsubscribe();
+    expect(disconnected).toBe(true);
+  });
+
   it('calculates responsive grid positions', () => {
     const grid = new GridLayout({ columns: { base: 1, sm: 2, lg: 3 }, gap: { base: 8, md: 16 } });
     expect(grid.layout(400, 3)).toEqual({

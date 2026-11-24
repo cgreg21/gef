@@ -1,7 +1,8 @@
 # GEF Kitchen Sink
 
-A native GTK4 demo gallery for the GEF renderer. The app is organized as
-focused screens instead of one long widget list:
+A TypeScript GTK4 application that demonstrates GEF by mounting real GTPL screens through the framework's GTK render host.
+
+## Screens
 
 - **Overview** — dashboard cards and recent activity.
 - **Actions** — primary, secondary and destructive action patterns.
@@ -9,30 +10,24 @@ focused screens instead of one long widget list:
 - **Preferences** — switches, checkboxes and numeric settings.
 - **Layouts** — Sidebar, Flex, Grid and progress controls.
 
-Each screen has a **View source** action in the header. It opens the exact
-GTPL file used to render that screen.
+The application shell, navigation and source viewer are written in TypeScript. Each screen is a GTPL template rendered by GEF; **View source** opens the template used by the active screen.
 
-## Run with Node.js (Windows, Linux and macOS)
-
-From the repository root:
+## Run with Node.js
 
 ```powershell
 npm install
 npm run kitchen-sink
 ```
 
-To compile the screens without opening the application:
+To compile the application and templates without opening the window:
 
 ```powershell
 npm run build:kitchen-sink
 ```
 
-Requirements: Node.js 22+ and the project's `node-gtk` development dependency.
-On Windows, use a Node.js version supported by the installed Node-GTK package.
+Requirements: Node.js 22+ and the project's `node-gtk` development dependency. The native GTK runtime and its platform dependencies must be installed.
 
 ## Run with GJS (GNOME/Linux)
-
-The GJS entry point is retained for GTK/GNOME development:
 
 ```sh
 npm install
@@ -42,6 +37,6 @@ gjs -m packages/examples/kitchen-sink/kitchen-sink.js
 
 ## Structure
 
-- `demos/*.gtpl` — source of truth for each screen.
-- `kitchen-sink-node.mjs` — native GTK application shell, navigation and source viewer.
-- `kitchen-sink.js` — GJS entry point.
+- `kitchen-sink.ts` — typed GTK application shell and GEF integration.
+- `demos/*.gtpl` — source templates rendered by GEF.
+- `kitchen-sink.js` — optional GJS entry point.

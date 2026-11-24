@@ -134,7 +134,6 @@ function propertyName(name: string, api: 'gjs' | 'node-gtk' = 'gjs'): string {
     : camelCase.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`).replace(/^_/, '');
 }
 
-
 function floatValue(attribute: string, value: unknown): number {
   const number = typeof value === 'number'
     ? value
@@ -404,7 +403,7 @@ export function createGtkRenderHost(
         activeClasses.clear();
         for (const name of next) activeClasses.add(name);
       };
-      for (const _item of classBindings) scope.add(effect(syncClasses));
+      if (classBindings.length > 0) scope.add(effect(syncClasses));
       syncClasses();
 
       const styleValue = attributes.style;
@@ -437,9 +436,13 @@ export function createGtkRenderHost(
           if (/[{}]/.test(css)) throw new Error('GTPL style must contain CSS declarations only (without braces).');
           provider.load_from_data(css ? `* { ${css} }` : '* {}');
         };
-        if (isGtplBinding(styleValue)) scope.add(effect(syncStyle));
-        if (isGtplBinding(styleBindingValue)) scope.add(effect(syncStyle));
-        for (const _item of styleBindings) scope.add(effect(syncStyle));
+        
+        
+        
+        if (Object.entries(attributes).some(([name, value]) =>
+          (name === 'style' || name === 'styleBinding' || name.startsWith('style.')) && isGtplBinding(value))) {
+          scope.add(effect(syncStyle));
+        }
         syncStyle();
       }
     },
@@ -671,10 +674,14 @@ export function createGtkRenderHost(
           };
           context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION ?? 600);
           scope.add(() => context.remove_provider(provider));
-          if (isGtplBinding(styleValue)) scope.add(effect(syncStyle));
-          if (isGtplBinding(styleBindingValue)) scope.add(effect(syncStyle));
-          for (const _item of styleBindings) scope.add(effect(syncStyle));
-          syncStyle();
+          
+          
+          
+          if (Object.entries(attributes).some(([name, value]) =>
+          (name === 'style' || name === 'styleBinding' || name.startsWith('style.')) && isGtplBinding(value))) {
+          scope.add(effect(syncStyle));
+        }
+        syncStyle();
         }
         const activeClasses = new Set<string>();
         const syncClasses = (): void => {
@@ -690,7 +697,7 @@ export function createGtkRenderHost(
           activeClasses.clear();
           for (const name of next) activeClasses.add(name);
         };
-        for (const _item of classBindings) scope.add(effect(syncClasses));
+        if (classBindings.length > 0) scope.add(effect(syncClasses));
         syncClasses();
         for (const [signal, handler] of events) {
           const property = twoWayProperty(signal);

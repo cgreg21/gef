@@ -79,7 +79,6 @@ function notifySignal(property: string): string {
   return `notify::${property.replace(/([A-Z])/g, '-$1').replace(/_/g, '-').toLowerCase()}`;
 }
 
-
 function booleanValue(attribute: string, value: unknown): boolean {
   if (value === true || value === 'true') return true;
   if (value === false || value === 'false') return false;
@@ -276,6 +275,10 @@ export function createStRenderHost(
         if (isGtplBinding(styleValue)) scope.add(effect(syncStyle));
         if (isGtplBinding(styleBindingValue)) scope.add(effect(syncStyle));
         for (const _item of styleBindings) scope.add(effect(syncStyle));
+        if (Object.entries(attributes).some(([name, value]) =>
+          (name === 'style' || name === 'styleBinding' || name.startsWith('style.')) && isGtplBinding(value))) {
+          resources.add(effect(syncStyle));
+        }
         syncStyle();
       }
     },
@@ -409,10 +412,14 @@ export function createStRenderHost(
             if (/[{}]/.test(css)) throw new Error('GTPL style must contain CSS declarations only (without braces).');
             actor.set_style!(css);
           };
-          if (isGtplBinding(styleValue)) resources.add(effect(syncStyle));
-          if (isGtplBinding(styleBindingValue)) resources.add(effect(syncStyle));
-          for (const _item of styleBindings) resources.add(effect(syncStyle));
-          syncStyle();
+          
+          
+          
+          if (Object.entries(attributes).some(([name, value]) =>
+          (name === 'style' || name === 'styleBinding' || name.startsWith('style.')) && isGtplBinding(value))) {
+          resources.add(effect(syncStyle));
+        }
+        syncStyle();
         }
         const activeClasses = new Set<string>();
         const syncClasses = (): void => {
@@ -432,7 +439,7 @@ export function createStRenderHost(
           activeClasses.clear();
           for (const name of next) activeClasses.add(name);
         };
-        for (const _item of classBindings) resources.add(effect(syncClasses));
+        if (classBindings.length > 0) resources.add(effect(syncClasses));
         syncClasses();
         if (name === 'StPasswordEntry') {
           const textActor = (actor as StActor & { get_clutter_text?: () => StActor }).get_clutter_text?.()

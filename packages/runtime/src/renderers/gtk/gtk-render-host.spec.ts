@@ -239,18 +239,24 @@ describe('createGtkRenderHost', () => {
     const host = createGtkRenderHost(createGtk());
     const classes = signal({ active: true });
     const color = signal('red');
+    let classReads = 0;
+    let styleReads = 0;
     const widget = host.element('GtkLabel', {}, undefined) as FakeWidget;
     host.setHostAttributes?.(widget, {
-      classBinding: { kind: 'binding', get: () => classes.get() },
-      styleBinding: { kind: 'binding', get: () => `color: ${color.get()};` },
+      classBinding: { kind: 'binding', get: () => { classReads += 1; return classes.get(); } },
+      styleBinding: { kind: 'binding', get: () => { styleReads += 1; return `color: ${color.get()};`; } },
     });
     const provider = [...widget.styleContext.providers][0];
     expect(widget.classUpdateCount).toBe(1);
     expect(provider?.loadCount).toBe(1);
+    expect(classReads).toBe(1);
+    expect(styleReads).toBe(1);
     classes.set({ active: false });
     color.set('blue');
     expect(widget.classUpdateCount).toBe(2);
     expect(provider?.loadCount).toBe(2);
+    expect(classReads).toBe(2);
+    expect(styleReads).toBe(2);
     host.destroy(widget);
   });
 

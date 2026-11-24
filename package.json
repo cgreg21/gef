@@ -26,7 +26,8 @@
     "build:kitchen-sink": "npm run build && node dist/cli/src/index.js compile packages/examples/kitchen-sink/template.gtpl dist/examples/kitchen-sink/template.js",
     "kitchen-sink": "npm run build:kitchen-sink && node --import node-gtk/register packages/examples/kitchen-sink/kitchen-sink-node.mjs",
     "test:node-gtk:availability": "node --import node-gtk/register tests/node-gtk/availability.mjs",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:kitchen-sink": "npm run build:kitchen-sink && node --import node-gtk/register tests/node-gtk/kitchen-sink-smoke.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

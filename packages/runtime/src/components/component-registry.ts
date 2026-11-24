@@ -7,7 +7,7 @@ export class ComponentRegistry<Node> {
   register<Instance>(selector: string, definition: ComponentDefinition<Instance, Node>): this {
     if (!selector.trim()) throw new TypeError('A component selector cannot be empty.');
     if (this.#entries.some((entry) => entry.selector === selector)) {
-      throw new TypeError(\`Duplicate component selector "\${selector}".\`);
+      throw new TypeError('Duplicate component selector "' + selector + '".');
     }
     this.#entries.push({ selector, definition: definition as unknown as ComponentDefinition<object, Node> });
     return this;

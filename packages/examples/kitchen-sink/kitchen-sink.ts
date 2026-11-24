@@ -37,7 +37,9 @@ const host = createGtkRenderHost(Gtk, { api: 'node-gtk' });
 const components = createKitchenSinkComponents();
 const views = new Map<string, GtplRenderView<GtkActor>>();
 for (const demo of demos) {
-  views.set(demo.id, mountGtplTemplate({}, demo.render, host, undefined, undefined, undefined, components));
+  views.set(demo.id, mountGtplTemplate(
+    {}, demo.render, host, undefined, undefined, undefined, components,
+  ));
 }
 
 const loop = GLib.MainLoop.new(null, false);

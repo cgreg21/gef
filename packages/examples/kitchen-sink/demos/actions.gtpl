@@ -1,6 +1,5 @@
 <Flex direction="column" gap="16" margin-top="20">
-  <GtkLabel label="Actions and feedback" xalign="0" />
-  <GtkLabel label="Choose the action that matches the task. Native GTK buttons retain their platform styling." xalign="0" />
+  <GefSectionHeader title="Actions and feedback" description="Reusable GEF components compose with native GTK controls." />
   <Flex direction="row" gap="8">
     <GtkButton label="Create extension" />
     <GtkButton label="Preview" />

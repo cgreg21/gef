@@ -1,6 +1,5 @@
 <Flex direction="column" gap="16" margin-top="20">
-  <GtkLabel label="Preferences" xalign="0" />
-  <GtkLabel label="Control how the extension behaves on your desktop." xalign="0" />
+  <GefSectionHeader title="Preferences" description="Configure how the extension behaves on your desktop." />
   <Flex direction="row" gap="12">
     <Flex direction="column" gap="4">
       <GtkLabel label="Automatic updates" xalign="0" />

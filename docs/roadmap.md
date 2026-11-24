@@ -88,7 +88,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [x] Générer les fichiers TypeScript et GTPL des composants en kebab-case, conformément aux conventions Angular (CI `45410666986`, tentative 2 : quatre jobs réussis).
 - [x] Ajouter les générateurs directive, service et pipe avec tests E2E TypeScript (commit `953d9de`, CI `45418969015`, quatre jobs réussis).
 - [ ] Améliorer la validation de configuration et les messages d'erreur.
-  Validation stricte de `gef.json` et tests des cas invalides ajoutés ; à cocher après CI.
+  Validation stricte de `gef.json` et tests des cas invalides ajoutés. La première CI a révélé un ancien fixture de test de packaging incomplet ; le fixture est réaligné sur le schéma requis avant validation finale.
 - [ ] Vérifier les packages npm et les distributions autonomes sur leurs plateformes natives.
 - [ ] Définir les critères de sortie de l'alpha et préparer une version stable.
 

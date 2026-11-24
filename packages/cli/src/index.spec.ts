@@ -239,7 +239,7 @@ describe('GEF CLI', () => {
     const io: CliIO = {
       ...base.io,
       readFile: async (path) => path.endsWith('gef.json')
-        ? JSON.stringify({ version: 1, defaultProject: 'app', projects: { app: { projectType: 'application' } } })
+        ? JSON.stringify({ version: 1, defaultProject: 'app', projects: { app: { projectType: 'application', root: '.', sourceRoot: 'src', entryPoint: 'src/main.ts', outputPath: 'dist' } } })
         : path.endsWith('package.json')
           ? JSON.stringify({ scripts: { package: 'node-gtk bundle' } })
           : '',

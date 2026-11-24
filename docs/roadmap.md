@@ -63,6 +63,15 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [x] Simplifier le README principal et celui du Kitchen Sink.
 - [ ] Simplifier les autres guides et harmoniser la documentation.
 - [ ] Documenter les limites et les prérequis de chaque runtime.
+- [ ] Ajouter au Kitchen Sink des exemples d'applications complètes, construits avec les composants et les API publiques de GEF :
+  - [ ] Liste de tâches : création, modification, suppression, filtres et état terminé.
+  - [ ] Gestionnaire de notes : liste, recherche, édition et sauvegarde locale.
+  - [ ] Calculatrice : opérations de base, affichage et gestion des erreurs de saisie.
+  - [ ] Éditeur de texte : édition, ouverture/enregistrement de fichiers et état modifié.
+  - [ ] Gestionnaire de recettes : catalogue, recherche, détails, ingrédients et étapes.
+  - [ ] Ajouter d'autres exemples ciblés selon les composants et besoins démontrés (par exemple gestionnaire de favoris, suivi de dépenses ou carnet d'adresses).
+  - [ ] Pour chaque exemple, fournir une interface utilisable, des données de démonstration et l'accès au code TypeScript/GTPL correspondant.
+  - [ ] Garder les exemples indépendants et simples à parcourir depuis la navigation du Kitchen Sink.
 
 ## P6 — CLI et distribution
 

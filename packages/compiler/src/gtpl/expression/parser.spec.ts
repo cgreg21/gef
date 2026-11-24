@@ -73,6 +73,19 @@ describe('parseGtplExpression', () => {
     expect(parseGtplExpression('getState() = value').diagnostics.map((item) => item.code)).toContain('GTPL2009');
   });
 
+  it('parses object literals with shorthand-free keys and trailing commas', () => {
+    const result = parseGtplExpression('{ active: isActive, "aria-label": label, 2: count, }');
+    expect(result.diagnostics).toHaveLength(0);
+    expect(result.expression).toMatchObject({
+      kind: 'object',
+      properties: [
+        { key: 'active', value: { kind: 'identifier', name: 'isActive' } },
+        { key: 'aria-label', value: { kind: 'identifier', name: 'label' } },
+        { key: '2', value: { kind: 'identifier', name: 'count' } },
+      ],
+    });
+  });
+
   it('parses arrays and unary expressions', () => {
     const result = parseGtplExpression('[!busy, -count, true]');
     expect(result.diagnostics).toHaveLength(0);
@@ -242,6 +255,9 @@ describe('parseGtplExpression', () => {
       switch (node.kind) {
         case 'array':
           for (const element of node.elements) assertExpressionSpans(element, source);
+          break;
+        case 'object':
+          for (const property of node.properties) assertExpressionSpans(property.value, source);
           break;
         case 'assignment':
           assertExpressionSpans(node.target, source);

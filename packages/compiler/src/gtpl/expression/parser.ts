@@ -2,6 +2,7 @@ import type { ExpressionNode, ExpressionSpan } from '../ast/expression.js';
 
 export type {
   ArrayExpression,
+  ObjectExpression,
   BinaryExpression,
   CallExpression,
   ConditionalExpression,
@@ -275,6 +276,33 @@ class ExpressionParser {
       const expression = this.parseExpression(0);
       this.expect(')');
       return expression;
+    }
+
+    if (token.value === '{') {
+      this.advance();
+      const properties: Array<{ key: string; value: ExpressionNode }> = [];
+      while (this.getCurrentToken().kind !== 'eof' && this.getCurrentToken().value !== '}') {
+        const keyToken = this.current;
+        let key: string | null = null;
+        if (keyToken.kind === 'identifier' || keyToken.kind === 'string' || keyToken.kind === 'number') {
+          key = keyToken.kind === 'string' ? this.decodeString(keyToken.value, keyToken.terminated === true) : keyToken.value;
+          this.advance();
+        } else {
+          this.report('GTPL2011', 'Expected an object property name.', keyToken.start, keyToken.end);
+          if (keyToken.kind !== 'eof') this.advance();
+        }
+        if (!this.expect(':')) break;
+        const value = this.parseExpression(0);
+        if (key !== null && value) properties.push({ key, value });
+        if (this.current.value !== ',') break;
+        this.advance();
+      }
+      const close = this.expect('}');
+      return {
+        kind: 'object',
+        properties,
+        span: { start: token.start, end: close?.end ?? properties.at(-1)?.value.span.end ?? this.getCurrentToken().start },
+      };
     }
 
     if (token.value === '[') {

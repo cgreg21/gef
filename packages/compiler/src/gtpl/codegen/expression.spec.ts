@@ -33,6 +33,11 @@ describe('emitGtplExpression', () => {
       .toBe('[( !busy), (-count), (enabled ? "yes" : "no")]'.replace('( !busy)', '(!busy)'));
   });
 
+  it('emits object literals with safe property names', () => {
+    expect(emit('{ active: isActive, "aria-label": label }'))
+      .toBe('{"active": ctx.isActive, "aria-label": ctx.label}');
+  });
+
   it('emits pipe expressions', () => {
     expect(emit('name | uppercase:2')).toBe('runtime.pipe("uppercase", name, 2)');
   });

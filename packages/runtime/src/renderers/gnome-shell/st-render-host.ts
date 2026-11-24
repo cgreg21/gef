@@ -335,7 +335,7 @@ export function createStRenderHost(
             actor.set_style!(css);
           };
           if (isGtplBinding(styleValue)) resources.add(effect(syncStyle));
-          for (const item of styleBindings) resources.add(effect(syncStyle));
+          for (const _item of styleBindings) resources.add(effect(syncStyle));
           syncStyle();
         }
         const activeClasses = new Set<string>();
@@ -356,7 +356,7 @@ export function createStRenderHost(
           activeClasses.clear();
           for (const name of next) activeClasses.add(name);
         };
-        for (const item of classBindings) resources.add(effect(syncClasses));
+        for (const _item of classBindings) resources.add(effect(syncClasses));
         syncClasses();
         if (name === 'StPasswordEntry') {
           const textActor = (actor as StActor & { get_clutter_text?: () => StActor }).get_clutter_text?.()

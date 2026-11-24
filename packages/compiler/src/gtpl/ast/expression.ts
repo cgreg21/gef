@@ -71,6 +71,12 @@ export interface PipeExpression {
   readonly span: ExpressionSpan;
 }
 
+export interface ObjectExpression {
+  readonly kind: 'object';
+  readonly properties: readonly { readonly key: string; readonly value: ExpressionNode }[];
+  readonly span: ExpressionSpan;
+}
+
 export interface ArrayExpression {
   readonly kind: 'array';
   readonly elements: readonly ExpressionNode[];
@@ -87,4 +93,5 @@ export type ExpressionNode =
   | ConditionalExpression
   | AssignmentExpression
   | PipeExpression
-  | ArrayExpression;
+  | ArrayExpression
+  | ObjectExpression;

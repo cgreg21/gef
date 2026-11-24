@@ -230,6 +230,9 @@ class GtplSemanticAnalyzer {
       case 'array':
         for (const element of expression.elements) this.checkExpression(element, scope, sourceSpan, preciseSpan);
         return;
+      case 'object':
+        for (const property of expression.properties) this.checkExpression(property.value, scope, sourceSpan, preciseSpan);
+        return;
     }
   }
 

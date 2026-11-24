@@ -9,11 +9,13 @@ import actions from '../../dist/examples/kitchen-sink/demos/actions.js';
 import forms from '../../dist/examples/kitchen-sink/demos/forms.js';
 import preferences from '../../dist/examples/kitchen-sink/demos/preferences.js';
 import layouts from '../../dist/examples/kitchen-sink/demos/layouts.js';
+import { createKitchenSinkComponents } from '../../dist/examples/kitchen-sink/components.js';
 
 Gtk.init();
 const host = createGtkRenderHost(Gtk, { api: 'node-gtk' });
 const demos = [overview, actions, forms, preferences, layouts];
-const views = demos.map((render) => mountGtplTemplate({}, render, host));
+const components = createKitchenSinkComponents();
+const views = demos.map((render) => mountGtplTemplate({}, render, host, undefined, undefined, undefined, components));
 assert.equal(views.length, 5);
 for (const view of views) {
   assert.ok(view.node, 'Each demo must mount a native GTK widget tree.');

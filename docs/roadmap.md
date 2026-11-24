@@ -41,7 +41,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [ ] Mesurer et réduire les mises à jour et allocations inutiles.
 - [x] Éviter les écritures natives répétées lorsqu'un binding réactif conserve la même valeur primitive (GTK et GJS).
 - [x] Vérifier que les bindings ignorent les valeurs identiques sans bloquer l'application des valeurs modifiées (GTK et GJS, CI `45403392586`).
-- [ ] Éviter de réappliquer les styles natifs lorsque le CSS calculé reste identique (GTK et GJS) — correction GNOME Shell en cours après un échec de test CI.
+- [x] Éviter de réappliquer les styles natifs lorsque le CSS calculé reste identique (GTK et GJS, CI `45404667970`).
 - [x] Ajouter des régressions vérifiant qu'un binding de classe ou de style ne déclenche qu'une synchronisation initiale (GTK et GJS, CI `45401361924`).
 
 ## P4 — Bibliothèque UI

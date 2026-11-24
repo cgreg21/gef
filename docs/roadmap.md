@@ -7,7 +7,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 ## P0 — Stabilisation
 
 - [x] Corriger les erreurs de parsing TypeScript/ESLint dans le générateur CLI (commit `954c7a9`).
-- [ ] Ajouter une régression qui vérifie la syntaxe des sources du squelette généré.
+- [x] Ajouter une régression qui vérifie la syntaxe des sources du squelette généré (tests CLI, CI `45382171668`).
 - [x] Obtenir une CI entièrement verte sur Linux, GTK4/libadwaita, Windows et macOS (commit `b1f2513`, run `45381718868`, quatre jobs réussis).
 - [ ] Ajouter des tests de génération exécutant réellement les projets créés.
 - [x] Conserver une séparation stricte entre le runtime GNOME Shell (GJS) et le runtime desktop (Node-GTK).
@@ -28,8 +28,8 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [x] Gérer les bindings réactifs et la destruction des abonnements du composant.
 - [x] Fournir les décorateurs `@Directive`, `@Pipe`, `@HostBinding` et `@HostListener`.
 - [x] Enregistrer composants, directives et pipes avec leurs registres dédiés.
-- [ ] Réduire les inscriptions/fabriques manuelles redondantes lorsque le bootstrap le permet.
-- [ ] Ajouter davantage de tests d'intégration couvrant des composants décorés imbriqués.
+- [x] Réduire les inscriptions/fabriques manuelles redondantes : `ComponentRegistry.registerType()` instancie les classes décorées ; bootstrap et registres UI/Kitchen Sink migrés (commit `bf98182`).
+- [x] Ajouter des tests d'intégration couvrant le montage, les entrées et la destruction de composants décorés imbriqués (commit `5587904`, CI `45398852767`).
 
 ## P3 — Compilateur GTPL et runtime
 

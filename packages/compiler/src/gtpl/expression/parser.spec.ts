@@ -138,7 +138,7 @@ describe('parseGtplExpression', () => {
       ],
     });
     expect(result.diagnostics).toMatchObject([
-      { code: 'GTPL2008', span: { start: 16, end: 22 } },
+      { code: 'GTPL2008', span: { start: 13, end: 19 } },
     ]);
   });
 

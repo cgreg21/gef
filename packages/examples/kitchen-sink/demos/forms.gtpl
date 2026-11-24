@@ -1,5 +1,5 @@
 <Flex direction="column" gap="14" margin-top="20">
-  <GtkLabel label="Create an extension" xalign="0" />
+  <GefSectionHeader title="Create an extension" description="A practical form composed from GTK widgets and GEF layout components." />
   <GtkLabel label="Basic information" xalign="0" />
   <GtkLabel label="Extension name" xalign="0" />
   <GtkEntry placeholder-text="e.g. Workspace Navigator" />

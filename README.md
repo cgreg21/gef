@@ -1,133 +1,110 @@
-# GNOME Extension Framework (GEF)
+# GEF — GNOME Extension Framework
 
-> **Alpha software:** GEF is under active development. APIs, generated output and CLI behavior may change between alpha releases. It targets GNOME Shell 51; do not treat local validation as a guarantee of extensions.gnome.org approval.
+GEF est un framework TypeScript et GTPL pour créer des extensions GNOME Shell 51 et des applications natives GTK4/libadwaita.
 
-GEF is a TypeScript and GTPL framework for native GNOME desktop projects. It supports GNOME Shell 51 extensions running in GJS and native GTK4/libadwaita applications running in Node.js through node-gtk. The two project types are selected in `gef.json`; they remain separate runtime targets. It does not use a browser DOM. The GNOME Shell 51 smoke test exercises resource-scope cleanup, St host signal/effect teardown and GLib timer cancellation, then installs the generated EGO ZIP and runs two real extension enable/disable cycles on a virtual X11 display.
+Il fournit un compilateur de templates, des composants décorés, un runtime réactif et une CLI. Les extensions GJS et les applications Node-GTK utilisent des cibles d'exécution distinctes. GEF n'utilise pas le DOM du navigateur.
 
-## Requirements
+> **Statut : alpha.** Le framework évolue encore. Certaines API et certains comportements peuvent changer. Les outils de validation ne garantissent pas l'acceptation d'une extension sur extensions.gnome.org.
 
-- Node.js 22+ for compiler, CLI, build tooling and Node-GTK GTK4 applications (Node-GTK prebuilt binaries target Node.js 22, 24 and 26)
-- GNOME Shell 51 and GJS for the extension runtime
-- GTK4 and libadwaita for preferences UI
-- Sass (installed with the development dependencies) for SCSS compilation
-- `zip` and `unzip` for creating and validating the EGO archive
-- `linuxdeploy` on Linux for AppImage output
-- Homebrew GTK4, libadwaita, Adwaita icons and GObject Introspection on macOS for standalone `.app`/`.dmg` output
+## Prérequis
 
-## Development
+- Node.js 22 ou supérieur
+- GNOME Shell 51 et GJS pour développer une extension
+- GTK4 et libadwaita pour exécuter une application native
+- Sass pour compiler les feuilles de style
+- `zip` et `unzip` pour créer et vérifier les archives d'extensions
+
+## Installation
+
+Depuis ce dépôt :
 
 ```sh
 npm install
-npm run check
 npm run build
-npm run package:example
-# Native GTK4/libadwaita smoke test (also runs in CI):
-npm run test:gtk
-# Build and launch the GTK4 Kitchen Sink with Node-GTK (Windows/Linux/macOS):
-npm run build:kitchen-sink
-npm run kitchen-sink
-# Or use the GJS entry point on GNOME/Linux:
-# gjs -m packages/examples/kitchen-sink/kitchen-sink.js
-# Build the smaller UI showcase template:
-npm run build:ui-showcase
-# On a host with GNOME Shell 51, GJS, dbus-run-session and Xvfb:
-npm run test:gnome
+npm run check
 ```
 
-The GTK4 smoke test opens and closes a real `Adw.PreferencesWindow` three times using a shared widget lookup helper, mounts the compiled preferences page on each cycle, checks its GSettings-backed switch, verifies view detachment and confirms a destroyed switch can no longer change settings. Renderer unit tests also destroy nested GTK widget trees and verify that child signal handlers and reactive bindings are stopped recursively. GTK teardown releases descendant resources without redundantly detaching children from a container that is itself being disposed. It also loads a real CSS file through a native `Gtk.CssProvider` and verifies resource-scope cleanup without duplicate removal. The GJS lifecycle fixture also checks that St host signal handlers and reactive effects stop when their actors are destroyed. The generated extension's Shell-reported enable/disable cycles are tested separately; this does not introspect every Shell-owned resource. The staged GNOME Shell 51 example is written to `dist/extension/` and packaged as `dist/<uuid>.shell-extension.zip`. The ZIP is rooted at the extension files (not a containing directory), integrity-checked, and scanned for required and development-only paths. On a GNOME Shell 51 host, `npm run test:gnome` installs that exact ZIP into an isolated user data directory, checks the Shell-reported state after enabling and disabling it twice, and removes the temporary installation afterward.
-`npm run dev:watch` rebuilds and restages it when source files change.
-
-## Quick start
-
-The first public npm release has not yet been completed. Until it is published, use the CLI from this checkout:
+Pour créer un projet avec la CLI locale :
 
 ```sh
-npm install
-npm run build
-npm run gef -- --help
 npm run gef -- new my-extension
 ```
 
-After the alpha is published, install it in an extension project:
+Pour une application GTK :
+
+```sh
+npm run gef -- new my-app --type application
+```
+
+Après publication du package :
 
 ```sh
 npm install --save-dev gnome-extension-framework@next
-npx --yes --package gnome-extension-framework@next gef --help
-npx --yes --package gnome-extension-framework@next gef new my-extension
-npx --yes --package gnome-extension-framework@next gef new my-app --type application
+npx gef new my-extension
 ```
 
-The `new` command creates a project with an Angular-style `gef.json` workspace file. Use `--type extension` (the default) for a GNOME Shell 51 extension, or `--type application` for a Node-GTK GTK4/libadwaita desktop application. Review the generated files before building or publishing; the starter is intentionally small and is not a promise that every project-specific build step is configured. Node-GTK application projects include a `bundle` configuration with the application ID, compiled entry point and GTK 4 target. Their build compiles GTPL templates and mounts them through the GEF GTK renderer's Node-GTK mode. GEF packages GTK applications on their native build hosts: Linux as AppImage plus portable archive, Windows as a self-contained ZIP, and macOS as an .app/.dmg. The Windows package reuses the self-contained DLL/typelib runtime shipped by the Node-GTK prebuilt; the macOS package collects the GTK runtime installed through Homebrew. Each target must be built on its native OS. macOS artifacts are unsigned and require Developer ID signing and notarization for public distribution. GNOME Shell extension ZIPs remain a separate Linux/GNOME-only package.
+Le premier package npm n'est pas encore publié. Jusqu'à sa publication, utilisez la CLI depuis le dépôt.
 
-For the UI component guide and examples, see [GEF UI documentation](docs/ui-components.md), the [GEF Kitchen Sink](packages/examples/kitchen-sink/README.md) and the [minimal GTK showcase](packages/examples/ui-showcase/README.md). For the full first-project walkthrough, see [Getting started](docs/getting-started.md). For command syntax and behavior, see the [CLI reference](docs/cli-reference.md).
-## CLI
+## Développement
 
-From a source checkout, use `npm run gef -- <command>`. After installing the published package in a project, use `npx gef <command>` or the local `node_modules/.bin/gef` executable.
+Commandes principales, à lancer depuis la racine :
 
-```sh
-npm run gef -- check src/view.gtpl
-npm run gef -- compile src/view.gtpl dist/view.js
-npm run gef -- styles src/theme.scss dist/theme.css
-npm run gef -- new my-extension
-npm run gef -- generate component UserCard src/components
-npm run gef -- test
-npm run gef -- package
-npm run gef -- doctor
-npm run gef -- ego-check dist/extension
+| Commande | Description |
+| --- | --- |
+| `npm run check` | Vérifie le code et les types |
+| `npm run build` | Compile le framework |
+| `npm run gef -- --help` | Affiche l'aide de la CLI |
+| `npm run test:gtk` | Lance les tests natifs GTK |
+| `npm run build:kitchen-sink` | Compile l'application de démonstration |
+| `npm run kitchen-sink` | Lance le Kitchen Sink GTK |
+| `npm run test:gnome` | Teste l'extension sur GNOME Shell 51 |
+| `npm run package:example` | Prépare et empaquette l'exemple d'extension |
+
+Le test GNOME nécessite un environnement Linux avec GNOME Shell 51, GJS, D-Bus et Xvfb. Les applications GTK nécessitent les bibliothèques GTK4 et libadwaita de la plateforme.
+
+## Exemple
+
+GEF utilise des décorateurs pour déclarer les composants et leurs entrées :
+
+```ts
+import { Component, Input } from "gnome-extension-framework";
+
+@Component({
+  selector: "app-greeting",
+  template: `<GtkLabel label="{name}" />`,
+})
+export class GreetingComponent {
+  @Input() name = "GNOME";
+}
 ```
 
-Run `gef --help` to see each command and its description on separate lines, including the staged-extension `ego-check` command. `gef generate component UserCard src/components` creates a decorated component with a working `@Input()` property and a GTPL interpolation that displays it. The `ego-check` command checks staged metadata and UUID syntax, requires the root `extension.js` entry point, validates unique stable Shell versions and positive integer metadata versions when supplied, checks declared GSettings schema presence, dotted ID syntax and exact schema-element ID matching, warns about GNOME resource and signal side effects in constructors and temporary `console.debug()` calls, rejects development files and orphan JavaScript modules using normalized relative paths, validates local CSS `url()` asset references, and warns about potentially unused CSS, image, font, resource and schema files without failing when dynamic references cannot be proven, and checks Shell/preferences API boundaries. A successful check prints summary totals for files, JavaScript files and warnings; a failed check prints error and warning totals. File, JavaScript, warning and error counts use correct singular and plural wording. The compiler emits readable multi-line JavaScript and line/column-aware Source Map v3 mappings across each entry point's local JavaScript dependency graph and requires the Shell entry class to implement `enable()` and `disable()`. The package workflow runs this validator automatically after staging. It is a useful local guard, not a substitute for EGO review. The `new` command creates a working panel-indicator example, with minimal GJS type declarations, direct generated types and explicit `enable()`/`disable()` resource cleanup. The example owns its stylesheet, settings bindings and mounted view in one reverse-order resource scope; a failed partial activation rolls back resources immediately. Generated Node.js packaging code uses static imports and a straightforward synchronous pack command. Generated source includes the GNOME guidance notice for AI-assisted code; remove it only if you understand and can maintain the JavaScript before considering EGO publication. The `compile` command creates missing parent directories for its JavaScript output path, including nested relative paths, and writes a linked Source Map v3 file. The compiler API and component compilation results also expose GTPL node mappings, including nested elements and text nodes; expression mappings are emitted for interpolations and expression-bound attributes; control-flow expressions are also mapped; each nested expression AST node is mapped to its own GTPL source position. CSS compatibility errors include source excerpts and caret markers. CLI diagnostics split LF, CRLF and standalone CR line endings consistently with GTPL source positions.
-
-## npm and npx
-
-For the alpha channel, install GEF in an extension project with `npm install --save-dev gnome-extension-framework@next`, or run the CLI without a global installation:
-
-```sh
-npx --yes --package gnome-extension-framework@next gef --help
-npx --yes --package gnome-extension-framework@next gef new my-extension
-```
-
-The published package exposes the `gef` executable and the compiler/runtime ESM entry points. CI verifies the published manifest and required tarball files, installs the generated package into a clean temporary project, checks compiler/runtime ESM imports and invokes the CLI through `npx`. Alpha releases are published to the npm `next` dist-tag so they do not replace the stable `latest` channel. Stable releases use `latest`. Publishing is performed from a GitHub Release after these checks pass, using npm trusted publishing (OIDC) with a current npm CLI; the release tag must match the package version. The first npm publication must bootstrap the package manually before its trusted publisher can be configured. The current source is prepared as `0.1.0-alpha.1`; it is not public on npm until that bootstrap and release workflow are completed. No npm token is stored in the repository. See [npm release setup](docs/npm-release.md).
+La syntaxe exacte des templates et les API disponibles sont décrites dans le guide des composants.
 
 ## Documentation
 
-- [Documentation index](docs/README.md)
-- [Getting started](docs/getting-started.md)
-- [CLI reference](docs/cli-reference.md)
-- [GTPL language](docs/gtpl-language.md)
-- [UI components — guide complet](docs/ui-components.md)
-- [UI layout](docs/ui-layout.md)
-- [Components, directives and pipes](docs/components.md)
-- [Semantic analysis](docs/semantic-analysis.md)
+- [Démarrage](docs/getting-started.md)
+- [Référence de la CLI](docs/cli-reference.md)
+- [Langage GTPL](docs/gtpl-language.md)
+- [Composants, directives et pipes](docs/components.md)
+- [Guide des composants UI](docs/ui-components.md)
+- [Layouts](docs/ui-layout.md)
 - [Architecture](docs/architecture.md)
-- [EGO compliance](docs/ego-compliance.md)
-- [npm releases](docs/npm-release.md)
-- [Development roadmap](docs/roadmap.md)
+- [Conformité extensions.gnome.org](docs/ego-compliance.md)
+- [Configuration des releases npm](docs/npm-release.md)
+- [Roadmap](docs/roadmap.md)
+
+Exemples :
+- [Kitchen Sink GTK](packages/examples/kitchen-sink/README.md)
+- [UI Showcase](packages/examples/ui-showcase/README.md)
 
 ## Packages
 
-- `gnome-extension-framework`: compiler declarations and GTPL tooling
-- `gnome-extension-framework/runtime`: renderer-independent runtime, DI,
-  reactivity, GJS lifecycle helpers, St and GTK render hosts, scoped native stylesheet providers
-- `gef`: project and build CLI
+- **`gnome-extension-framework`** — compilateur, déclarations et outils GTPL.
+- **`gnome-extension-framework/runtime`** — runtime, composants, injection de dépendances, réactivité et renderers GJS/GTK.
+- **`gef`** — CLI de création, compilation et packaging.
 
-The runtime package has no Node.js or TypeScript imports. Decorator metadata is shared with the compiler through a small runtime-safe module; Node, TypeScript and Sass are build-time tools.
+## Périmètre
 
-## Current scope
+GEF fournit les bases nécessaires à la création de projets GNOME : templates GTPL, composants et métadonnées, directives, pipes, injection de dépendances, signaux réactifs, gestion du cycle de vie et renderers natifs.
 
-Implemented foundations include the GTPL parser and structural lowering,
-expression and template code generation with preserved meaningful text whitespace and Source Map v3 mappings for template and expression nodes, optional TypeScript expression type checking, component contract validation,
-selector-matched runtime directives and components, component input/output
-lifecycles and DI (including reactive input teardown tests and GTK component
-reactive input binding, mounting and disposal coverage), repeat-item failure cleanup,
-initial-render rollback tracking released immediately after mount, reactive signals,
-pure pipe caching, resource scopes, expanded St/GTK4/libadwaita widget hosts, GLib
-source and GObject signal cleanup, reactive boolean/integer/string/string-array GSettings bindings,
-identifier-level GTPL diagnostics with LF/CRLF/CR source positions and regression coverage, source-context CLI diagnostics, native GTK4/libadwaita smoke tests, a CSS compatibility checker that ignores comments and quoted strings, reports unterminated CSS strings and comments, and validates browser-only declarations,
-and a schema-aware extension staging pipeline.
-
-GEF targets extensions.gnome.org (EGO) review requirements: generated JavaScript must remain readable and reviewable, extension lifecycle work must happen in `enable()` and be cleaned in `disable()`, preferences and Shell code must stay process-isolated, and packages must contain only required runtime files. See [EGO compliance](docs/ego-compliance.md) for the compiler and packaging requirements.
-
-This is an active framework under development, not yet a production-complete
-replacement for GNOME's native extension APIs. EGO approval cannot be guaranteed by tooling. See [the architecture](docs/architecture.md)
-and [the roadmap](docs/roadmap.md) for the remaining work.
+Le framework est encore en développement. Consultez la [roadmap](docs/roadmap.md) pour connaître les fonctionnalités en cours et les limites actuelles.

@@ -1,5 +1,10 @@
 # GEF — GNOME Extension Framework
 
+[![CI](https://github.com/cgreg21/gef/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/cgreg21/gef/actions/workflows/ci.yml)
+[![Last commit](https://img.shields.io/github/last-commit/cgreg21/gef)](https://github.com/cgreg21/gef/commits/main)
+[![Open issues](https://img.shields.io/github/issues/cgreg21/gef)](https://github.com/cgreg21/gef/issues)
+[![Stars](https://img.shields.io/github/stars/cgreg21/gef)](https://github.com/cgreg21/gef/stargazers)
+
 GEF est un framework TypeScript et GTPL pour créer des extensions GNOME Shell 51 et des applications natives GTK4/libadwaita.
 
 Il fournit un compilateur de templates, des composants décorés, un runtime réactif et une CLI. Les extensions GJS et les applications Node-GTK utilisent des cibles d'exécution distinctes. GEF n'utilise pas le DOM du navigateur.

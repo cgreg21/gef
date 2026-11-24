@@ -39,7 +39,7 @@ try {
   const component = mountDecoratedComponent(AppComponent, renderApp, injector, host);
 
   try {
-    assert.equal(component.view.node.get_label(), 'Hello from GEF and node-gtk!');
+    assert.equal(component.view.node.label, 'Hello from GEF and node-gtk!');
     assert.equal(component.instance.title, 'GeneratedApp');
   } finally {
     component.destroy();

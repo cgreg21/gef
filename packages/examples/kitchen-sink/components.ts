@@ -33,21 +33,22 @@ function renderMetricCard(
   component: MetricCardComponent,
   runtime: GtplRenderRuntime<GtkActor>,
 ): GtkActor {
-  return runtime.element('Flex', { direction: 'column', gap: 6 }, runtime.fragment([
-    runtime.element('GtkLabel', { label: component.title, xalign: 0 }, undefined),
-    runtime.element('GtkLabel', { label: component.value, xalign: 0 }, undefined),
-    runtime.element('GtkLabel', { label: component.detail, xalign: 0 }, undefined),
-  ]));
+  return runtime.element('GtkLabel', {
+    label: `${component.title}\n${component.value}\n${component.detail}`,
+    xalign: 0,
+    wrap: true,
+  }, undefined);
 }
 
 function renderSectionHeader(
   component: SectionHeaderComponent,
   runtime: GtplRenderRuntime<GtkActor>,
 ): GtkActor {
-  return runtime.element('Flex', { direction: 'column', gap: 4 }, runtime.fragment([
-    runtime.element('GtkLabel', { label: component.title, xalign: 0 }, undefined),
-    runtime.element('GtkLabel', { label: component.description, xalign: 0 }, undefined),
-  ]));
+  return runtime.element('GtkLabel', {
+    label: `${component.title}\n${component.description}`,
+    xalign: 0,
+    wrap: true,
+  }, undefined);
 }
 
 export function createKitchenSinkComponents(): ComponentRegistry<GtkActor> {

@@ -86,6 +86,9 @@ function collectIdentifiers(node: ExpressionNode, names: Set<string>): void {
       return;
     case 'array':
       for (const element of node.elements) collectIdentifiers(element, names);
+      return;
+    case 'object':
+      for (const property of node.properties) collectIdentifiers(property.value, names);
   }
 }
 

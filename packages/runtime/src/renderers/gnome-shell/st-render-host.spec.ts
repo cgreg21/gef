@@ -170,6 +170,22 @@ describe('createStRenderHost', () => {
   });
 
 
+  it('synchronizes element class and style bindings once initially', () => {
+    const host = createStRenderHost(createSt());
+    let classReads = 0;
+    let styleReads = 0;
+    const actor = host.element('StLabel', {
+      classBinding: { kind: 'binding', get: () => { classReads += 1; return { active: true }; } },
+      style: { kind: 'binding', get: () => { styleReads += 1; return 'color: red;'; } },
+    }, undefined) as FakeActor;
+
+    expect(classReads).toBe(1);
+    expect(styleReads).toBe(1);
+    expect(actor.properties.style_class).toBe('active');
+    expect(actor.properties.style).toBe('color: red;');
+    host.destroy(actor);
+  });
+
   it('creates registered St widgets with normalized GObject property names', () => {
     const host = createStRenderHost(createSt());
     const child = host.text('Hello');

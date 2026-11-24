@@ -414,11 +414,10 @@ export function createStRenderHost(
             actor.set_style!(css);
             previousCss = css;
           };
-        if (Object.entries(attributes).some(([name, value]) =>
-          (name === 'style' || name === 'styleBinding' || name.startsWith('style.')) && isGtplBinding(value))) {
-          resources.add(effect(syncStyle));
-        }
-        syncStyle();
+        const hasReactiveStyle = Object.entries(attributes).some(([name, value]) =>
+          (name === 'style' || name === 'styleBinding' || name.startsWith('style.')) && isGtplBinding(value));
+        if (hasReactiveStyle) resources.add(effect(syncStyle));
+        else syncStyle();
         }
         const activeClasses = new Set<string>();
         const syncClasses = (): void => {
@@ -439,7 +438,7 @@ export function createStRenderHost(
           for (const name of next) activeClasses.add(name);
         };
         if (classBindings.length > 0) resources.add(effect(syncClasses));
-        syncClasses();
+        else syncClasses();
         if (name === 'StPasswordEntry') {
           const textActor = (actor as StActor & { get_clutter_text?: () => StActor }).get_clutter_text?.()
             ?? readProperty(actor, 'clutter-text') as StActor | undefined;

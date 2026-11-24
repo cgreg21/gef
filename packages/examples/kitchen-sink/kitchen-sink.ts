@@ -2,14 +2,14 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import Gtk from 'gi:Gtk-4.0';
 import GLib from 'gi:GLib-2.0';
-import { createGtkRenderHost, mountGtplTemplate } from '../../runtime/src/index.js';
+import { createGtkRenderHost, mountGtplTemplate, type GtkActor, type GtplRenderFunction, type GtplRenderView } from '../../runtime/src/index.js';
 import overview from './demos/overview.js';
 import actions from './demos/actions.js';
 import forms from './demos/forms.js';
 import preferences from './demos/preferences.js';
 import layouts from './demos/layouts.js';
 
-interface Demo { readonly id: string; readonly title: string; readonly source: string; readonly render: (context: Record<string, never>) => unknown; }
+interface Demo { readonly id: string; readonly title: string; readonly source: string; readonly render: GtplRenderFunction<Record<string, never>, GtkActor>; }
 
 Gtk.init();
 const demos: readonly Demo[] = [
@@ -21,7 +21,8 @@ const demos: readonly Demo[] = [
 ];
 
 const host = createGtkRenderHost(Gtk, { api: 'node-gtk' });
-const views = new Map(demos.map((demo) => [demo.id, mountGtplTemplate({}, demo.render, host)]));
+const views = new Map<string, GtplRenderView<GtkActor>>();
+for (const demo of demos) views.set(demo.id, mountGtplTemplate({}, demo.render, host));
 const loop = GLib.MainLoop.new(null, false);
 const window = new Gtk.Window({ title: 'GEF Kitchen Sink', defaultWidth: 1180, defaultHeight: 820 });
 const root = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 0 });

@@ -1,17 +1,8 @@
 <Flex direction="column" gap="16" margin-top="20">
-  <GtkLabel label="Welcome back" xalign="0" />
-  <GtkLabel label="Your workspace at a glance" xalign="0" />
+  <GefSectionHeader title="Welcome back" description="Your workspace at a glance" />
   <Grid columns="2" gap="12">
-    <Flex direction="column" gap="6">
-      <GtkLabel label="Installed extensions" xalign="0" />
-      <GtkLabel label="12" xalign="0" />
-      <GtkLabel label="2 updates available" xalign="0" />
-    </Flex>
-    <Flex direction="column" gap="6">
-      <GtkLabel label="System status" xalign="0" />
-      <GtkLabel label="All systems operational" xalign="0" />
-      <GtkLabel label="Last checked just now" xalign="0" />
-    </Flex>
+    <GefMetricCard title="Installed extensions" value="12" detail="2 updates available" />
+    <GefMetricCard title="System status" value="Operational" detail="Last checked just now" />
   </Grid>
   <GtkSeparator orientation="horizontal" />
   <GtkLabel label="Recent activity" xalign="0" />

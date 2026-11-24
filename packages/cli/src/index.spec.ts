@@ -178,7 +178,8 @@ describe('GEF CLI', () => {
     expect(app).toContain('new Injector()');
     expect(app).toContain('app.run([])');
     const component = writes.find((item) => item.path.endsWith(join('src', 'app', 'app.component.ts')))?.content ?? '';
-    expect(component).toContain("@Component({ selector: 'app-root'");\n    expect(component).toContain("templateUrl: './app.component.gtpl'");\n    const template = writes.find((item) => item.path.endsWith(join('src', 'app', 'app.component.gtpl')))?.content ?? '';
+    expect(component).toContain("@Component({ selector: 'app-root'");\n    expect(component).toContain("templateUrl: './app.component.gtpl'");
+    const template = writes.find((item) => item.path.endsWith(join('src', 'app', 'app.component.gtpl')))?.content ?? '';
     expect(template).toContain('<GtkLabel label="Hello from GEF and node-gtk!" />');
     const projectPackage = JSON.parse(writes.find((item) => item.path.endsWith('package.json'))?.content ?? '{}') as {
       dependencies?: Record<string, string>;

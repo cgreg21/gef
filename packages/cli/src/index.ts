@@ -443,7 +443,8 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
       if (projectType === 'application') {
         for (const folder of ['src', 'src/app', 'src/components', 'src/directives', 'src/pipes', 'src/services', 'src/models', 'src/assets', 'src/styles']) {
           await io.mkdir(resolve(directory, folder));
-        }\n      }
+        }
+      }
       for (const [path, source] of Object.entries(files)) await io.writeFile(resolve(directory, path), source);
     } catch (error) {
       io.stderr(`Unable to generate project: ${error instanceof Error ? error.message : String(error)}`);

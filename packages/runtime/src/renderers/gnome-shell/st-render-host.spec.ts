@@ -197,12 +197,13 @@ describe('createStRenderHost', () => {
     const host = createStRenderHost(createSt());
     const classes = signal({ active: true });
     const color = signal('red');
+    const revision = signal(0);
     let classReads = 0;
     let styleReads = 0;
     const actor = host.element('StLabel', {}, undefined) as FakeActor;
     host.setHostAttributes?.(actor, {
       classBinding: { kind: 'binding', get: () => { classReads += 1; return classes.get(); } },
-      styleBinding: { kind: 'binding', get: () => { styleReads += 1; return `color: ${color.get()};`; } },
+      styleBinding: { kind: 'binding', get: () => { styleReads += 1; revision.get(); return `color: ${color.get()};`; } },
     });
     expect(actor.properties.style_class).toBe('active');
     expect(actor.styleUpdateCount).toBe(1);
@@ -214,6 +215,9 @@ describe('createStRenderHost', () => {
     expect(actor.styleUpdateCount).toBe(2);
     expect(classReads).toBe(2);
     expect(styleReads).toBe(2);
+    revision.set(1);
+    expect(actor.styleUpdateCount).toBe(2);
+    expect(styleReads).toBe(3);
     host.destroy(actor);
   });
 

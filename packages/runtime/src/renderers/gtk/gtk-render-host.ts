@@ -424,6 +424,7 @@ export function createGtkRenderHost(
         const provider = new Gtk.CssProvider();
         context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION ?? 600);
         scope.add(() => context.remove_provider(provider));
+        let previousCss: string | undefined;
         const syncStyle = (): void => {
           const declarations = styleDeclarations(isGtplBinding(styleValue) ? styleValue.get() : styleValue);
           mergeStyleDeclarations(declarations, isGtplBinding(styleBindingValue) ? styleBindingValue.get() : styleBindingValue);
@@ -434,7 +435,9 @@ export function createGtkRenderHost(
           }
           const css = styleText(declarations);
           if (/[{}]/.test(css)) throw new Error('GTPL style must contain CSS declarations only (without braces).');
+          if (css === previousCss) return;
           provider.load_from_data(css ? `* { ${css} }` : '* {}');
+          previousCss = css;
         };
         const hasReactiveStyle = [styleValue, styleBindingValue, ...styleBindings.map((item) => item.binding)]
           .some(isGtplBinding);

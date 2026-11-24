@@ -395,6 +395,7 @@ export function createStRenderHost(
       try {
         if (styleValue !== undefined || styleBindingValue !== undefined || styleBindings.length) {
           if (!actor.set_style) throw new Error('This St widget does not support inline styles.');
+          let previousCss: string | undefined;
           const syncStyle = (): void => {
             const declarations = styleDeclarations(isGtplBinding(styleValue) ? styleValue.get() : styleValue);
             const boundStyles = isGtplBinding(styleBindingValue) ? styleBindingValue.get() : styleBindingValue;
@@ -406,7 +407,9 @@ export function createStRenderHost(
             }
             const css = styleText(declarations);
             if (/[{}]/.test(css)) throw new Error('GTPL style must contain CSS declarations only (without braces).');
+            if (css === previousCss) return;
             actor.set_style!(css);
+            previousCss = css;
           };
         if (Object.entries(attributes).some(([name, value]) =>
           (name === 'style' || name === 'styleBinding' || name.startsWith('style.')) && isGtplBinding(value))) {

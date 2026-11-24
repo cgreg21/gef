@@ -93,6 +93,58 @@ function formatDiagnostic(source: string, input: string, diagnostic: { code: str
   ].join('\n');
 }
 
+type WorkspaceProject = {
+  projectType: 'application' | 'extension';
+  root: string;
+  sourceRoot: string;
+  entryPoint: string;
+  outputPath: string;
+};
+
+function validateWorkspaceConfig(source: string): string | undefined {
+  let value: unknown;
+  try {
+    value = JSON.parse(source);
+  } catch {
+    return 'gef.json must contain valid JSON.';
+  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return 'gef.json must contain a JSON object.';
+  const config = value as Record<string, unknown>;
+  if (config.version !== 1) return 'gef.json version must be 1.';
+  if (!config.projects || typeof config.projects !== 'object' || Array.isArray(config.projects)) {
+    return 'gef.json projects must be a non-empty object.';
+  }
+  const projects = config.projects as Record<string, unknown>;
+  const names = Object.keys(projects);
+  if (names.length === 0) return 'gef.json projects must contain at least one project.';
+  for (const name of names) {
+    if (!/^[a-z][a-z0-9-]*$/.test(name)) return `gef.json project name "${name}" must use lowercase letters, digits and hyphens.`;
+    const project = projects[name];
+    if (!project || typeof project !== 'object' || Array.isArray(project)) {
+      return `gef.json project "${name}" must be an object.`;
+    }
+    const entry = project as Record<string, unknown>;
+    if (entry.projectType !== 'application' && entry.projectType !== 'extension') {
+      return `gef.json project "${name}" projectType must be "application" or "extension".`;
+    }
+    for (const field of ['root', 'sourceRoot', 'entryPoint', 'outputPath'] as const) {
+      const path = entry[field];
+      if (typeof path !== 'string' || !path.trim() || path.includes('\\') || path.startsWith('/') || /^[A-Za-z]:/.test(path)
+        || path.split('/').some((part) => part === '..' || part === '.')) {
+        return `gef.json project "${name}" ${field} must be a non-empty relative path without "." or ".." segments.`;
+      }
+    }
+  }
+  if (config.defaultProject !== undefined
+    && (typeof config.defaultProject !== 'string' || !Object.hasOwn(projects, config.defaultProject))) {
+    return 'gef.json defaultProject must reference a project declared in projects.';
+  }
+  if (config.defaultProject === undefined && names.length !== 1) {
+    return 'gef.json must define defaultProject when it contains multiple projects.';
+  }
+  return undefined;
+}
+
 export async function runCli(args: readonly string[] = process.argv.slice(2), io: CliIO = defaultIO): Promise<number> {
   const [command, inputArg, outputArg] = args;
   if (!command || command === '--help' || command === '-h') {
@@ -313,17 +365,8 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
 
   if (command === 'build' || command === 'test' || command === 'package' || command === 'watch') {
     try {
-      const config = JSON.parse(await io.readFile(resolve('gef.json'))) as {
-        defaultProject?: string;
-        projects?: Record<string, { projectType?: string }>;
-      };
-      const names = Object.keys(config.projects ?? {});
-      const selected = config.defaultProject ?? (names.length === 1 ? names[0] : undefined);
-      const project = selected ? config.projects?.[selected] : undefined;
-      if (!project) throw new Error('gef.json must define a defaultProject or exactly one project.');
-      if (project.projectType !== 'application' && project.projectType !== 'extension') {
-        throw new Error('gef.json projectType must be "application" or "extension".');
-      }
+      const error = validateWorkspaceConfig(await io.readFile(resolve('gef.json')));
+      if (error) throw new Error(error);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
         io.stderr(`Invalid project configuration: ${error instanceof Error ? error.message : String(error)}`);

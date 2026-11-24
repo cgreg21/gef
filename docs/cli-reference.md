@@ -68,6 +68,10 @@ gef new desktop-app --type application
 
 The generated `gef.json` follows Angular's workspace idea: it has a
 `projects` map, a `defaultProject`, and a `projectType` for each project.
+The CLI validates the workspace version, project names and types, required
+relative paths, and the selected default project before running build, test,
+watch or package scripts. A single-project workspace may omit
+`defaultProject`; a multi-project workspace must select one explicitly.
 Supported types are `extension` (GJS / GNOME Shell) and `application`
 (Node.js / node-gtk). Extension projects include `src/extension.ts`, a decorated root component under `src/app/`, GNOME metadata and an EGO
 packaging script. Application projects include a GTK4/libadwaita starter,

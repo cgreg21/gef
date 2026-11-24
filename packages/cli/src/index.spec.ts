@@ -643,6 +643,35 @@ describe('GEF CLI', () => {
     expect(base.output[0]).toContain('MISSING  GNOME Shell 51');
   });
 
+  it.each([
+    ['invalid JSON', '{'],
+    ['unsupported version', JSON.stringify({ version: 2, projects: { demo: { projectType: 'extension', root: '.', sourceRoot: 'src', entryPoint: 'src/extension.ts', outputPath: 'dist' } } })],
+    ['empty projects', JSON.stringify({ version: 1, projects: {} })],
+    ['invalid project type', JSON.stringify({ version: 1, projects: { demo: { projectType: 'library', root: '.', sourceRoot: 'src', entryPoint: 'src/main.ts', outputPath: 'dist' } } })],
+    ['parent traversal', JSON.stringify({ version: 1, projects: { demo: { projectType: 'extension', root: '.', sourceRoot: '../src', entryPoint: 'src/extension.ts', outputPath: 'dist' } } })],
+    ['unknown default project', JSON.stringify({ version: 1, defaultProject: 'missing', projects: { demo: { projectType: 'extension', root: '.', sourceRoot: 'src', entryPoint: 'src/extension.ts', outputPath: 'dist' } } })],
+    ['missing default with multiple projects', JSON.stringify({ version: 1, projects: {
+      demo: { projectType: 'extension', root: '.', sourceRoot: 'src', entryPoint: 'src/extension.ts', outputPath: 'dist' },
+      desktop: { projectType: 'application', root: '.', sourceRoot: 'src', entryPoint: 'src/main.ts', outputPath: 'dist' },
+    } })],
+  ])('rejects invalid gef.json: %s', async (_label, config) => {
+    const base = createIO('');
+    const io: CliIO = { ...base.io, readFile: async (path) => path.endsWith('gef.json') ? config : '' };
+    expect(await runCli(['build'], io)).toBe(2);
+    expect(base.errors[0]).toContain('Invalid project configuration:');
+    expect(base.commands).toHaveLength(0);
+  });
+
+  it('accepts a valid single-project workspace without defaultProject', async () => {
+    const base = createIO('');
+    const config = JSON.stringify({ version: 1, projects: {
+      demo: { projectType: 'extension', root: '.', sourceRoot: 'src', entryPoint: 'src/extension.ts', outputPath: 'dist' },
+    } });
+    const io: CliIO = { ...base.io, readFile: async (path) => path.endsWith('gef.json') ? config : '' };
+    expect(await runCli(['build'], io)).toBe(0);
+    expect(base.commands).toEqual([{ command: 'npm', args: ['run', 'build'] }]);
+  });
+
   it('runs the build command', async () => {
     const { io, commands } = createIO('');
     expect(await runCli(['build'], io)).toBe(0);

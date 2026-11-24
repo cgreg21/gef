@@ -6,9 +6,9 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 
 ## P0 — Stabilisation
 
-- [ ] Corriger les erreurs de parsing TypeScript/ESLint dans le générateur CLI (correction en cours, CI précédente encore rouge).
+- [x] Corriger les erreurs de parsing TypeScript/ESLint dans le générateur CLI (commit `954c7a9`).
 - [ ] Ajouter une régression qui vérifie la syntaxe des sources du squelette généré.
-- [ ] Obtenir une CI entièrement verte sur Linux, GTK4/libadwaita, Windows et macOS.
+- [x] Obtenir une CI entièrement verte sur Linux, GTK4/libadwaita, Windows et macOS (commit `954c7a9`, quatre jobs réussis).
 - [ ] Ajouter des tests de génération exécutant réellement les projets créés.
 - [x] Conserver une séparation stricte entre le runtime GNOME Shell (GJS) et le runtime desktop (Node-GTK).
 

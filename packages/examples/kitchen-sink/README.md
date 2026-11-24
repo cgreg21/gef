@@ -1,29 +1,38 @@
 # GEF Kitchen Sink
 
-A runnable GTK4 gallery of the native widgets and GTPL layout containers
-currently supported by GEF. The template is the source of truth: it uses GTPL
-tags directly and does not require a parallel TypeScript layout configuration.
+A native GTK4 demo gallery for the GEF renderer. The app is organized as
+focused screens instead of one long widget list:
+
+- **Overview** — dashboard cards and recent activity.
+- **Actions** — primary, secondary and destructive action patterns.
+- **Forms** — text, search and password inputs.
+- **Preferences** — switches, checkboxes and numeric settings.
+- **Layouts** — Sidebar, Flex, Grid and progress controls.
+
+Each screen has a **View source** action in the header. It opens the exact
+GTPL file used to render that screen.
 
 ## Run with Node.js (Windows, Linux and macOS)
-
-Node-GTK provides the GTK4 runtime through Node.js. On Windows, its published
-package includes the GTK4/Adwaita binaries for supported Node.js versions.
 
 From the repository root:
 
 ```powershell
 npm install
-npm run build:kitchen-sink
 npm run kitchen-sink
 ```
 
-Requirements: Node.js 22+ (Node-GTK provides prebuilt binaries for Node.js
-22, 24 and 26). The `node-gtk` dependency is installed with the project's
-development dependencies; no GJS or WSL is required for this entry point.
+To compile the screens without opening the application:
+
+```powershell
+npm run build:kitchen-sink
+```
+
+Requirements: Node.js 22+ and the project's `node-gtk` development dependency.
+On Windows, use a Node.js version supported by the installed Node-GTK package.
 
 ## Run with GJS (GNOME/Linux)
 
-The GJS entry point remains available for GNOME-oriented environments:
+The GJS entry point is retained for GTK/GNOME development:
 
 ```sh
 npm install
@@ -31,21 +40,8 @@ npm run build:kitchen-sink
 gjs -m packages/examples/kitchen-sink/kitchen-sink.js
 ```
 
-Requirements: GJS and GTK4.
+## Structure
 
-## Included
-
-- GTK buttons, labels, separators, text entry, search entry and password entry.
-- Checkbox, switch, spin button and progress bar.
-- GTPL `Flex`, `Grid`, `HeaderBar` and `Sidebar` containers.
-- A two-column grid and nested row/column layouts.
-
-## Platform notes
-
-Both entry points use the same GTPL template and GEF GTK renderer. The Node.js
-entry point selects the renderer's `node-gtk` API mode; the GJS entry point
-uses its GJS mode. GEF also maps the shared GTPL layout containers to GNOME
-Shell St widgets, but individual GTK controls do not all have a one-to-one St
-equivalent. Consult [the UI component guide](../../../docs/ui-components.md)
-and [the layout guide](../../../docs/ui-layout.md) for the current compatibility
-matrix and known limitations.
+- `demos/*.gtpl` — source of truth for each screen.
+- `kitchen-sink-node.mjs` — native GTK application shell, navigation and source viewer.
+- `kitchen-sink.js` — GJS entry point.

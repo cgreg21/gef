@@ -67,6 +67,7 @@ export interface GtkInlineCssProvider {
 }
 
 export interface GtkNamespace {
+  readonly Orientation?: { readonly HORIZONTAL: number; readonly VERTICAL: number };
   readonly CssProvider?: new () => GtkInlineCssProvider;
   readonly STYLE_PROVIDER_PRIORITY_APPLICATION?: number;
   readonly Box: GtkWidgetConstructor;
@@ -158,6 +159,13 @@ function alignValue(value: unknown): number {
   const alignment = alignments[value];
   if (alignment === undefined) throw new Error('Invalid Flex alignment.');
   return alignment;
+}
+
+function orientationValue(value: unknown, Gtk: GtkNamespace): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (value === 'horizontal') return Gtk.Orientation?.HORIZONTAL ?? 0;
+  if (value === 'vertical') return Gtk.Orientation?.VERTICAL ?? 1;
+  throw new Error('GTK orientation must be "horizontal" or "vertical".');
 }
 
 function flexValue(attribute: string, value: unknown): unknown {
@@ -487,6 +495,12 @@ export function createGtkRenderHost(
           continue;
         }
         const [property, normalized] = layoutAttribute(name, attribute, value);
+        if (property === 'orientation') {
+          if (isGtplBinding(normalized)) {
+            bindings.push([property, { kind: 'binding', get: () => orientationValue(normalized.get(), Gtk) } satisfies GtplBinding<unknown>]);
+          } else properties[propertyName(property, options.api)] = orientationValue(normalized, Gtk);
+          continue;
+        }
         if (name === 'Grid' && attribute === 'columns') { gridColumns = normalized as number; continue; }
         if (name === 'Grid' && attribute === 'gap') { properties[propertyName('row-spacing', options.api)] = normalized; properties[propertyName('column-spacing', options.api)] = normalized; continue; }
         if (property === 'xalign' || property === 'yalign') {

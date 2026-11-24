@@ -188,6 +188,7 @@ export function createStRenderHost(
     ...options.components,
   };
   const destroyed = new WeakSet<StActor>();
+  const actorResources = new WeakMap<StActor, ResourceScope>();
   const fragmentChildren = new WeakMap<StActor, readonly StActor[]>();
   const destroyActor = (actor: StActor): void => {
     if (destroyed.has(actor)) return;
@@ -214,7 +215,7 @@ export function createStRenderHost(
   return {
     setProperty: (actor, property, value) => actor.set_property(propertyName(property), value),
     setHostAttributes(actor, attributes) {
-      const scope = resources.get(actor);
+      const scope = actorResources.get(actor);
       if (!scope) throw new Error('Component host attributes require a single managed GNOME Shell root actor.');
       const classes = classNames(attributes.class ?? attributes.className);
       const classBindings: Array<{ name?: string; binding: GtplBinding<unknown> }> = [];
@@ -248,7 +249,7 @@ export function createStRenderHost(
 
       const styleValue = attributes.style;
       const styleBindingValue = attributes.styleBinding;
-      const styleBindings: Array<{ name: string; unit?: string; binding: GtplBinding<unknown> }> = [];
+      const styleBindings: Array<{ name: string; unit?: string | undefined; binding: GtplBinding<unknown> }> = [];
       for (const [attribute, value] of Object.entries(attributes)) {
         if (!attribute.startsWith('style.')) continue;
         const parts = attribute.slice(6).split('.');
@@ -390,6 +391,7 @@ export function createStRenderHost(
       }
       const actor = new Constructor(properties);
       const resources = new ResourceScope();
+      actorResources.set(actor, resources);
       actor.connect('destroy', () => { destroyed.add(actor); resources.dispose(); });
       try {
         if (styleValue !== undefined || styleBindingValue !== undefined || styleBindings.length) {

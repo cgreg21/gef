@@ -363,7 +363,7 @@ export function createGtkRenderHost(
 
       const styleValue = attributes.style;
       const styleBindingValue = attributes.styleBinding;
-      const styleBindings: Array<{ name: string; unit?: string; binding: GtplBinding<unknown> }> = [];
+      const styleBindings: Array<{ name: string; unit?: string | undefined; binding: GtplBinding<unknown> }> = [];
       for (const [attribute, value] of Object.entries(attributes)) {
         if (!attribute.startsWith('style.')) continue;
         const parts = attribute.slice(6).split('.');

@@ -211,6 +211,9 @@ describe('GEF CLI', () => {
       const args = projectType === 'extension' ? ['new', 'syntax-check'] : ['new', 'syntax-check', '--type', 'application'];
       expect(await runCli(args, io)).toBe(0);
       for (const source of writes.filter((item) => item.path.endsWith('.ts'))) {
+        const parsed = ts.createSourceFile(source.path, source.content, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS);
+        expect(parsed.parseDiagnostics, source.path).toHaveLength(0);
+        if (source.path.endsWith('.d.ts')) continue;
         const result = ts.transpileModule(source.content, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.NodeNext, experimentalDecorators: true }, fileName: source.path, reportDiagnostics: true });
         const errors = (result.diagnostics ?? []).filter((item) => item.category === ts.DiagnosticCategory.Error);
         expect(errors, source.path).toHaveLength(0);

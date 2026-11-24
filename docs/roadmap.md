@@ -7,6 +7,7 @@ Cette roadmap décrit les chantiers du framework dans leur ordre de priorité. E
 ## P0 — Stabilisation
 
 - [ ] Corriger les erreurs de parsing TypeScript/ESLint dans le générateur CLI.
+- [ ] Ajouter une régression qui vérifie la syntaxe des sources du squelette généré.
 - [ ] Obtenir une CI entièrement verte sur Linux, GTK4/libadwaita, Windows et macOS.
 - [ ] Ajouter des tests de génération exécutant réellement les projets créés.
 - [ ] Conserver une séparation stricte entre le runtime GNOME Shell (GJS) et le runtime desktop (Node-GTK).

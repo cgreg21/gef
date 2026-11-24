@@ -28,6 +28,18 @@ export function styleDeclarations(value: unknown): Map<string, string> {
   return declarations;
 }
 
+export function mergeStyleDeclarations(target: Map<string, string>, value: unknown): void {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    for (const [name, content] of Object.entries(value)) {
+      const cssName = name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+      if (content === null || content === undefined || content === false || content === '') target.delete(cssName);
+      else target.set(cssName, String(content));
+    }
+    return;
+  }
+  for (const [name, content] of styleDeclarations(value)) target.set(name, content);
+}
+
 export function styleText(declarations: Map<string, string>): string {
   return [...declarations].map(([name, value]) => `${name}: ${value};`).join(' ');
 }

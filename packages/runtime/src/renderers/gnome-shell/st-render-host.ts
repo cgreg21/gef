@@ -1,7 +1,7 @@
 import { isGtplBinding, type GtplBinding, type GtplRenderHost, type GtplRepeatItem, type GtplRepeatState } from '../../rendering/gtpl-runtime.js';
 import { effect } from '../../reactivity/signal.js';
 import { ResourceScope } from '../../resources/resource-scope.js';
-import { classNames, styleDeclarations, styleText } from '../gtpl-bindings.js';
+import { classNames, mergeStyleDeclarations, styleDeclarations, styleText } from '../gtpl-bindings.js';
 
 export interface StActor {
   add_child?(child: StActor): void;
@@ -332,7 +332,7 @@ export function createStRenderHost(
           const syncStyle = (): void => {
             const declarations = styleDeclarations(isGtplBinding(styleValue) ? styleValue.get() : styleValue);
             const boundStyles = isGtplBinding(styleBindingValue) ? styleBindingValue.get() : styleBindingValue;
-            for (const [name, content] of styleDeclarations(boundStyles)) declarations.set(name, content);
+            mergeStyleDeclarations(declarations, boundStyles);
             for (const item of styleBindings) {
               const value = item.binding.get();
               if (value === null || value === undefined) declarations.delete(item.name);

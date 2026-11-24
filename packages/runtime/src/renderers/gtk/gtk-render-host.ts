@@ -1,7 +1,7 @@
 import { isGtplBinding, type GtplBinding, type GtplRenderHost, type GtplRepeatItem, type GtplRepeatState } from '../../rendering/gtpl-runtime.js';
 import { effect } from '../../reactivity/signal.js';
 import { ResourceScope } from '../../resources/resource-scope.js';
-import { classNames, styleDeclarations, styleText } from '../gtpl-bindings.js';
+import { classNames, mergeStyleDeclarations, styleDeclarations, styleText } from '../gtpl-bindings.js';
 
 export interface GtkActor {
   append?(child: GtkActor): void;
@@ -541,7 +541,7 @@ export function createGtkRenderHost(
           const syncStyle = (): void => {
             const declarations = styleDeclarations(isGtplBinding(styleValue) ? styleValue.get() : styleValue);
             const boundStyles = isGtplBinding(styleBindingValue) ? styleBindingValue.get() : styleBindingValue;
-            for (const [name, content] of styleDeclarations(boundStyles)) declarations.set(name, content);
+            mergeStyleDeclarations(declarations, boundStyles);
             for (const item of styleBindings) {
               const value = item.binding.get();
               if (value === null || value === undefined) declarations.delete(item.name);
@@ -581,15 +581,6 @@ export function createGtkRenderHost(
         }
         for (const [property, binding] of bindings) {
           scope.add(effect(() => setProperty(actor, property, binding.get(), options.api ?? 'gjs')));
-        }
-        for (const binding of classBindings) {
-          let previousDynamicClasses: string[] = [];
-          scope.add(effect(() => {
-            const nextClasses = classNames(binding.get());
-            for (const name of previousDynamicClasses) if (!nextClasses.includes(name)) (actor.remove_css_class ?? actor.removeCssClass)?.call(actor, name);
-            for (const name of nextClasses) if (!previousDynamicClasses.includes(name)) (actor.add_css_class ?? actor.addCssClass)?.call(actor, name);
-            previousDynamicClasses = nextClasses;
-          }));
         }
         if (name === 'Grid') {
           if (typeof actor.attach !== 'function') throw new Error('This GTK Grid widget does not support child placement.');

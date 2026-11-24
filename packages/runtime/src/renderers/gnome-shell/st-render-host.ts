@@ -412,10 +412,7 @@ export function createStRenderHost(
             if (/[{}]/.test(css)) throw new Error('GTPL style must contain CSS declarations only (without braces).');
             actor.set_style!(css);
           };
-          
-          
-          
-          if (Object.entries(attributes).some(([name, value]) =>
+        if (Object.entries(attributes).some(([name, value]) =>
           (name === 'style' || name === 'styleBinding' || name.startsWith('style.')) && isGtplBinding(value))) {
           resources.add(effect(syncStyle));
         }

@@ -436,9 +436,6 @@ export function createGtkRenderHost(
           if (/[{}]/.test(css)) throw new Error('GTPL style must contain CSS declarations only (without braces).');
           provider.load_from_data(css ? `* { ${css} }` : '* {}');
         };
-        
-        
-        
         if (Object.entries(attributes).some(([name, value]) =>
           (name === 'style' || name === 'styleBinding' || name.startsWith('style.')) && isGtplBinding(value))) {
           scope.add(effect(syncStyle));
@@ -674,10 +671,7 @@ export function createGtkRenderHost(
           };
           context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION ?? 600);
           scope.add(() => context.remove_provider(provider));
-          
-          
-          
-          if (Object.entries(attributes).some(([name, value]) =>
+        if (Object.entries(attributes).some(([name, value]) =>
           (name === 'style' || name === 'styleBinding' || name.startsWith('style.')) && isGtplBinding(value))) {
           scope.add(effect(syncStyle));
         }

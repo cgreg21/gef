@@ -233,7 +233,7 @@ export function createStRenderHost(
       let styleBindingValue: unknown;
       const classes: string[] = [];
       const classBindings: Array<{ name?: string; binding: GtplBinding<unknown> }> = [];
-      const styleBindings: Array<{ name: string; unit?: string; binding: GtplBinding<unknown> }> = [];
+      const styleBindings: Array<{ name: string; unit?: string | undefined; binding: GtplBinding<unknown> }> = [];
       let flexHomogeneous: boolean | undefined;
       let gridColumns = 2;
       let gridGap = 0;

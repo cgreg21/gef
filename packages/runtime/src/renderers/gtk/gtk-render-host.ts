@@ -345,8 +345,8 @@ export function createGtkRenderHost(
       const events: Array<[string, (...args: unknown[]) => unknown]> = [];
       const bindings: Array<[string, GtplBinding<unknown>]> = [];
       const classes: string[] = [];
-      const classBindings: Array<{ name?: string; unit?: string; binding: GtplBinding<unknown> }> = [];
-      const styleBindings: Array<{ name: string; unit?: string; binding: GtplBinding<unknown> }> = [];
+      const classBindings: Array<{ name?: string; unit?: string | undefined; binding: GtplBinding<unknown> }> = [];
+      const styleBindings: Array<{ name: string; unit?: string | undefined; binding: GtplBinding<unknown> }> = [];
       let styleValue: unknown;
       let styleBindingValue: unknown;
       let gridColumns = 2;

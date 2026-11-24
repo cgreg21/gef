@@ -1,6 +1,5 @@
 <Flex direction="column" gap="16" margin-top="20">
-  <GtkLabel label="Layout patterns" xalign="0" />
-  <GtkLabel label="Flex creates horizontal and vertical groups. Grid aligns related actions." xalign="0" />
+  <GefSectionHeader title="Layout patterns" description="GEF components can be nested alongside native GTK widgets." />
   <Flex direction="row" gap="12">
     <Sidebar>
       <GtkButton label="Overview" />

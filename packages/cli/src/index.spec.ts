@@ -243,6 +243,7 @@ describe('GEF CLI', () => {
     const template = writes.find((item) => item.path.endsWith('UserCard.gtpl'))?.content ?? '';
     expect(component).toContain("import { Component, Input } from 'gnome-extension-framework/runtime'");
     expect(component).toContain("templateUrl: './UserCard.gtpl'");
+    expect(component).toContain("selector: 'user-card'");
     expect(component).toContain("@Input() title = 'UserCard'");
     expect(template).toContain('<StLabel>{{ title }}</StLabel>');
   });

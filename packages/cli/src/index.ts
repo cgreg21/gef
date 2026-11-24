@@ -93,14 +93,6 @@ function formatDiagnostic(source: string, input: string, diagnostic: { code: str
   ].join('\n');
 }
 
-type WorkspaceProject = {
-  projectType: 'application' | 'extension';
-  root: string;
-  sourceRoot: string;
-  entryPoint: string;
-  outputPath: string;
-};
-
 function validateWorkspaceConfig(source: string): string | undefined {
   let value: unknown;
   try {
@@ -130,7 +122,7 @@ function validateWorkspaceConfig(source: string): string | undefined {
     for (const field of ['root', 'sourceRoot', 'entryPoint', 'outputPath'] as const) {
       const path = entry[field];
       if (typeof path !== 'string' || !path.trim() || path.includes('\\') || path.startsWith('/') || /^[A-Za-z]:/.test(path)
-        || path.split('/').some((part) => part === '..' || part === '.')) {
+        || (path !== '.' && path.split('/').some((part) => part === '..' || part === '.'))) {
         return `gef.json project "${name}" ${field} must be a non-empty relative path without "." or ".." segments.`;
       }
     }

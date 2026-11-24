@@ -14,6 +14,7 @@ import actions from './demos/actions.js';
 import forms from './demos/forms.js';
 import preferences from './demos/preferences.js';
 import layouts from './demos/layouts.js';
+import { createKitchenSinkComponents } from './components.js';
 
 interface Demo {
   readonly id: string;
@@ -33,9 +34,10 @@ const demos: readonly Demo[] = [
 ];
 
 const host = createGtkRenderHost(Gtk, { api: 'node-gtk' });
+const components = createKitchenSinkComponents();
 const views = new Map<string, GtplRenderView<GtkActor>>();
 for (const demo of demos) {
-  views.set(demo.id, mountGtplTemplate({}, demo.render, host));
+  views.set(demo.id, mountGtplTemplate({}, demo.render, host, undefined, undefined, undefined, components));
 }
 
 const loop = GLib.MainLoop.new(null, false);

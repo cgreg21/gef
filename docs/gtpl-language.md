@@ -149,6 +149,19 @@ GTK uses `Gtk.Grid` cell attachment. GNOME Shell 51 uses a vertical `St.BoxLayou
 
 `Flex` is a native box container on both renderers. Its GTPL attributes are `direction="row|column"`, `gap="N"`, `homogeneous="true|false"` and `align="fill|start|center|end"`. `direction` and `homogeneous` can be bound reactively. `gap` maps to native box spacing; `homogeneous` asks the native box to distribute the same size to each child. Any child widget can declare `expand="true|false"`; this maps to GTK `hexpand`/`vexpand` or St `x_expand`/`y_expand`, and supports reactive bindings. It requests additional space from the native layout; it does not force an exact size. `align` sets the Flex container's horizontal and vertical native alignment (GTK `halign`/`valign`, St `x_align`/`y_align`) and supports reactive bindings. It does not implement CSS `align-items`. Main-axis `justify-content` is not exposed because the native box APIs do not provide a matching cross-platform property; wrapping and per-child grow/shrink weights are also not yet supported.
 
+## Component host bindings
+
+Components can expose native root properties with `@HostBinding`, using the same metadata decorator available to directives. A host binding is applied after the component template has rendered and is disposed with the component:
+
+```ts
+@Component({ selector: 'GefIconButton', template: '<StButton />' })
+class IconButton {
+  @HostBinding('accessible-label') label = 'Open settings';
+}
+```
+
+The renderer must support `setProperty` for the native root. A member containing a GEF binding is updated reactively; ordinary values are applied once. Host bindings do not create extra wrappers or alter the component's template structure.
+
 ## Component host class and style
 
 A component may receive the same class and style attributes as a native element. GEF applies these attributes to the component template's single native root, while the component's own template and input bindings remain independent:

@@ -1,5 +1,5 @@
 export interface ComponentOptions { readonly selector: string; readonly template?: string; readonly templateUrl?: string; readonly styles?: readonly string[]; }
-export interface ComponentMetadata { readonly selector: string; readonly template: string; readonly templateUrl?: string; readonly styles: readonly string[]; readonly inputs: readonly string[]; readonly outputs: readonly string[]; readonly inputBindings: readonly InputBindingMetadata[]; readonly outputBindings: readonly OutputBindingMetadata[]; }
+export interface ComponentMetadata { readonly selector: string; readonly template: string; readonly templateUrl?: string; readonly styles: readonly string[]; readonly hostBindings: readonly HostBindingMetadata[]; readonly inputs: readonly string[]; readonly outputs: readonly string[]; readonly inputBindings: readonly InputBindingMetadata[]; readonly outputBindings: readonly OutputBindingMetadata[]; }
 export interface DirectiveOptions { readonly selector: string; }
 export interface InputBindingMetadata { readonly publicName: string; readonly member: string; }
 export interface OutputBindingMetadata { readonly publicName: string; readonly member: string; }
@@ -85,7 +85,7 @@ export function Component(options: ComponentOptions): ClassDecorator {
     }
     const members = collectMembers(target);
     const inputs = names(members, 'input'); const outputs = names(members, 'output');
-    components.set(target, Object.freeze({ selector: options.selector, template: options.template ?? '', ...(options.templateUrl ? { templateUrl: options.templateUrl } : {}), styles: Object.freeze([...(options.styles ?? [])]), inputs, outputs, inputBindings: bindings(members, 'input') as readonly InputBindingMetadata[], outputBindings: bindings(members, 'output') as readonly OutputBindingMetadata[] }));
+    components.set(target, Object.freeze({ selector: options.selector, template: options.template ?? '', ...(options.templateUrl ? { templateUrl: options.templateUrl } : {}), styles: Object.freeze([...(options.styles ?? [])]), hostBindings: Object.freeze(members.filter((item): item is Extract<MemberMetadata, { kind: 'host-binding' }> => item.kind === 'host-binding').map(({ member, property }) => Object.freeze({ member, property }))), inputs, outputs, inputBindings: bindings(members, 'input') as readonly InputBindingMetadata[], outputBindings: bindings(members, 'output') as readonly OutputBindingMetadata[] }));
   };
 }
 /** Declares a behavior attached to matching native or component host elements. */

@@ -15,7 +15,7 @@ export class ComponentRegistry<Node> {
 
   registerType<Instance>(
     type: Function,
-    definition: Omit<ComponentDefinition<Instance, Node>, 'inputs' | 'outputs'>,
+    definition: Omit<ComponentDefinition<Instance, Node>, 'inputs' | 'outputs' | 'hostBindings'>,
   ): this {
     const metadata = getComponentMetadata(type);
     if (!metadata) throw new TypeError('Cannot register a component without @Component metadata.');
@@ -23,10 +23,10 @@ export class ComponentRegistry<Node> {
   }
 
   registerMetadata<Instance>(
-    metadata: { readonly selector: string; readonly inputBindings: readonly ComponentInput[]; readonly outputBindings: readonly ComponentOutput[] },
+    metadata: { readonly selector: string; readonly inputBindings: readonly ComponentInput[]; readonly outputBindings: readonly ComponentOutput[]; readonly hostBindings?: readonly { readonly member: string; readonly property: string }[] },
     definition: Omit<ComponentDefinition<Instance, Node>, 'inputs' | 'outputs'>,
   ): this {
-    return this.register(metadata.selector, { ...definition, inputs: metadata.inputBindings, outputs: metadata.outputBindings });
+    return this.register(metadata.selector, { ...definition, inputs: metadata.inputBindings, outputs: metadata.outputBindings, hostBindings: metadata.hostBindings });
   }
 
   match(element: string, attributes: Readonly<Record<string, unknown>>): ComponentDefinition<object, Node> | undefined {

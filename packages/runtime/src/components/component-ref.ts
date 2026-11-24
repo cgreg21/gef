@@ -17,6 +17,11 @@ export interface ComponentInput {
   readonly member: string;
 }
 
+export interface ComponentHostBinding {
+  readonly member: string;
+  readonly property: string;
+}
+
 export interface ComponentOutput {
   readonly publicName: string;
   readonly member: string;
@@ -25,6 +30,7 @@ export interface ComponentOutput {
 export interface ComponentDefinition<Instance, Node> {
   readonly inputs?: readonly ComponentInput[];
   readonly outputs?: readonly ComponentOutput[];
+  readonly hostBindings?: readonly ComponentHostBinding[];
   readonly create: (injector: Injector) => Instance;
   readonly render: GtplRenderFunction<Instance, Node>;
   readonly providers?: readonly Provider[];
@@ -79,6 +85,14 @@ export function mountComponent<Instance, Node>(
     }
     const view = mountGtplTemplate(instance, definition.render, host, definition.pipes, definition.directives, injector, definition.components);
     resources.add(() => view.dispose());
+    if ((definition.hostBindings?.length ?? 0) > 0) {
+      if (!host.setProperty) throw new Error('The renderer host does not support component host property bindings.');
+      for (const binding of definition.hostBindings ?? []) {
+        const value = (instance as Record<string, unknown>)[binding.member];
+        if (isBinding(value)) resources.add(effect(() => host.setProperty?.(view.node, binding.property, value.get())));
+        else host.setProperty(view.node, binding.property, value);
+      }
+    }
     return {
       instance,
       injector,

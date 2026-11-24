@@ -1,4 +1,4 @@
-import { Component, Input } from '../../../shared/src/components/metadata.js';
+import { Component, HostBinding, Input } from '../../../shared/src/components/metadata.js';
 import { describe, expect, it } from 'vitest';
 import { ComponentRegistry } from './component-registry.js';
 
@@ -25,6 +25,7 @@ describe('ComponentRegistry', () => {
     @Component({ selector: 'GefDecoratedLabel', template: '<StLabel />' })
     class DecoratedLabel {
       @Input('title') label = '';
+      @HostBinding('accessible-label') accessibleLabel = 'Decorated label';
     }
     const registry = new ComponentRegistry<object>().registerType(DecoratedLabel, {
       create: () => new DecoratedLabel(),
@@ -32,6 +33,7 @@ describe('ComponentRegistry', () => {
     });
     expect(registry.match('GefDecoratedLabel', {})).toBeDefined();
     expect(registry.match('GefDecoratedLabel', {} )?.inputs).toEqual([{ publicName: 'title', member: 'label' }]);
+    expect(registry.match('GefDecoratedLabel', {} )?.hostBindings).toEqual([{ member: 'accessibleLabel', property: 'accessible-label' }]);
   });
 
   it('supports attribute selectors and rejects duplicates', () => {

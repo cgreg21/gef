@@ -92,6 +92,26 @@ describe('mountComponent', () => {
     parent.destroy();
   });
 
+  it('applies static and reactive component host property bindings', () => {
+    const value = signal('first');
+    const properties: Array<[string, unknown]> = [];
+    const host = createHost();
+    host.setProperty = (_node, property, next) => { properties.push([property, next]); };
+    const parent = new Injector();
+    const component = mountComponent({
+      create: () => ({ label: { kind: 'binding' as const, get: () => value.get() } }),
+      hostBindings: [{ member: 'label', property: 'accessible-label' }],
+      render: (_instance, runtime) => runtime.text('host binding'),
+    }, parent, host);
+    expect(properties).toEqual([['accessible-label', 'first']]);
+    value.set('second');
+    expect(properties.at(-1)).toEqual(['accessible-label', 'second']);
+    component.destroy();
+    value.set('third');
+    expect(properties.at(-1)).toEqual(['accessible-label', 'second']);
+    parent.destroy();
+  });
+
   it('cleans up the child injector when component creation fails', () => {
     const LOCAL = new InjectionToken<object>('local');
     const dispose = vi.fn();

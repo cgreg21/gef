@@ -658,6 +658,7 @@ export function createGtkRenderHost(
           const context = actor.get_style_context?.();
           if (!Gtk.CssProvider || !context) throw new Error('GTK style attributes require Gtk.CssProvider and Gtk.Widget.get_style_context().');
           const provider = new Gtk.CssProvider();
+          let previousCss: string | undefined;
           const syncStyle = (): void => {
             const declarations = styleDeclarations(isGtplBinding(styleValue) ? styleValue.get() : styleValue);
             const boundStyles = isGtplBinding(styleBindingValue) ? styleBindingValue.get() : styleBindingValue;
@@ -669,15 +670,16 @@ export function createGtkRenderHost(
             }
             const css = styleText(declarations);
             if (/[{}]/.test(css)) throw new Error('GTPL style must contain CSS declarations only (without braces).');
+            if (css === previousCss) return;
             provider.load_from_data(css ? `* { ${css} }` : '* {}');
+            previousCss = css;
           };
           context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION ?? 600);
           scope.add(() => context.remove_provider(provider));
-        if (Object.entries(attributes).some(([name, value]) =>
-          (name === 'style' || name === 'styleBinding' || name.startsWith('style.')) && isGtplBinding(value))) {
-          scope.add(effect(syncStyle));
-        }
-        syncStyle();
+        const hasReactiveStyle = Object.entries(attributes).some(([name, value]) =>
+          (name === 'style' || name === 'styleBinding' || name.startsWith('style.')) && isGtplBinding(value));
+        if (hasReactiveStyle) scope.add(effect(syncStyle));
+        else syncStyle();
         }
         const activeClasses = new Set<string>();
         const syncClasses = (): void => {

@@ -198,14 +198,21 @@ describe('createStRenderHost', () => {
   it('applies static and reactive inline styles to native St widgets', () => {
     const host = createStRenderHost(createSt());
     const style = signal('color: red;');
+    const revision = signal(0);
     const actor = host.element('StLabel', {
       class: 'heading',
-      style: { kind: 'binding', get: () => style.get() },
+      style: { kind: 'binding', get: () => { revision.get(); return style.get(); } },
     }, undefined) as FakeActor;
     expect(actor.properties.style_class).toBe('heading');
     expect(actor.properties.style).toBe('color: red;');
+    expect(actor.styleUpdateCount).toBe(1);
+    revision.set(1);
+    expect(actor.styleUpdateCount).toBe(1);
     style.set('font-weight: bold;');
     expect(actor.properties.style).toBe('font-weight: bold;');
+    expect(actor.styleUpdateCount).toBe(2);
+    revision.set(2);
+    expect(actor.styleUpdateCount).toBe(2);
     host.destroy(actor);
   });
 

@@ -245,15 +245,22 @@ describe('createGtkRenderHost', () => {
   it('applies static and reactive inline styles to GTK widgets and releases providers', () => {
     const host = createGtkRenderHost(createGtk());
     const style = signal('color: red;');
+    const revision = signal(0);
     const widget = host.element('GtkLabel', {
       class: 'heading',
-      style: { kind: 'binding', get: () => style.get() },
+      style: { kind: 'binding', get: () => { revision.get(); return style.get(); } },
     }, undefined) as FakeWidget;
     expect([...widget.classes]).toEqual(['heading']);
     const provider = [...widget.styleContext.providers][0];
     expect(provider?.data).toBe('* { color: red; }');
+    expect(provider?.loadCount).toBe(1);
+    revision.set(1);
+    expect(provider?.loadCount).toBe(1);
     style.set('font-weight: bold;');
     expect(provider?.data).toBe('* { font-weight: bold; }');
+    expect(provider?.loadCount).toBe(2);
+    revision.set(2);
+    expect(provider?.loadCount).toBe(2);
     host.destroy(widget);
     expect(widget.styleContext.providers.size).toBe(0);
   });

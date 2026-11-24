@@ -238,12 +238,13 @@ describe('GEF CLI', () => {
   it('generates a component class and template', async () => {
     const { io, writes } = createIO('');
     expect(await runCli(['generate', 'component', 'UserCard', 'src/components'], io)).toBe(0);
-    expect(writes.map((item) => item.path)).toEqual(expect.arrayContaining([expect.stringContaining('UserCard.ts'), expect.stringContaining('UserCard.gtpl')]));
-    const component = writes.find((item) => item.path.endsWith('UserCard.ts'))?.content ?? '';
-    const template = writes.find((item) => item.path.endsWith('UserCard.gtpl'))?.content ?? '';
+    expect(writes.map((item) => item.path)).toEqual(expect.arrayContaining([expect.stringContaining('user-card.ts'), expect.stringContaining('user-card.gtpl')]));
+    const component = writes.find((item) => item.path.endsWith('user-card.ts'))?.content ?? '';
+    const template = writes.find((item) => item.path.endsWith('user-card.gtpl'))?.content ?? '';
     expect(component).toContain("import { Component, Input } from 'gnome-extension-framework/runtime'");
-    expect(component).toContain("templateUrl: './UserCard.gtpl'");
+    expect(component).toContain("templateUrl: './user-card.gtpl'");
     expect(component).toContain("selector: 'user-card'");
+    expect(component).toContain('export class UserCard');
     expect(component).toContain("@Input() title = 'UserCard'");
     expect(template).toContain('<StLabel>{{ title }}</StLabel>');
   });

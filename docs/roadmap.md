@@ -83,7 +83,8 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 
 - [ ] Fiabiliser `gef new` et ses tests de bout en bout.
 - [ ] Compléter `gef generate component` avec imports et tests cohérents.
-- [ ] Générer des sélecteurs de composants en kebab-case à partir des noms PascalCase.
+- [x] Générer des sélecteurs de composants en kebab-case à partir des noms PascalCase (CI `45409017580`).
+- [ ] Générer les fichiers TypeScript et GTPL des composants en kebab-case, conformément aux conventions Angular.
 - [ ] Ajouter les générateurs directive, service et pipe.
 - [ ] Améliorer la validation de configuration et les messages d'erreur.
 - [ ] Vérifier les packages npm et les distributions autonomes sur leurs plateformes natives.

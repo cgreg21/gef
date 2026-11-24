@@ -197,7 +197,10 @@ function emitGtplTemplateInternal(
           ? `($event) => ${emitted}`
           : attribute.kind === 'property' ? `runtime.bind(() => ${emitted})` : emitted;
       }
-      attributes.push(`${JSON.stringify(attribute.name)}: ${value}`);
+      const name = attribute.kind === 'property' && attribute.name === 'class' ? 'classBinding'
+        : attribute.kind === 'property' && attribute.name === 'style' ? 'styleBinding'
+          : attribute.name;
+      attributes.push(`${JSON.stringify(name)}: ${value}`);
     }
     const children = node.children.length > 0 ? renderNodes(node.children, locals) : 'undefined';
     const attributeObject = attributes.length === 0

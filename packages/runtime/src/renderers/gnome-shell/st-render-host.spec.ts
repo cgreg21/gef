@@ -177,7 +177,7 @@ describe('createStRenderHost', () => {
     const width = signal(120);
     const actor = host.element('StLabel', {
       class: 'heading',
-      '[class]': { kind: 'binding', get: () => classes.get() },
+      classBinding: { kind: 'binding', get: () => classes.get() },
       'class.selected': { kind: 'binding', get: () => active.get() },
       'style.width.px': { kind: 'binding', get: () => width.get() },
       'style.color': { kind: 'binding', get: () => 'red' },

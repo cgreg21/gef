@@ -240,7 +240,7 @@ describe('createGtkRenderHost', () => {
     const width = signal(120);
     const widget = host.element('GtkLabel', {
       class: 'heading',
-      '[class]': { kind: 'binding', get: () => classes.get() },
+      classBinding: { kind: 'binding', get: () => classes.get() },
       'class.selected': { kind: 'binding', get: () => active.get() },
       'style.width.px': { kind: 'binding', get: () => width.get() },
       'style.color': { kind: 'binding', get: () => 'red' },

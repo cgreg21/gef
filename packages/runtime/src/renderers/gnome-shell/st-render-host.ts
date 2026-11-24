@@ -230,6 +230,7 @@ export function createStRenderHost(
       const events: Array<[string, (...args: unknown[]) => unknown]> = [];
       const bindings: Array<[string, GtplBinding<unknown>]> = [];
       let styleValue: unknown;
+      let styleBindingValue: unknown;
       const classes: string[] = [];
       const classBindings: Array<{ name?: string; binding: GtplBinding<unknown> }> = [];
       const styleBindings: Array<{ name: string; unit?: string; binding: GtplBinding<unknown> }> = [];
@@ -245,6 +246,11 @@ export function createStRenderHost(
       const passwordChange = name === 'StPasswordEntry' ? attributes.textChange : undefined;
       for (const [attribute, value] of Object.entries(attributes)) {
         if (attribute === 'style') { styleValue = value; continue; }
+        if (attribute === 'styleBinding') { styleBindingValue = value; continue; }
+        if (attribute === 'classBinding') {
+          classBindings.push({ binding: value as GtplBinding<unknown> });
+          continue;
+        }
         if (attribute === 'class' || attribute === 'className') {
           if (isGtplBinding(value)) classBindings.push({ binding: value });
           else classes.push(...classNames(value));
@@ -321,10 +327,12 @@ export function createStRenderHost(
       const resources = new ResourceScope();
       actor.connect('destroy', () => { destroyed.add(actor); resources.dispose(); });
       try {
-        if (styleValue !== undefined || styleBindings.length) {
+        if (styleValue !== undefined || styleBindingValue !== undefined || styleBindings.length) {
           if (!actor.set_style) throw new Error('This St widget does not support inline styles.');
           const syncStyle = (): void => {
             const declarations = styleDeclarations(isGtplBinding(styleValue) ? styleValue.get() : styleValue);
+            const boundStyles = isGtplBinding(styleBindingValue) ? styleBindingValue.get() : styleBindingValue;
+            for (const [name, content] of styleDeclarations(boundStyles)) declarations.set(name, content);
             for (const item of styleBindings) {
               const value = item.binding.get();
               if (value === null || value === undefined) declarations.delete(item.name);
@@ -335,6 +343,7 @@ export function createStRenderHost(
             actor.set_style!(css);
           };
           if (isGtplBinding(styleValue)) resources.add(effect(syncStyle));
+          if (isGtplBinding(styleBindingValue)) resources.add(effect(syncStyle));
           for (const _item of styleBindings) resources.add(effect(syncStyle));
           syncStyle();
         }

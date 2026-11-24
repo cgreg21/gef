@@ -348,6 +348,7 @@ export function createGtkRenderHost(
       const classBindings: Array<{ name?: string; unit?: string; binding: GtplBinding<unknown> }> = [];
       const styleBindings: Array<{ name: string; unit?: string; binding: GtplBinding<unknown> }> = [];
       let styleValue: unknown;
+      let styleBindingValue: unknown;
       let gridColumns = 2;
       const isSelect = name === 'GtkDropDown' && Object.prototype.hasOwnProperty.call(attributes, 'options');
       const isTextArea = name === 'GtkTextView' && Object.prototype.hasOwnProperty.call(attributes, 'text');
@@ -368,6 +369,11 @@ export function createGtkRenderHost(
         if (isPasswordInput && ['text', 'textChange'].includes(attribute)) continue;
         if (isSlider && ['value', 'valueChange'].includes(attribute)) continue;
         if (attribute === 'style') { styleValue = value; continue; }
+        if (attribute === 'styleBinding') { styleBindingValue = value; continue; }
+        if (attribute === 'classBinding') {
+          classBindings.push({ binding: value as GtplBinding<unknown> });
+          continue;
+        }
         if (attribute === 'class' || attribute === 'className') {
           if (isGtplBinding(value)) classBindings.push({ binding: value });
           else classes.push(...classNames(value));
@@ -528,12 +534,14 @@ export function createGtkRenderHost(
       }
       own(actor, scope);
       try {
-        if (styleValue !== undefined || styleBindings.length) {
+        if (styleValue !== undefined || styleBindingValue !== undefined || styleBindings.length) {
           const context = actor.get_style_context?.();
           if (!Gtk.CssProvider || !context) throw new Error('GTK style attributes require Gtk.CssProvider and Gtk.Widget.get_style_context().');
           const provider = new Gtk.CssProvider();
           const syncStyle = (): void => {
             const declarations = styleDeclarations(isGtplBinding(styleValue) ? styleValue.get() : styleValue);
+            const boundStyles = isGtplBinding(styleBindingValue) ? styleBindingValue.get() : styleBindingValue;
+            for (const [name, content] of styleDeclarations(boundStyles)) declarations.set(name, content);
             for (const item of styleBindings) {
               const value = item.binding.get();
               if (value === null || value === undefined) declarations.delete(item.name);
@@ -546,6 +554,7 @@ export function createGtkRenderHost(
           context.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION ?? 600);
           scope.add(() => context.remove_provider(provider));
           if (isGtplBinding(styleValue)) scope.add(effect(syncStyle));
+          if (isGtplBinding(styleBindingValue)) scope.add(effect(syncStyle));
           for (const _item of styleBindings) scope.add(effect(syncStyle));
           syncStyle();
         }

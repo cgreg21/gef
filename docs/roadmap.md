@@ -39,6 +39,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [x] Gérer le cycle de vie et le nettoyage des ressources natives.
 - [ ] Uniformiser les comportements des renderers GTK et GJS sans mélanger leurs API.
 - [ ] Mesurer et réduire les mises à jour et allocations inutiles.
+- [ ] Ajouter des régressions vérifiant qu'un binding de classe ou de style ne déclenche qu'une synchronisation initiale.
 
 ## P4 — Bibliothèque UI
 

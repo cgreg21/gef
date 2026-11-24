@@ -7,6 +7,8 @@ import { EventEmitter } from '../../../../shared/src/events/event-emitter.js';
 import { Injector } from '../../di/injector.js';
 
 class FakeActor implements StActor {
+  styleUpdateCount = 0;
+  classUpdateCount = 0;
   readonly properties: Record<string, unknown>;
   readonly children: StActor[] = [];
   readonly signals = new Map<number, { name: string; callback: (actor: StActor, ...args: unknown[]) => unknown }>();
@@ -48,7 +50,7 @@ class FakeActor implements StActor {
     for (const child of children) child.destroy();
   }
 
-  set_style(style: string): void { this.properties.style = style; }
+  set_style(style: string): void { this.styleUpdateCount += 1; this.properties.style = style; }
 
   set_property(name: string, value: unknown): void {
     this.properties[name] = value;
@@ -165,8 +167,10 @@ describe('createStRenderHost', () => {
     }, undefined) as FakeActor;
     expect(actor.properties.style_class).toBe('heading');
     expect(actor.properties.style).toBe('color: red;');
+    expect(actor.styleUpdateCount).toBe(1);
     style.set('font-weight: bold;');
     expect(actor.properties.style).toBe('font-weight: bold;');
+    expect(actor.styleUpdateCount).toBe(2);
     host.destroy(actor);
   });
 
@@ -186,6 +190,7 @@ describe('createStRenderHost', () => {
     expect(actor.properties.style_class).toContain('active');
     expect(actor.properties.style).toContain('width: 120px;');
     expect(actor.properties.style).toContain('color: red;');
+    expect(actor.styleUpdateCount).toBe(1);
     classes.set({ active: false, muted: true });
     active.set(true);
     width.set(240);

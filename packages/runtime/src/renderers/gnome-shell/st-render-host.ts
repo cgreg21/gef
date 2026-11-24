@@ -244,7 +244,7 @@ export function createStRenderHost(
         for (const name of next) activeClasses.add(name);
       };
       if (classBindings.length > 0) scope.add(effect(syncClasses));
-      syncClasses();
+      else syncClasses();
 
       const styleValue = attributes.style;
       const styleBindingValue = attributes.styleBinding;
@@ -272,11 +272,10 @@ export function createStRenderHost(
           if (/[{}]/.test(css)) throw new Error('GTPL style must contain CSS declarations only (without braces).');
           actor.set_style!(css);
         };
-        if (Object.entries(attributes).some(([name, value]) =>
-          (name === 'style' || name === 'styleBinding' || name.startsWith('style.')) && isGtplBinding(value))) {
-          scope.add(effect(syncStyle));
-        }
-        syncStyle();
+        const hasReactiveStyle = [styleValue, styleBindingValue, ...styleBindings.map((item) => item.binding)]
+          .some(isGtplBinding);
+        if (hasReactiveStyle) scope.add(effect(syncStyle));
+        else syncStyle();
       }
     },
     listen: (actor, event, handler) => {

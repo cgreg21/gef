@@ -8,6 +8,7 @@ import { Injector } from '../../di/injector.js';
 import { EventEmitter } from '../../../../shared/src/events/event-emitter.js';
 
 class FakeWidget implements GtkActor {
+  classUpdateCount = 0;
   readonly styleContext = {
     providers: new Set<FakeCssProvider>(),
     add_provider(provider: FakeCssProvider): void { this.providers.add(provider); },
@@ -40,8 +41,8 @@ class FakeWidget implements GtkActor {
   }
   disconnect(id: number): void { this.signals.delete(id); }
   get_parent(): GtkActor | null { return this.parent; }
-  add_css_class(name: string): void { this.classes.add(name); }
-  remove_css_class(name: string): void { this.classes.delete(name); }
+  add_css_class(name: string): void { this.classUpdateCount += 1; this.classes.add(name); }
+  remove_css_class(name: string): void { this.classUpdateCount += 1; this.classes.delete(name); }
   emit(name: string, ...args: unknown[]): unknown {
     return [...this.signals.values()].find((entry) => entry.name === name)?.callback(this, ...args);
   }
@@ -147,7 +148,8 @@ class FailingBox extends FakeWidget {
 
 class FakeCssProvider {
   data = '';
-  load_from_data(data: string): void { this.data = data; }
+  loadCount = 0;
+  load_from_data(data: string): void { this.loadCount += 1; this.data = data; }
 }
 
 class FakeStringList {
@@ -227,8 +229,10 @@ describe('createGtkRenderHost', () => {
     expect([...widget.classes]).toEqual(['heading']);
     const provider = [...widget.styleContext.providers][0];
     expect(provider?.data).toBe('* { color: red; }');
+    expect(provider?.loadCount).toBe(1);
     style.set('font-weight: bold;');
     expect(provider?.data).toBe('* { font-weight: bold; }');
+    expect(provider?.loadCount).toBe(2);
     host.destroy(widget);
     expect(widget.styleContext.providers.size).toBe(0);
   });
@@ -246,6 +250,7 @@ describe('createGtkRenderHost', () => {
       'style.color': { kind: 'binding', get: () => 'red' },
     }, undefined) as FakeWidget;
     expect([...widget.classes].sort()).toEqual(['active', 'heading']);
+    expect(widget.classUpdateCount).toBe(2);
     const provider = [...widget.styleContext.providers][0];
     expect(provider?.data).toContain('width: 120px;');
     expect(provider?.data).toContain('color: red;');

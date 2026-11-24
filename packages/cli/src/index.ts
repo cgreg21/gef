@@ -411,7 +411,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
       'gef.json': projectConfig,
       'metadata.json': JSON.stringify({ uuid: `${name}@example.com`, name, description: `A GEF extension: ${name}`, 'shell-version': ['51'], version: 1 }, null, 2) + '\n',
       'src/extension.ts': [
-        '// Generated with GEF. Review and test on your target GNOME Shell version.',
+        '// Do NOT upload to extensions.gnome.org unless you understand and can maintain this code.',
         "import St from 'gi://St';",
         "import Clutter from 'gi://Clutter';",
         "import Main from 'resource:///org/gnome/shell/ui/main.js';",
@@ -445,7 +445,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         '    resources?.dispose();',
         '  }',
         '}',
-      ].join('\\n') + '\\n',
+      ].join('\n') + '\n',
       'src/gjs.d.ts': `declare module 'gi://St' { const St: any; export default St; }\ndeclare module 'gi://Clutter' { const Clutter: any; export default Clutter; }\ndeclare module 'resource:///org/gnome/shell/ui/main.js' { const Main: any; export default Main; }\ndeclare module 'resource:///org/gnome/shell/extensions/extension.js' { export class Extension { enable(): void; disable(): void; } }\n`,
       'tsconfig.json': JSON.stringify({ compilerOptions: { target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', experimentalDecorators: true, useDefineForClassFields: false, strict: true, skipLibCheck: true, rootDir: 'src', outDir: 'dist', types: [] }, include: ['src/**/*.ts', 'src/**/*.d.ts', 'src/**/*.js'], exclude: ['node_modules', 'dist'] }, null, 2) + '\n',
       'package.json': JSON.stringify({ name, version: '1.0.0', private: true, type: 'module', scripts: { build: 'gef compile src/app/app.component.gtpl src/app/app.component.view.js && tsc -p tsconfig.json', package: 'npm run build && node scripts/package.mjs' }, dependencies: { 'gnome-extension-framework': '^0.1.0-alpha.2' }, devDependencies: { typescript: '^5.9.3' } }, null, 2) + '\n',

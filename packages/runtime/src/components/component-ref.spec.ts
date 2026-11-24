@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { InjectionToken, Injector } from '../di/injector.js';
 import { mountComponent, mountDecoratedComponent } from './component-ref.js';
-import { Component } from '../../../shared/src/components/metadata.js';
+import { ComponentRegistry } from './component-registry.js';
+import { Component, Input } from '../../../shared/src/components/metadata.js';
 import { EventEmitter } from '../../../shared/src/events/event-emitter.js';
 import { signal } from '../reactivity/signal.js';
 import type { GtplRenderHost } from '../rendering/gtpl-runtime.js';
@@ -38,6 +39,55 @@ describe('mountComponent', () => {
     expect(lifecycle).toEqual(['init']);
     component.destroy();
     expect(lifecycle).toEqual(['init', 'destroy']);
+    parent.destroy();
+  });
+
+  it('mounts nested decorated components and destroys them with the root view', () => {
+    const lifecycle: string[] = [];
+    const callbacks = new Map<Node, Array<() => void>>();
+    const host = createHost();
+    host.onDestroy = (node, callback) => {
+      const current = callbacks.get(node) ?? [];
+      current.push(callback);
+      callbacks.set(node, current);
+    };
+    host.destroy = (node) => {
+      lifecycle.push(`view:${node.kind}`);
+      for (const callback of callbacks.get(node) ?? []) callback();
+    };
+
+    @Component({ selector: 'gef-child', template: '<StLabel />' })
+    class ChildComponent {
+      @Input() label = 'default';
+      onInit(): void { lifecycle.push(`child:init:${this.label}`); }
+      onDestroy(): void { lifecycle.push('child:destroy'); }
+    }
+    @Component({ selector: 'gef-parent', template: '<gef-child />' })
+    class ParentComponent {
+      onInit(): void { lifecycle.push('parent:init'); }
+      onDestroy(): void { lifecycle.push('parent:destroy'); }
+    }
+
+    const components = new ComponentRegistry<Node>().registerType(
+      ChildComponent,
+      (instance, runtime) => runtime.text(instance.label),
+    );
+    const parent = new Injector();
+    const root = mountDecoratedComponent(
+      ParentComponent,
+      (_instance, runtime) => runtime.element('gef-child', { label: 'nested' }, undefined),
+      parent,
+      host,
+      {},
+      { components },
+    );
+    expect(root.view.node).toEqual({ kind: 'text', value: 'nested' });
+    expect(lifecycle).toEqual(['parent:init', 'child:init:nested']);
+    root.destroy();
+    expect(lifecycle).toEqual([
+      'parent:init', 'child:init:nested',
+      'view:text', 'view:text', 'child:destroy', 'parent:destroy',
+    ]);
     parent.destroy();
   });
 

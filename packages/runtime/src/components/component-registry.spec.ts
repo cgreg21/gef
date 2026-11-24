@@ -1,6 +1,7 @@
 import { Component, HostBinding, Input } from '../../../shared/src/components/metadata.js';
 import { describe, expect, it } from 'vitest';
 import { ComponentRegistry } from './component-registry.js';
+import { Injector } from '../di/injector.js';
 
 describe('ComponentRegistry', () => {
   it('matches component element selectors and returns definitions', () => {
@@ -27,13 +28,23 @@ describe('ComponentRegistry', () => {
       @Input('title') label = '';
       @HostBinding('accessible-label') accessibleLabel = 'Decorated label';
     }
-    const registry = new ComponentRegistry<object>().registerType(DecoratedLabel, {
-      create: () => new DecoratedLabel(),
-      render: (instance, runtime) => runtime.text(instance.label),
-    });
+    const registry = new ComponentRegistry<object>().registerType(
+      DecoratedLabel,
+      (instance, runtime) => runtime.text(instance.label),
+    );
     expect(registry.match('GefDecoratedLabel', {})).toBeDefined();
     expect(registry.match('GefDecoratedLabel', {} )?.inputs).toEqual([{ publicName: 'title', member: 'label' }]);
     expect(registry.match('GefDecoratedLabel', {} )?.hostBindings).toEqual([{ member: 'accessibleLabel', property: 'accessible-label' }]);
+  });
+
+  it('creates decorated component instances without a manual factory', () => {
+    @Component({ selector: 'GefAutomatic', template: '<StLabel />' })
+    class AutomaticComponent {}
+    const definition = new ComponentRegistry<object>().registerType(
+      AutomaticComponent,
+      () => ({ kind: 'automatic' }),
+    ).match('GefAutomatic', {});
+    expect(definition?.create(new Injector())).toBeInstanceOf(AutomaticComponent);
   });
 
   it('supports attribute selectors and rejects duplicates', () => {

@@ -133,6 +133,7 @@ export function mountDecoratedComponent<Instance, Node>(
   parentInjector: Injector,
   host: GtplRenderHost<Node>,
   inputs: Readonly<Record<string, unknown>> = {},
+  options: Omit<ComponentDefinition<Instance, Node>, 'create' | 'render' | 'inputs' | 'outputs' | 'hostBindings'> = {},
 ): ComponentRef<Instance, Node> {
   const metadata = getComponentMetadata(type);
   if (!metadata) throw new TypeError('Cannot mount a component without @Component metadata.');
@@ -140,6 +141,7 @@ export function mountDecoratedComponent<Instance, Node>(
     inputs: metadata.inputBindings,
     outputs: metadata.outputBindings,
     hostBindings: metadata.hostBindings,
+    ...options,
     create: () => new type(),
     render,
   }, parentInjector, host, inputs);

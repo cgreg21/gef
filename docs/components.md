@@ -26,17 +26,18 @@ export class CounterComponent {
 ```
 
 At build time, validate the template with `compileGtplComponent` and generate
-its render function. Register the runtime-safe metadata with that generated
-function:
+its render function. Register the decorated class with that generated
+function. GEF reads the selector, inputs, outputs and host bindings from the
+class metadata and creates the instance itself:
 
 ```ts
 import { ComponentRegistry, type StActor } from 'gnome-extension-framework/runtime';
 import counterRender from './counter-render.js';
 
-const components = new ComponentRegistry<StActor>().registerType(CounterComponent, {
-  create: () => new CounterComponent(),
-  render: counterRender,
-});
+const components = new ComponentRegistry<StActor>().registerType(
+  CounterComponent,
+  counterRender,
+);
 ```
 
 Input bindings are assigned before `onInit` and reactive bindings stop updating when the component is destroyed; output subscriptions are
@@ -45,7 +46,7 @@ instances, child injectors and views share one deterministic lifetime.
 
 ## Generate a component
 
-`gef generate component UserCard src/components` creates a TypeScript class with `@Component` metadata, a `@Input() title` property, and an external GTPL template that interpolates `title`. The generated pair is a starting point: compile the template with the component member list, then register the generated render function with `ComponentRegistry`.
+`gef generate component UserCard src/components` creates a TypeScript class with `@Component` metadata, a `@Input() title` property, and an external GTPL template that interpolates `title`. The generated pair is a starting point: compile the template with the component member list, then register the decorated class and generated render function with `ComponentRegistry`. No per-component `create` factory is needed for ordinary zero-argument components.
 
 ## Directive
 

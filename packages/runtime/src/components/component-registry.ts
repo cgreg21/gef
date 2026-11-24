@@ -1,5 +1,6 @@
 import { getComponentMetadata } from '../../../shared/src/components/metadata.js';
 import type { ComponentDefinition, ComponentInput, ComponentOutput } from './component-ref.js';
+import type { GtplRenderFunction } from '../rendering/gtpl-runtime.js';
 
 export class ComponentRegistry<Node> {
   readonly #entries: Array<{ selector: string; definition: ComponentDefinition<object, Node> }> = [];
@@ -14,12 +15,17 @@ export class ComponentRegistry<Node> {
   }
 
   registerType<Instance>(
-    type: Function,
-    definition: Omit<ComponentDefinition<Instance, Node>, 'inputs' | 'outputs' | 'hostBindings'>,
+    type: new () => Instance,
+    render: GtplRenderFunction<Instance, Node>,
+    options: Omit<ComponentDefinition<Instance, Node>, 'create' | 'render' | 'inputs' | 'outputs' | 'hostBindings'> = {},
   ): this {
     const metadata = getComponentMetadata(type);
     if (!metadata) throw new TypeError('Cannot register a component without @Component metadata.');
-    return this.registerMetadata(metadata, definition);
+    return this.registerMetadata(metadata, {
+      ...options,
+      create: () => new type(),
+      render,
+    });
   }
 
   registerMetadata<Instance>(

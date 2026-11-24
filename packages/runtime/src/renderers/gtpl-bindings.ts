@@ -1,6 +1,6 @@
 /** Small, renderer-independent helpers for Angular-style GTPL class and style bindings. */
 export function classNames(value: unknown): string[] {
-  if (typeof value === 'string') return value.split(/\\s+/).filter(Boolean);
+  if (typeof value === 'string') return value.split(/\s+/).filter(Boolean);
   if (Array.isArray(value)) return value.filter((item): item is string => typeof item === 'string' && item.length > 0);
   if (value && typeof value === 'object') return Object.entries(value).filter(([, enabled]) => Boolean(enabled)).map(([name]) => name);
   return [];

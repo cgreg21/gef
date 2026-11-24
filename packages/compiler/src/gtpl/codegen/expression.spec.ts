@@ -35,7 +35,7 @@ describe('emitGtplExpression', () => {
 
   it('emits object literals with safe property names', () => {
     expect(emit('{ active: isActive, "aria-label": label }'))
-      .toBe('{"active": isActive, "aria-label": label}');
+      .toBe('({"active": isActive, "aria-label": label})');
   });
 
   it('emits pipe expressions', () => {

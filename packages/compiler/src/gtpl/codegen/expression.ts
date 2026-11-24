@@ -70,7 +70,7 @@ function emitInternal(
       case 'array':
         code = `[${node.elements.map(emit).join(', ')}]`; break;
       case 'object':
-        code = `{${node.properties.map(({ key, value }) => `${JSON.stringify(key)}: ${emit(value)}`).join(', ')}}`; break;
+        code = `({${node.properties.map(({ key, value }) => `${JSON.stringify(key)}: ${emit(value)}`).join(', ')}})`; break;
     }
     return marker + code!;
   };

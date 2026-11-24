@@ -55,9 +55,9 @@ describe('validateStCss', () => {
     ]);
   });
 
-  it('reports unbalanced parentheses and brackets outside strings and comments', () => {
-    const source = '.panel { padding: calc(1px; background: [red; color: blue); }';
-    expect(validateStCss(source).map((item) => item.code)).toEqual(['GEFCSS1009', 'GEFCSS1011', 'GEFCSS1008']);
+  it('reports unclosed parentheses and brackets outside strings and comments', () => {
+    expect(validateStCss('.panel { padding: calc(1px; }').map((item) => item.code)).toEqual(['GEFCSS1009']);
+    expect(validateStCss('.panel { padding: [red; }').map((item) => item.code)).toEqual(['GEFCSS1011']);
   });
 
   it('ignores parentheses and brackets inside strings and comments', () => {

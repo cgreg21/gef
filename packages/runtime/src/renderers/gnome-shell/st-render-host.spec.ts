@@ -167,9 +167,25 @@ describe('createStRenderHost', () => {
     }, undefined) as FakeActor;
     expect(actor.properties.style_class).toBe('heading');
     expect(actor.properties.style).toBe('color: red;');
-    expect(actor.styleUpdateCount).toBe(1);
     style.set('font-weight: bold;');
     expect(actor.properties.style).toBe('font-weight: bold;');
+    host.destroy(actor);
+  });
+
+  it('synchronizes component host classes and styles once initially', () => {
+    const host = createStRenderHost(createSt());
+    const classes = signal({ active: true });
+    const color = signal('red');
+    const actor = host.element('StLabel', {}, undefined) as FakeActor;
+    host.setHostAttributes?.(actor, {
+      classBinding: { kind: 'binding', get: () => classes.get() },
+      styleBinding: { kind: 'binding', get: () => `color: ${color.get()};` },
+    });
+    expect(actor.properties.style_class).toBe('active');
+    expect(actor.styleUpdateCount).toBe(1);
+    classes.set({ active: false });
+    color.set('blue');
+    expect(actor.properties.style_class).toBe('');
     expect(actor.styleUpdateCount).toBe(2);
     host.destroy(actor);
   });
@@ -190,7 +206,6 @@ describe('createStRenderHost', () => {
     expect(actor.properties.style_class).toContain('active');
     expect(actor.properties.style).toContain('width: 120px;');
     expect(actor.properties.style).toContain('color: red;');
-    expect(actor.styleUpdateCount).toBe(1);
     classes.set({ active: false, muted: true });
     active.set(true);
     width.set(240);

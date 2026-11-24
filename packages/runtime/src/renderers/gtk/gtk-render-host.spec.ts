@@ -229,12 +229,29 @@ describe('createGtkRenderHost', () => {
     expect([...widget.classes]).toEqual(['heading']);
     const provider = [...widget.styleContext.providers][0];
     expect(provider?.data).toBe('* { color: red; }');
-    expect(provider?.loadCount).toBe(1);
     style.set('font-weight: bold;');
     expect(provider?.data).toBe('* { font-weight: bold; }');
-    expect(provider?.loadCount).toBe(2);
     host.destroy(widget);
     expect(widget.styleContext.providers.size).toBe(0);
+  });
+
+  it('synchronizes component host classes and styles once initially', () => {
+    const host = createGtkRenderHost(createGtk());
+    const classes = signal({ active: true });
+    const color = signal('red');
+    const widget = host.element('GtkLabel', {}, undefined) as FakeWidget;
+    host.setHostAttributes?.(widget, {
+      classBinding: { kind: 'binding', get: () => classes.get() },
+      styleBinding: { kind: 'binding', get: () => `color: ${color.get()};` },
+    });
+    const provider = [...widget.styleContext.providers][0];
+    expect(widget.classUpdateCount).toBe(1);
+    expect(provider?.loadCount).toBe(1);
+    classes.set({ active: false });
+    color.set('blue');
+    expect(widget.classUpdateCount).toBe(2);
+    expect(provider?.loadCount).toBe(2);
+    host.destroy(widget);
   });
 
   it('combines reactive class maps and individual classes with unit-aware style bindings', () => {

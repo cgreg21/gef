@@ -68,7 +68,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [x] Documenter le catalogue UI, les conteneurs, les événements et les différences entre GTK et GNOME Shell.
 - [x] Simplifier le README principal et celui du Kitchen Sink.
 - [ ] Simplifier les autres guides et harmoniser la documentation.
-- [ ] Documenter les limites et les prérequis de chaque runtime.
+- [x] Documenter les limites et les prérequis de chaque runtime (guide docs/runtimes.md).
 - [ ] Ajouter au Kitchen Sink des exemples d'applications complètes, construits avec les composants et les API publiques de GEF :
   - [ ] Liste de tâches : création, modification, suppression, filtres et état terminé.
   - [ ] Gestionnaire de notes : liste, recherche, édition et sauvegarde locale.

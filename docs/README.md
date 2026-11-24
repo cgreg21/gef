@@ -24,8 +24,8 @@ Use this index to find the guide for each part of the framework.
 ## Runtime and distribution
 
 - [Architecture](architecture.md) — compiler, runtime, renderer and process boundaries.
+- [Runtimes and compatibility](runtimes.md) — prerequisites, platform matrix, validation commands and known limitations.
 - [EGO compliance](ego-compliance.md) — metadata, lifecycle, process isolation and archive requirements.
 - [npm releases](npm-release.md) — alpha/stable channels and trusted publishing setup.
 
-GEF is alpha software targeting GNOME Shell 51. APIs and generated output may
-change; local checks do not guarantee extensions.gnome.org approval.
+GEF is alpha software. GNOME Shell 51 is the initial extension target; Node-GTK applications use a separate desktop runtime. APIs and generated output may change. Passing local checks does not guarantee extensions.gnome.org approval.

@@ -213,6 +213,71 @@ export function createStRenderHost(
 
   return {
     setProperty: (actor, property, value) => actor.set_property(propertyName(property), value),
+    setHostAttributes(actor, attributes) {
+      const scope = resources.get(actor);
+      if (!scope) throw new Error('Component host attributes require a single managed GNOME Shell root actor.');
+      const classes = classNames(attributes.class ?? attributes.className);
+      const classBindings: Array<{ name?: string; binding: GtplBinding<unknown> }> = [];
+      for (const [name, value] of Object.entries(attributes)) {
+        if (name === 'classBinding') {
+          if (isGtplBinding(value)) classBindings.push({ binding: value });
+          else classes.push(...classNames(value));
+        } else if (name.startsWith('class.')) {
+          if (isGtplBinding(value)) classBindings.push({ name: name.slice(6), binding: value });
+          else if (value) classes.push(name.slice(6));
+        }
+      }
+      const activeClasses = new Set<string>();
+      const syncClasses = (): void => {
+        const next = new Set(classes);
+        for (const item of classBindings) {
+          const value = item.binding.get();
+          for (const name of (item.name ? (value ? [item.name] : []) : classNames(value))) next.add(name);
+        }
+        for (const name of activeClasses) if (!next.has(name)) actor.set_property('style_class', classNames(readProperty(actor, 'style-class') ?? '').filter((item) => item !== name).join(' '));
+        for (const name of next) if (!activeClasses.has(name)) {
+          const current = classNames(readProperty(actor, 'style-class') ?? '');
+          if (!current.includes(name)) current.push(name);
+          actor.set_property('style_class', current.join(' '));
+        }
+        activeClasses.clear();
+        for (const name of next) activeClasses.add(name);
+      };
+      for (const _item of classBindings) scope.add(effect(syncClasses));
+      syncClasses();
+
+      const styleValue = attributes.style;
+      const styleBindingValue = attributes.styleBinding;
+      const styleBindings: Array<{ name: string; unit?: string; binding: GtplBinding<unknown> }> = [];
+      for (const [attribute, value] of Object.entries(attributes)) {
+        if (!attribute.startsWith('style.')) continue;
+        const parts = attribute.slice(6).split('.');
+        const unit = parts.length > 1 ? parts.pop() : undefined;
+        const name = (parts[0] ?? '').replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+        if (!name) throw new Error('GTPL style binding requires a CSS property name.');
+        if (isGtplBinding(value)) styleBindings.push({ name, unit, binding: value });
+        else if (value !== null && value !== undefined) styleBindings.push({ name, unit, binding: { kind: 'binding', get: () => value } });
+      }
+      if (styleValue !== undefined || styleBindingValue !== undefined || styleBindings.length > 0) {
+        if (!actor.set_style) throw new Error('This GNOME Shell component root does not support inline styles.');
+        const syncStyle = (): void => {
+          const declarations = styleDeclarations(isGtplBinding(styleValue) ? styleValue.get() : styleValue);
+          mergeStyleDeclarations(declarations, isGtplBinding(styleBindingValue) ? styleBindingValue.get() : styleBindingValue);
+          for (const item of styleBindings) {
+            const value = item.binding.get();
+            if (value === null || value === undefined) declarations.delete(item.name);
+            else declarations.set(item.name, `${value}${item.unit ?? ''}`);
+          }
+          const css = styleText(declarations);
+          if (/[{}]/.test(css)) throw new Error('GTPL style must contain CSS declarations only (without braces).');
+          actor.set_style!(css);
+        };
+        if (isGtplBinding(styleValue)) scope.add(effect(syncStyle));
+        if (isGtplBinding(styleBindingValue)) scope.add(effect(syncStyle));
+        for (const _item of styleBindings) scope.add(effect(syncStyle));
+        syncStyle();
+      }
+    },
     listen: (actor, event, handler) => {
       const id = actor.connect(event, (_source, ...args) => handler(...args));
       return () => actor.disconnect(id);

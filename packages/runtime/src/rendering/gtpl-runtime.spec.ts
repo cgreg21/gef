@@ -91,6 +91,40 @@ describe('createGtplRenderRuntime', () => {
     expect(onPressed).toHaveBeenCalledOnce();
   });
 
+  it('forwards component host class and style bindings to the native root', () => {
+    const applied: Array<{ node: Node; attributes: Readonly<Record<string, unknown>> }> = [];
+    const host: GtplRenderHost<Node> = {
+      ...createHost(),
+      setHostAttributes: (node, attributes) => applied.push({ node, attributes }),
+      onDestroy: () => {},
+    };
+    const components = new ComponentRegistry<Node>().register('GefPanel', {
+      create: () => ({}),
+      render: (_instance, runtime) => runtime.element('StBox', {}, undefined),
+    });
+    const classBinding = { kind: 'binding' as const, get: () => ({ active: true }) };
+    const styleBinding = { kind: 'binding' as const, get: () => ({ color: 'red' }) };
+    const runtime = createGtplRenderRuntime(host, undefined, undefined, new Injector(), components);
+    const node = runtime.element('GefPanel', {
+      class: 'panel',
+      classBinding,
+      style: 'padding: 4px;',
+      styleBinding,
+      'class.compact': true,
+      'style.width.px': 240,
+    }, undefined);
+    expect(applied).toHaveLength(1);
+    expect(applied[0]?.node).toBe(node);
+    expect(applied[0]?.attributes).toEqual({
+      class: 'panel',
+      classBinding,
+      style: 'padding: 4px;',
+      styleBinding,
+      'class.compact': true,
+      'style.width.px': 240,
+    });
+  });
+
   it('creates explicit binding values for reactive hosts', () => {
     const runtime = createGtplRenderRuntime(createHost());
     const value = runtime.bind(() => 'current');

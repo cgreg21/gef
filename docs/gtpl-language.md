@@ -149,6 +149,21 @@ GTK uses `Gtk.Grid` cell attachment. GNOME Shell 51 uses a vertical `St.BoxLayou
 
 `Flex` is a native box container on both renderers. Its GTPL attributes are `direction="row|column"`, `gap="N"`, `homogeneous="true|false"` and `align="fill|start|center|end"`. `direction` and `homogeneous` can be bound reactively. `gap` maps to native box spacing; `homogeneous` asks the native box to distribute the same size to each child. Any child widget can declare `expand="true|false"`; this maps to GTK `hexpand`/`vexpand` or St `x_expand`/`y_expand`, and supports reactive bindings. It requests additional space from the native layout; it does not force an exact size. `align` sets the Flex container's horizontal and vertical native alignment (GTK `halign`/`valign`, St `x_align`/`y_align`) and supports reactive bindings. It does not implement CSS `align-items`. Main-axis `justify-content` is not exposed because the native box APIs do not provide a matching cross-platform property; wrapping and per-child grow/shrink weights are also not yet supported.
 
+## Component host class and style
+
+A component may receive the same class and style attributes as a native element. GEF applies these attributes to the component template's single native root, while the component's own template and input bindings remain independent:
+
+```html
+<GefButton
+  class="toolbar-button"
+  [class]="{ active: isActive }"
+  [class.disabled]="isDisabled"
+  [style]="{ minWidth: '120px', opacity: buttonOpacity }"
+/>
+```
+
+The GTK4 and GNOME Shell renderers apply these bindings to the native root and dispose reactive effects and GTK CSS providers with that root. A component template must therefore render one managed native root when host class/style attributes are used; a fragment or text-only root cannot receive native styling.
+
 ## Security and correctness
 
 - Do not use `eval`, `Function`, or dynamic code evaluation for expressions.

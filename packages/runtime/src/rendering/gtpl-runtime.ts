@@ -31,6 +31,8 @@ export interface GtplRepeatState<Node> {
 export interface GtplRenderHost<Node> {
   destroy(node: Node): void;
   setProperty?(node: Node, property: string, value: unknown): void;
+  /** Applies component-host class/style attributes to its single native root node. */
+  setHostAttributes?(node: Node, attributes: Readonly<Record<string, unknown>>): void;
   listen?(node: Node, event: string, handler: (...args: unknown[]) => unknown): () => void;
   onDestroy?(node: Node, callback: () => void): void;
   element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node | undefined): Node;
@@ -99,6 +101,18 @@ export function createGtplRenderRuntime<Node>(
       const component = components.match(name, attributes);
       if (component) {
         const ref = mountComponent(component, injector, host, attributes);
+        const hostAttributes = Object.fromEntries(Object.entries(attributes).filter(([name]) =>
+          name === 'class' || name === 'className' || name === 'classBinding' || name.startsWith('class.')
+          || name === 'style' || name === 'styleBinding' || name.startsWith('style.')));
+        try {
+          if (Object.keys(hostAttributes).length > 0) {
+            if (!host.setHostAttributes) throw new Error('The renderer host does not support component host class/style attributes.');
+            host.setHostAttributes(ref.view.node, hostAttributes);
+          }
+        } catch (error) {
+          ref.destroy();
+          throw error;
+        }
         for (const [output, emitter] of Object.entries(ref.outputs)) {
           const handler = attributes[output];
           if (typeof handler === 'function') {

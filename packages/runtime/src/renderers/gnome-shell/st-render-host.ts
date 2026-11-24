@@ -260,6 +260,7 @@ export function createStRenderHost(
       }
       if (styleValue !== undefined || styleBindingValue !== undefined || styleBindings.length > 0) {
         if (!actor.set_style) throw new Error('This GNOME Shell component root does not support inline styles.');
+        let previousCss: string | undefined;
         const syncStyle = (): void => {
           const declarations = styleDeclarations(isGtplBinding(styleValue) ? styleValue.get() : styleValue);
           mergeStyleDeclarations(declarations, isGtplBinding(styleBindingValue) ? styleBindingValue.get() : styleBindingValue);
@@ -270,7 +271,9 @@ export function createStRenderHost(
           }
           const css = styleText(declarations);
           if (/[{}]/.test(css)) throw new Error('GTPL style must contain CSS declarations only (without braces).');
+          if (css === previousCss) return;
           actor.set_style!(css);
+          previousCss = css;
         };
         const hasReactiveStyle = [styleValue, styleBindingValue, ...styleBindings.map((item) => item.binding)]
           .some(isGtplBinding);

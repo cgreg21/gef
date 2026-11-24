@@ -27,7 +27,8 @@ describe('generated project smoke tests', () => {
       expect(await runCli(['check', template])).toBe(0);
       const compiled = join(project, 'src/app/app.component.view.js');
       expect(await runCli(['compile', template, compiled])).toBe(0);
-      const renderModule = await import(pathToFileURL(compiled).href) as { default: unknown };
+      const renderSource = await readFile(compiled, 'utf8');
+      const renderModule = await import(`data:text/javascript;base64,${Buffer.from(renderSource).toString('base64')}`) as { default: unknown };
       expect(typeof renderModule.default).toBe('function');
 
       const sourceFiles = async (directory: string): Promise<string[]> => {

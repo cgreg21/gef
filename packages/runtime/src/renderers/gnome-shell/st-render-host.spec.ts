@@ -170,6 +170,32 @@ describe('createStRenderHost', () => {
     host.destroy(actor);
   });
 
+  it('combines reactive class maps and individual classes with unit-aware style bindings', () => {
+    const host = createStRenderHost(createSt());
+    const classes = signal({ active: true, muted: false });
+    const active = signal(false);
+    const width = signal(120);
+    const actor = host.element('StLabel', {
+      class: 'heading',
+      '[class]': { kind: 'binding', get: () => classes.get() },
+      'class.selected': { kind: 'binding', get: () => active.get() },
+      'style.width.px': { kind: 'binding', get: () => width.get() },
+      'style.color': { kind: 'binding', get: () => 'red' },
+    }, undefined) as FakeActor;
+    expect(actor.properties.style_class).toContain('heading');
+    expect(actor.properties.style_class).toContain('active');
+    expect(actor.properties.style).toContain('width: 120px;');
+    expect(actor.properties.style).toContain('color: red;');
+    classes.set({ active: false, muted: true });
+    active.set(true);
+    width.set(240);
+    expect(actor.properties.style_class).toContain('muted');
+    expect(actor.properties.style_class).toContain('selected');
+    expect(actor.properties.style_class).not.toContain('active');
+    expect(actor.properties.style).toContain('width: 240px;');
+    host.destroy(actor);
+  });
+
   it('binds StPasswordEntry through its native Clutter.Text actor', () => {
     const host = createStRenderHost(createSt());
     const value = signal('secret');

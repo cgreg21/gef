@@ -135,6 +135,13 @@ describe('emitGtplTemplate', () => {
     expect(compact(output)).toContain(`runtime.text(runtime.bind(() => "Hello " + String(ctx.name ?? '')))`);
   });
 
+  it('emits object literals and resolves every class/style expression identifier', () => {
+    const output = emit('<StLabel [class]="{ active: isActive, disabled: isDisabled }" [style]="{ color: textColor }" />', ['isActive', 'isDisabled', 'textColor']);
+    expect(output).toContain('"active": ctx.isActive');
+    expect(output).toContain('"disabled": ctx.isDisabled');
+    expect(output).toContain('"color": ctx.textColor');
+  });
+
   it('emits property bindings and event callbacks', () => {
     const output = emit('<button [sensitive]="enabled" (clicked)="activate()">Go</button>', ['enabled', 'activate']);
     expect(compact(output)).toContain('"sensitive": runtime.bind(() => ctx.enabled)');

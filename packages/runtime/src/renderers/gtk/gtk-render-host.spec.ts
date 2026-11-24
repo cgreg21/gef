@@ -233,6 +233,30 @@ describe('createGtkRenderHost', () => {
     expect(widget.styleContext.providers.size).toBe(0);
   });
 
+  it('combines reactive class maps and individual classes with unit-aware style bindings', () => {
+    const host = createGtkRenderHost(createGtk());
+    const classes = signal({ active: true, muted: false });
+    const active = signal(false);
+    const width = signal(120);
+    const widget = host.element('GtkLabel', {
+      class: 'heading',
+      '[class]': { kind: 'binding', get: () => classes.get() },
+      'class.selected': { kind: 'binding', get: () => active.get() },
+      'style.width.px': { kind: 'binding', get: () => width.get() },
+      'style.color': { kind: 'binding', get: () => 'red' },
+    }, undefined) as FakeWidget;
+    expect([...widget.classes].sort()).toEqual(['active', 'heading']);
+    const provider = [...widget.styleContext.providers][0];
+    expect(provider?.data).toContain('width: 120px;');
+    expect(provider?.data).toContain('color: red;');
+    classes.set({ active: false, muted: true });
+    active.set(true);
+    width.set(240);
+    expect([...widget.classes].sort()).toEqual(['heading', 'muted', 'selected']);
+    expect(provider?.data).toContain('width: 240px;');
+    host.destroy(widget);
+  });
+
   it('binds GtkScale values and emits native value changes', () => {
     const host = createGtkRenderHost(createGtk());
     const value = signal(0.25);

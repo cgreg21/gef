@@ -128,6 +128,20 @@ describe('parseGtplExpression', () => {
     }
   });
 
+  it('recovers missing commas between object properties', () => {
+    const result = parseGtplExpression('{ first: one second: two }');
+    expect(result.expression).toMatchObject({
+      kind: 'object',
+      properties: [
+        { key: 'first', value: { kind: 'identifier', name: 'one' } },
+        { key: 'second', value: { kind: 'identifier', name: 'two' } },
+      ],
+    });
+    expect(result.diagnostics).toMatchObject([
+      { code: 'GTPL2008', span: { start: 16, end: 22 } },
+    ]);
+  });
+
   it('parses arrays and unary expressions', () => {
     const result = parseGtplExpression('[!busy, -count, true]');
     expect(result.diagnostics).toHaveLength(0);

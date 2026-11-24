@@ -294,8 +294,15 @@ class ExpressionParser {
         if (!this.expect(':')) break;
         const value = this.parseExpression(0);
         if (key !== null && value) properties.push({ key, value });
-        if (this.current.value !== ',') break;
-        this.advance();
+        if (this.current.value === ',') {
+          this.advance();
+          continue;
+        }
+        if (this.current.kind !== 'eof' && this.current.value !== '}') {
+          this.report('GTPL2008', 'Expected \",\\" between object properties.', this.current.start, this.current.end);
+          continue;
+        }
+        break;
       }
       const close = this.expect('}');
       return {

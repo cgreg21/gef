@@ -8,7 +8,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 
 - [x] Corriger les erreurs de parsing TypeScript/ESLint dans le générateur CLI (commit `954c7a9`).
 - [ ] Ajouter une régression qui vérifie la syntaxe des sources du squelette généré.
-- [x] Obtenir une CI entièrement verte sur Linux, GTK4/libadwaita, Windows et macOS (commit `954c7a9`, quatre jobs réussis).
+- [x] Obtenir une CI entièrement verte sur Linux, GTK4/libadwaita, Windows et macOS (commit `b1f2513`, run `45381718868`, quatre jobs réussis).
 - [ ] Ajouter des tests de génération exécutant réellement les projets créés.
 - [x] Conserver une séparation stricte entre le runtime GNOME Shell (GJS) et le runtime desktop (Node-GTK).
 
@@ -16,9 +16,9 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 
 - [x] Introduire un squelette d'application desktop avec `src/app/` et un composant racine décoré.
 - [x] Générer `app.config.ts`, le template GTPL et les répertoires de base.
-- [x] Aligner le squelette d'extension GNOME sur l'organisation `src/` avec un adaptateur `src/extension.ts` décoré et limité aux API GJS.
-- [x] Finaliser le bootstrap et la destruction du composant racine sur GTK et GJS via `mountDecoratedComponent()`.
-- [x] Documenter et tester les commandes de création pour application et extension, y compris la syntaxe TypeScript des squelettes générés.
+- [x] Aligner le squelette d'extension GNOME sur l'organisation `src/` avec un adaptateur `src/extension.ts` décoré et limité aux API GJS (commit `421d354`).
+- [x] Finaliser le bootstrap et la destruction du composant racine sur GTK et GJS via `mountDecoratedComponent()` (commits `421d354` à `b1f2513`).
+- [x] Documenter et tester les commandes de création pour application et extension, y compris la syntaxe TypeScript des squelettes générés (CI `45381718868`).
 - [ ] Ajouter la configuration de routes uniquement lorsqu'un routeur fonctionnel existe (différé : aucun routeur fonctionnel n'est encore fourni).
 
 ## P2 — Architecture des composants décorés

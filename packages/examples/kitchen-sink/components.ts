@@ -14,7 +14,7 @@ Input()(MetricCardComponent.prototype, 'value');
 Input()(MetricCardComponent.prototype, 'detail');
 Component({
   selector: 'GefMetricCard',
-  template: '<Flex direction="column"><GtkLabel /></Flex>',
+  template: '<GtkLabel />',
 })(MetricCardComponent);
 
 export class SectionHeaderComponent {
@@ -26,7 +26,7 @@ Input()(SectionHeaderComponent.prototype, 'title');
 Input()(SectionHeaderComponent.prototype, 'description');
 Component({
   selector: 'GefSectionHeader',
-  template: '<Flex direction="column"><GtkLabel /><GtkLabel /></Flex>',
+  template: '<GtkLabel />',
 })(SectionHeaderComponent);
 
 function renderMetricCard(

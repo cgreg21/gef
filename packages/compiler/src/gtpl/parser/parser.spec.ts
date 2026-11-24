@@ -350,8 +350,11 @@ describe('GTPL expression integration', () => {
         expression: '({ profile: { name: user.name } }).profile.name',
       },
     ]);
-    // Object literals are not yet part of the supported expression grammar.
-    expect(result.diagnostics.length).toBeGreaterThan(0);
+    expect(result.diagnostics).toHaveLength(0);
+    expect(text.parts[0]).toMatchObject({
+      kind: 'interpolation',
+      parsedExpression: { kind: 'member', object: { kind: 'member', object: { kind: 'object' } } },
+    });
   });
 
   it('does not close interpolations on delimiters inside quoted strings', () => {

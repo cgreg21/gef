@@ -442,7 +442,10 @@ class ExpressionParser {
       if (/[A-Za-z_]/.test(next)) {
         this.offset = end;
         while (this.offset < this.source.length && /[A-Za-z0-9_]/.test(this.source[this.offset] ?? '')) this.offset += 1;
-        if ((this.source[this.offset] === '+' || this.source[this.offset] === '-') && /[eE]$/.test(this.source.slice(start, this.offset))) this.offset += 1;
+        if ((this.source[this.offset] === '+' || this.source[this.offset] === '-') && /[eE]$/.test(this.source.slice(start, this.offset))) {
+          this.offset += 1;
+          while (this.offset < this.source.length && /[A-Za-z0-9_]/.test(this.source[this.offset] ?? '')) this.offset += 1;
+        }
         this.report('GTPL2012', 'Malformed numeric literal.', start, this.offset);
         return { kind: 'invalid', value: this.source.slice(start, this.offset), start, end: this.offset };
       }

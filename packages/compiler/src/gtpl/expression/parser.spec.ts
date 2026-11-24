@@ -118,7 +118,7 @@ describe('parseGtplExpression', () => {
   });
 
   it('reports malformed numeric literals with a single precise diagnostic', () => {
-    for (const source of ['1__0', '0x', '1e+', '0b102', '0x_FF']) {
+    for (const source of ['1__0', '0x', '1e+', '1e+foo', '1foo', '0b102', '0o8', '0x_FF']) {
       const result = parseGtplExpression(source);
       expect(result.diagnostics).toEqual([{
         code: 'GTPL2012',

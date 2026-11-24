@@ -487,6 +487,25 @@ describe('createGtkRenderHost', () => {
     expect(label.label).toBe('after');
   });
 
+  it('converts GTK orientation strings to native enum values', () => {
+    const Gtk = { ...createGtk(), Orientation: { HORIZONTAL: 10, VERTICAL: 20 } };
+    const host = createGtkRenderHost(Gtk);
+    const separator = host.element('GtkSeparator', { orientation: 'horizontal' }, undefined) as FakeWidget;
+    expect(separator.properties.orientation).toBe(10);
+
+    const direction = signal('vertical');
+    const reactive = host.element('GtkSeparator', {
+      orientation: { kind: 'binding', get: () => direction.get() },
+    }, undefined) as FakeWidget;
+    expect(reactive.properties.orientation).toBe(20);
+    direction.set('horizontal');
+    expect(reactive.properties.orientation).toBe(10);
+    expect(() => host.element('GtkSeparator', { orientation: 'diagonal' }, undefined))
+      .toThrow('GTK orientation must be "horizontal" or "vertical".');
+    host.destroy(separator);
+    host.destroy(reactive);
+  });
+
   it('converts GTK float properties from GTPL string attributes', () => {
     const host = createGtkRenderHost(createGtk());
     const label = host.element('GtkLabel', { xalign: '0', yalign: '1' }, undefined) as FakeWidget;

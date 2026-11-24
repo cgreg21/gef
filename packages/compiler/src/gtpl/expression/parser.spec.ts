@@ -117,6 +117,17 @@ describe('parseGtplExpression', () => {
     }
   });
 
+  it('reports malformed numeric literals with a single precise diagnostic', () => {
+    for (const source of ['1__0', '0x', '1e+', '0b102', '0x_FF']) {
+      const result = parseGtplExpression(source);
+      expect(result.diagnostics).toEqual([{
+        code: 'GTPL2012',
+        message: 'Malformed numeric literal.',
+        span: { start: 0, end: source.length },
+      }]);
+    }
+  });
+
   it('parses arrays and unary expressions', () => {
     const result = parseGtplExpression('[!busy, -count, true]');
     expect(result.diagnostics).toHaveLength(0);

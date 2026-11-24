@@ -372,13 +372,7 @@ class ExpressionParser {
     }
 
     if (/[0-9]/.test(char) || (char === '.' && /[0-9]/.test(this.source[this.offset + 1] ?? ''))) {
-      const remaining = this.source.slice(start);
-      const radixMatch = /^0[xX][0-9a-fA-F](?:_?[0-9a-fA-F])*|^0[bB][01](?:_?[01])*|^0[oO][0-7](?:_?[0-7])*/.exec(remaining);
-      const match = radixMatch ?? /^(?:[0-9](?:_?[0-9])*(?:\.(?:[0-9](?:_?[0-9])*)?)?|\.[0-9](?:_?[0-9])*)(?:[eE][+-]?[0-9](?:_?[0-9])*)?/.exec(remaining);
-      if (match) {
-        this.offset += match[0].length;
-        return { kind: 'number', value: match[0], start, end: this.offset };
-      }
+      return this.readNumber(start);
     }
 
     if (char === '"' || char === "'") {
@@ -420,6 +414,45 @@ class ExpressionParser {
     this.offset += 1;
     this.report('GTPL2006', `Unsupported character "${char}" in expression.`, start, this.offset);
     return { kind: 'invalid', value: char, start, end: this.offset };
+  }
+
+  private readNumber(start: number): Token {
+    const remaining = this.source.slice(start);
+    const radix = /^0([xXbBoO])/.exec(remaining);
+    if (radix) {
+      const patterns: Readonly<Record<string, RegExp>> = {
+        x: /^0[xX][0-9a-fA-F](?:_?[0-9a-fA-F])*/,
+        b: /^0[bB][01](?:_?[01])*/,
+        o: /^0[oO][0-7](?:_?[0-7])*/,
+      };
+      const match = patterns[radix[1]?.toLowerCase() ?? '']?.exec(remaining);
+      if (match && !/[A-Za-z0-9_]/.test(remaining[match[0].length] ?? '')) {
+        this.offset = start + match[0].length;
+        return { kind: 'number', value: match[0], start, end: this.offset };
+      }
+      while (this.offset < this.source.length && /[A-Za-z0-9_]/.test(this.source[this.offset] ?? '')) this.offset += 1;
+      this.report('GTPL2012', 'Malformed numeric literal.', start, this.offset);
+      return { kind: 'invalid', value: this.source.slice(start, this.offset), start, end: this.offset };
+    }
+
+    const match = /^(?:[0-9](?:_?[0-9])*(?:\.(?:[0-9](?:_?[0-9])*)?)?|\.[0-9](?:_?[0-9])*)(?:[eE][+-]?[0-9](?:_?[0-9])*)?/.exec(remaining);
+    if (match) {
+      const end = start + match[0].length;
+      const next = this.source[end] ?? '';
+      if (/[A-Za-z_]/.test(next)) {
+        this.offset = end;
+        while (this.offset < this.source.length && /[A-Za-z0-9_]/.test(this.source[this.offset] ?? '')) this.offset += 1;
+        if ((this.source[this.offset] === '+' || this.source[this.offset] === '-') && /[eE]$/.test(this.source.slice(start, this.offset))) this.offset += 1;
+        this.report('GTPL2012', 'Malformed numeric literal.', start, this.offset);
+        return { kind: 'invalid', value: this.source.slice(start, this.offset), start, end: this.offset };
+      }
+      this.offset = end;
+      return { kind: 'number', value: match[0], start, end: this.offset };
+    }
+
+    this.offset = start + 1;
+    this.report('GTPL2012', 'Malformed numeric literal.', start, this.offset);
+    return { kind: 'invalid', value: this.source.slice(start, this.offset), start, end: this.offset };
   }
 
   private decodeString(raw: string, terminated: boolean): string {

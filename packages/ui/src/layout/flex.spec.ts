@@ -42,6 +42,15 @@ describe('FlexLayout', () => {
     expect(result.items[1]!.line).toBe(1);
   });
 
+  it('preserves an explicitly zero cross size when wrapping', () => {
+    const result = new FlexLayout({ wrap: true, gap: 10, align: 'center' }).layout(100, 100, [
+      { basis: 70, crossSize: 0 },
+      { basis: 70, crossSize: 0 },
+    ]);
+    expect(result.items[0]!.height).toBe(0);
+    expect(result.items[1]!.y).toBe(10);
+  });
+
   it('rejects invalid dimensions and item values', () => {
     expect(() => new FlexLayout().layout(-1, 20, [])).toThrow(RangeError);
     expect(() => new FlexLayout().layout(100, 20, [{ basis: -1 }])).toThrow(RangeError);

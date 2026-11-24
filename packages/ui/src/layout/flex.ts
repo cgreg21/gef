@@ -86,7 +86,8 @@ export class FlexLayout {
       const between = justify === 'space-between' && line.length > 1
         ? gap + remaining / (line.length - 1) : gap;
       const naturalCross = Math.max(0, ...line.map(item => item.crossSize ?? 0));
-      const lineCross = naturalCross || (lines.length === 1 ? crossLimit : crossLimit / lines.length);
+      const hasCrossSize = line.some(item => item.crossSize !== undefined);
+      const lineCross = hasCrossSize ? naturalCross : (lines.length === 1 ? crossLimit : crossLimit / lines.length);
 
       let mainOffset = offset;
       line.forEach((item, itemIndex) => {

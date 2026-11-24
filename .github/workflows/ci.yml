@@ -178,3 +178,5 @@ jobs:
           GTK_A11Y=none xvfb-run -a gjs -m tests/gtk4/kitchen-sink-smoke.js
       - name: Node-GTK renderer smoke test
         run: npm run build && node dist/cli/src/index.js compile tests/node-gtk/smoke.gtpl dist/node-gtk-view.js && GTK_A11Y=none xvfb-run -a node --import node-gtk/register tests/node-gtk/smoke.mjs
+      - name: Execute generated application component with Node-GTK
+        run: GTK_A11Y=none xvfb-run -a node --import node-gtk/register tests/node-gtk/generated-app-smoke.mjs

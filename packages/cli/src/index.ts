@@ -123,7 +123,7 @@ function validateWorkspaceConfig(source: string): string | undefined {
       const path = entry[field];
       if (typeof path !== 'string' || !path.trim() || path.includes('\\') || path.startsWith('/') || /^[A-Za-z]:/.test(path)
         || (path !== '.' && path.split('/').some((part) => part === '..' || part === '.'))) {
-        return `gef.json project "${name}" ${field} must be a non-empty relative path without "." or ".." segments.`;
+        return `gef.json project "${name}" ${field} must be a safe workspace-relative path.`;
       }
     }
   }

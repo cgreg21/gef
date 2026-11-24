@@ -143,7 +143,7 @@ describe('GEF CLI', () => {
     [['new', 'demo', '--type', 'application', '--type', 'extension'], 'Usage: gef new'],
     [['new', 'demo', '--unknown'], 'Unexpected argument: --unknown'],
     [['new', 'demo', 'one', 'two'], 'Unexpected argument: two'],
-  ])('rejects malformed project creation arguments: %j', async (args, message) => {
+  ] as const)('rejects malformed project creation arguments: %j', async (args, message) => {
     const base = createIO('');
     expect(await runCli(args, base.io)).toBe(2);
     expect(base.errors[0]).toContain(message);

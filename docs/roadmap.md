@@ -1,8 +1,8 @@
 # Roadmap GEF
 
-Cette roadmap décrit les chantiers du framework dans leur ordre de priorité. Elle est tenue à jour avec chaque modification fonctionnelle : une tâche n'est cochée qu'après implémentation et validation par les tests/CI concernés.
+Cette roadmap présente les priorités du framework. Les cases cochées correspondent aux fonctionnalités implémentées ; leur validation dépend des tests et de la CI concernés.
 
-**Statut du dépôt :** alpha. Les tâches ci-dessous représentent le plan de travail, pas une déclaration que les fonctionnalités sont déjà disponibles.
+**Statut : alpha.** Les API et le périmètre peuvent encore évoluer.
 
 ## P0 — Stabilisation
 
@@ -10,7 +10,7 @@ Cette roadmap décrit les chantiers du framework dans leur ordre de priorité. E
 - [ ] Ajouter une régression qui vérifie la syntaxe des sources du squelette généré.
 - [ ] Obtenir une CI entièrement verte sur Linux, GTK4/libadwaita, Windows et macOS.
 - [ ] Ajouter des tests de génération exécutant réellement les projets créés.
-- [ ] Conserver une séparation stricte entre le runtime GNOME Shell (GJS) et le runtime desktop (Node-GTK).
+- [x] Conserver une séparation stricte entre le runtime GNOME Shell (GJS) et le runtime desktop (Node-GTK).
 
 ## P1 — Génération de projets Angular-like
 
@@ -23,35 +23,53 @@ Cette roadmap décrit les chantiers du framework dans leur ordre de priorité. E
 
 ## P2 — Architecture des composants décorés
 
-- [ ] Faire de `@Component` le point d'entrée canonique de déclaration.
-- [ ] Fiabiliser la découverte des métadonnées et l'instanciation des composants.
-- [ ] Finaliser `@Input`, `@Output`, `@HostBinding` et `@HostListener`.
-- [ ] Garantir les hooks et la destruction du cycle de vie.
-- [ ] Réduire les inscriptions/fabriques manuelles redondantes.
-- [ ] Ajouter des tests d'intégration couvrant des composants décorés imbriqués.
+- [x] Déclarer les composants avec `@Component` et les métadonnées associées.
+- [x] Prendre en charge les entrées `@Input` et sorties `@Output` avec `EventEmitter`.
+- [x] Gérer les bindings réactifs et la destruction des abonnements du composant.
+- [x] Fournir les décorateurs `@Directive`, `@Pipe`, `@HostBinding` et `@HostListener`.
+- [x] Enregistrer composants, directives et pipes avec leurs registres dédiés.
+- [ ] Réduire les inscriptions/fabriques manuelles redondantes lorsque le bootstrap le permet.
+- [ ] Ajouter davantage de tests d'intégration couvrant des composants décorés imbriqués.
 
 ## P3 — Compilateur GTPL et runtime
 
-- [ ] Consolider le rendu initial et les mises à jour réactives.
-- [ ] Fiabiliser les bindings, événements et valeurs statiques/réactives.
-- [ ] Améliorer les diagnostics avec fichier, ligne et colonne.
+- [x] Compiler les templates GTPL et leurs expressions.
+- [x] Prendre en charge les bindings, événements et valeurs réactives documentés.
+- [x] Fournir des diagnostics avec fichier, ligne et colonne.
+- [x] Gérer le cycle de vie et le nettoyage des ressources natives.
 - [ ] Uniformiser les comportements des renderers GTK et GJS sans mélanger leurs API.
 - [ ] Mesurer et réduire les mises à jour et allocations inutiles.
 
-## P4 — CLI et générateurs
+## P4 — Bibliothèque UI
+
+- [x] Ajouter une API UI publique via `gnome-extension-framework/ui`.
+- [x] Fournir les registres natifs GTK et GNOME Shell : `createGtkUiRegistry()` et `createStUiRegistry()`.
+- [x] Ajouter les composants `GefButton`, `GefLabel`, `GefIcon`, `GefInput`, `GefCheckbox`, `GefSwitch` et `GefProgressBar`.
+- [x] Relier les propriétés et événements des composants aux widgets natifs.
+- [x] Ajouter les conteneurs GTPL `Flex` et `Grid`.
+- [x] Ajouter les conteneurs `HeaderBar` et `Sidebar` avec rendu adapté à chaque plateforme.
+- [x] Ajouter les utilitaires responsive : breakpoints, résolution de valeurs, `BreakpointObserver`, `FlexLayout` et `GridLayout`.
+- [ ] Connecter automatiquement les changements de taille des widgets natifs aux layouts responsive.
+- [ ] Étendre les options de layout GTPL : retour à la ligne, poids `grow` par enfant et justification cohérente entre GTK et St.
+- [ ] Enrichir la bibliothèque de composants uniquement selon les besoins démontrés par les exemples.
+
+## P5 — Démonstration et documentation
+
+- [x] Organiser le Kitchen Sink en écrans de démonstration distincts.
+- [x] Écrire le shell du Kitchen Sink en TypeScript et l'intégrer au runtime GTK de GEF.
+- [x] Ajouter des composants GEF réutilisables dans le Kitchen Sink (`GefSectionHeader`, `GefMetricCard`).
+- [x] Fournir un accès au code GTPL de chaque démonstration.
+- [x] Documenter le catalogue UI, les conteneurs, les événements et les différences entre GTK et GNOME Shell.
+- [x] Simplifier le README principal et celui du Kitchen Sink.
+- [ ] Simplifier les autres guides et harmoniser la documentation.
+- [ ] Documenter les limites et les prérequis de chaque runtime.
+
+## P6 — CLI et distribution
 
 - [ ] Fiabiliser `gef new` et ses tests de bout en bout.
 - [ ] Compléter `gef generate component` avec imports et tests cohérents.
 - [ ] Ajouter les générateurs directive, service et pipe.
 - [ ] Améliorer la validation de configuration et les messages d'erreur.
-- [ ] Garder les commandes et abstractions au strict nécessaire (KISS).
-
-## P5 — Démonstration, documentation et distribution
-
-- [ ] Faire du Kitchen Sink une application de démonstration complète, organisée par écrans.
-- [ ] Fournir un accès au code source de chaque démonstration.
-- [ ] Simplifier les guides de démarrage et la référence CLI.
-- [ ] Documenter les limites et les prérequis de chaque runtime.
 - [ ] Vérifier les packages npm et les distributions autonomes sur leurs plateformes natives.
 - [ ] Définir les critères de sortie de l'alpha et préparer une version stable.
 
@@ -59,7 +77,7 @@ Cette roadmap décrit les chantiers du framework dans leur ordre de priorité. E
 
 Après chaque modification fonctionnelle ou corrective :
 
-1. Mettre à jour cette roadmap : cocher uniquement ce qui est réellement terminé, ajouter les tâches découvertes et réordonner si nécessaire.
+1. Mettre à jour cette roadmap : cocher uniquement ce qui est réellement terminé et ajouter les tâches découvertes.
 2. Faire une passe de refactoring KISS sur le code modifié.
 3. Exécuter les tests et contrôles pertinents.
 4. Pousser sur `main`, puis vérifier la CI du commit exact avant de déclarer le travail terminé.

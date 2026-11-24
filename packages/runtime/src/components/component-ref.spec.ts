@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { InjectionToken, Injector } from '../di/injector.js';
-import { mountComponent } from './component-ref.js';
+import { mountComponent, mountDecoratedComponent } from './component-ref.js';
+import { Component } from '../../../shared/src/components/metadata.js';
 import { EventEmitter } from '../../../shared/src/events/event-emitter.js';
 import { signal } from '../reactivity/signal.js';
 import type { GtplRenderHost } from '../rendering/gtpl-runtime.js';
@@ -24,6 +25,22 @@ function createHost(order: string[] = []): GtplRenderHost<Node> {
 }
 
 describe('mountComponent', () => {
+  it('mounts decorated components directly from their metadata', () => {
+    const lifecycle: string[] = [];
+    @Component({ selector: 'test-root', template: '<TestLabel />' })
+    class TestComponent {
+      onInit(): void { lifecycle.push('init'); }
+      onDestroy(): void { lifecycle.push('destroy'); }
+    }
+    const parent = new Injector();
+    const component = mountDecoratedComponent(TestComponent, (_instance, runtime) => runtime.text('decorated'), parent, createHost());
+    expect(component.view.node).toEqual({ kind: 'text', value: 'decorated' });
+    expect(lifecycle).toEqual(['init']);
+    component.destroy();
+    expect(lifecycle).toEqual(['init', 'destroy']);
+    parent.destroy();
+  });
+
   it('owns component, view and child injector lifetimes in reverse order', () => {
     const DEPENDENCY = new InjectionToken<string>('dependency');
     const LOCAL = new InjectionToken<object>('local');

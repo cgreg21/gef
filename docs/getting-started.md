@@ -46,7 +46,7 @@ cd hello-world
 npm install
 ```
 
-The generator also writes `gef.json`, which records the project under `projects` and sets `projectType` to `extension`. It creates `metadata.json`, `extension.ts`, minimal GJS declarations, TypeScript configuration, package scripts and an EGO packaging script. The generated example adds a panel button in `enable()` and destroys it in `disable()`.
+The generator also writes `gef.json`, which records the project under `projects` and sets `projectType` to `extension`. It creates `metadata.json`, a `src/extension.ts` GJS adapter, a decorated `src/app/app.component.ts`, its GTPL template, minimal GJS declarations, TypeScript configuration, package scripts and an EGO packaging script. The adapter mounts the root component in `enable()` and disposes its view, component and injector in `disable()`.
 
 The generated project declares the framework dependency as `^0.1.0-alpha.2`. The generated UUID is a placeholder (`hello-world@example.com`). Replace it with a stable UUID you control before packaging. Update the extension name, description and supported Shell versions in `metadata.json` as appropriate. Do not claim compatibility with a Shell version you have not tested.
 
@@ -63,7 +63,7 @@ npm start
 gef package
 ```
 
-This creates an Angular-inspired `src/app/` root with a decorated `AppComponent`, its GTPL template, component stylesheet and `app.config.ts`. Feature code has dedicated `components/`, `directives/`, `pipes/`, `services/`, `models/`, `assets/` and `styles/` directories. `src/main.ts` bootstraps the decorated root component through GEF's component lifecycle using the Node-GTK renderer. The generated `build` script compiles the component template with GEF, then compiles TypeScript. Node-GTK remains a separate runtime from GJS extensions. Its `package.json` also configures the portable bundle name, reverse-DNS application ID, compiled entry point and GTK 4 target. Node-GTK 4 runs with `node --import node-gtk/register`; install the native GTK4 and libadwaita libraries required by your platform. `gef package` runs the generated `npm run package` script, which builds the app and delegates to `node-gtk bundle`. The upstream portable bundler currently targets Linux.
+This creates an Angular-inspired `src/app/` root with a decorated `AppComponent`, its GTPL template, component stylesheet and `app.config.ts`. Feature code has dedicated `components/`, `directives/`, `pipes/`, `services/`, `models/`, `assets/` and `styles/` directories. `src/main.ts` bootstraps the decorated root component through GEF's component lifecycle using the Node-GTK renderer. The generated `build` script compiles the component template with GEF, then compiles TypeScript. Both project types use `mountDecoratedComponent()` so the runtime reads `@Component` metadata instead of repeating input, output and host-binding declarations in the bootstrap. Node-GTK remains a separate runtime from GJS extensions. Its `package.json` also configures the portable bundle name, reverse-DNS application ID, compiled entry point and GTK 4 target. Node-GTK 4 runs with `node --import node-gtk/register`; install the native GTK4 and libadwaita libraries required by your platform. `gef package` runs the generated `npm run package` script, which builds the app and delegates to `node-gtk bundle`. The upstream portable bundler currently targets Linux.
 ## 3. Build and package
 
 The starter project defines its own build and package scripts. Run:

@@ -41,6 +41,8 @@ Pour une application GTK :
 npm run gef -- new my-app --type application
 ```
 
+Les deux générateurs créent un projet organisé sous `src/`, avec un composant racine `@Component` et un template GTPL. L'adaptateur `src/extension.ts` reste spécifique à GJS ; `src/main.ts` reste spécifique à Node-GTK.
+
 Après publication du package :
 
 ```sh

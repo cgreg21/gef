@@ -6,6 +6,7 @@ import type { DirectiveRegistry } from '../directives/directive-registry.js';
 import type { ComponentRegistry } from './component-registry.js';
 import { effect } from '../reactivity/signal.js';
 import type { EventEmitter } from '../../../shared/src/events/event-emitter.js';
+import { getComponentMetadata } from '../../../shared/src/components/metadata.js';
 
 export interface ComponentLifecycle {
   onInit?(): void;
@@ -125,6 +126,24 @@ export function mountComponent<Instance, Node>(
   }
 }
 
+/** Mounts a decorated component without repeating its @Component metadata. */
+export function mountDecoratedComponent<Instance, Node>(
+  type: new () => Instance,
+  render: GtplRenderFunction<Instance, Node>,
+  parentInjector: Injector,
+  host: GtplRenderHost<Node>,
+  inputs: Readonly<Record<string, unknown>> = {},
+): ComponentRef<Instance, Node> {
+  const metadata = getComponentMetadata(type);
+  if (!metadata) throw new TypeError('Cannot mount a component without @Component metadata.');
+  return mountComponent({
+    inputs: metadata.inputBindings,
+    outputs: metadata.outputBindings,
+    hostBindings: metadata.hostBindings,
+    create: () => new type(),
+    render,
+  }, parentInjector, host, inputs);
+}
 function isBinding(value: unknown): value is { get(): unknown } {
   return typeof value === 'object' && value !== null && 'kind' in value
     && value.kind === 'binding' && 'get' in value && typeof value.get === 'function';

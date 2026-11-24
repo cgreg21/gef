@@ -16,10 +16,10 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 
 - [x] Introduire un squelette d'application desktop avec `src/app/` et un composant racine décoré.
 - [x] Générer `app.config.ts`, le template GTPL et les répertoires de base.
-- [ ] Aligner le squelette d'extension GNOME sur l'organisation `src/` avec un adaptateur `src/extension.ts`.
-- [ ] Finaliser le bootstrap et la destruction du composant racine sur les deux cibles.
-- [ ] Documenter et tester les commandes de création pour application et extension.
-- [ ] Ajouter la configuration de routes uniquement lorsqu'un routeur fonctionnel existe.
+- [x] Aligner le squelette d'extension GNOME sur l'organisation `src/` avec un adaptateur `src/extension.ts` décoré et limité aux API GJS.
+- [x] Finaliser le bootstrap et la destruction du composant racine sur GTK et GJS via `mountDecoratedComponent()`.
+- [x] Documenter et tester les commandes de création pour application et extension, y compris la syntaxe TypeScript des squelettes générés.
+- [ ] Ajouter la configuration de routes uniquement lorsqu'un routeur fonctionnel existe (différé : aucun routeur fonctionnel n'est encore fourni).
 
 ## P2 — Architecture des composants décorés
 

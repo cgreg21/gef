@@ -487,6 +487,46 @@ describe('createGtkRenderHost', () => {
     expect(label.label).toBe('after');
   });
 
+  it('normalizes string-valued GTK numeric and boolean properties', () => {
+    const host = createGtkRenderHost(createGtk());
+    const spacing = signal('12');
+    const fraction = signal('0.25');
+    const active = signal('false');
+    const box = host.element('GtkBox', {
+      spacing: { kind: 'binding', get: () => spacing.get() },
+      'margin-top': '20',
+    }, undefined) as FakeWidget;
+    const progress = host.element('GtkProgressBar', {
+      fraction: { kind: 'binding', get: () => fraction.get() },
+      'show-text': 'true',
+    }, undefined) as FakeWidget;
+    const toggle = host.element('GtkCheckButton', {
+      active: { kind: 'binding', get: () => active.get() },
+    }, undefined) as FakeWidget;
+    const spin = host.element('GtkSpinButton', { value: '3' }, undefined) as FakeWidget;
+
+    expect(box.properties).toMatchObject({ spacing: 12, margin_top: 20 });
+    expect(progress.properties).toMatchObject({ fraction: 0.25, show_text: true });
+    expect(toggle.properties.active).toBe(false);
+    expect(spin.properties.value).toBe(3);
+
+    spacing.set('16');
+    fraction.set('0.75');
+    active.set('true');
+    expect(box.properties.spacing).toBe(16);
+    expect(progress.properties.fraction).toBe(0.75);
+    expect(toggle.properties.active).toBe(true);
+
+    host.destroy(box);
+    host.destroy(progress);
+    host.destroy(toggle);
+    host.destroy(spin);
+    expect(() => host.element('GtkBox', { spacing: '1.5' }, undefined))
+      .toThrow('GTK spacing must be an integer.');
+    expect(() => host.element('GtkCheckButton', { active: 'yes' }, undefined))
+      .toThrow('active must be "true" or "false".');
+  });
+
   it('converts GTK orientation strings to native enum values', () => {
     const Gtk = { ...createGtk(), Orientation: { HORIZONTAL: 10, VERTICAL: 20 } };
     const host = createGtkRenderHost(Gtk);

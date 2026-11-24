@@ -173,9 +173,9 @@ describe('GEF CLI', () => {
     expect(app).toContain("import Gtk from 'gi:Gtk-4.0'");
     expect(app).toContain("import Adw from 'gi:Adw-1'");
     expect(app).toContain("createGtkRenderHost(Gtk, { api: 'node-gtk' })");
-    expect(app).toContain('mountGtplTemplate({}, renderMain, host)');
+    expect(app).toContain('mountComponent({');\n    expect(app).toContain('getComponentMetadata(AppComponent)');\n    expect(app).toContain('new Injector()');
     expect(app).toContain('app.run([])');
-    const template = writes.find((item) => item.path.endsWith(join('src', 'main.gtpl')))?.content ?? '';
+    const component = writes.find((item) => item.path.endsWith(join('src', 'app', 'app.component.ts')))?.content ?? '';\n    expect(component).toContain("@Component({ selector: 'app-root'");\n    expect(component).toContain("templateUrl: './app.component.gtpl'");\n    const template = writes.find((item) => item.path.endsWith(join('src', 'app', 'app.component.gtpl')))?.content ?? '';
     expect(template).toContain('<GtkLabel label="Hello from GEF and node-gtk!" />');
     const projectPackage = JSON.parse(writes.find((item) => item.path.endsWith('package.json'))?.content ?? '{}') as {
       dependencies?: Record<string, string>;
@@ -184,12 +184,12 @@ describe('GEF CLI', () => {
     };
     expect(projectPackage.dependencies?.['node-gtk']).toBe('^4.1.1');
     expect(projectPackage.dependencies?.['gnome-extension-framework']).toBe('^0.1.0-alpha.2');
-    expect(projectPackage.scripts?.build).toContain('gef compile src/main.gtpl');
+    expect(projectPackage.scripts?.build).toContain('gef compile src/app/app.component.gtpl');
     expect(projectPackage.scripts?.start).toContain('--import node-gtk/register');
     expect(projectPackage.scripts?.package).toBe('npm run build && node scripts/package.mjs');
     expect(writes.find((item) => item.path.endsWith(join('scripts', 'package.mjs')))?.content).toContain("gnome-extension-framework/scripts/package-app.mjs");
     expect(projectPackage.bundle).toEqual({ name: 'DesktopApp', id: 'com.example.desktop.app', entry: 'dist/main.js', gtk: 4 });
-    expect(directories).toContain(resolve('out/src'));
+    expect(directories).toContain(resolve('out/src'));\n    expect(directories).toContain(resolve('out/src/app'));\n    expect(directories).toContain(resolve('out/src/components'));\n    expect(directories).toContain(resolve('out/src/services'));
     expect(directories).toContain(resolve('out/scripts'));
     expect(output[0]).toContain('Created application project');
   });

@@ -112,6 +112,46 @@ describe('mountComponent', () => {
     parent.destroy();
   });
 
+  it('forwards component host class and style bindings to the native host', () => {
+    const active = signal(true);
+    const opacity = signal(0.5);
+    const calls: Array<Record<string, unknown>> = [];
+    const host = createHost();
+    host.setHostAttributes = (_node, attributes) => { calls.push({ ...attributes }); };
+    const parent = new Injector();
+    const component = mountComponent({
+      create: () => ({
+        classes: { primary: true },
+        active: { kind: 'binding' as const, get: () => active.get() },
+        styles: { minWidth: '120px' },
+        opacity: { kind: 'binding' as const, get: () => opacity.get() },
+      }),
+      hostBindings: [
+        { member: 'classes', property: 'class' },
+        { member: 'active', property: 'class.active' },
+        { member: 'styles', property: 'style' },
+        { member: 'opacity', property: 'style.opacity' },
+      ],
+      render: (_instance, runtime) => runtime.text('styled component'),
+    }, parent, host);
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toMatchObject({
+      class: { primary: true },
+      'class.active': expect.objectContaining({ kind: 'binding' }),
+      style: { minWidth: '120px' },
+      'style.opacity': expect.objectContaining({ kind: 'binding' }),
+    });
+    expect((calls[0]?.['class.active'] as { get(): boolean }).get()).toBe(true);
+    expect((calls[0]?.['style.opacity'] as { get(): number }).get()).toBe(0.5);
+    active.set(false);
+    opacity.set(0.8);
+    expect((calls[0]?.['class.active'] as { get(): boolean }).get()).toBe(false);
+    expect((calls[0]?.['style.opacity'] as { get(): number }).get()).toBe(0.8);
+    component.destroy();
+    parent.destroy();
+  });
+
   it('cleans up the child injector when component creation fails', () => {
     const LOCAL = new InjectionToken<object>('local');
     const dispose = vi.fn();

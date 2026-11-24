@@ -160,7 +160,7 @@ class IconButton {
 }
 ```
 
-The renderer must support `setProperty` for the native root. A member containing a GEF binding is updated reactively; ordinary values are applied once. Host bindings do not create extra wrappers or alter the component's template structure.
+The renderer must support `setProperty` for native properties and `setHostAttributes` for class/style bindings. Ordinary values are applied once; members containing GEF bindings update reactively and are disposed with the component. Class and style bindings reuse the same renderer behavior as template-level host attributes. Supported forms include `@HostBinding('class')`, `@HostBinding('class.active')`, `@HostBinding('style')`, and `@HostBinding('style.opacity')`. These bindings do not create extra wrappers or alter the component's template structure.
 
 ## Component host class and style
 

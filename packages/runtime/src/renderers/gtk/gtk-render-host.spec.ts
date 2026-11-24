@@ -546,6 +546,25 @@ describe('createGtkRenderHost', () => {
     host.destroy(reactive);
   });
 
+  it('normalizes static and reactive GtkScale values from GTPL strings', () => {
+    const host = createGtkRenderHost(createGtk());
+    const value = signal('0.4');
+    const slider = host.element('GtkScale', { value: '0.4' }, undefined) as FakeWidget;
+    const reactive = host.element('GtkScale', {
+      value: { kind: 'binding', get: () => value.get() },
+    }, undefined) as FakeWidget;
+
+    expect(slider.properties.value).toBe(0.4);
+    expect(reactive.properties.value).toBe(0.4);
+    value.set('0.75');
+    expect(reactive.properties.value).toBe(0.75);
+
+    host.destroy(slider);
+    host.destroy(reactive);
+    expect(() => host.element('GtkScale', { value: 'invalid' }, undefined))
+      .toThrow('GTK value must be a finite number.');
+  });
+
   it('converts GTK float properties from GTPL string attributes', () => {
     const host = createGtkRenderHost(createGtk());
     const label = host.element('GtkLabel', { xalign: '0', yalign: '1' }, undefined) as FakeWidget;

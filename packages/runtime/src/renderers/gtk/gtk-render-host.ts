@@ -547,8 +547,8 @@ export function createGtkRenderHost(
         actor.set_increments?.(0.01, 0.1);
         let updating = false;
         const syncValue = (): void => {
-          const value = isGtplBinding(sliderValue) ? sliderValue.get() : sliderValue;
-          if (typeof value !== 'number' || !Number.isFinite(value)) throw new Error('GtkScale value must be a finite number.');
+          const rawValue = isGtplBinding(sliderValue) ? sliderValue.get() : sliderValue;
+          const value = floatValue('value', rawValue);
           updating = true;
           try { setProperty(actor, 'value', Math.min(1, Math.max(0, value)), options.api ?? 'gjs'); }
           finally { updating = false; }

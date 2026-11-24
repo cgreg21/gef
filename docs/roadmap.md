@@ -40,6 +40,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [ ] Uniformiser les comportements des renderers GTK et GJS sans mélanger leurs API.
 - [ ] Mesurer et réduire les mises à jour et allocations inutiles.
 - [x] Éviter les écritures natives répétées lorsqu'un binding réactif conserve la même valeur primitive (GTK et GJS).
+- [ ] Vérifier que les bindings ignorent les valeurs identiques sans bloquer l'application des valeurs modifiées (GTK et GJS).
 - [x] Ajouter des régressions vérifiant qu'un binding de classe ou de style ne déclenche qu'une synchronisation initiale (GTK et GJS, CI `45401361924`).
 
 ## P4 — Bibliothèque UI

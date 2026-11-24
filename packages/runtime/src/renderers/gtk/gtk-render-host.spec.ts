@@ -210,15 +210,21 @@ function createGtk(): GtkNamespace {
 }
 
 describe('createGtkRenderHost', () => {
-  it('skips native property writes when a reactive binding resolves to the same value', () => {
+  it('skips unchanged native writes and applies changed reactive property values', () => {
     const host = createGtkRenderHost(createGtk());
     const revision = signal(0);
+    const label = signal('first');
     const widget = host.element('GtkLabel', {
-      label: { kind: 'binding', get: () => { revision.get(); return 'unchanged'; } },
+      label: { kind: 'binding', get: () => { revision.get(); return label.get(); } },
     }, undefined) as FakeWidget;
     expect(widget.propertyUpdateCount.get('label')).toBe(1);
     revision.set(1);
     expect(widget.propertyUpdateCount.get('label')).toBe(1);
+    label.set('second');
+    expect(widget.properties.label).toBe('second');
+    expect(widget.propertyUpdateCount.get('label')).toBe(2);
+    revision.set(2);
+    expect(widget.propertyUpdateCount.get('label')).toBe(2);
     host.destroy(widget);
   });
 

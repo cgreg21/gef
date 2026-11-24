@@ -151,15 +151,21 @@ function createSt(): StNamespace {
 }
 
 describe('createStRenderHost', () => {
-  it('skips native property writes when a reactive binding resolves to the same value', () => {
+  it('skips unchanged native writes and applies changed reactive property values', () => {
     const host = createStRenderHost(createSt());
     const revision = signal(0);
+    const label = signal('first');
     const actor = host.element('StLabel', {
-      text: { kind: 'binding', get: () => { revision.get(); return 'unchanged'; } },
+      text: { kind: 'binding', get: () => { revision.get(); return label.get(); } },
     }, undefined) as FakeActor;
     expect(actor.propertyUpdateCount.get('text')).toBe(1);
     revision.set(1);
     expect(actor.propertyUpdateCount.get('text')).toBe(1);
+    label.set('second');
+    expect(actor.properties.text).toBe('second');
+    expect(actor.propertyUpdateCount.get('text')).toBe(2);
+    revision.set(2);
+    expect(actor.propertyUpdateCount.get('text')).toBe(2);
     host.destroy(actor);
   });
 

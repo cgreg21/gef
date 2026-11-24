@@ -102,6 +102,21 @@ describe('parseGtplExpression', () => {
     }
   });
 
+  it('parses hexadecimal, binary and octal numeric literals', () => {
+    for (const [source, value] of [
+      ['0xff', 255],
+      ['0XCA_FE', 51966],
+      ['0b1010', 10],
+      ['0B11_01', 13],
+      ['0o755', 493],
+      ['0O7_7', 63],
+    ] as const) {
+      const result = parseGtplExpression(source);
+      expect(result.diagnostics, source).toEqual([]);
+      expect(result.expression).toMatchObject({ kind: 'literal', value });
+    }
+  });
+
   it('parses arrays and unary expressions', () => {
     const result = parseGtplExpression('[!busy, -count, true]');
     expect(result.diagnostics).toHaveLength(0);

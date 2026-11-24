@@ -372,7 +372,9 @@ class ExpressionParser {
     }
 
     if (/[0-9]/.test(char) || (char === '.' && /[0-9]/.test(this.source[this.offset + 1] ?? ''))) {
-      const match = /^(?:[0-9](?:_?[0-9])*(?:\.(?:[0-9](?:_?[0-9])*)?)?|\.[0-9](?:_?[0-9])*)(?:[eE][+-]?[0-9](?:_?[0-9])*)?/.exec(this.source.slice(start));
+      const remaining = this.source.slice(start);
+      const radixMatch = /^0[xX][0-9a-fA-F](?:_?[0-9a-fA-F])*|^0[bB][01](?:_?[01])*|^0[oO][0-7](?:_?[0-7])*/.exec(remaining);
+      const match = radixMatch ?? /^(?:[0-9](?:_?[0-9])*(?:\.(?:[0-9](?:_?[0-9])*)?)?|\.[0-9](?:_?[0-9])*)(?:[eE][+-]?[0-9](?:_?[0-9])*)?/.exec(remaining);
       if (match) {
         this.offset += match[0].length;
         return { kind: 'number', value: match[0], start, end: this.offset };

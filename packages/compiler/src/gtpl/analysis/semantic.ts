@@ -242,15 +242,22 @@ class GtplSemanticAnalyzer {
     if (!this.source) return { ...base, start: absoluteStart, end: absoluteEnd };
 
     const prefix = this.source.slice(base.start, absoluteStart);
-    const newline = String.fromCharCode(10);
-    const lineBreaks = prefix.split(newline).length - 1;
-    const lastLineBreak = prefix.lastIndexOf(newline);
-    return {
-      start: absoluteStart,
-      end: absoluteEnd,
-      line: base.line + lineBreaks,
-      column: lastLineBreak === -1 ? base.column + prefix.length : prefix.length - lastLineBreak,
-    };
+    let line = base.line;
+    let column = base.column;
+    for (let index = 0; index < prefix.length; index++) {
+      const character = prefix[index];
+      if (character === '\r') {
+        if (prefix[index + 1] === '\n') index++;
+        line++;
+        column = 1;
+      } else if (character === '\n') {
+        line++;
+        column = 1;
+      } else {
+        column++;
+      }
+    }
+    return { start: absoluteStart, end: absoluteEnd, line, column };
   }
 
   private declare(scope: Scope, entry: SymbolEntry): void {

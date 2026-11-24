@@ -66,6 +66,22 @@ describe('GTPL semantic scopes', () => {
     expect(diagnostic?.span).toMatchObject({ start: source.indexOf('missing'), end: source.indexOf('missing') + 7, line: 2, column: 12 });
   });
 
+  it.each([['LF', '\n'], ['CRLF', '\r\n'], ['CR', '\r']])(
+    'reports exact identifier positions with %s line endings',
+    (_name, newline) => {
+      const source = ['<StLabel>', '{{ first + missing }}', '</StLabel>'].join(newline);
+      const parsed = parseGtpl(source);
+      const semantic = analyzeGtpl(parsed.nodes, { componentMembers: ['first'], source });
+      const diagnostic = semantic.diagnostics.find((item) => item.code === 'GTPL4002');
+      expect(diagnostic?.span).toMatchObject({
+        start: source.indexOf('missing'),
+        end: source.indexOf('missing') + 7,
+        line: 2,
+        column: 12,
+      });
+    },
+  );
+
   it('validates identifiers inside object literal bindings', () => {
     const diagnostics = analyze('<StLabel [class]="{ active: isActive, disabled: missing }" />', ['isActive']);
     expect(diagnostics.filter((item) => item.code === 'GTPL4002')).toHaveLength(1);

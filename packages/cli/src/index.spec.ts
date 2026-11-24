@@ -173,9 +173,12 @@ describe('GEF CLI', () => {
     expect(app).toContain("import Gtk from 'gi:Gtk-4.0'");
     expect(app).toContain("import Adw from 'gi:Adw-1'");
     expect(app).toContain("createGtkRenderHost(Gtk, { api: 'node-gtk' })");
-    expect(app).toContain('mountComponent({');\n    expect(app).toContain('getComponentMetadata(AppComponent)');\n    expect(app).toContain('new Injector()');
+    expect(app).toContain('mountComponent({');
+    expect(app).toContain('getComponentMetadata(AppComponent)');
+    expect(app).toContain('new Injector()');
     expect(app).toContain('app.run([])');
-    const component = writes.find((item) => item.path.endsWith(join('src', 'app', 'app.component.ts')))?.content ?? '';\n    expect(component).toContain("@Component({ selector: 'app-root'");\n    expect(component).toContain("templateUrl: './app.component.gtpl'");\n    const template = writes.find((item) => item.path.endsWith(join('src', 'app', 'app.component.gtpl')))?.content ?? '';
+    const component = writes.find((item) => item.path.endsWith(join('src', 'app', 'app.component.ts')))?.content ?? '';
+    expect(component).toContain("@Component({ selector: 'app-root'");\n    expect(component).toContain("templateUrl: './app.component.gtpl'");\n    const template = writes.find((item) => item.path.endsWith(join('src', 'app', 'app.component.gtpl')))?.content ?? '';
     expect(template).toContain('<GtkLabel label="Hello from GEF and node-gtk!" />');
     const projectPackage = JSON.parse(writes.find((item) => item.path.endsWith('package.json'))?.content ?? '{}') as {
       dependencies?: Record<string, string>;

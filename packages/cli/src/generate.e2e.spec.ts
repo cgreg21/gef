@@ -68,6 +68,45 @@ describe('generated project smoke tests', () => {
       await rm(root, { recursive: true, force: true });
     }
   });
+  it('generates a component with a matching GTPL template and compilable render module', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'gef-component-'));
+    try {
+      const output = join(root, 'src', 'components');
+      expect(await runCli(['generate', 'component', 'UserProfile', output])).toBe(0);
+
+      const componentPath = join(output, 'user-profile.ts');
+      const templatePath = join(output, 'user-profile.gtpl');
+      const component = await readFile(componentPath, 'utf8');
+      const template = await readFile(templatePath, 'utf8');
+
+      expect(component).toContain("import { Component, Input } from 'gnome-extension-framework/runtime'");
+      expect(component).toContain("@Component({ selector: 'user-profile', templateUrl: './user-profile.gtpl' })");
+      expect(component).toContain('@Input() title =');
+      expect(template).toContain('{{ title }}');
+
+      const parsed = ts.createSourceFile(componentPath, component, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS);
+      expect((parsed as ts.SourceFile & { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics).toHaveLength(0);
+      const result = ts.transpileModule(component, {
+        fileName: componentPath,
+        reportDiagnostics: true,
+        compilerOptions: {
+          target: ts.ScriptTarget.ES2022,
+          module: ts.ModuleKind.ESNext,
+          experimentalDecorators: true,
+          useDefineForClassFields: false,
+        },
+      });
+      expect(result.diagnostics?.filter((item) => item.category === ts.DiagnosticCategory.Error)).toEqual([]);
+
+      const compiled = join(output, 'user-profile.view.js');
+      expect(await runCli(['compile', templatePath, compiled])).toBe(0);
+      const renderModule = await import(pathToFileURL(compiled).href) as { default: unknown };
+      expect(typeof renderModule.default).toBe('function');
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it.each([
     ['directive', 'Highlight', 'highlight.directive.ts'],
     ['service', 'User', 'user.service.ts'],

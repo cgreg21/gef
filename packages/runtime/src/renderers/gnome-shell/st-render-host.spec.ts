@@ -8,6 +8,7 @@ import { Injector } from '../../di/injector.js';
 
 class FakeActor implements StActor {
   styleUpdateCount = 0;
+  readonly propertyUpdateCount = new Map<string, number>();
   classUpdateCount = 0;
   readonly properties: Record<string, unknown>;
   readonly children: StActor[] = [];
@@ -53,6 +54,7 @@ class FakeActor implements StActor {
   set_style(style: string): void { this.styleUpdateCount += 1; this.properties.style = style; }
 
   set_property(name: string, value: unknown): void {
+    this.propertyUpdateCount.set(name, (this.propertyUpdateCount.get(name) ?? 0) + 1);
     this.properties[name] = value;
   }
 
@@ -149,6 +151,19 @@ function createSt(): StNamespace {
 }
 
 describe('createStRenderHost', () => {
+  it('skips native property writes when a reactive binding resolves to the same value', () => {
+    const host = createStRenderHost(createSt());
+    const revision = signal(0);
+    const actor = host.element('StLabel', {
+      text: { kind: 'binding', get: () => { revision.get(); return 'unchanged'; } },
+    }, undefined) as FakeActor;
+    expect(actor.propertyUpdateCount.get('text')).toBe(1);
+    revision.set(1);
+    expect(actor.propertyUpdateCount.get('text')).toBe(1);
+    host.destroy(actor);
+  });
+
+
   it('creates registered St widgets with normalized GObject property names', () => {
     const host = createStRenderHost(createSt());
     const child = host.text('Hello');

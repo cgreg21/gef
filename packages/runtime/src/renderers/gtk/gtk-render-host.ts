@@ -698,7 +698,15 @@ export function createGtkRenderHost(
             property ? handler(readProperty(actor, property, options.api ?? 'gjs')) : handler(args.length <= 1 ? args[0] : args)));
         }
         for (const [property, binding] of bindings) {
-          scope.add(effect(() => setProperty(actor, property, binding.get(), options.api ?? 'gjs')));
+          let previous: unknown;
+          let initialized = false;
+          scope.add(effect(() => {
+            const value = binding.get();
+            if (initialized && Object.is(value, previous)) return;
+            initialized = true;
+            previous = value;
+            setProperty(actor, property, value, options.api ?? 'gjs');
+          }));
         }
         if (name === 'Grid') {
           if (typeof actor.attach !== 'function') throw new Error('This GTK Grid widget does not support child placement.');

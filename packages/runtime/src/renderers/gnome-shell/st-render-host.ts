@@ -555,11 +555,17 @@ export function createStRenderHost(
         }
         if (flexHomogeneous !== undefined) setFlexHomogeneous(actor, flexHomogeneous);
         for (const [property, binding] of bindings) {
+          let previous: unknown;
+          let initialized = false;
           resources.add(effect(() => {
+            const value = binding.get();
+            if (initialized && Object.is(value, previous)) return;
+            initialized = true;
+            previous = value;
             if (name === 'Flex' && property === 'homogeneous') {
-              setFlexHomogeneous(actor, binding.get() as boolean);
+              setFlexHomogeneous(actor, value as boolean);
             } else {
-              actor.set_property(property, binding.get());
+              actor.set_property(property, value);
             }
           }));
         }

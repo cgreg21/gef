@@ -9,6 +9,7 @@ import { EventEmitter } from '../../../../shared/src/events/event-emitter.js';
 
 class FakeWidget implements GtkActor {
   classUpdateCount = 0;
+  readonly propertyUpdateCount = new Map<string, number>();
   readonly styleContext = {
     providers: new Set<FakeCssProvider>(),
     add_provider(provider: FakeCssProvider): void { this.providers.add(provider); },
@@ -31,7 +32,10 @@ class FakeWidget implements GtkActor {
     if (index !== -1) this.children.splice(index, 1);
     (child as FakeWidget).parent = null;
   }
-  set_property(name: string, value: unknown): void { this.properties[name] = value; }
+  set_property(name: string, value: unknown): void {
+    this.propertyUpdateCount.set(name, (this.propertyUpdateCount.get(name) ?? 0) + 1);
+    this.properties[name] = value;
+  }
   get_property(name: string): unknown { return this.properties[name]; }
   get_style_context(): typeof this.styleContext { return this.styleContext; }
   connect(name: string, callback: (actor: GtkActor, ...args: unknown[]) => unknown): number {
@@ -206,6 +210,19 @@ function createGtk(): GtkNamespace {
 }
 
 describe('createGtkRenderHost', () => {
+  it('skips native property writes when a reactive binding resolves to the same value', () => {
+    const host = createGtkRenderHost(createGtk());
+    const revision = signal(0);
+    const widget = host.element('GtkLabel', {
+      label: { kind: 'binding', get: () => { revision.get(); return 'unchanged'; } },
+    }, undefined) as FakeWidget;
+    expect(widget.propertyUpdateCount.get('label')).toBe(1);
+    revision.set(1);
+    expect(widget.propertyUpdateCount.get('label')).toBe(1);
+    host.destroy(widget);
+  });
+
+
   it('registers common GTK4 widgets and optional libadwaita widgets', () => {
     const host = createGtkRenderHost(createGtk(), {
       adw: { PreferencesPage: FakeWidget, PreferencesGroup: FakeWidget, ActionRow: FakeWidget,

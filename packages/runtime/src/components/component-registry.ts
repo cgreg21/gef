@@ -24,15 +24,20 @@ export class ComponentRegistry<Node> {
 
   registerMetadata<Instance>(
     metadata: { readonly selector: string; readonly inputBindings: readonly ComponentInput[]; readonly outputBindings: readonly ComponentOutput[]; readonly hostBindings?: readonly { readonly member: string; readonly property: string }[] },
-    definition: Omit<ComponentDefinition<Instance, Node>, 'inputs' | 'outputs'>,
+    definition: Omit<ComponentDefinition<Instance, Node>, 'inputs' | 'outputs' | 'hostBindings'>,
   ): this {
-    return this.register(metadata.selector, { ...definition, inputs: metadata.inputBindings, outputs: metadata.outputBindings, hostBindings: metadata.hostBindings });
+    return this.register(metadata.selector, {
+      ...definition,
+      inputs: metadata.inputBindings,
+      outputs: metadata.outputBindings,
+      ...(metadata.hostBindings ? { hostBindings: metadata.hostBindings } : {}),
+    });
   }
 
   match(element: string, attributes: Readonly<Record<string, unknown>>): ComponentDefinition<object, Node> | undefined {
     const entry = this.#entries.find(({ selector }) => {
       if (selector === element) return true;
-      const attribute = /^\[([\w-]+)\]$/.exec(selector);
+      const attribute = /^\\[([\\w-]+)\\]$/.exec(selector);
       return Boolean(attribute && attribute[1]! in attributes);
     });
     return entry?.definition;

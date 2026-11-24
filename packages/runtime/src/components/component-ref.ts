@@ -86,11 +86,25 @@ export function mountComponent<Instance, Node>(
     const view = mountGtplTemplate(instance, definition.render, host, definition.pipes, definition.directives, injector, definition.components);
     resources.add(() => view.dispose());
     if ((definition.hostBindings?.length ?? 0) > 0) {
-      if (!host.setProperty) throw new Error('The renderer host does not support component host property bindings.');
+      const hostAttributes: Record<string, unknown> = {};
       for (const binding of definition.hostBindings ?? []) {
         const value = (instance as Record<string, unknown>)[binding.member];
-        if (isBinding(value)) resources.add(effect(() => host.setProperty?.(view.node, binding.property, value.get())));
-        else host.setProperty(view.node, binding.property, value);
+        if (binding.property === 'class' || binding.property === 'style') {
+          const attribute = isBinding(value)
+            ? binding.property === 'class' ? 'classBinding' : 'styleBinding'
+            : binding.property;
+          hostAttributes[attribute] = value;
+        } else if (binding.property.startsWith('class.') || binding.property.startsWith('style.')) {
+          hostAttributes[binding.property] = value;
+        } else {
+          if (!host.setProperty) throw new Error('The renderer host does not support component host property bindings.');
+          if (isBinding(value)) resources.add(effect(() => host.setProperty?.(view.node, binding.property, value.get())));
+          else host.setProperty(view.node, binding.property, value);
+        }
+      }
+      if (Object.keys(hostAttributes).length > 0) {
+        if (!host.setHostAttributes) throw new Error('The renderer host does not support component host class/style bindings.');
+        host.setHostAttributes(view.node, hostAttributes);
       }
     }
     return {

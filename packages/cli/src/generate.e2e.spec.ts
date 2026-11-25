@@ -54,6 +54,12 @@ describe('generated project smoke tests', () => {
         expect(result.diagnostics?.filter((item) => item.category === ts.DiagnosticCategory.Error), file).toEqual([]);
       }
 
+      if (projectType === 'extension') {
+        const config = await readFile(join(project, 'src/app/app.config.ts'), 'utf8');
+        expect(config).toContain('ApplicationRouterConfig<StActor>');
+        expect(await readFile(join(project, 'src/extension.ts'), 'utf8')).toContain('renderRouterOutlet');
+      }
+
       if (projectType === 'application') {
         const source = await readFile(join(project, 'src/app/app.config.ts'), 'utf8');\n        expect(await readFile(join(project, 'src/main.ts'), 'utf8')).toContain('renderRouterOutlet');
         const javascript = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext } }).outputText;

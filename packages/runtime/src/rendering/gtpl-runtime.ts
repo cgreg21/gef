@@ -41,7 +41,6 @@ export interface GtplRenderHost<Node> {
   listen?(node: Node, event: string, handler: (...args: unknown[]) => unknown): () => void;
   onDestroy?(node: Node, callback: () => void): void;
   element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node | undefined): Node;
-  setRouter(router: Router<Node>): void;
   text(value: string | GtplBinding<string>): Node;
   fragment(children: readonly Node[]): Node;
   repeat(state: GtplBinding<GtplRepeatState<Node>>): Node;
@@ -66,6 +65,7 @@ export interface GtplRenderRuntime<Node> {
   pipe(name: string, value: unknown, ...args: unknown[]): unknown;
   bind<T>(get: () => T): GtplBinding<T>;
   element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node | undefined): Node;
+  setRouter(router: Router<Node>): void;
   text(value: string | GtplBinding<string>): Node;
   fragment(children: readonly Node[]): Node;
   if<T>(condition: T | GtplBinding<T>, render: (value: T) => Node, fallback?: () => Node): Node;
@@ -102,7 +102,7 @@ export function createGtplRenderRuntime<Node>(
   };
   let router: Router<Node> | undefined;
   const attachRouterLink = (node: Node, value: unknown): void => {
-    if (value === undefined) return;
+    if (value === undefined || value === null) return;
     if (!router || !host.listen || !host.onDestroy) {
       throw new Error('The renderer host and RouterOutlet are required for routerLink.');
     }

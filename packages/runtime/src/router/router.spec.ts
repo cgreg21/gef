@@ -253,10 +253,10 @@ describe('Router', () => {
     cleanups[0]!();
   });
 
-  it('allows a null routerLink to disable navigation and rejects use without an outlet', () => {
+  it('allows a null routerLink to disable navigation without requiring an outlet', () => {
     const host = createHost();
     const runtime = createGtplRenderRuntime(host);
-    expect(() => runtime.element('StButton', { routerLink: null }, undefined)).toThrow(/RouterOutlet/);
+    expect(runtime.element('StButton', { routerLink: null }, undefined).kind).toBe('StButton');
 
     const router = new Router([{ path: '/', render: () => ({ kind: 'home' }) }]);
     renderRouterOutlet(router, runtime);
@@ -265,8 +265,7 @@ describe('Router', () => {
     const linkedRuntime = createGtplRenderRuntime(linkHost);
     renderRouterOutlet(router, linkedRuntime);
     linkedRuntime.element('StButton', { routerLink: null }, undefined);
-    expect(listeners).toHaveLength(1);
-    listeners[0]!();
+    expect(listeners).toHaveLength(0);
     expect(router.url).toBe('/');
   });
 

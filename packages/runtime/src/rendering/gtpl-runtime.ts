@@ -204,7 +204,7 @@ export function createGtplRenderRuntime<Node>(
           items: entries.map(({ key, value, index }) => {
             let rowRevision: Signal<number> | undefined;
             let updateRow: ((item: unknown, index: number, count: number) => void) | undefined;
-            let currentValue = value;
+            let currentValue: unknown = value;
             let currentIndex = index;
             let currentCount = count;
             return {

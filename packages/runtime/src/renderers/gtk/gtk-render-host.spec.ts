@@ -776,7 +776,7 @@ describe('createGtkRenderHost', () => {
     let renders = 0;
     const list = runtime.for(
       runtime.bind(() => values.get()),
-      (item, index, count, registerUpdate) => {
+      (item, _index, _count, registerUpdate) => {
         let current = item;
         let currentIndex = index;
         let currentCount = count;
@@ -802,6 +802,69 @@ describe('createGtkRenderHost', () => {
     expect(originalB.properties.label).toBe('B2:0/2');
     expect(originalA.properties.label).toBe('A2:1/2');
     expect(renders).toBe(2);
+    host.destroy(list);
+  });
+  it('updates nested GTK branches and loops when a parent row changes', () => {
+    const host = createGtkRenderHost(createGtk());
+    const runtime = createGtplRenderRuntime(host);
+    const values = signal([{
+      id: 'parent',
+      label: 'Before',
+      show: true,
+      mode: 'idle',
+      children: [{ id: 'child', label: 'Child' }],
+    }]);
+    const list = runtime.for(
+      runtime.bind(() => values.get()),
+      (item, _index, _count, registerUpdate) => {
+        let current = item;
+        registerUpdate((nextItem) => { current = nextItem; });
+        const conditional = runtime.if(
+          runtime.bind(() => current.show),
+          () => host.element('GtkLabel', { label: runtime.bind(() => current.label) }, undefined),
+          () => host.text('hidden'),
+        );
+        const switched = runtime.switch(
+          runtime.bind(() => current.mode),
+          [{ values: ['ready'], render: () => host.element('GtkLabel', { label: runtime.bind(() => current.label + '-switch') }, undefined) }],
+          () => host.text('idle'),
+        );
+        const nested = runtime.for(
+          runtime.bind(() => current.children),
+          (child, _childIndex, _childCount, registerChildUpdate) => {
+            let currentChild = child;
+            registerChildUpdate((nextChild) => { currentChild = nextChild; });
+            return host.element('GtkLabel', { label: runtime.bind(() => currentChild.label) }, undefined);
+          },
+          (child) => child.id,
+          () => host.text('empty child'),
+        );
+        return host.element('GtkBox', {}, host.fragment([conditional, switched, nested]));
+      },
+      (item) => item.id,
+      () => host.text('empty parent'),
+    ) as FakeWidget;
+    const row = list.children[0] as FakeWidget;
+    const content = row.children[0] as FakeWidget;
+    const conditional = content.children[0] as FakeWidget;
+    const switched = content.children[1] as FakeWidget;
+    const nested = content.children[2] as FakeWidget;
+    const originalChild = nested.children[0] as FakeWidget;
+    expect((conditional.children[0] as FakeWidget).properties.label).toBe('Before');
+    expect((switched.children[0] as FakeWidget).properties.label).toBe('idle');
+    expect(originalChild.properties.label).toBe('Child');
+    values.set([{
+      id: 'parent',
+      label: 'After',
+      show: true,
+      mode: 'ready',
+      children: [{ id: 'child', label: 'Child 2' }, { id: 'new', label: 'New child' }],
+    }]);
+    expect(list.children[0]).toBe(row);
+    expect((conditional.children[0] as FakeWidget).properties.label).toBe('After');
+    expect((switched.children[0] as FakeWidget).properties.label).toBe('After-switch');
+    expect(nested.children[0]).toBe(originalChild);
+    expect(nested.children.map((child) => (child as FakeWidget).properties.label)).toEqual(['Child 2', 'New child']);
     host.destroy(list);
   });
   it('disposes repeat children with their GTK container', () => {

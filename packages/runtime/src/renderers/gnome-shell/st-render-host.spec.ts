@@ -550,7 +550,7 @@ describe('createStRenderHost', () => {
     let renders = 0;
     const list = runtime.for(
       runtime.bind(() => values.get()),
-      (item, index, count, registerUpdate) => {
+      (item, _index, _count, registerUpdate) => {
         let current = item;
         let currentIndex = index;
         let currentCount = count;
@@ -576,6 +576,69 @@ describe('createStRenderHost', () => {
     expect(originalB.properties.text).toBe('B2:0/2');
     expect(originalA.properties.text).toBe('A2:1/2');
     expect(renders).toBe(2);
+    host.destroy(list);
+  });
+  it('updates nested St branches and loops when a parent row changes', () => {
+    const host = createStRenderHost(createSt());
+    const runtime = createGtplRenderRuntime(host);
+    const values = signal([{
+      id: 'parent',
+      label: 'Before',
+      show: true,
+      mode: 'idle',
+      children: [{ id: 'child', label: 'Child' }],
+    }]);
+    const list = runtime.for(
+      runtime.bind(() => values.get()),
+      (item, _index, _count, registerUpdate) => {
+        let current = item;
+        registerUpdate((nextItem) => { current = nextItem; });
+        const conditional = runtime.if(
+          runtime.bind(() => current.show),
+          () => host.element('StLabel', { text: runtime.bind(() => current.label) }, undefined),
+          () => host.text('hidden'),
+        );
+        const switched = runtime.switch(
+          runtime.bind(() => current.mode),
+          [{ values: ['ready'], render: () => host.element('StLabel', { text: runtime.bind(() => current.label + '-switch') }, undefined) }],
+          () => host.text('idle'),
+        );
+        const nested = runtime.for(
+          runtime.bind(() => current.children),
+          (child, _childIndex, _childCount, registerChildUpdate) => {
+            let currentChild = child;
+            registerChildUpdate((nextChild) => { currentChild = nextChild; });
+            return host.element('StLabel', { text: runtime.bind(() => currentChild.label) }, undefined);
+          },
+          (child) => child.id,
+          () => host.text('empty child'),
+        );
+        return host.element('StBox', {}, host.fragment([conditional, switched, nested]));
+      },
+      (item) => item.id,
+      () => host.text('empty parent'),
+    ) as FakeActor;
+    const row = list.children[0] as FakeActor;
+    const content = row.children[0] as FakeActor;
+    const conditional = content.children[0] as FakeActor;
+    const switched = content.children[1] as FakeActor;
+    const nested = content.children[2] as FakeActor;
+    const originalChild = nested.children[0] as FakeActor;
+    expect((conditional.children[0] as FakeActor).properties.text).toBe('Before');
+    expect((switched.children[0] as FakeActor).properties.text).toBe('idle');
+    expect(originalChild.properties.text).toBe('Child');
+    values.set([{
+      id: 'parent',
+      label: 'After',
+      show: true,
+      mode: 'ready',
+      children: [{ id: 'child', label: 'Child 2' }, { id: 'new', label: 'New child' }],
+    }]);
+    expect(list.children[0]).toBe(row);
+    expect((conditional.children[0] as FakeActor).properties.text).toBe('After');
+    expect((switched.children[0] as FakeActor).properties.text).toBe('After-switch');
+    expect(nested.children[0]).toBe(originalChild);
+    expect(nested.children.map((child) => (child as FakeActor).properties.text)).toEqual(['Child 2', 'New child']);
     host.destroy(list);
   });
   it('supports custom component constructors', () => {

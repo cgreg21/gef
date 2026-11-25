@@ -142,6 +142,11 @@ describe('emitGtplTemplate', () => {
     expect(output).toContain('"color": ctx.textColor');
   });
 
+  it('emits routerLink property bindings as runtime bindings', () => {
+    const output = emit('<StButton [routerLink]="profileUrl" />', ['profileUrl']);
+    expect(compact(output)).toContain('"routerLink": runtime.bind(() => ctx.profileUrl)');
+  });
+
   it('emits property bindings and event callbacks', () => {
     const output = emit('<button [sensitive]="enabled" (clicked)="activate()">Go</button>', ['enabled', 'activate']);
     expect(compact(output)).toContain('"sensitive": runtime.bind(() => ctx.enabled)');

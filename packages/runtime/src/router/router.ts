@@ -43,12 +43,35 @@ interface RouteRecord<Node> {
 }
 
 function normalizeRoutePath(path: string): string {
-  return path.split('/').filter(Boolean).join('/');
+  return path.split('/').filter(Boolean).map((segment) => {
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(segment);
+    } catch {
+      throw new TypeError(`Route path "${path}" contains an invalid encoded segment.`);
+    }
+    if (decoded === '.' || decoded === '..' || decoded.includes('/') || decoded.includes('\\\\')) {
+      throw new TypeError(`Route path "${path}" contains an invalid path segment.`);
+    }
+    return decoded;
+  }).join('/');
 }
 
 function parseUrl(value: string): ParsedUrl {
   if (/^[A-Za-z][A-Za-z0-9+.-]*:/.test(value) || value.startsWith('//')) {
     throw new TypeError('Router navigation only accepts application-relative URLs.');
+  }
+  const rawPath = value.split(/[?#]/, 1)[0]!;
+  for (const segment of rawPath.split('/').filter(Boolean)) {
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(segment);
+    } catch {
+      throw new TypeError(`Route URL "${value}" contains an invalid encoded path segment.`);
+    }
+    if (decoded === '.' || decoded === '..' || decoded.includes('/') || decoded.includes('\\\\')) {
+      throw new TypeError(`Route URL "${value}" contains an invalid path segment.`);
+    }
   }
   let parsed: URL;
   try {
@@ -64,6 +87,11 @@ function parseUrl(value: string): ParsedUrl {
     segments = parsed.pathname.split('/').filter(Boolean).map(decodeURIComponent);
   } catch {
     throw new TypeError(`Route URL "${value}" contains an invalid encoded path segment.`);
+  }
+  try {
+    decodeURIComponent(parsed.search.slice(1));
+  } catch {
+    throw new TypeError(`Route URL "${value}" contains an invalid encoded query parameter.`);
   }
   const queryParams = Object.freeze(Object.fromEntries(new URLSearchParams(parsed.search)));
   let fragment: string | undefined;

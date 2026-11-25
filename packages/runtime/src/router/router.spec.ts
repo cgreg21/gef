@@ -217,6 +217,28 @@ describe('Router', () => {
     expect(() => router.navigate('/about#bad%ZZ')).toThrow(/invalid encoded fragment/);
   });
 
+  it('normalizes encoded static route segments and rejects encoded separators or dot segments', () => {
+    const router = new Router([
+      { path: '/files/my%20document', render: () => ({ kind: 'file' }) },
+      { path: '/files/:name', render: () => ({ kind: 'dynamic' }) },
+    ]);
+    expect(router.navigate('/files/my%20document')).toBe(true);
+    expect(router.currentRoute?.config.path).toBe('/files/my%20document');
+    expect(router.navigate('/files/another%20file')).toBe(true);
+    expect(router.currentRoute?.params.name).toBe('another file');
+
+    const render = () => ({ kind: 'route' });
+    expect(() => new Router([{ path: '/files/a%2Fb', render }])).toThrow(/invalid path segment/);
+    expect(() => new Router([{ path: '/files/%2E%2E', render }])).toThrow(/invalid path segment/);
+    expect(() => router.navigate('/files/../secret')).toThrow(/invalid path segment/);
+    expect(() => router.navigate('/files/%2e%2e/secret')).toThrow(/invalid path segment/);
+  });
+
+  it('rejects malformed percent encoding in query parameters', () => {
+    const router = new Router([{ path: '/search', render: () => ({ kind: 'search' }) }]);
+    expect(() => router.navigate('/search?q=%ZZ')).toThrow(/invalid encoded query parameter/);
+  });
+
   it('rejects query strings and fragments in route configuration paths', () => {
     const render = () => ({ kind: 'route' });
     expect(() => new Router([{ path: '/search?q=gef', render }])).toThrow(/cannot contain query parameters/);

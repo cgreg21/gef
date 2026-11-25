@@ -191,7 +191,7 @@ export function renderRouterOutlet<Node>(
   fallback: () => Node = () => runtime.fragment([]),
 ): Node {
   const route: GtplBinding<ActivatedRoute<Node> | null> = runtime.bind(() => router.currentRoute);
-  return runtime.if(route, (current) => current.config.render(current, runtime), fallback);
+  return runtime.if(route, (current) => current ? current.config.render(current, runtime) : fallback(), fallback);
 }
 
 /** Returns a URL and navigation callback suitable for a component or template handler. */

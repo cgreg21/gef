@@ -25,10 +25,14 @@ describe('Router', () => {
       routes: [{ path: '/home' }, { path: '/custom', render: () => ({ kind: 'custom' }) }],
     }, () => root);
 
-    expect(router.currentRoute?.config.path).toBe('/home');
-    expect(router.currentRoute?.config.render(router.currentRoute, createGtplRenderRuntime(createHost()))).toBe(root);
+    const homeRoute = router.currentRoute;
+    if (!homeRoute) throw new Error('Expected the initial route to match.');
+    expect(homeRoute.config.path).toBe('/home');
+    expect(homeRoute.config.render(homeRoute, createGtplRenderRuntime(createHost()))).toBe(root);
     expect(router.navigate('/custom')).toBe(true);
-    expect(router.currentRoute?.config.render(router.currentRoute, createGtplRenderRuntime(createHost()))).toEqual({ kind: 'custom' });
+    const customRoute = router.currentRoute;
+    if (!customRoute) throw new Error('Expected the custom route to match.');
+    expect(customRoute.config.render(customRoute, createGtplRenderRuntime(createHost()))).toEqual({ kind: 'custom' });
   });
 
   it('matches static routes before parameter routes and exposes decoded params', () => {

@@ -43,9 +43,11 @@ function emitInternal(
     switch (node.kind) {
       case 'literal':
         code = JSON.stringify(node.value); break;
-      case 'identifier':
+      case 'identifier': {
         const binding = options.localBindings?.get(node.name);
-        code = binding ? `${binding}()` : context.has(node.name) && !locals.has(node.name) ? `ctx.${node.name}` : node.name; break;
+        code = binding ? `${binding}()` : context.has(node.name) && !locals.has(node.name) ? `ctx.${node.name}` : node.name;
+        break;
+      }
       case 'member': {
         const object = emit(node.object);
         if (node.computed) {

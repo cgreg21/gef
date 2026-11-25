@@ -247,8 +247,9 @@ function emitGtplTemplateInternal(
         value = JSON.stringify(attribute.value);
       } else {
         const attributeLocals = attribute.kind === 'event' ? new Set([...locals, '$event']) : locals;
-        const attributeLetBindings = attribute.kind === 'event' ? new Map(letBindings) : letBindings;
-        if (attribute.kind === 'event') attributeLetBindings.delete('$event');
+        const attributeLetBindings = attribute.kind === 'event'
+          ? withoutBinding(letBindings, '$event')
+          : letBindings;
         const emitted = expression(attribute.parsedExpression, attributeLocals, options, nodeMappings, {
           line: attribute.valueSpan.line,
           column: attribute.valueSpan.column,

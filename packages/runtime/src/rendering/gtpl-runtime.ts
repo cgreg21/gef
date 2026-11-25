@@ -224,7 +224,7 @@ export function createGtplRenderRuntime<Node>(
               update: (nextValue: unknown, nextIndex: number, nextCount: number) => {
                 if (!rowRevision || (Object.is(currentValue, nextValue)
                   && currentIndex === nextIndex && currentCount === nextCount)) return;
-                currentValue = nextValue as T;
+                currentValue = nextValue;
                 currentIndex = nextIndex;
                 currentCount = nextCount;
                 withContexts([...contexts, rowRevision], () => {

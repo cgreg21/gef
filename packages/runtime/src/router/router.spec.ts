@@ -229,8 +229,10 @@ describe('Router', () => {
 
     const render = () => ({ kind: 'route' });
     expect(() => new Router([{ path: '/files/a%2Fb', render }])).toThrow(/invalid path segment/);
+    expect(() => new Router([{ path: '/files/a%5Cb', render }])).toThrow(/invalid path segment/);
     expect(() => new Router([{ path: '/files/%2E%2E', render }])).toThrow(/invalid path segment/);
     expect(() => router.navigate('/files/../secret')).toThrow(/invalid path segment/);
+    expect(() => router.navigate('/files/a%5Cb')).toThrow(/invalid path segment/);
     expect(() => router.navigate('/files/%2e%2e/secret')).toThrow(/invalid path segment/);
   });
 

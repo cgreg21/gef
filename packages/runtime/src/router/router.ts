@@ -50,7 +50,7 @@ function normalizeRoutePath(path: string): string {
     } catch {
       throw new TypeError(`Route path "${path}" contains an invalid encoded segment.`);
     }
-    if (decoded === '.' || decoded === '..' || decoded.includes('/') || decoded.includes('\\\\')) {
+    if (decoded === '.' || decoded === '..' || decoded.includes('/') || decoded.includes('\\')) {
       throw new TypeError(`Route path "${path}" contains an invalid path segment.`);
     }
     return decoded;
@@ -69,7 +69,7 @@ function parseUrl(value: string): ParsedUrl {
     } catch {
       throw new TypeError(`Route URL "${value}" contains an invalid encoded path segment.`);
     }
-    if (decoded === '.' || decoded === '..' || decoded.includes('/') || decoded.includes('\\\\')) {
+    if (decoded === '.' || decoded === '..' || decoded.includes('/') || decoded.includes('\\')) {
       throw new TypeError(`Route URL "${value}" contains an invalid path segment.`);
     }
   }

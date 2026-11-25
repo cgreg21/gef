@@ -204,10 +204,12 @@ function emitGtplTemplateInternal(
     const letBindings = new Map(parentLetBindings);
     const statements: string[] = [];
     const rendered: string[] = [];
-    const contentNodes = items.filter((node) => !isWhitespaceOnlyText(node));
+    const contentNodes = items.filter((node) => node.kind !== 'let-declaration' && !isWhitespaceOnlyText(node));
     const isElementContainer = contentNodes.length > 0
       && contentNodes.every((node) => node.kind === 'element');
-    const nodes = isElementContainer ? contentNodes : items;
+    const nodes = isElementContainer
+      ? items.filter((node) => node.kind === 'let-declaration' || !isWhitespaceOnlyText(node))
+      : items;
 
     for (const node of nodes) {
       if (node.kind === 'let-declaration') {

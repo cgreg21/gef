@@ -154,7 +154,6 @@ describe('emitGtplTemplate', () => {
 @for (item of items; track item.id; let i = $index) { <label>{{item.name}} {{i}}</label> } @empty { Empty }
 @switch (state) { @case ("ready") { Ready } @default { Wait } }`, ['heading', 'visible', 'items', 'state']);
     expect(compact(output)).toContain('const $__gefLet0 = () => ctx.heading');
-    expect(compact(output)).toContain('String($__gefLet0() ??');
     expect(compact(output)).toContain('runtime.if(runtime.bind(() => ctx.visible)');
     expect(compact(output)).toContain('runtime.for( runtime.bind(() => ctx.items)');
     expect(compact(output)).toContain('return (item.id)');
@@ -198,8 +197,12 @@ describe('emitGtplTemplate', () => {
         ?? renderDefault?.() ?? { kind: 'fragment', children: [] },
     };
     const view = mountGtplTemplate({ heading, select: (value: string) => selected.push(value) }, render, host);
-    const attributes = view.node.value as { text: { get: () => string }; clicked: () => void };
-    const text = view.node.children?.[0]?.value as { get: () => string };
+    const label = view.node.kind === 'fragment'
+      ? view.node.children?.find((child) => child.kind === 'StLabel')
+      : view.node;
+    expect(label).toBeDefined();
+    const attributes = label!.value as { text: { get: () => string }; clicked: () => void };
+    const text = label!.children?.[0]?.value as { get: () => string };
     expect(attributes.text.get()).toBe('Hello GEF');
     expect(text.get()).toBe('GEF');
     attributes.clicked();

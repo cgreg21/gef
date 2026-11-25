@@ -51,7 +51,7 @@ function parseUrl(value: string): ParsedUrl {
   } catch {
     throw new TypeError(`Invalid route URL "${value}".`);
   }
-  if (parsed.origin !== 'gef://router') {
+  if (parsed.protocol !== 'gef:' || parsed.host !== 'router') {
     throw new TypeError('Router navigation only accepts application-relative URLs.');
   }
   let segments: string[];

@@ -23,7 +23,7 @@ const views = demos.map((render) => mountGtplTemplate(
 assert.equal(views.length, 5);
 const router = new Router(demoIds.map((id, index) => ({
   path: `/${id}`,
-  render: () => views[index]!.node,
+  render: () => views[index].node,
 })), '/overview');
 assert.equal(router.currentRoute?.config.path, '/overview');
 assert.equal(router.navigate('/forms'), true);

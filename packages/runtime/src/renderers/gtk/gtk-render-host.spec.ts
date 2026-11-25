@@ -466,6 +466,11 @@ describe('createGtkRenderHost', () => {
     expect(() => host.element('Flex', { homogeneous: 'yes' }, undefined)).toThrow(/Flex homogeneous/);
   });
 
+  it('rejects native Flex options that GTK Box cannot implement', () => {
+    const host = createGtkRenderHost(createGtk());
+    expect(() => host.element('Flex', { wrap: true }, undefined)).toThrow(/Flex wrap is not supported/);
+    expect(() => host.element('GtkButton', { grow: 2 }, undefined)).toThrow(/grow weights are not supported/);
+  });
   it('maps static and reactive GTPL Flex alignment to GTK alignment properties', () => {
     const host = createGtkRenderHost(createGtk());
     const aligned = host.element('Flex', { align: 'center' }, undefined) as FakeWidget;

@@ -57,7 +57,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [x] Ajouter les utilitaires responsive : breakpoints, résolution de valeurs, `BreakpointObserver`, `FlexLayout` et `GridLayout`.
 - [x] Préserver les dimensions transverses explicitement nulles dans les lignes Flex avec retour à la ligne (régression `FlexLayout`, commit `96e46a1`, CI `45429239230`, tentative 2 : quatre jobs réussis).
 - [x] Connecter les changements de largeur natifs aux breakpoints via `BreakpointObserver.observe(widget)` ; écoute `notify::width` et libère le signal à la désinscription.
-- [ ] Étendre les options de layout GTPL : retour à la ligne, poids `grow` par enfant et justification cohérente entre GTK et St.
+- [ ] Étendre les options de layout GTPL : retour à la ligne, poids `grow` par enfant et justification cohérente entre GTK et St. Les renderers refusent explicitement `wrap` et `grow` non pris en charge par les widgets natifs (tests GTK/St et guide runtimes) ; `Grid` et `expand` restent les solutions natives actuelles.
 - [ ] Enrichir la bibliothèque de composants uniquement selon les besoins démontrés par les exemples.
 
 ## P5 — Démonstration et documentation

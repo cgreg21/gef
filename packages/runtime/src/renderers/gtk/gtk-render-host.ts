@@ -477,6 +477,12 @@ export function createGtkRenderHost(
       const selectValue = isSelect ? attributes.value : undefined;
       const selectChange = isSelect ? attributes.valueChange : undefined;
       for (const [attribute, value] of Object.entries(attributes)) {
+        if (attribute === 'grow') {
+          throw new Error('GTPL grow weights are not supported by native widgets; use expand="true" for boolean expansion.');
+        }
+        if (name === 'Flex' && attribute === 'wrap') {
+          throw new Error('GTPL Flex wrap is not supported by native box widgets; use Grid or the FlexLayout calculator.');
+        }
         if (isSelect && ['options', 'value', 'valueChange'].includes(attribute)) continue;
         if (isTextArea && ['text', 'textChange'].includes(attribute)) continue;
         if (isPasswordInput && ['text', 'textChange'].includes(attribute)) continue;

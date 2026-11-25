@@ -313,6 +313,12 @@ export function createStRenderHost(
       const passwordValue = name === 'StPasswordEntry' ? attributes.text : undefined;
       const passwordChange = name === 'StPasswordEntry' ? attributes.textChange : undefined;
       for (const [attribute, value] of Object.entries(attributes)) {
+        if (attribute === 'grow') {
+          throw new Error('GTPL grow weights are not supported by native widgets; use expand="true" for boolean expansion.');
+        }
+        if (name === 'Flex' && attribute === 'wrap') {
+          throw new Error('GTPL Flex wrap is not supported by native box widgets; use Grid or the FlexLayout calculator.');
+        }
         if (attribute === 'style') { styleValue = value; continue; }
         if (attribute === 'styleBinding') { styleBindingValue = value; continue; }
         if (attribute === 'classBinding') {

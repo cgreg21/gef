@@ -93,7 +93,7 @@ La CI exécute aussi des contrôles de packaging natifs sur Linux, Windows et ma
 - Les runtimes GJS et Node-GTK ne sont pas interchangeables.
 - Les composants disponibles dépendent des widgets exposés par le renderer natif. Une API commune ne garantit pas que chaque propriété ou widget existe sur chaque plateforme.
 - GTPL génère des fonctions de rendu ; il ne fournit ni DOM, ni navigateur, ni moteur HTML.
-- Le layout Flex avancé (wrap, grow, shrink et justification) est disponible dans le calculateur TypeScript indépendant. Son application automatique aux widgets natifs GTPL n'est pas encore uniforme.
+- Le layout Flex avancé (wrap, grow, shrink et justification) est disponible dans le calculateur TypeScript indépendant. Les renderers natifs GTK `Gtk.Box` et GNOME Shell `St.BoxLayout` ne fournissent pas le retour à la ligne ni les poids `grow` ; GTPL rejette désormais explicitement ces options au lieu de les transmettre silencieusement aux widgets. Utiliser `Grid` pour organiser les lignes ou `expand="true"` pour une expansion native booléenne.
 - Le packaging doit être exécuté sur le système cible. Le bundle macOS n'est pas signé ni notarié.
 - Les smoke tests automatisés vérifient des chemins représentatifs, pas toutes les configurations de bureau, tous les thèmes ou toutes les extensions tierces.
 

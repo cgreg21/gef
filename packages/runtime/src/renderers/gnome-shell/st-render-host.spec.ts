@@ -416,6 +416,11 @@ describe('createStRenderHost', () => {
     expect(() => host.element('Flex', { homogeneous: 'yes' }, undefined)).toThrow(/Flex homogeneous/);
   });
 
+  it('rejects native Flex options that St BoxLayout cannot implement', () => {
+    const host = createStRenderHost(createSt());
+    expect(() => host.element('Flex', { wrap: true }, undefined)).toThrow(/Flex wrap is not supported/);
+    expect(() => host.element('StButton', { grow: 2 }, undefined)).toThrow(/grow weights are not supported/);
+  });
   it('maps static and reactive GTPL Flex alignment to St alignment properties', () => {
     const host = createStRenderHost(createSt());
     const aligned = host.element('Flex', { align: 'center' }, undefined) as FakeActor;

@@ -689,7 +689,7 @@ export function createStRenderHost(
               oldByKey.delete(item.key);
               previous.update?.(item.value, item.index, nextState.items.length);
               if (!previous.node) throw new Error('A retained GTPL @for item has no rendered node.');
-              return { ...item, node: previous.node, update: previous.update };
+              return { ...item, node: previous.node, ...(previous.update ? { update: previous.update } : {}) };
             }
             const node = item.node ?? item.render?.();
             if (!node) throw new Error('A new GTPL @for item has no render function.');

@@ -203,7 +203,7 @@ export function createGtplRenderRuntime<Node>(
         return {
           items: entries.map(({ key, value, index }) => {
             let rowRevision: Signal<number> | undefined;
-            let updateRow: ((item: T, index: number, count: number) => void) | undefined;
+            let updateRow: ((item: unknown, index: number, count: number) => void) | undefined;
             let currentValue = value;
             let currentIndex = index;
             let currentCount = count;
@@ -216,7 +216,7 @@ export function createGtplRenderRuntime<Node>(
                 rowRevision = revision;
                 activeContexts.push(revision);
                 try {
-                  return renderItem(value, index, count, (update) => { updateRow = update; });
+                  return renderItem(value, index, count, (update) => { updateRow = update as (item: unknown, index: number, count: number) => void; });
                 } finally {
                   activeContexts.pop();
                 }
@@ -228,7 +228,7 @@ export function createGtplRenderRuntime<Node>(
                 currentIndex = nextIndex;
                 currentCount = nextCount;
                 withContexts([...contexts, rowRevision], () => {
-                  updateRow?.(currentValue as T, currentIndex, currentCount);
+                  updateRow?.(currentValue, currentIndex, currentCount);
                   rowRevision!.update((revision) => revision + 1);
                 });
               },

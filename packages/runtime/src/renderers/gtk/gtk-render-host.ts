@@ -5,6 +5,10 @@ import { classNames, mergeStyleDeclarations, styleDeclarations, styleText } from
 
 export interface GtkActor {
   append?(child: GtkActor): void;
+  insert_child_after?(child: GtkActor, sibling: GtkActor | null): void;
+  reorder_child_after?(child: GtkActor, sibling: GtkActor | null): void;
+  insertChildAfter?(child: GtkActor, sibling: GtkActor | null): void;
+  reorderChildAfter?(child: GtkActor, sibling: GtkActor | null): void;
   add?(child: GtkActor): void;
   add_suffix?(child: GtkActor): void;
   pack_start?(child: GtkActor): void;
@@ -287,6 +291,35 @@ function removeChild(parent: GtkActor, child: GtkActor): void {
   else if (typeof parent.set_child === 'function') parent.set_child(null);
   else if (typeof parent.setChild === 'function') parent.setChild(null);
   else throw new Error('This GTK container cannot remove its child widget.');
+}
+
+function syncRepeatChildren(box: GtkActor, current: GtkActor[], next: GtkActor[]): GtkActor[] {
+  const insert = box.insert_child_after ?? box.insertChildAfter;
+  const reorder = box.reorder_child_after ?? box.reorderChildAfter;
+  if (!insert || !reorder) {
+    for (const child of current) removeChild(box, child);
+    for (const child of next) addChild(box, child);
+    return [...next];
+  }
+  const order = [...current];
+  for (const child of current) if (!next.includes(child)) {
+    removeChild(box, child);
+    order.splice(order.indexOf(child), 1);
+  }
+  let previous: GtkActor | null = null;
+  for (const child of next) {
+    const index = order.indexOf(child);
+    if (index === -1) {
+      insert.call(box, child, previous);
+      order.splice(previous ? order.indexOf(previous) + 1 : 0, 0, child);
+    } else if (order[index - 1] !== previous) {
+      reorder.call(box, child, previous);
+      order.splice(index, 1);
+      order.splice(previous ? order.indexOf(previous) + 1 : 0, 0, child);
+    }
+    previous = child;
+  }
+  return order;
 }
 
 function makeBox(Gtk: GtkNamespace, options: GtkRenderHostOptions): GtkActor {
@@ -771,6 +804,7 @@ export function createGtkRenderHost(
       own(box, scope);
       let previousItems: GtplRepeatItem<GtkActor>[] = [];
       let previousEmpty: GtkActor | undefined;
+      let mountedChildren: GtkActor[] = [];
       try {
         scope.add(effect(() => {
           const nextState = state.get();
@@ -798,11 +832,9 @@ export function createGtkRenderHost(
             const unchanged = previousItems.length === nextItems.length
               && previousItems.every((item, index) => item.node === nextItems[index]?.node);
             if (!unchanged || previousEmpty !== nextState.empty) {
-              for (const item of previousItems) if (item.node) removeChild(box, item.node);
-              if (previousEmpty) removeChild(box, previousEmpty);
+              mountedChildren = syncRepeatChildren(box, mountedChildren, nextChildren);
               for (const previous of oldByKey.values()) if (previous.node) disposeWidget(previous.node);
               if (previousEmpty && previousEmpty !== nextState.empty) disposeWidget(previousEmpty);
-              for (const child of nextChildren) addChild(box, child);
             }
 
             children.set(box, nextChildren);

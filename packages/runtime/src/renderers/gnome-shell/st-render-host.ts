@@ -5,6 +5,10 @@ import { classNames, mergeStyleDeclarations, styleDeclarations, styleText } from
 
 export interface StActor {
   add_child?(child: StActor): void;
+  insert_child_at_index?(child: StActor, index: number): void;
+  set_child_at_index?(child: StActor, index: number): void;
+  insertChildAtIndex?(child: StActor, index: number): void;
+  setChildAtIndex?(child: StActor, index: number): void;
   remove_child?(child: StActor): void;
   set_child?(child: StActor | null): void;
   set_property(name: string, value: unknown): void;
@@ -69,6 +73,35 @@ export interface StRenderHostOptions {
   readonly clutter?: StClutterNamespace;
   /** Optional Clutter.Orientation value for fragment and repeat containers. */
   readonly fragmentOrientation?: unknown;
+}
+
+function syncRepeatChildren(actor: StActor, current: StActor[], next: StActor[]): StActor[] {
+  const insert = actor.insert_child_at_index ?? actor.insertChildAtIndex;
+  const reorder = actor.set_child_at_index ?? actor.setChildAtIndex;
+  if (!insert || !reorder) {
+    for (const child of current) actor.remove_child?.(child);
+    for (const child of next) actor.add_child?.(child);
+    return [...next];
+  }
+  const order = [...current];
+  for (const child of current) if (!next.includes(child)) {
+    actor.remove_child?.(child);
+    order.splice(order.indexOf(child), 1);
+  }
+  for (let index = 0; index < next.length; index += 1) {
+    const child = next[index]!;
+    const currentIndex = order.indexOf(child);
+    if (currentIndex === index) continue;
+    if (currentIndex === -1) {
+      insert.call(actor, child, index);
+      order.splice(index, 0, child);
+    } else {
+      reorder.call(actor, child, index);
+      order.splice(currentIndex, 1);
+      order.splice(index, 0, child);
+    }
+  }
+  return order;
 }
 
 function twoWayProperty(event: string): string | undefined {
@@ -674,6 +707,7 @@ export function createStRenderHost(
       const resources = new ResourceScope();
       let previousItems: GtplRepeatItem<StActor>[] = [];
       let previousEmpty: StActor | undefined;
+      let mountedChildren: StActor[] = [];
       actor.connect('destroy', () => { destroyed.add(actor); resources.dispose(); });
       try {
         resources.add(effect(() => {
@@ -702,11 +736,9 @@ export function createStRenderHost(
           const unchanged = previousItems.length === nextItems.length
             && previousItems.every((item, index) => item.node === nextItems[index]?.node);
           if (!unchanged || previousEmpty !== nextState.empty) {
-            for (const item of previousItems) if (item.node) actor.remove_child?.(item.node);
-            if (previousEmpty) actor.remove_child?.(previousEmpty);
+            mountedChildren = syncRepeatChildren(actor, mountedChildren, nextChildren);
             for (const previous of oldByKey.values()) if (previous.node) destroyActor(previous.node);
             if (previousEmpty && previousEmpty !== nextState.empty) destroyActor(previousEmpty);
-            for (const child of nextChildren) actor.add_child?.(child);
           }
           previousItems = nextItems;
           previousEmpty = nextState.empty;

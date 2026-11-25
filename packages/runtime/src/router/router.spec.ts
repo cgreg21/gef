@@ -59,18 +59,29 @@ describe('Router', () => {
       { path: '/replacement', render: () => ({ kind: 'replacement' }) },
     ]);
 
+    expect(router.canGoBack).toBe(false);
+    expect(router.canGoForward).toBe(false);
     expect(router.navigate('/one')).toBe(true);
+    expect(router.canGoBack).toBe(true);
+    expect(router.canGoForward).toBe(false);
     expect(router.navigate('/two')).toBe(true);
+    expect(router.canGoForward).toBe(false);
     expect(router.back()).toBe(true);
+    expect(router.canGoForward).toBe(true);
     expect(router.url).toBe('/one');
     expect(router.navigate('/replacement', { replaceUrl: true })).toBe(true);
+    expect(router.canGoForward).toBe(false);
     expect(router.forward()).toBe(true);
+    expect(router.canGoBack).toBe(true);
+    expect(router.canGoForward).toBe(false);
     expect(router.url).toBe('/two');
     expect(router.back()).toBe(true);
     expect(router.url).toBe('/replacement');
     expect(router.back()).toBe(true);
     expect(router.url).toBe('/');
     expect(router.back()).toBe(false);
+    expect(router.canGoBack).toBe(false);
+    expect(router.canGoForward).toBe(true);
   });
 
   it('does not change the current route or history when a URL does not match', () => {

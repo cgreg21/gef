@@ -58,9 +58,13 @@ const window = new Gtk.Window({
 const root = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 0 });
 const header = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, spacing: 12 });
 const title = new Gtk.Label({ label: 'GEF Kitchen Sink', xalign: 0, hexpand: true });
+const backButton = new Gtk.Button({ label: 'Back' });
+const forwardButton = new Gtk.Button({ label: 'Forward' });
 const sourceButton = new Gtk.Button({ label: 'View source' });
 
 header.append(title);
+header.append(backButton);
+header.append(forwardButton);
 header.append(sourceButton);
 root.append(header);
 
@@ -99,6 +103,8 @@ const stopRouter = router.state.subscribe(({ route }) => {
   selectedDemo = demo;
   stack.setVisibleChildName(demo.id);
   title.setLabel(demo.title);
+  backButton.setSensitive(router.canGoBack);
+  forwardButton.setSensitive(router.canGoForward);
 });
 
 for (const demo of demos) {
@@ -107,6 +113,9 @@ for (const demo of demos) {
   button.on('clicked', () => selectDemo(demo));
   navigation.append(button);
 }
+
+backButton.on('clicked', () => router.back());
+forwardButton.on('clicked', () => router.forward());
 
 sourceButton.on('clicked', () => {
   const sourcePath = resolve(

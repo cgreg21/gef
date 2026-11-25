@@ -131,6 +131,14 @@ export class Router<Node = unknown> {
     return this.#state.get().route;
   }
 
+  get canGoBack(): boolean {
+    return this.#historyIndex > 0;
+  }
+
+  get canGoForward(): boolean {
+    return this.#historyIndex < this.#history.length - 1;
+  }
+
   navigate(url: string, options: NavigationOptions = {}): boolean {
     const parsed = parseUrl(url);
     const route = this.resolve(parsed);

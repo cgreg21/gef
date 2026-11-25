@@ -10,7 +10,7 @@ Application GTK4 écrite en TypeScript. Elle présente les composants et les tem
 - **Preferences** — interrupteurs, cases à cocher et valeurs numériques.
 - **Layouts** — mises en page Flex, Sidebar et Grid.
 
-La navigation entre les écrans utilise le routeur GEF (`/overview`, `/actions`, `/forms`, `/preferences`, `/layouts`) et conserve l'historique précédent/suivant. Chaque écran possède un bouton **View source** pour consulter son template GTPL.
+La navigation entre les écrans utilise le routeur GEF (`/overview`, `/actions`, `/forms`, `/preferences`, `/layouts`) et propose des commandes **Back**/**Forward** qui reflètent les possibilités de l'historique. Chaque écran possède un bouton **View source** pour consulter son template GTPL.
 
 ## Composants GEF
 

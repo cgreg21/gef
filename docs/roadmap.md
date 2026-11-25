@@ -39,6 +39,10 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [x] Gérer le cycle de vie et le nettoyage des ressources natives.
 - [ ] Uniformiser les comportements des renderers GTK et GJS sans mélanger leurs API.
 - [ ] Mesurer et réduire les mises à jour et allocations inutiles.
+- [ ] Réconcilier les listes GTPL par clé avant de créer les nouveaux nœuds : réutiliser les enfants existants et limiter les suppressions/réinsertions natives (inspiration Angular list reconciliation, sans recopier son algorithme interne).
+- [ ] Mettre en cache les résultats des pipes purs par site d'expression GTPL, et non uniquement par nom de pipe ; couvrir deux usages simultanés du même pipe avec des arguments différents.
+- [ ] Étudier la mémorisation des expressions GTPL pures par site d'appel ; ne l'ajouter qu'avec une mesure démontrant des recalculs coûteux.
+- [ ] Étudier une compilation incrémentale fondée sur les dépendances fichier/template, uniquement après ajout de mesures de performance et d'invalidation fiable.
 - [x] Éviter les écritures natives répétées lorsqu'un binding réactif conserve la même valeur primitive (GTK et GJS).
 - [x] Vérifier que les bindings ignorent les valeurs identiques sans bloquer l'application des valeurs modifiées (GTK et GJS, CI `45403392586`).
 - [x] Éviter de réappliquer les styles natifs lorsque le CSS calculé reste identique sur les composants décorés (GTK et GJS, CI `45404667970`).
@@ -84,6 +88,13 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 
 - [ ] Fiabiliser `gef new` et ses tests de bout en bout.
   Parsing strict des arguments et tests de rejet ajoutés ; la génération et compilation des deux squelettes restent couvertes par les tests E2E existants.
+- [ ] Introduire un plan de génération commun à `gef new` et `gef generate` : préparer les fichiers en mémoire, valider les chemins et conflits, puis seulement écrire ; éviter les projets partiellement générés en cas d'erreur.
+- [ ] Ajouter `--dry-run` et `--force` au plan de génération ; par défaut, refuser les fichiers existants sans les écraser.
+- [ ] Extraire progressivement commandes et générateurs de `packages/cli/src/index.ts` vers des sous-répertoires dédiés, sans changer les commandes publiques ni introduire de framework de commandes.
+- [ ] Centraliser la validation des options des générateurs ; adopter des schémas déclaratifs simples uniquement lorsque plusieurs options le justifient.
+- [ ] Préserver les commentaires et le format de `gef.json` lors de futures modifications automatiques du workspace ; JSONC différé tant que la CLI ne modifie pas cette configuration.
+- [ ] Concevoir les migrations de workspace seulement lorsqu'un changement réel de format ou d'API nécessitera une migration ; prévoir ordre déterministe, vérification préalable et échec explicite.
+- [ ] Garder les commandes de build/test/package/watch comme des tâches simples ; ne pas introduire Architect, RxJS ou un système de builders générique sans besoin concret.
 - [x] Vérifier `gef generate component` : import des décorateurs, sélecteur kebab-case, template lié, syntaxe TypeScript et compilation du render module (test E2E, commit `b00c478`, CI `45436563175`, quatre jobs réussis).
 - [x] Générer des sélecteurs de composants en kebab-case à partir des noms PascalCase (CI `45409017580`).
 - [x] Générer les fichiers TypeScript et GTPL des composants en kebab-case, conformément aux conventions Angular (CI `45410666986`, tentative 2 : quatre jobs réussis).
@@ -92,6 +103,10 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
   Validation stricte de `gef.json` et tests des cas invalides ajoutés ; fixture de packaging réaligné sur le schéma requis (CI `45434415606`, quatre jobs réussis).
 - [ ] Vérifier les packages npm et les distributions autonomes sur leurs plateformes natives.
 - [ ] Définir les critères de sortie de l'alpha et préparer une version stable.
+
+## Résultats du scan Angular et Angular CLI
+
+Les scans du runtime Angular, du compilateur et d'Angular CLI servent de références de conception, pas de dépendances à intégrer. Les points déjà couverts par GEF (comparaison des bindings inchangés, nettoyage des ressources, diagnostics GTPL et validation de configuration) ne sont pas à réimplémenter. Les pistes retenues sont la réconciliation des listes par clé, le cache des pipes par site d'expression et la génération CLI préparée avant écriture. Les mécanismes plus lourds d'Angular (LView, Architect, Schematics/DevKit, RxJS, graphe incrémental complet) ne doivent pas être portés tels quels : toute adaptation doit rester locale, mesurée et KISS.
 
 ## Règles de maintenance
 

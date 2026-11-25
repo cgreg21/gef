@@ -20,6 +20,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [x] Finaliser le bootstrap et la destruction du composant racine sur GTK et GJS via `mountDecoratedComponent()` (commits `421d354` à `b1f2513`).
 - [x] Documenter et tester les commandes de création pour application et extension, y compris la syntaxe TypeScript des squelettes générés (CI `45381718868`).
 - [x] Ajouter un premier routeur commun GTK/GJS : routes déclaratives, priorité aux chemins statiques, paramètres dynamiques, query params, fragment, wildcard, navigation, historique mémoire avant/arrière, liens et `RouterOutlet` GTPL. Tests unitaires sur le matching, l'historique, les erreurs et le rendu. Les gardes, le lazy-loading et les stratégies d'URL externes restent différés.
+- [x] Intégrer le routeur dans le Kitchen Sink GTK : chaque démonstration possède une URL interne, la sélection synchronise l'écran et le titre, et l'historique arrière est testé dans le smoke test Node-GTK.
 
 ## P2 — Architecture des composants décorés
 

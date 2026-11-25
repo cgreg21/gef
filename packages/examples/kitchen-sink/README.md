@@ -10,7 +10,7 @@ Application GTK4 écrite en TypeScript. Elle présente les composants et les tem
 - **Preferences** — interrupteurs, cases à cocher et valeurs numériques.
 - **Layouts** — mises en page Flex, Sidebar et Grid.
 
-Chaque écran possède un bouton **View source** pour consulter son template GTPL.
+La navigation entre les écrans utilise le routeur GEF (`/overview`, `/actions`, `/forms`, `/preferences`, `/layouts`) et conserve l'historique précédent/suivant. Chaque écran possède un bouton **View source** pour consulter son template GTPL.
 
 ## Composants GEF
 
@@ -40,7 +40,7 @@ Prérequis : Node.js 22+, GTK4 et la dépendance Node-GTK du projet.
 
 ## Fichiers
 
-- `kitchen-sink.ts` — application et navigation.
+- `kitchen-sink.ts` — application, routeur GEF et navigation.
 - `components.ts` — composants GEF de démonstration.
 - `demos/` — écrans GTPL.
 - `kitchen-sink.js` — point d'entrée GJS.

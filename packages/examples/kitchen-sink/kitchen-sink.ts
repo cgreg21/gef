@@ -5,6 +5,7 @@ import GLib from 'gi:GLib-2.0';
 import {
   createGtkRenderHost,
   mountGtplTemplate,
+  Router,
   type GtkActor,
   type GtplRenderFunction,
   type GtplRenderView,
@@ -41,6 +42,11 @@ for (const demo of demos) {
     {}, demo.render, host, undefined, undefined, undefined, components,
   ));
 }
+
+const router = new Router<GtkActor>(demos.map((demo) => ({
+  path: `/${demo.id}`,
+  render: () => views.get(demo.id)!.node,
+})), '/overview');
 
 const loop = GLib.MainLoop.new(null, false);
 const window = new Gtk.Window({
@@ -84,10 +90,16 @@ if (!firstDemo) throw new Error('Kitchen Sink requires at least one demo.');
 let selectedDemo = firstDemo;
 
 function selectDemo(demo: Demo): void {
+  router.navigate(`/${demo.id}`);
+}
+
+const stopRouter = router.state.subscribe(({ route }) => {
+  const demo = demos.find((item) => item.id === route?.config.path.replace(/^\\//, ''));
+  if (!demo) return;
   selectedDemo = demo;
   stack.setVisibleChildName(demo.id);
   title.setLabel(demo.title);
-}
+});
 
 for (const demo of demos) {
   const button = new Gtk.Button({ label: demo.title });
@@ -130,6 +142,7 @@ sourceButton.on('clicked', () => {
 
 selectDemo(firstDemo);
 window.on('close-request', () => {
+  stopRouter();
   for (const view of views.values()) view.dispose();
   loop.quit();
   return false;

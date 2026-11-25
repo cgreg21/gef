@@ -45,6 +45,33 @@ The names `StBox`, `StIcon`, `StLabel`, and `StButton` are proposed GEF renderer
 | `[style.width.px]="width"` | Dynamic style property with unit |
 | `#localName` | Local element reference |
 
+## Navigation interne
+
+Le routeur est indépendant des API natives et fonctionne avec les renderers GTK4 et GNOME Shell. Déclarez les routes dans la configuration de l'application, puis affichez la route active avec `renderRouterOutlet(router, runtime)` :
+
+```ts
+const router = createApplicationRouter({
+  initialUrl: '/home',
+  routes: [
+    { path: '/home' },
+    { path: '/users/:id', canActivate: (route) => Boolean(route.params.id) },
+  ],
+}, renderRoot);
+```
+
+Une route reçoit son contexte via `ActivatedRoute` : `params`, `queryParams`, `fragment` et `data`. Les paramètres de recherche et le fragment appartiennent à l'URL de navigation, pas au motif `path`. Les chemins acceptent les segments statiques, `:param` et le joker final `**`. Les chemins absolus externes et les URL protocol-relative sont refusés.
+
+Dans un template, utilisez `[routerLink]` sur un widget qui expose le signal natif `clicked` :
+
+```html
+<StButton label="Profil" [routerLink]="'/users/42'" />
+<StButton label="Ouvrir la recherche" [routerLink]="searchUrl" />
+```
+
+La valeur liée est relue au clic : elle peut donc être réactive. Une valeur `null` ou `undefined` désactive le lien. Le runtime retire `routerLink` des propriétés transmises au constructeur natif et libère l'écouteur avec le widget. Le lien doit être rendu dans un arbre possédant un `RouterOutlet`. Ce n'est pas un lien HTML et il n'ouvre pas de navigateur externe.
+
+`navigate(url, { replaceUrl: true })`, `back()` et `forward()` gèrent l'historique mémoire. Les gardes synchrones `canActivate` et `canDeactivate` peuvent refuser une transition sans modifier l'URL active ni l'historique. Les gardes asynchrones, les redirections, le lazy-loading et les stratégies d'URL externes ne sont pas encore pris en charge.
+
 ## Classes and inline styles
 
 GTPL follows Angular's built-in class and style binding model. Static `class` values accept whitespace-separated names. `[class]` accepts a string, an array of names, or an object whose truthy entries enable their keys. Individual tokens can be controlled with `[class.active]="isActive"`; all sources are combined, so disabling one binding does not remove a class still enabled elsewhere.

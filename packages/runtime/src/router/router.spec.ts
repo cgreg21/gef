@@ -208,10 +208,19 @@ describe('Router', () => {
     expect(() => new Router([{ path: '/**/end', render }])).toThrow(/final path segment/);
   });
 
-  it('rejects external URLs and malformed encoded path segments', () => {
+  it('rejects absolute URLs, protocol-relative URLs and malformed encoded URL parts', () => {
     const router = new Router([{ path: '**', render: () => ({ kind: 'fallback' }) }]);
     expect(() => router.navigate('https://example.com/')).toThrow(/application-relative/);
+    expect(() => router.navigate('gef://router/about')).toThrow(/application-relative/);
+    expect(() => router.navigate('//example.com/about')).toThrow(/application-relative/);
     expect(() => router.navigate('/bad%ZZ')).toThrow(/invalid encoded path segment/);
+    expect(() => router.navigate('/about#bad%ZZ')).toThrow(/invalid encoded fragment/);
+  });
+
+  it('rejects query strings and fragments in route configuration paths', () => {
+    const render = () => ({ kind: 'route' });
+    expect(() => new Router([{ path: '/search?q=gef', render }])).toThrow(/cannot contain query parameters/);
+    expect(() => new Router([{ path: '/search#results', render }])).toThrow(/cannot contain query parameters/);
   });
 
   it('renders the current route through the GTPL runtime outlet', () => {
@@ -234,12 +243,14 @@ describe('Router', () => {
     const router = new Router([
       { path: '/', render: () => ({ kind: 'home' }) },
       { path: '/about', render: () => ({ kind: 'about' }) },
+      { path: '/users/:id', render: () => ({ kind: 'user' }) },
     ]);
+    let target = '/about';
     const runtime = createGtplRenderRuntime(host);
     renderRouterOutlet(router, runtime);
 
     const button = runtime.element('StButton', {
-      routerLink: runtime.bind(() => '/about'),
+      routerLink: runtime.bind(() => target),
       label: 'About',
     }, undefined);
 
@@ -247,10 +258,29 @@ describe('Router', () => {
     expect(attributes[0]).toEqual({ label: 'About' });
     expect(listeners).toHaveLength(1);
     expect(router.url).toBe('/');
+    target = '/users/42';
     listeners[0]!();
-    expect(router.url).toBe('/about');
+    expect(router.url).toBe('/users/42');
     expect(cleanups).toHaveLength(1);
     cleanups[0]!();
+  });
+
+
+  it('rejects an invalid routerLink value before registering a native listener', () => {
+    const listeners: Array<(...args: unknown[]) => unknown> = [];
+    const destroyed: Node[] = [];
+    const host = {
+      ...createHost(listeners),
+      destroy: (node: Node) => { destroyed.push(node); },
+    };
+    const router = new Router([{ path: '/', render: () => ({ kind: 'home' }) }]);
+    const runtime = createGtplRenderRuntime(host);
+    renderRouterOutlet(router, runtime);
+
+    expect(() => runtime.element('StButton', { routerLink: 42 }, undefined))
+      .toThrow(/URL string or null/);
+    expect(listeners).toHaveLength(0);
+    expect(destroyed).toHaveLength(1);
   });
 
   it('allows a null routerLink to disable navigation without requiring an outlet', () => {

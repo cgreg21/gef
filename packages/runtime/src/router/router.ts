@@ -47,6 +47,9 @@ function normalizeRoutePath(path: string): string {
 }
 
 function parseUrl(value: string): ParsedUrl {
+  if (/^[A-Za-z][A-Za-z0-9+.-]*:/.test(value) || value.startsWith('//')) {
+    throw new TypeError('Router navigation only accepts application-relative URLs.');
+  }
   let parsed: URL;
   try {
     parsed = new URL(value, 'gef://router');
@@ -63,7 +66,12 @@ function parseUrl(value: string): ParsedUrl {
     throw new TypeError(`Route URL "${value}" contains an invalid encoded path segment.`);
   }
   const queryParams = Object.freeze(Object.fromEntries(new URLSearchParams(parsed.search)));
-  const fragment = parsed.hash ? decodeURIComponent(parsed.hash.slice(1)) : undefined;
+  let fragment: string | undefined;
+  try {
+    fragment = parsed.hash ? decodeURIComponent(parsed.hash.slice(1)) : undefined;
+  } catch {
+    throw new TypeError(`Route URL "${value}" contains an invalid encoded fragment.`);
+  }
   return {
     url: `${parsed.pathname}${parsed.search}${parsed.hash}`,
     path: `/${segments.join('/')}`,
@@ -100,6 +108,9 @@ export class Router<Node = unknown> {
     const names = new Set<string>();
     this.#routes = routes.map((config) => {
       if (typeof config.path !== 'string') throw new TypeError('A route path must be a string.');
+      if (config.path.includes('?') || config.path.includes('#')) {
+        throw new TypeError(`Route path "${config.path}" cannot contain query parameters or a fragment.`);
+      }
       const path = normalizeRoutePath(config.path);
       if (names.has(path)) throw new TypeError(`Duplicate route path "${config.path}".`);
       names.add(path);

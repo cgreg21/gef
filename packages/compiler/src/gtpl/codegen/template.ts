@@ -297,27 +297,39 @@ function emitGtplTemplateInternal(
     const loopNames = [node.item, '$index', '$count', '$first', '$last', '$even', '$odd', ...node.aliases.map((alias) => alias.name)];
     const loopLocals = new Set([...locals, ...loopNames]);
     const loopLetBindings = withoutBindings(letBindings, loopNames);
-    const aliases = node.aliases.map((alias) => `const ${alias.name} = ${alias.context};`).join(' ');
+    const aliases = node.aliases.map((alias) => `let ${alias.name} = ${alias.context};`).join(' ');
     const aliasLines = aliases ? `${aliases}\n    ` : '';
+    const aliasUpdates = node.aliases.map((alias) => `${alias.name} = ${alias.context};`).join(' ');
     const body = renderNodes(node.children, loopLocals, loopLetBindings);
     const empty = renderNodes(node.empty, locals, letBindings);
     const collection = expression(node.parsedCollection, locals, options, nodeMappings, node.collectionSpan, node.collection, letBindings);
     const track = expression(node.parsedTrack, loopLocals, options, nodeMappings, node.trackSpan, node.track, loopLetBindings);
     return `runtime.for(
   runtime.bind(() => ${collection}),
-  (${node.item}, $index, $count) => {
-    const $first = $index === 0;
-    const $last = $index === $count - 1;
-    const $even = $index % 2 === 0;
-    const $odd = !$even;
-    ${aliasLines}return ${body};
+  (${node.item}, $index, $count, $registerUpdate) => {
+    let $first = $index === 0;
+    let $last = $index === $count - 1;
+    let $even = $index % 2 === 0;
+    let $odd = !$even;
+    ${aliasLines}$registerUpdate((nextItem, nextIndex, nextCount) => {
+      ${node.item} = nextItem;
+      $index = nextIndex;
+      $count = nextCount;
+      $first = $index === 0;
+      $last = $index === $count - 1;
+      $even = $index % 2 === 0;
+      $odd = !$even;
+      ${aliasUpdates}
+    });
+    return ${body};
   },
   (${node.item}, $index, $count) => {
     const $first = $index === 0;
     const $last = $index === $count - 1;
     const $even = $index % 2 === 0;
     const $odd = !$even;
-    ${aliasLines}return ${track};
+    ${node.aliases.map((alias) => `const ${alias.name} = ${alias.context};`).join(' ')}
+    return ${track};
   },
   () => ${empty}
 )`;

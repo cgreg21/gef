@@ -15,7 +15,16 @@ function createHost(): GtplRenderHost<Node> {
     element: (name, attributes, children) => ({ kind: name, value: attributes, children: children ? [children] : [] }),
     text: (value) => ({ kind: 'text', value }),
     fragment: (children) => ({ kind: 'fragment', children }),
-    repeat: (state) => ({ kind: 'repeat', value: state.get() }),
+    repeat: (state) => {
+      const value = state.get();
+      return {
+        kind: 'repeat',
+        value: {
+          ...value,
+          items: value.items.map((item) => ({ ...item, node: item.node ?? item.render?.() })),
+        },
+      };
+    },
     conditional: (condition, render, fallback) => condition.get() ? render(condition.get()) : fallback(),
     switch: (value, cases, renderDefault) => {
       const current = value.get();
@@ -171,7 +180,7 @@ describe('createGtplRenderRuntime', () => {
       () => 'duplicate',
       () => ({ kind: 'empty' }),
     )).toThrow('Duplicate GTPL @for track key.');
-    expect(destroyed).toEqual([{ kind: 'item', value: 'same' }]);
+    expect(destroyed).toEqual([]);
   });
 
   it('destroys components rendered before a repeat batch fails track-key validation', () => {
@@ -198,8 +207,8 @@ describe('createGtplRenderRuntime', () => {
       () => 'duplicate',
       () => ({ kind: 'empty' }),
     )).toThrow('Duplicate GTPL @for track key.');
-    expect(onDestroy).toHaveBeenCalledOnce();
-    expect(destroyedCallbacks.size).toBe(1);
+    expect(onDestroy).not.toHaveBeenCalled();
+    expect(destroyedCallbacks.size).toBe(0);
   });
 
   it('uses the empty branch for null and empty iterables', () => {

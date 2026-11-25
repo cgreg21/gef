@@ -543,6 +543,41 @@ describe('createStRenderHost', () => {
     expect(list.children).toHaveLength(0);
   });
 
+  it('updates retained St rows when their keyed item and index change', () => {
+    const host = createStRenderHost(createSt());
+    const runtime = createGtplRenderRuntime(host);
+    const values = signal([{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }]);
+    let renders = 0;
+    const list = runtime.for(
+      runtime.bind(() => values.get()),
+      (item, index, count, registerUpdate) => {
+        let current = item;
+        let currentIndex = index;
+        let currentCount = count;
+        registerUpdate((nextItem, nextIndex, nextCount) => {
+          current = nextItem;
+          currentIndex = nextIndex;
+          currentCount = nextCount;
+        });
+        renders += 1;
+        return host.element('StLabel', {
+          text: runtime.bind(() => `${current.label}:${currentIndex}/${currentCount}`),
+        }, undefined);
+      },
+      (item) => item.id,
+      () => host.text('empty'),
+    ) as FakeActor;
+    const originalA = list.children[0] as FakeActor;
+    const originalB = list.children[1] as FakeActor;
+    expect(originalA.properties.text).toBe('A:0/2');
+    expect(originalB.properties.text).toBe('B:1/2');
+    values.set([{ id: 'b', label: 'B2' }, { id: 'a', label: 'A2' }]);
+    expect(list.children).toEqual([originalB, originalA]);
+    expect(originalB.properties.text).toBe('B2:0/2');
+    expect(originalA.properties.text).toBe('A2:1/2');
+    expect(renders).toBe(2);
+    host.destroy(list);
+  });
   it('supports custom component constructors', () => {
     const host = createStRenderHost(createSt(), { components: { GefCustom: FakeActor } });
     expect(host.element('GefCustom', {}, host.fragment([]))).toBeInstanceOf(FakeActor);

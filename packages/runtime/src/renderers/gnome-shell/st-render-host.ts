@@ -680,29 +680,42 @@ export function createStRenderHost(
         const nextState = state.get();
         const retained = new Set(previousItems.map((item) => item.node));
         if (previousEmpty) retained.add(previousEmpty);
+        const created: StActor[] = [];
         try {
           const oldByKey = new Map(previousItems.map((item) => [item.key, item]));
           const nextItems = nextState.items.map((item) => {
             const previous = oldByKey.get(item.key);
-            if (!previous) return item;
-            oldByKey.delete(item.key);
-            destroyActor(item.node);
-            return { ...item, node: previous.node };
+            if (previous) {
+              oldByKey.delete(item.key);
+              previous.update?.(item.value, item.index, nextState.items.length);
+              if (!previous.node) throw new Error('A retained GTPL @for item has no rendered node.');
+              return { ...item, node: previous.node, update: previous.update };
+            }
+            const node = item.node ?? item.render?.();
+            if (!node) throw new Error('A new GTPL @for item has no render function.');
+            created.push(node);
+            return { ...item, node };
           });
-          for (const item of previousItems) actor.remove_child?.(item.node);
-          if (previousEmpty) actor.remove_child?.(previousEmpty);
-          for (const previous of oldByKey.values()) destroyActor(previous.node);
-          if (previousEmpty) destroyActor(previousEmpty);
           const nextChildren = nextItems.length
-            ? nextItems.map((item) => item.node)
+            ? nextItems.map((item) => item.node!)
             : nextState.empty ? [nextState.empty] : [];
-          for (const child of nextChildren) actor.add_child?.(child);
+          const unchanged = previousItems.length === nextItems.length
+            && previousItems.every((item, index) => item.node === nextItems[index]?.node);
+          if (!unchanged || previousEmpty !== nextState.empty) {
+            for (const item of previousItems) if (item.node) actor.remove_child?.(item.node);
+            if (previousEmpty) actor.remove_child?.(previousEmpty);
+            for (const previous of oldByKey.values()) if (previous.node) destroyActor(previous.node);
+            if (previousEmpty && previousEmpty !== nextState.empty) destroyActor(previousEmpty);
+            for (const child of nextChildren) actor.add_child?.(child);
+          }
           previousItems = nextItems;
           previousEmpty = nextState.empty;
         } catch (error) {
-          for (const item of nextState.items) {
-            if (!retained.has(item.node)) destroyActor(item.node);
+          for (const previous of previousItems) {
+            const item = nextState.items.find((candidate) => Object.is(candidate.key, previous.key));
+            if (item) previous.update?.(previous.value, previous.index, previousItems.length);
           }
+          for (const node of created) destroyActor(node);
           if (nextState.empty && !retained.has(nextState.empty)) destroyActor(nextState.empty);
           throw error;
         }

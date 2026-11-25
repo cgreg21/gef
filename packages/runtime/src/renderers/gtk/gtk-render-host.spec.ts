@@ -769,6 +769,41 @@ describe('createGtkRenderHost', () => {
     host.destroy(list);
   });
 
+  it('updates retained GTK rows when their keyed item and index change', () => {
+    const host = createGtkRenderHost(createGtk());
+    const runtime = createGtplRenderRuntime(host);
+    const values = signal([{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }]);
+    let renders = 0;
+    const list = runtime.for(
+      runtime.bind(() => values.get()),
+      (item, index, count, registerUpdate) => {
+        let current = item;
+        let currentIndex = index;
+        let currentCount = count;
+        registerUpdate((nextItem, nextIndex, nextCount) => {
+          current = nextItem;
+          currentIndex = nextIndex;
+          currentCount = nextCount;
+        });
+        renders += 1;
+        return host.element('GtkLabel', {
+          label: runtime.bind(() => `${current.label}:${currentIndex}/${currentCount}`),
+        }, undefined);
+      },
+      (item) => item.id,
+      () => host.text('empty'),
+    ) as FakeWidget;
+    const originalA = list.children[0] as FakeWidget;
+    const originalB = list.children[1] as FakeWidget;
+    expect(originalA.properties.label).toBe('A:0/2');
+    expect(originalB.properties.label).toBe('B:1/2');
+    values.set([{ id: 'b', label: 'B2' }, { id: 'a', label: 'A2' }]);
+    expect(list.children).toEqual([originalB, originalA]);
+    expect(originalB.properties.label).toBe('B2:0/2');
+    expect(originalA.properties.label).toBe('A2:1/2');
+    expect(renders).toBe(2);
+    host.destroy(list);
+  });
   it('disposes repeat children with their GTK container', () => {
     const host = createGtkRenderHost(createGtk());
     const child = host.element('GtkButton', { clicked: () => undefined }, undefined) as FakeWidget;

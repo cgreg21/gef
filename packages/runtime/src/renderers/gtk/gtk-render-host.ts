@@ -774,47 +774,53 @@ export function createGtkRenderHost(
       try {
         scope.add(effect(() => {
           const nextState = state.get();
-          const retained = new Set(previousItems.map((item) => item.node));
-          if (previousEmpty) retained.add(previousEmpty);
 
+          const created: GtkActor[] = [];
           try {
             const oldByKey = new Map(previousItems.map((item) => [item.key, item]));
             const nextItems = nextState.items.map((item) => {
               const previous = oldByKey.get(item.key);
-              if (!previous) return item;
-              oldByKey.delete(item.key);
-              disposeWidget(item.node);
-              return { ...item, node: previous.node };
+              if (previous) {
+                oldByKey.delete(item.key);
+                previous.update?.(item.value, item.index, nextState.items.length);
+                if (!previous.node) throw new Error('A retained GTPL @for item has no rendered node.');
+                return { ...item, node: previous.node, update: previous.update };
+              }
+              const node = item.node ?? item.render?.();
+              if (!node) throw new Error('A new GTPL @for item has no render function.');
+              created.push(node);
+              return { ...item, node };
             });
 
-            for (const item of previousItems) removeChild(box, item.node);
-            if (previousEmpty) removeChild(box, previousEmpty);
-            for (const previous of oldByKey.values()) disposeWidget(previous.node);
-            if (previousEmpty) disposeWidget(previousEmpty);
-
             const nextChildren = nextItems.length
-              ? nextItems.map((item) => item.node)
+              ? nextItems.map((item) => item.node!)
               : nextState.empty ? [nextState.empty] : [];
-            for (const child of nextChildren) addChild(box, child);
+            const unchanged = previousItems.length === nextItems.length
+              && previousItems.every((item, index) => item.node === nextItems[index]?.node);
+            if (!unchanged || previousEmpty !== nextState.empty) {
+              for (const item of previousItems) if (item.node) removeChild(box, item.node);
+              if (previousEmpty) removeChild(box, previousEmpty);
+              for (const previous of oldByKey.values()) if (previous.node) disposeWidget(previous.node);
+              if (previousEmpty && previousEmpty !== nextState.empty) disposeWidget(previousEmpty);
+              for (const child of nextChildren) addChild(box, child);
+            }
 
             children.set(box, nextChildren);
             previousItems = nextItems;
             previousEmpty = nextState.empty;
           } catch (error) {
-            const nextChildren = [
-              ...nextState.items.map((item) => item.node),
-              ...(nextState.empty ? [nextState.empty] : []),
-            ];
-            children.set(box, [
-              ...new Set([
-                ...previousItems.map((item) => item.node),
-                ...(previousEmpty ? [previousEmpty] : []),
-                ...nextChildren,
-              ]),
-            ].filter((child) => !disposed.has(child)));
-            for (const child of nextChildren) {
-              if (!retained.has(child)) disposeWidget(child);
+            for (const previous of previousItems) {
+              const item = nextState.items.find((candidate) => Object.is(candidate.key, previous.key));
+              if (item) previous.update?.(previous.value, previous.index, previousItems.length);
             }
+            const nextChildren = [
+              ...previousItems.map((item) => item.node).filter((node): node is GtkActor => !!node),
+              ...(previousEmpty ? [previousEmpty] : []),
+              ...created,
+            ];
+            children.set(box, [...new Set(nextChildren)].filter((child) => !disposed.has(child)));
+            for (const child of created) disposeWidget(child);
+            if (nextState.empty && nextState.empty !== previousEmpty) disposeWidget(nextState.empty);
             throw error;
           }
         }));

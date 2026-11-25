@@ -5,11 +5,15 @@ import { mountDirective } from '../directives/directive-ref.js';
 import { DirectiveRegistry } from '../directives/directive-registry.js';
 import { mountComponent } from '../components/component-ref.js';
 import { ComponentRegistry } from '../components/component-registry.js';
+import { signal, type Signal } from '../reactivity/signal.js';
 
 export interface GtplRepeatItem<Node> {
   readonly key: unknown;
   readonly index: number;
-  readonly node: Node;
+  readonly value?: unknown;
+  readonly node?: Node;
+  readonly render?: () => Node;
+  readonly update?: (value: unknown, index: number, count: number) => void;
 }
 
 export interface GtplBinding<T> {
@@ -65,7 +69,7 @@ export interface GtplRenderRuntime<Node> {
   if<T>(condition: T | GtplBinding<T>, render: (value: T) => Node, fallback?: () => Node): Node;
   for<T>(
     collection: Iterable<T> | GtplBinding<Iterable<T> | null | undefined> | null | undefined,
-    renderItem: (item: T, index: number, count: number) => Node,
+    renderItem: (item: T, index: number, count: number, registerUpdate: (update: (item: T, index: number, count: number) => void) => void) => Node,
     trackBy: (item: T, index: number, count: number) => unknown,
     renderEmpty: () => Node,
   ): Node;
@@ -94,9 +98,26 @@ export function createGtplRenderRuntime<Node>(
     onNodeCreated?.(node);
     return node;
   };
+  const activeContexts: Signal<number>[] = [];
+  const captureContexts = (): Signal<number>[] => [...activeContexts];
+  const withContexts = <T>(contexts: readonly Signal<number>[], callback: () => T): T => {
+    activeContexts.push(...contexts);
+    try { return callback(); }
+    finally { activeContexts.length -= contexts.length; }
+  };
+  const bind = <T>(get: () => T): GtplBinding<T> => {
+    const contexts = captureContexts();
+    return {
+      kind: 'binding',
+      get: () => withContexts(contexts, () => {
+        for (const context of contexts) context.get();
+        return get();
+      }),
+    };
+  };
   return {
     pipe: (name, value, ...args) => pipes.transform(name, value, ...args),
-    bind: (get) => ({ kind: 'binding', get }),
+    bind,
     element: (name, attributes, children) => {
       const component = components.match(name, attributes);
       if (component) {
@@ -158,45 +179,79 @@ export function createGtplRenderRuntime<Node>(
     text: (value) => track(host.text(value)),
     fragment: (children) => track(host.fragment(children)),
     if: (condition, render, fallback) => {
-      const renderFallback = fallback ?? (() => track(host.fragment([])));
+      const contexts = captureContexts();
+      const renderBranch = (value: unknown): Node => withContexts(contexts, () => render(value as never));
+      const renderFallback = (): Node => withContexts(contexts, () => fallback?.() ?? track(host.fragment([])));
       return isGtplBinding(condition)
-        ? track(host.conditional(condition, render, renderFallback))
-        : condition ? render(condition) : renderFallback();
+        ? track(host.conditional(condition, renderBranch, renderFallback))
+        : condition ? renderBranch(condition) : renderFallback();
     },
     for: (collection, renderItem, trackBy, renderEmpty) => {
+      const contexts = captureContexts();
       const getCollection = isGtplBinding(collection) ? collection.get : () => collection;
-      return track(host.repeat({
-        kind: 'binding',
-        get: () => {
-          const values = Array.from(getCollection() ?? []);
-          if (values.length === 0) return { items: [], empty: renderEmpty() };
-          const count = values.length;
-          const keys = new Set<unknown>();
-          const items: GtplRepeatItem<Node>[] = [];
-          try {
-            values.forEach((item, index) => {
-              const key = trackBy(item, index, count);
-              if (keys.has(key)) throw new Error('Duplicate GTPL @for track key.');
-              keys.add(key);
-              items.push({ key, index, node: renderItem(item, index, count) });
-            });
-            return { items };
-          } catch (error) {
-            for (const item of items) host.destroy(item.node);
-            throw error;
-          }
-        },
-      }));
+      return track(host.repeat(bind(() => {
+        const values = Array.from(withContexts(contexts, getCollection) ?? []);
+        const count = values.length;
+        const keys = new Set<unknown>();
+        const entries = values.map((value, index) => {
+          const key = withContexts(contexts, () => trackBy(value, index, count));
+          if (keys.has(key)) throw new Error('Duplicate GTPL @for track key.');
+          keys.add(key);
+          return { key, value, index };
+        });
+        if (entries.length === 0) return { items: [], empty: withContexts(contexts, renderEmpty) };
+        return {
+          items: entries.map(({ key, value, index }) => {
+            let rowRevision: Signal<number> | undefined;
+            let updateRow: ((item: T, index: number, count: number) => void) | undefined;
+            let currentValue = value;
+            let currentIndex = index;
+            let currentCount = count;
+            return {
+              key,
+              index,
+              value,
+              render: () => withContexts(contexts, () => {
+                const revision = signal(0);
+                rowRevision = revision;
+                activeContexts.push(revision);
+                try {
+                  return renderItem(value, index, count, (update) => { updateRow = update; });
+                } finally {
+                  activeContexts.pop();
+                }
+              }),
+              update: (nextValue: unknown, nextIndex: number, nextCount: number) => {
+                if (!rowRevision || (Object.is(currentValue, nextValue)
+                  && currentIndex === nextIndex && currentCount === nextCount)) return;
+                currentValue = nextValue as T;
+                currentIndex = nextIndex;
+                currentCount = nextCount;
+                withContexts([...contexts, rowRevision], () => {
+                  updateRow?.(currentValue as T, currentIndex, currentCount);
+                  rowRevision!.update((revision) => revision + 1);
+                });
+              },
+            };
+          }),
+        };
+      })));
     },
     switch: (value, cases, renderDefault) => {
+      const contexts = captureContexts();
+      const scopedCases = cases.map((branch) => ({
+        values: branch.values,
+        render: () => withContexts(contexts, branch.render),
+      }));
+      const scopedDefault = renderDefault ? () => withContexts(contexts, renderDefault) : undefined;
       const render = (current: unknown): Node => {
-        for (const branch of cases) {
+        for (const branch of scopedCases) {
           if (branch.values.some((candidate) => Object.is(candidate, current))) return branch.render();
         }
-        return renderDefault?.() ?? track(host.fragment([]));
+        return scopedDefault?.() ?? track(host.fragment([]));
       };
       return isGtplBinding(value)
-        ? track(host.switch(value, cases, renderDefault))
+        ? track(host.switch(value, scopedCases, scopedDefault))
         : render(value);
     },
   };

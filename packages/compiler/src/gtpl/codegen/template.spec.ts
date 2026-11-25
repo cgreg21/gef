@@ -151,11 +151,14 @@ describe('emitGtplTemplate', () => {
   it('emits if/else, for/empty, switch and let control flow', () => {
     const output = emit(`@let title = heading;
 @if (visible; as shown) { <label>{{shown}}</label> } @else { <label>Hidden</label> }
-@for (item of items; track item.id; let i = $index) { <label>{{item.name}} {{i}}</label> } @empty { Empty }
+@for (item of items; track item.id; let i = $index) { @let label = item.name; <label>{{label}} {{i}}</label> } @empty { Empty }
 @switch (state) { @case ("ready") { Ready } @default { Wait } }`, ['heading', 'visible', 'items', 'state']);
     expect(compact(output)).toContain('const $__gefLet0 = () => ctx.heading');
     expect(compact(output)).toContain('runtime.if(runtime.bind(() => ctx.visible)');
     expect(compact(output)).toContain('runtime.for( runtime.bind(() => ctx.items)');
+    expect(compact(output)).toContain('$registerUpdate((nextItem, nextIndex, nextCount) =>');
+    expect(compact(output)).toContain('item = nextItem');
+    expect(compact(output)).toContain('i = $index');
     expect(compact(output)).toContain('return (item.id)');
     expect(compact(output)).toContain('runtime.switch(runtime.bind(() => ctx.state)');
   });

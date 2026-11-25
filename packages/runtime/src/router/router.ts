@@ -16,6 +16,7 @@ export interface Route<Node> {
   readonly render: (route: ActivatedRoute<Node>, runtime: GtplRenderRuntime<Node>) => Node;
   readonly data?: Readonly<Record<string, unknown>>;
   readonly canActivate?: (route: ActivatedRoute<Node>) => boolean;
+  readonly canDeactivate?: (current: ActivatedRoute<Node>, next: ActivatedRoute<Node>) => boolean;
 }
 
 export interface RouterState<Node> {
@@ -144,7 +145,7 @@ export class Router<Node = unknown> {
   navigate(url: string, options: NavigationOptions = {}): boolean {
     const parsed = parseUrl(url);
     const route = this.resolve(parsed);
-    if (!route || !(route.config.canActivate?.(route) ?? true)) return false;
+    if (!route || !this.canTransition(route)) return false;
 
     if (options.replaceUrl) {
       this.#history[this.#historyIndex] = parsed.url;
@@ -176,9 +177,15 @@ export class Router<Node = unknown> {
   private activate(url: string): boolean {
     const parsed = parseUrl(url);
     const route = this.resolve(parsed);
-    if (!route || !(route.config.canActivate?.(route) ?? true)) return false;
+    if (!route || !this.canTransition(route)) return false;
     this.#state.set({ url: parsed.url, route });
     return true;
+  }
+
+  private canTransition(next: ActivatedRoute<Node>): boolean {
+    const current = this.currentRoute;
+    return (next.config.canActivate?.(next) ?? true)
+      && (!current || (current.config.canDeactivate?.(current, next) ?? true));
   }
 
   private resolve(parsed: ParsedUrl): ActivatedRoute<Node> | null {
@@ -221,6 +228,7 @@ export interface ApplicationRoute<Node> {
   readonly data?: Readonly<Record<string, unknown>>;
   readonly render?: Route<Node>['render'];
   readonly canActivate?: Route<Node>['canActivate'];
+  readonly canDeactivate?: Route<Node>['canDeactivate'];
 }
 
 export interface ApplicationRouterConfig<Node> {
@@ -237,6 +245,7 @@ export function createApplicationRouter<Node>(
     path: route.path,
     ...(route.data ? { data: route.data } : {}),
     ...(route.canActivate ? { canActivate: route.canActivate } : {}),
+    ...(route.canDeactivate ? { canDeactivate: route.canDeactivate } : {}),
     render: route.render ?? renderRoot,
   })), config.initialUrl ?? '/');
 }

@@ -130,6 +130,54 @@ describe('Router', () => {
     expect(router.canGoForward).toBe(true);
   });
 
+
+  it('blocks leaving a route and preserves navigation history', () => {
+    let canLeave = false;
+    const router = new Router([
+      { path: '/', render: () => ({ kind: 'home' }) },
+      {
+        path: '/edit',
+        canDeactivate: () => canLeave,
+        render: () => ({ kind: 'edit' }),
+      },
+      { path: '/preview', render: () => ({ kind: 'preview' }) },
+    ]);
+
+    expect(router.navigate('/edit')).toBe(true);
+    expect(router.navigate('/preview')).toBe(false);
+    expect(router.url).toBe('/edit');
+    expect(router.canGoBack).toBe(true);
+    expect(router.canGoForward).toBe(false);
+
+    canLeave = true;
+    expect(router.navigate('/preview')).toBe(true);
+    canLeave = false;
+    expect(router.back()).toBe(false);
+    expect(router.url).toBe('/preview');
+    expect(router.canGoBack).toBe(true);
+    expect(router.canGoForward).toBe(false);
+
+    canLeave = true;
+    expect(router.back()).toBe(true);
+    expect(router.url).toBe('/edit');
+    expect(router.forward()).toBe(false);
+    expect(router.url).toBe('/edit');
+  });
+
+  it('passes current and next activated routes to the deactivation guard', () => {
+    const guard = vi.fn(() => true);
+    const router = new Router([
+      { path: '/one', render: () => ({ kind: 'one' }), canDeactivate: guard },
+      { path: '/two', render: () => ({ kind: 'two' }) },
+    ], '/one');
+
+    expect(router.navigate('/two')).toBe(true);
+    expect(guard).toHaveBeenCalledWith(
+      expect.objectContaining({ path: '/one' }),
+      expect.objectContaining({ path: '/two' }),
+    );
+  });
+
   it('does not activate a guarded initial route when access is denied', () => {
     const router = new Router([
       { path: '/private', canActivate: () => false, render: () => ({ kind: 'private' }) },

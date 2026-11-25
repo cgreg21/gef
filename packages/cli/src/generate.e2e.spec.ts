@@ -61,14 +61,16 @@ describe('generated project smoke tests', () => {
       }
 
       if (projectType === 'application') {
-        const source = await readFile(join(project, 'src/app/app.config.ts'), 'utf8');\n        expect(await readFile(join(project, 'src/main.ts'), 'utf8')).toContain('renderRouterOutlet');
+        const source = await readFile(join(project, 'src/app/app.config.ts'), 'utf8');
+        expect(await readFile(join(project, 'src/main.ts'), 'utf8')).toContain('renderRouterOutlet');
         const javascript = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext } }).outputText;
         const configModule = await import(`data:text/javascript;base64,${Buffer.from(javascript).toString('base64')}`) as {
           appConfig: { applicationId: string; window: { width: number; height: number }; router: { initialUrl: string; routes: { path: string }[] } };
         };
         expect(configModule.appConfig).toMatchObject({
           applicationId: 'com.example.desktop.smoke',
-          window: { width: 640, height: 480 },\n          router: { initialUrl: '/', routes: [{ path: '/' }] },
+          window: { width: 640, height: 480 },
+          router: { initialUrl: '/', routes: [{ path: '/' }] },
         });
       }
     } finally {

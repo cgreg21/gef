@@ -17,6 +17,9 @@ class FakeWidget implements GtkActor {
   };
   readonly properties: Record<string, unknown>;
   readonly children: GtkActor[] = [];
+  insertCount = 0;
+  reorderCount = 0;
+  removeCount = 0;
   readonly classes = new Set<string>();
   readonly signals = new Map<number, { name: string; callback: (actor: GtkActor, ...args: unknown[]) => unknown }>();
   parent: FakeWidget | null = null;
@@ -28,9 +31,25 @@ class FakeWidget implements GtkActor {
   add_suffix(child: GtkActor): void { this.attachChild(child); }
   remove_suffix(child: GtkActor): void { this.remove(child); }
   remove(child: GtkActor): void {
+    this.removeCount += 1;
     const index = this.children.indexOf(child);
     if (index !== -1) this.children.splice(index, 1);
     (child as FakeWidget).parent = null;
+  }
+  insert_child_after(child: GtkActor, sibling: GtkActor | null): void {
+    this.insertCount += 1;
+    const widget = child as FakeWidget;
+    widget.parent?.remove(widget);
+    const index = sibling ? this.children.indexOf(sibling) + 1 : 0;
+    widget.parent = this;
+    this.children.splice(index, 0, child);
+  }
+  reorder_child_after(child: GtkActor, sibling: GtkActor | null): void {
+    this.reorderCount += 1;
+    const index = this.children.indexOf(child);
+    if (index !== -1) this.children.splice(index, 1);
+    const target = sibling ? this.children.indexOf(sibling) + 1 : 0;
+    this.children.splice(target, 0, child);
   }
   set_property(name: string, value: unknown): void {
     this.propertyUpdateCount.set(name, (this.propertyUpdateCount.get(name) ?? 0) + 1);
@@ -867,6 +886,28 @@ describe('createGtkRenderHost', () => {
     expect(nested.children.map((child) => (child as FakeWidget).properties.label)).toEqual(['Child 2', 'New child']);
     host.destroy(list);
   });
+  it('moves only the GTK row that changes position', () => {
+    const host = createGtkRenderHost(createGtk());
+    const state = signal({ items: [
+      { key: 'a', index: 0, node: host.text('a') as FakeWidget },
+      { key: 'b', index: 1, node: host.text('b') as FakeWidget },
+      { key: 'c', index: 2, node: host.text('c') as FakeWidget },
+    ] });
+    const list = host.repeat({ kind: 'binding', get: () => state.get() }) as FakeWidget;
+    const [a, b, c] = [...list.children] as FakeWidget[];
+    list.reorderCount = 0;
+    list.removeCount = 0;
+    state.set({ items: [
+      { key: 'c', index: 0, node: c },
+      { key: 'a', index: 1, node: a },
+      { key: 'b', index: 2, node: b },
+    ] });
+    expect(list.children).toEqual([c, a, b]);
+    expect(list.reorderCount).toBe(1);
+    expect(list.removeCount).toBe(0);
+    host.destroy(list);
+  });
+
   it('disposes repeat children with their GTK container', () => {
     const host = createGtkRenderHost(createGtk());
     const child = host.element('GtkButton', { clicked: () => undefined }, undefined) as FakeWidget;

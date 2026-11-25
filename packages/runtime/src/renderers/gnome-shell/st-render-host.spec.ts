@@ -12,6 +12,9 @@ class FakeActor implements StActor {
   classUpdateCount = 0;
   readonly properties: Record<string, unknown>;
   readonly children: StActor[] = [];
+  insertCount = 0;
+  reorderCount = 0;
+  removeCount = 0;
   readonly signals = new Map<number, { name: string; callback: (actor: StActor, ...args: unknown[]) => unknown }>();
   readonly layoutManager = { homogeneous: false, set_homogeneous: (value: boolean) => { this.layoutManager.homogeneous = value; } };
   destroyed = false;
@@ -26,7 +29,20 @@ class FakeActor implements StActor {
     this.children.push(child);
   }
 
+  insert_child_at_index(child: StActor, index: number): void {
+    this.insertCount += 1;
+    this.children.splice(index, 0, child);
+  }
+
+  set_child_at_index(child: StActor, index: number): void {
+    this.reorderCount += 1;
+    const current = this.children.indexOf(child);
+    if (current !== -1) this.children.splice(current, 1);
+    this.children.splice(index, 0, child);
+  }
+
   remove_child(child: StActor): void {
+    this.removeCount += 1;
     const index = this.children.indexOf(child);
     if (index !== -1) this.children.splice(index, 1);
   }
@@ -687,6 +703,28 @@ describe('createStRenderHost', () => {
     expect(repeat.children.map((child) => (child as FakeActor).properties.text)).toEqual(['a', 'b']);
   });
 
+
+  it('moves only the St row that changes position', () => {
+    const host = createStRenderHost(createSt());
+    const state = signal({ items: [
+      { key: 'a', index: 0, node: host.text('a') as FakeActor },
+      { key: 'b', index: 1, node: host.text('b') as FakeActor },
+      { key: 'c', index: 2, node: host.text('c') as FakeActor },
+    ] });
+    const list = host.repeat({ kind: 'binding', get: () => state.get() }) as FakeActor;
+    const [a, b, c] = [...list.children] as FakeActor[];
+    list.reorderCount = 0;
+    list.removeCount = 0;
+    state.set({ items: [
+      { key: 'c', index: 0, node: c },
+      { key: 'a', index: 1, node: a },
+      { key: 'b', index: 2, node: b },
+    ] });
+    expect(list.children).toEqual([c, a, b]);
+    expect(list.reorderCount).toBe(1);
+    expect(list.removeCount).toBe(0);
+    host.destroy(list);
+  });
 
   it('destroys newly rendered repeat nodes when attaching a batch fails', () => {
     class FailingBox extends FakeActor {

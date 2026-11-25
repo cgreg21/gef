@@ -94,7 +94,7 @@ function selectDemo(demo: Demo): void {
 }
 
 const stopRouter = router.state.subscribe(({ route }) => {
-  const demo = demos.find((item) => item.id === route?.config.path.replace(/^\\//, ''));
+  const demo = demos.find((item) => route?.config.path === `/${item.id}`);
   if (!demo) return;
   selectedDemo = demo;
   stack.setVisibleChildName(demo.id);

@@ -180,6 +180,7 @@ describe('emitGtplTemplate', () => {
   });
 
   it('re-evaluates @let values in bindings, interpolations and event handlers when signals change', () => {
+    type Node = { kind: string; value?: unknown; children?: readonly Node[] };
     const parsed = parseGtpl('@let title = heading.get();\n@let message = "Hello " + title;\n<StLabel [text]="message" (clicked)="select(message)">{{title}}</StLabel>');
     expect(parsed.diagnostics).toEqual([]);
     const source = emitGtplTemplate(parsed.nodes);

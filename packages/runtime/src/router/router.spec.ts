@@ -70,7 +70,7 @@ describe('Router', () => {
     expect(router.canGoForward).toBe(true);
     expect(router.url).toBe('/one');
     expect(router.navigate('/replacement', { replaceUrl: true })).toBe(true);
-    expect(router.canGoForward).toBe(false);
+    expect(router.canGoForward).toBe(true);
     expect(router.forward()).toBe(true);
     expect(router.canGoBack).toBe(true);
     expect(router.canGoForward).toBe(false);

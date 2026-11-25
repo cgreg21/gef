@@ -102,6 +102,42 @@ describe('Router', () => {
     expect(router.canGoForward).toBe(true);
   });
 
+
+  it('guards navigation and keeps history unchanged when a route is denied', () => {
+    let allowed = false;
+    const router = new Router([
+      { path: '/', render: () => ({ kind: 'home' }) },
+      { path: '/private', canActivate: () => allowed, render: () => ({ kind: 'private' }) },
+      { path: '/public', render: () => ({ kind: 'public' }) },
+    ]);
+
+    expect(router.navigate('/private')).toBe(false);
+    expect(router.url).toBe('/');
+    expect(router.canGoBack).toBe(false);
+
+    expect(router.navigate('/public')).toBe(true);
+    expect(router.navigate('/private')).toBe(false);
+    expect(router.url).toBe('/public');
+
+    allowed = true;
+    expect(router.navigate('/private')).toBe(true);
+    allowed = false;
+    expect(router.back()).toBe(true);
+    expect(router.url).toBe('/public');
+    expect(router.canGoForward).toBe(true);
+    expect(router.forward()).toBe(false);
+    expect(router.url).toBe('/public');
+    expect(router.canGoForward).toBe(true);
+  });
+
+  it('does not activate a guarded initial route when access is denied', () => {
+    const router = new Router([
+      { path: '/private', canActivate: () => false, render: () => ({ kind: 'private' }) },
+    ], '/private');
+    expect(router.currentRoute).toBeNull();
+    expect(router.url).toBe('/private');
+  });
+
   it('does not change the current route or history when a URL does not match', () => {
     const router = new Router([{ path: '/', render: () => ({ kind: 'home' }) }]);
     expect(router.navigate('/missing')).toBe(false);

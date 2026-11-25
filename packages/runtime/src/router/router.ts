@@ -15,6 +15,7 @@ export interface Route<Node> {
   readonly path: string;
   readonly render: (route: ActivatedRoute<Node>, runtime: GtplRenderRuntime<Node>) => Node;
   readonly data?: Readonly<Record<string, unknown>>;
+  readonly canActivate?: (route: ActivatedRoute<Node>) => boolean;
 }
 
 export interface RouterState<Node> {
@@ -114,7 +115,8 @@ export class Router<Node = unknown> {
     }).sort((left, right) => right.score - left.score);
 
     const parsed = parseUrl(initialUrl);
-    const route = this.resolve(parsed);
+    const matched = this.resolve(parsed);
+    const route = matched && (matched.config.canActivate?.(matched) ?? true) ? matched : null;
     this.#state = signal<RouterState<Node>>({ url: parsed.url, route });
     this.#history = [parsed.url];
   }
@@ -142,7 +144,7 @@ export class Router<Node = unknown> {
   navigate(url: string, options: NavigationOptions = {}): boolean {
     const parsed = parseUrl(url);
     const route = this.resolve(parsed);
-    if (!route) return false;
+    if (!route || !(route.config.canActivate?.(route) ?? true)) return false;
 
     if (options.replaceUrl) {
       this.#history[this.#historyIndex] = parsed.url;
@@ -157,21 +159,26 @@ export class Router<Node = unknown> {
 
   back(): boolean {
     if (this.#historyIndex === 0) return false;
-    this.#historyIndex -= 1;
-    this.activate(this.#history[this.#historyIndex]!);
+    const index = this.#historyIndex - 1;
+    if (!this.activate(this.#history[index]!)) return false;
+    this.#historyIndex = index;
     return true;
   }
 
   forward(): boolean {
     if (this.#historyIndex >= this.#history.length - 1) return false;
-    this.#historyIndex += 1;
-    this.activate(this.#history[this.#historyIndex]!);
+    const index = this.#historyIndex + 1;
+    if (!this.activate(this.#history[index]!)) return false;
+    this.#historyIndex = index;
     return true;
   }
 
-  private activate(url: string): void {
+  private activate(url: string): boolean {
     const parsed = parseUrl(url);
-    this.#state.set({ url: parsed.url, route: this.resolve(parsed) });
+    const route = this.resolve(parsed);
+    if (!route || !(route.config.canActivate?.(route) ?? true)) return false;
+    this.#state.set({ url: parsed.url, route });
+    return true;
   }
 
   private resolve(parsed: ParsedUrl): ActivatedRoute<Node> | null {
@@ -213,6 +220,7 @@ export interface ApplicationRoute<Node> {
   readonly path: string;
   readonly data?: Readonly<Record<string, unknown>>;
   readonly render?: Route<Node>['render'];
+  readonly canActivate?: Route<Node>['canActivate'];
 }
 
 export interface ApplicationRouterConfig<Node> {
@@ -228,6 +236,7 @@ export function createApplicationRouter<Node>(
   return new Router(config.routes.map((route) => ({
     path: route.path,
     ...(route.data ? { data: route.data } : {}),
+    ...(route.canActivate ? { canActivate: route.canActivate } : {}),
     render: route.render ?? renderRoot,
   })), config.initialUrl ?? '/');
 }

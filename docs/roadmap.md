@@ -22,6 +22,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [x] Ajouter un premier routeur commun GTK/GJS : routes déclaratives, priorité aux chemins statiques, paramètres dynamiques, query params, fragment, wildcard, navigation, historique mémoire avant/arrière, liens et `RouterOutlet` GTPL. Tests unitaires sur le matching, l'historique, les erreurs et le rendu. Les gardes, le lazy-loading et les stratégies d'URL externes restent différés.
 - [x] Intégrer le routeur dans le Kitchen Sink GTK : chaque démonstration possède une URL interne, la sélection synchronise l'écran et le titre, les commandes **Back**/**Forward** suivent l'état de l'historique, et les navigations sont testées dans le smoke test Node-GTK.
 - [x] Connecter le routeur au bootstrap des applications générées GTK et GJS : `app.config.ts` déclare les routes et l'URL initiale, `createApplicationRouter()` fournit la vue racine par défaut, `renderRouterOutlet()` monte la route active, et le bootstrap détruit l'outlet avec ses ressources. Les routes peuvent fournir leur propre renderer.
+- [x] Ajouter des gardes synchrones `canActivate` par route : navigation directe, URL initiale et historique arrière/avant respectent la garde ; une navigation refusée ne modifie ni l'URL active ni l'historique. Les gardes asynchrones et redirections restent différées.
 
 ## P2 — Architecture des composants décorés
 

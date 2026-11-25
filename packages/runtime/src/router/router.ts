@@ -206,3 +206,28 @@ export function renderRouterOutlet<Node>(
 export function routerLink<Node>(router: Router<Node>, url: string): { readonly href: string; readonly navigate: () => boolean } {
   return Object.freeze({ href: url, navigate: () => router.navigate(url) });
 }
+
+
+/** Route configuration used by application bootstraps. */
+export interface ApplicationRoute<Node> {
+  readonly path: string;
+  readonly data?: Readonly<Record<string, unknown>>;
+  readonly render?: Route<Node>['render'];
+}
+
+export interface ApplicationRouterConfig<Node> {
+  readonly routes: readonly ApplicationRoute<Node>[];
+  readonly initialUrl?: string;
+}
+
+/** Creates an application router, using the root view for routes without a custom renderer. */
+export function createApplicationRouter<Node>(
+  config: ApplicationRouterConfig<Node>,
+  renderRoot: Route<Node>['render'],
+): Router<Node> {
+  return new Router(config.routes.map((route) => ({
+    path: route.path,
+    ...(route.data ? { data: route.data } : {}),
+    render: route.render ?? renderRoot,
+  })), config.initialUrl ?? '/');
+}

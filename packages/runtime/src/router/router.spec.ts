@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Router, renderRouterOutlet, routerLink } from './router.js';
+import { createApplicationRouter, Router, renderRouterOutlet, routerLink } from './router.js';
 import { createGtplRenderRuntime, type GtplRenderHost } from '../rendering/gtpl-runtime.js';
 
 type Node = { readonly kind: string; readonly value?: unknown; readonly children?: readonly Node[] };
@@ -17,6 +17,20 @@ function createHost(): GtplRenderHost<Node> {
 }
 
 describe('Router', () => {
+
+  it('creates an application router from route configuration and a root view', () => {
+    const root = { kind: 'root' };
+    const router = createApplicationRouter({
+      initialUrl: '/home',
+      routes: [{ path: '/home' }, { path: '/custom', render: () => ({ kind: 'custom' }) }],
+    }, () => root);
+
+    expect(router.currentRoute?.config.path).toBe('/home');
+    expect(router.currentRoute?.config.render(router.currentRoute, createGtplRenderRuntime(createHost()))).toBe(root);
+    expect(router.navigate('/custom')).toBe(true);
+    expect(router.currentRoute?.config.render(router.currentRoute, createGtplRenderRuntime(createHost()))).toEqual({ kind: 'custom' });
+  });
+
   it('matches static routes before parameter routes and exposes decoded params', () => {
     const router = new Router([
       { path: '/users/:id', render: () => ({ kind: 'user' }) },

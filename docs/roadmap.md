@@ -88,7 +88,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 
 - [ ] Fiabiliser `gef new` et ses tests de bout en bout.
   Parsing strict des arguments et tests de rejet ajoutés ; la génération et compilation des deux squelettes restent couvertes par les tests E2E existants.
-- [ ] Introduire un plan de génération commun à `gef new` et `gef generate` : préparer les fichiers en mémoire, valider les chemins et conflits, puis seulement écrire ; éviter les projets partiellement générés en cas d'erreur.
+- [ ] Introduire un plan de génération commun à `gef new` et `gef generate` : préparer les fichiers en mémoire, vérifier les chemins (dont les sorties hors du répertoire cible), les collisions et les fichiers existants, puis seulement écrire. Cette prévalidation évite les générations partielles dues aux erreurs de validation/conflits ; une panne d'E/S pendant l'écriture nécessitera un rollback explicite si une atomicité réelle devient nécessaire.
 - [ ] Ajouter `--dry-run` et `--force` au plan de génération ; par défaut, refuser les fichiers existants sans les écraser.
 - [ ] Extraire progressivement commandes et générateurs de `packages/cli/src/index.ts` vers des sous-répertoires dédiés, sans changer les commandes publiques ni introduire de framework de commandes.
 - [ ] Centraliser la validation des options des générateurs ; adopter des schémas déclaratifs simples uniquement lorsque plusieurs options le justifient.
@@ -107,6 +107,8 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 ## Résultats du scan Angular et Angular CLI
 
 Les scans du runtime Angular, du compilateur et d'Angular CLI servent de références de conception, pas de dépendances à intégrer. Les points déjà couverts par GEF (comparaison des bindings inchangés, nettoyage des ressources, diagnostics GTPL et validation de configuration) ne sont pas à réimplémenter. Les pistes retenues sont la réconciliation des listes par clé, le cache des pipes par site d'expression et la génération CLI préparée avant écriture. Les mécanismes plus lourds d'Angular (LView, Architect, Schematics/DevKit, RxJS, graphe incrémental complet) ne doivent pas être portés tels quels : toute adaptation doit rester locale, mesurée et KISS.
+
+Le scan complémentaire d'Angular CLI confirme plusieurs idées ciblées : `ng generate` construit ses commandes et options à partir des schémas des générateurs, puis compose des filtres et des transformations de templates ; GEF peut reprendre la validation stricte, les valeurs par défaut et les alias sans adopter le moteur Schematics. Le `RecordHost` d'Angular prépare les opérations dans un arbre mémoire, mais son commit applique ensuite les écritures séquentiellement : ce n'est pas une transaction résistante aux pannes d'E/S. Le plan de génération GEF doit donc distinguer prévalidation et atomicité réelle. `ng update` vérifie par défaut la propreté du dépôt et encadre les migrations ; ces garde-fous sont pertinents si GEF introduit un jour des migrations de workspace. Enfin, `JSONFile` préserve commentaires et format via des modifications minimales de l'AST ; cela reste différé tant que GEF ne modifie pas automatiquement `gef.json`.
 
 ## Règles de maintenance
 

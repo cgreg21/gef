@@ -97,7 +97,7 @@ function selectDemo(demo: Demo): void {
   router.navigate(`/${demo.id}`);
 }
 
-const stopRouter = router.state.subscribe(({ route }) => {
+function updateRoute(route: typeof router.currentRoute): void {
   const demo = demos.find((item) => route?.config.path === `/${item.id}`);
   if (!demo) return;
   selectedDemo = demo;
@@ -105,7 +105,10 @@ const stopRouter = router.state.subscribe(({ route }) => {
   title.setLabel(demo.title);
   backButton.setSensitive(router.canGoBack);
   forwardButton.setSensitive(router.canGoForward);
-});
+}
+
+const stopRouter = router.state.subscribe(({ route }) => updateRoute(route));
+updateRoute(router.currentRoute);
 
 for (const demo of demos) {
   const button = new Gtk.Button({ label: demo.title });
@@ -149,7 +152,6 @@ sourceButton.on('clicked', () => {
   sourceWindow.present();
 });
 
-selectDemo(firstDemo);
 window.on('close-request', () => {
   stopRouter();
   for (const view of views.values()) view.dispose();

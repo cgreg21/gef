@@ -153,7 +153,11 @@ function expression(
   const globals = new Set([...BUILTIN_GLOBALS, ...(options.globals ?? [])]);
   const contextIdentifiers = options.componentMembers
     ?? [...identifiers].filter((name) => !locals.has(name) && !globals.has(name));
-  const expressionOptions = { contextIdentifiers, localIdentifiers: [...locals, ...globals], localBindings };
+  const expressionOptions = {
+    contextIdentifiers,
+    localIdentifiers: [...locals, ...globals],
+    ...(localBindings ? { localBindings } : {}),
+  };
   if (!mappings || !sourcePosition || sourceExpression === undefined) {
     return emitGtplExpressionWithMarkers(node, expressionOptions, () => '');
   }

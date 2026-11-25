@@ -895,7 +895,7 @@ describe('createGtkRenderHost', () => {
       { key: 'c', index: 2, node: host.text('c') as FakeWidget },
     ] });
     const list = host.repeat({ kind: 'binding', get: () => state.get() }) as FakeWidget;
-    const [a, b, c] = [...list.children] as FakeWidget[];
+    const [a, b, c] = list.children as [FakeWidget, FakeWidget, FakeWidget];
     list.reorderCount = 0;
     list.removeCount = 0;
     state.set({ items: [

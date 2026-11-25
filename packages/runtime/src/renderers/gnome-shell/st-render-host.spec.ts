@@ -714,7 +714,7 @@ describe('createStRenderHost', () => {
       { key: 'c', index: 2, node: host.text('c') as FakeActor },
     ] });
     const list = host.repeat({ kind: 'binding', get: () => state.get() }) as FakeActor;
-    const [a, b, c] = [...list.children] as FakeActor[];
+    const [a, b, c] = list.children as [FakeActor, FakeActor, FakeActor];
     list.reorderCount = 0;
     list.removeCount = 0;
     state.set({ items: [

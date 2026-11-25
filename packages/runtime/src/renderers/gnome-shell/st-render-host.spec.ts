@@ -31,6 +31,8 @@ class FakeActor implements StActor {
 
   insert_child_at_index(child: StActor, index: number): void {
     this.insertCount += 1;
+    this.add_child(child);
+    this.children.pop();
     this.children.splice(index, 0, child);
   }
 

@@ -40,8 +40,9 @@ class FakeWidget implements GtkActor {
     this.insertCount += 1;
     const widget = child as FakeWidget;
     widget.parent?.remove(widget);
+    this.append(child);
+    this.children.pop();
     const index = sibling ? this.children.indexOf(sibling) + 1 : 0;
-    widget.parent = this;
     this.children.splice(index, 0, child);
   }
   reorder_child_after(child: GtkActor, sibling: GtkActor | null): void {

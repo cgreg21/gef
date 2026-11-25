@@ -4,10 +4,16 @@ import { createGtplRenderRuntime, type GtplRenderHost } from '../rendering/gtpl-
 
 type Node = { readonly kind: string; readonly value?: unknown; readonly children?: readonly Node[] };
 
-function createHost(): GtplRenderHost<Node> {
+function createHost(
+  listeners: Array<(...args: unknown[]) => unknown> = [],
+  cleanups: Array<() => void> = [],
+  createdAttributes: Array<Readonly<Record<string, unknown>>> = [],
+): GtplRenderHost<Node> {
   return {
     destroy: () => {},
-    element: (name, attributes, children) => ({ kind: name, value: attributes, children: children ? [children] : [] }),
+    listen: (_node, _event, handler) => { listeners.push(handler); return () => { cleanups.push(() => {}); }; },
+    onDestroy: (_node, callback) => { cleanups.push(callback); },
+    element: (name, attributes, children) => { createdAttributes.push(attributes); return { kind: name, value: attributes, children: children ? [children] : [] }; },
     text: (value) => ({ kind: 'text', value }),
     fragment: (children) => ({ kind: 'fragment', children }),
     repeat: (state) => ({ kind: 'repeat', value: state.get() }),
@@ -217,6 +223,51 @@ describe('Router', () => {
     expect(renderRouterOutlet(router, runtime)).toEqual({ kind: 'home' });
     router.navigate('/users/42');
     expect(renderRouterOutlet(router, runtime)).toEqual({ kind: 'user', value: '42' });
+  });
+
+
+  it('navigates from GTPL routerLink and releases the native listener with its node', () => {
+    const listeners: Array<(...args: unknown[]) => unknown> = [];
+    const cleanups: Array<() => void> = [];
+    const attributes: Array<Readonly<Record<string, unknown>>> = [];
+    const host = createHost(listeners, cleanups, attributes);
+    const router = new Router([
+      { path: '/', render: () => ({ kind: 'home' }) },
+      { path: '/about', render: () => ({ kind: 'about' }) },
+    ]);
+    const runtime = createGtplRenderRuntime(host);
+    renderRouterOutlet(router, runtime);
+
+    const button = runtime.element('StButton', {
+      routerLink: runtime.bind(() => '/about'),
+      label: 'About',
+    }, undefined);
+
+    expect(button.kind).toBe('StButton');
+    expect(attributes[0]).toEqual({ label: 'About' });
+    expect(listeners).toHaveLength(1);
+    expect(router.url).toBe('/');
+    listeners[0]!();
+    expect(router.url).toBe('/about');
+    expect(cleanups).toHaveLength(1);
+    cleanups[0]!();
+  });
+
+  it('allows a null routerLink to disable navigation and rejects use without an outlet', () => {
+    const host = createHost();
+    const runtime = createGtplRenderRuntime(host);
+    expect(() => runtime.element('StButton', { routerLink: null }, undefined)).toThrow(/RouterOutlet/);
+
+    const router = new Router([{ path: '/', render: () => ({ kind: 'home' }) }]);
+    renderRouterOutlet(router, runtime);
+    const listeners: Array<(...args: unknown[]) => unknown> = [];
+    const linkHost = createHost(listeners);
+    const linkedRuntime = createGtplRenderRuntime(linkHost);
+    renderRouterOutlet(router, linkedRuntime);
+    linkedRuntime.element('StButton', { routerLink: null }, undefined);
+    expect(listeners).toHaveLength(1);
+    listeners[0]!();
+    expect(router.url).toBe('/');
   });
 
   it('creates simple navigable links', () => {

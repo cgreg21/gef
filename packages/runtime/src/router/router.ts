@@ -212,6 +212,7 @@ export function renderRouterOutlet<Node>(
   runtime: GtplRenderRuntime<Node>,
   fallback: () => Node = () => runtime.fragment([]),
 ): Node {
+  runtime.setRouter(router);
   const route: GtplBinding<ActivatedRoute<Node> | null> = runtime.bind(() => router.currentRoute);
   return runtime.if(route, (current) => current ? current.config.render(current, runtime) : fallback(), fallback);
 }

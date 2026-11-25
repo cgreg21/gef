@@ -6,6 +6,7 @@ import { DirectiveRegistry } from '../directives/directive-registry.js';
 import { mountComponent } from '../components/component-ref.js';
 import { ComponentRegistry } from '../components/component-registry.js';
 import { signal, type Signal } from '../reactivity/signal.js';
+import type { Router } from '../router/router.js';
 
 export interface GtplRepeatItem<Node> {
   readonly key: unknown;
@@ -40,6 +41,7 @@ export interface GtplRenderHost<Node> {
   listen?(node: Node, event: string, handler: (...args: unknown[]) => unknown): () => void;
   onDestroy?(node: Node, callback: () => void): void;
   element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node | undefined): Node;
+  setRouter(router: Router<Node>): void;
   text(value: string | GtplBinding<string>): Node;
   fragment(children: readonly Node[]): Node;
   repeat(state: GtplBinding<GtplRepeatState<Node>>): Node;
@@ -98,6 +100,26 @@ export function createGtplRenderRuntime<Node>(
     onNodeCreated?.(node);
     return node;
   };
+  let router: Router<Node> | undefined;
+  const attachRouterLink = (node: Node, value: unknown): void => {
+    if (value === undefined) return;
+    if (!router || !host.listen || !host.onDestroy) {
+      throw new Error('The renderer host and RouterOutlet are required for routerLink.');
+    }
+    const getUrl = (): unknown => isGtplBinding(value) ? value.get() : value;
+    const initialUrl = getUrl();
+    if (initialUrl !== null && typeof initialUrl !== 'string') {
+      throw new TypeError('GTPL routerLink must resolve to a URL string or null.');
+    }
+    const disconnect = host.listen(node, 'clicked', () => {
+      const url = getUrl();
+      if (url !== null && typeof url !== 'string') {
+        throw new TypeError('GTPL routerLink must resolve to a URL string or null.');
+      }
+      if (url !== null) router!.navigate(url);
+    });
+    host.onDestroy(node, disconnect);
+  };
   const activeContexts: Signal<number>[] = [];
   const captureContexts = (): Signal<number>[] => [...activeContexts];
   const withContexts = <T>(contexts: readonly Signal<number>[], callback: () => T): T => {
@@ -118,11 +140,16 @@ export function createGtplRenderRuntime<Node>(
   return {
     pipe: (name, value, ...args) => pipes.transform(name, value, ...args),
     bind,
+    setRouter: (value) => { router = value; },
     element: (name, attributes, children) => {
-      const component = components.match(name, attributes);
+      const linkValue = attributes.routerLink;
+      const elementAttributes = Object.hasOwn(attributes, 'routerLink')
+        ? Object.fromEntries(Object.entries(attributes).filter(([key]) => key !== 'routerLink'))
+        : attributes;
+      const component = components.match(name, elementAttributes);
       if (component) {
-        const ref = mountComponent(component, injector, host, attributes);
-        const hostAttributes = Object.fromEntries(Object.entries(attributes).filter(([name]) =>
+        const ref = mountComponent(component, injector, host, elementAttributes);
+        const hostAttributes = Object.fromEntries(Object.entries(elementAttributes).filter(([name]) =>
           name === 'class' || name === 'className' || name === 'classBinding' || name.startsWith('class.')
           || name === 'style' || name === 'styleBinding' || name.startsWith('style.')));
         try {
@@ -135,7 +162,7 @@ export function createGtplRenderRuntime<Node>(
           throw error;
         }
         for (const [output, emitter] of Object.entries(ref.outputs)) {
-          const handler = attributes[output];
+          const handler = elementAttributes[output];
           if (typeof handler === 'function') {
             const subscription = emitter.subscribe(handler as (value: unknown) => void);
             ref.onDestroy(() => subscription.unsubscribe());
@@ -146,10 +173,22 @@ export function createGtplRenderRuntime<Node>(
           throw new Error('The renderer host does not support component lifecycle cleanup.');
         }
         host.onDestroy(ref.view.node, () => ref.destroy());
+        try {
+          attachRouterLink(ref.view.node, linkValue);
+        } catch (error) {
+          ref.destroy();
+          throw error;
+        }
         return track(ref.view.node);
       }
-      const node = host.element(name, attributes, children);
-      const matches = directives.match(name, attributes);
+      const node = host.element(name, elementAttributes, children);
+      try {
+        attachRouterLink(node, linkValue);
+      } catch (error) {
+        host.destroy(node);
+        throw error;
+      }
+      const matches = directives.match(name, elementAttributes);
       if (matches.length === 0) return track(node);
       if (!host.setProperty || !host.listen || !host.onDestroy) {
         host.destroy(node);

@@ -19,7 +19,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [x] Aligner le squelette d'extension GNOME sur l'organisation `src/` avec un adaptateur `src/extension.ts` décoré et limité aux API GJS (commit `421d354`).
 - [x] Finaliser le bootstrap et la destruction du composant racine sur GTK et GJS via `mountDecoratedComponent()` (commits `421d354` à `b1f2513`).
 - [x] Documenter et tester les commandes de création pour application et extension, y compris la syntaxe TypeScript des squelettes générés (CI `45381718868`).
-- [ ] Ajouter la configuration de routes uniquement lorsqu'un routeur fonctionnel existe (différé : aucun routeur fonctionnel n'est encore fourni).
+- [x] Ajouter un premier routeur commun GTK/GJS : routes déclaratives, priorité aux chemins statiques, paramètres dynamiques, query params, fragment, wildcard, navigation, historique mémoire avant/arrière, liens et `RouterOutlet` GTPL. Tests unitaires sur le matching, l'historique, les erreurs et le rendu. Les gardes, le lazy-loading et les stratégies d'URL externes restent différés.
 
 ## P2 — Architecture des composants décorés
 

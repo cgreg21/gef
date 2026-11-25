@@ -30,3 +30,5 @@ export * from './renderers/gtk/gtk-styles.js';
 export * from '../../shared/src/components/metadata.js';
 
 export * from './platform/gsettings.js';
+
+export * from './router/router.js';

@@ -5,6 +5,8 @@ export interface GtplExpressionOptions {
   readonly contextIdentifiers?: readonly string[];
   /** Names already declared in the current generated lexical scope. */
   readonly localIdentifiers?: readonly string[];
+  /** Generated getters for lexically scoped, reactive @let declarations. */
+  readonly localBindings?: ReadonlyMap<string, string>;
 }
 
 /**
@@ -42,7 +44,8 @@ function emitInternal(
       case 'literal':
         code = JSON.stringify(node.value); break;
       case 'identifier':
-        code = context.has(node.name) && !locals.has(node.name) ? `ctx.${node.name}` : node.name; break;
+        const binding = options.localBindings?.get(node.name);
+        code = binding ? `${binding}()` : context.has(node.name) && !locals.has(node.name) ? `ctx.${node.name}` : node.name; break;
       case 'member': {
         const object = emit(node.object);
         if (node.computed) {

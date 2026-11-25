@@ -92,6 +92,47 @@ function collectIdentifiers(node: ExpressionNode, names: Set<string>): void {
   }
 }
 
+function collectTemplateNames(nodes: readonly GtplNode[], names: Set<string>): void {
+  for (const node of nodes) {
+    switch (node.kind) {
+      case 'let-declaration':
+        names.add(node.name);
+        if (node.parsedExpression) collectIdentifiers(node.parsedExpression, names);
+        break;
+      case 'text':
+        for (const part of node.parts) if (part.kind === 'interpolation' && part.parsedExpression) collectIdentifiers(part.parsedExpression, names);
+        break;
+      case 'element':
+        for (const attribute of node.attributes) if (attribute.parsedExpression) collectIdentifiers(attribute.parsedExpression, names);
+        collectTemplateNames(node.children, names);
+        break;
+      case 'if-block':
+        for (const branch of node.branches) {
+          if (branch.alias) names.add(branch.alias);
+          if (branch.parsedCondition) collectIdentifiers(branch.parsedCondition, names);
+          collectTemplateNames(branch.children, names);
+        }
+        break;
+      case 'for-block':
+        names.add(node.item);
+        for (const alias of node.aliases) names.add(alias.name);
+        if (node.parsedCollection) collectIdentifiers(node.parsedCollection, names);
+        if (node.parsedTrack) collectIdentifiers(node.parsedTrack, names);
+        collectTemplateNames(node.children, names);
+        collectTemplateNames(node.empty, names);
+        break;
+      case 'switch-block':
+        if (node.parsedExpression) collectIdentifiers(node.parsedExpression, names);
+        for (const branch of node.cases) {
+          for (const value of branch.parsedExpressions) collectIdentifiers(value, names);
+          collectTemplateNames(branch.children, names);
+        }
+        if (node.defaultCase) collectTemplateNames(node.defaultCase.children, names);
+        break;
+    }
+  }
+}
+
 function isWhitespaceOnlyText(node: GtplNode): boolean {
   return node.kind === 'text'
     && node.parts.every((part) => part.kind === 'text' && /^\s*$/.test(part.value));
@@ -104,6 +145,7 @@ function expression(
   mappings?: NodeMapping[],
   sourcePosition?: { line: number; column: number },
   sourceExpression?: string,
+  localBindings?: ReadonlyMap<string, string>,
 ): string {
   if (!node) throw new Error('Cannot generate GTPL: an expression has no valid AST.');
   const identifiers = new Set<string>();
@@ -111,7 +153,7 @@ function expression(
   const globals = new Set([...BUILTIN_GLOBALS, ...(options.globals ?? [])]);
   const contextIdentifiers = options.componentMembers
     ?? [...identifiers].filter((name) => !locals.has(name) && !globals.has(name));
-  const expressionOptions = { contextIdentifiers, localIdentifiers: [...locals, ...globals] };
+  const expressionOptions = { contextIdentifiers, localIdentifiers: [...locals, ...globals], localBindings };
   if (!mappings || !sourcePosition || sourceExpression === undefined) {
     return emitGtplExpressionWithMarkers(node, expressionOptions, () => '');
   }
@@ -140,8 +182,22 @@ function emitGtplTemplateInternal(
   options: GtplTemplateOptions,
 ): { code: string; nodeMappings: NodeMapping[] } {
   const nodeMappings: NodeMapping[] = [];
-  const renderNodes = (items: readonly GtplNode[], parentLocals: ReadonlySet<string>): string => {
+  const reservedNames = new Set<string>();
+  collectTemplateNames(nodes, reservedNames);
+  let generatedNameIndex = 0;
+  const nextGeneratedName = (): string => {
+    let name: string;
+    do { name = `$__gefLet${generatedNameIndex++}`; } while (reservedNames.has(name));
+    reservedNames.add(name);
+    return name;
+  };
+  const renderNodes = (
+    items: readonly GtplNode[],
+    parentLocals: ReadonlySet<string>,
+    parentLetBindings: ReadonlyMap<string, string> = new Map(),
+  ): string => {
     const locals = new Set(parentLocals);
+    const letBindings = new Map(parentLetBindings);
     const statements: string[] = [];
     const rendered: string[] = [];
     const contentNodes = items.filter((node) => !isWhitespaceOnlyText(node));
@@ -151,12 +207,14 @@ function emitGtplTemplateInternal(
 
     for (const node of nodes) {
       if (node.kind === 'let-declaration') {
-        const value = expression(node.parsedExpression, locals, options, nodeMappings, node.expressionSpan, node.expression);
-        statements.push(`const ${node.name} = ${value};`);
+        const value = expression(node.parsedExpression, locals, options, nodeMappings, node.expressionSpan, node.expression, letBindings);
+        const getter = nextGeneratedName();
+        statements.push(`const ${getter} = () => ${value};`);
         locals.add(node.name);
+        letBindings.set(node.name, getter);
         continue;
       }
-      rendered.push(renderNode(node, locals));
+      rendered.push(renderNode(node, locals, letBindings));
     }
 
     const contentPrefix = rendered.length > 1 ? 'runtime.fragment([' : '';
@@ -167,10 +225,10 @@ function emitGtplTemplateInternal(
     return statementPrefix + content + (statements.length === 0 ? '' : '\n})()');
   };
 
-  const renderText = (node: TextNode, locals: ReadonlySet<string>): string => {
+  const renderText = (node: TextNode, locals: ReadonlySet<string>, letBindings: ReadonlyMap<string, string>): string => {
     const value = node.parts.map((part) => part.kind === 'text'
       ? JSON.stringify(part.value)
-      : `String(${expression(part.parsedExpression, locals, options, nodeMappings, part.expressionSpan, part.expression)} ?? '')`);
+      : `String(${expression(part.parsedExpression, locals, options, nodeMappings, part.expressionSpan, part.expression, letBindings)} ?? '')`);
     if (value.length === 0) return 'runtime.text("")';
     const text = value.length === 1 ? value[0] : value.join(' + ');
     return node.parts.some((part) => part.kind === 'interpolation')
@@ -178,7 +236,7 @@ function emitGtplTemplateInternal(
       : `runtime.text(${text})`;
   };
 
-  const renderElement = (node: ElementNode, locals: ReadonlySet<string>): string => {
+  const renderElement = (node: ElementNode, locals: ReadonlySet<string>, letBindings: ReadonlyMap<string, string>): string => {
     const attributes: string[] = [];
     for (const attribute of node.attributes) {
       if (attribute.kind === 'structural' || attribute.kind === 'two-way') {
@@ -189,10 +247,12 @@ function emitGtplTemplateInternal(
         value = JSON.stringify(attribute.value);
       } else {
         const attributeLocals = attribute.kind === 'event' ? new Set([...locals, '$event']) : locals;
+        const attributeLetBindings = attribute.kind === 'event' ? new Map(letBindings) : letBindings;
+        if (attribute.kind === 'event') attributeLetBindings.delete('$event');
         const emitted = expression(attribute.parsedExpression, attributeLocals, options, nodeMappings, {
           line: attribute.valueSpan.line,
           column: attribute.valueSpan.column,
-        }, attribute.value);
+        }, attribute.value, attributeLetBindings);
         value = attribute.kind === 'event'
           ? `($event) => ${emitted}`
           : attribute.kind === 'property' ? `runtime.bind(() => ${emitted})` : emitted;
@@ -202,38 +262,40 @@ function emitGtplTemplateInternal(
           : attribute.name;
       attributes.push(`${JSON.stringify(name)}: ${value}`);
     }
-    const children = node.children.length > 0 ? renderNodes(node.children, locals) : 'undefined';
+    const children = node.children.length > 0 ? renderNodes(node.children, locals, letBindings) : 'undefined';
     const attributeObject = attributes.length === 0
       ? '{}'
       : `{\n  ${attributes.join(',\n  ')}\n}`;
     return `runtime.element(${JSON.stringify(node.name)}, ${attributeObject}, ${children})`;
   };
 
-  const renderIf = (node: IfBlockNode, locals: ReadonlySet<string>): string => {
+  const renderIf = (node: IfBlockNode, locals: ReadonlySet<string>, letBindings: ReadonlyMap<string, string>): string => {
     let fallback = 'runtime.fragment([])';
     for (let index = node.branches.length - 1; index >= 0; index -= 1) {
       const branch = node.branches[index]!;
       if (branch.parsedCondition) {
-        const condition = expression(branch.parsedCondition, locals, options, nodeMappings, branch.conditionSpan, branch.condition);
+        const condition = expression(branch.parsedCondition, locals, options, nodeMappings, branch.conditionSpan, branch.condition, letBindings);
         const render = branch.alias
-          ? `(${branch.alias}) => ${renderNodes(branch.children, new Set([...locals, branch.alias]))}`
-          : `() => ${renderNodes(branch.children, locals)}`;
+          ? `(${branch.alias}) => ${renderNodes(branch.children, new Set([...locals, branch.alias]), withoutBinding(letBindings, branch.alias))}`
+          : `() => ${renderNodes(branch.children, locals, letBindings)}`;
         fallback = `runtime.if(runtime.bind(() => ${condition}), ${render}, () => ${fallback})`;
       } else {
-        fallback = renderNodes(branch.children, locals);
+        fallback = renderNodes(branch.children, locals, letBindings);
       }
     }
     return fallback;
   };
 
-  const renderFor = (node: ForBlockNode, locals: ReadonlySet<string>): string => {
-    const loopLocals = new Set([...locals, node.item, '$index', '$count', '$first', '$last', '$even', '$odd', ...node.aliases.map((alias) => alias.name)]);
+  const renderFor = (node: ForBlockNode, locals: ReadonlySet<string>, letBindings: ReadonlyMap<string, string>): string => {
+    const loopNames = [node.item, '$index', '$count', '$first', '$last', '$even', '$odd', ...node.aliases.map((alias) => alias.name)];
+    const loopLocals = new Set([...locals, ...loopNames]);
+    const loopLetBindings = withoutBindings(letBindings, loopNames);
     const aliases = node.aliases.map((alias) => `const ${alias.name} = ${alias.context};`).join(' ');
     const aliasLines = aliases ? `${aliases}\n    ` : '';
-    const body = renderNodes(node.children, loopLocals);
-    const empty = renderNodes(node.empty, locals);
-    const collection = expression(node.parsedCollection, locals, options, nodeMappings, node.collectionSpan, node.collection);
-    const track = expression(node.parsedTrack, loopLocals, options, nodeMappings, node.trackSpan, node.track);
+    const body = renderNodes(node.children, loopLocals, loopLetBindings);
+    const empty = renderNodes(node.empty, locals, letBindings);
+    const collection = expression(node.parsedCollection, locals, options, nodeMappings, node.collectionSpan, node.collection, letBindings);
+    const track = expression(node.parsedTrack, loopLocals, options, nodeMappings, node.trackSpan, node.track, loopLetBindings);
     return `runtime.for(
   runtime.bind(() => ${collection}),
   (${node.item}, $index, $count) => {
@@ -254,30 +316,41 @@ function emitGtplTemplateInternal(
 )`;
   };
 
-  const renderSwitch = (node: SwitchBlockNode, locals: ReadonlySet<string>): string => {
+  const renderSwitch = (node: SwitchBlockNode, locals: ReadonlySet<string>, letBindings: ReadonlyMap<string, string>): string => {
     const cases = node.cases.map((branch) => {
-      const values = branch.parsedExpressions.map((item, index) => expression(item, locals, options, nodeMappings, branch.expressionSpans[index], branch.expressions[index]));
-      return `{ values: [${values.join(', ')}], render: () => ${renderNodes(branch.children, locals)} }`;
+      const values = branch.parsedExpressions.map((item, index) => expression(item, locals, options, nodeMappings, branch.expressionSpans[index], branch.expressions[index], letBindings));
+      return `{ values: [${values.join(', ')}], render: () => ${renderNodes(branch.children, locals, letBindings)} }`;
     });
     const fallback = node.defaultCase && !node.defaultCase.exhaustive
-      ? `() => ${renderNodes(node.defaultCase.children, locals)}`
+      ? `() => ${renderNodes(node.defaultCase.children, locals, letBindings)}`
       : 'undefined';
-    return `runtime.switch(runtime.bind(() => ${expression(node.parsedExpression, locals, options, nodeMappings, node.expressionSpan, node.expression)}), [${cases.join(', ')}], ${fallback})`;
+    return `runtime.switch(runtime.bind(() => ${expression(node.parsedExpression, locals, options, nodeMappings, node.expressionSpan, node.expression, letBindings)}), [${cases.join(', ')}], ${fallback})`;
   };
 
-  const renderNode = (node: GtplNode, locals: ReadonlySet<string>): string => {
+  const renderNode = (node: GtplNode, locals: ReadonlySet<string>, letBindings: ReadonlyMap<string, string>): string => {
     const marker = nodeMappings.length;
     nodeMappings.push({ generatedLine: 0, generatedColumn: 0, sourceLine: node.span.line - 1, sourceColumn: node.span.column - 1 });
     let rendered: string;
     switch (node.kind) {
-      case 'text': rendered = renderText(node, locals); break;
-      case 'element': rendered = renderElement(node, locals); break;
-      case 'if-block': rendered = renderIf(node, locals); break;
-      case 'for-block': rendered = renderFor(node as ForBlockNode, locals); break;
-      case 'switch-block': rendered = renderSwitch(node, locals); break;
+      case 'text': rendered = renderText(node, locals, letBindings); break;
+      case 'element': rendered = renderElement(node, locals, letBindings); break;
+      case 'if-block': rendered = renderIf(node, locals, letBindings); break;
+      case 'for-block': rendered = renderFor(node as ForBlockNode, locals, letBindings); break;
+      case 'switch-block': rendered = renderSwitch(node, locals, letBindings); break;
       case 'let-declaration': rendered = 'runtime.fragment([])'; break;
     }
     return `/*__GEF_MAP_${marker}__*/${rendered}`;
+  };
+
+  const withoutBinding = (bindings: ReadonlyMap<string, string>, name: string): Map<string, string> => {
+    const result = new Map(bindings);
+    result.delete(name);
+    return result;
+  };
+  const withoutBindings = (bindings: ReadonlyMap<string, string>, names: readonly string[]): Map<string, string> => {
+    const result = new Map(bindings);
+    for (const name of names) result.delete(name);
+    return result;
   };
 
   const markedCode = '(ctx, runtime) => {\n  return ' + renderNodes(nodes, new Set()) + ';\n}';

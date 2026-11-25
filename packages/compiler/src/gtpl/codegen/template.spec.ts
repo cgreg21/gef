@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { emitGtplTemplate, emitGtplTemplateWithSourceMap } from './template.js';
 import { parseGtpl } from '../parser/parser.js';
 import { lowerGtplStructuralDirectives } from '../lowering/structural.js';
-import { mountGtplTemplate, type GtplRenderHost } from '../../../../runtime/src/index.js';
+import { mountGtplTemplate, signal, type GtplRenderHost } from '../../../../runtime/src/index.js';
 
 function emit(source: string, componentMembers: string[] = []): string {
   const parsed = parseGtpl(source);
@@ -153,7 +153,8 @@ describe('emitGtplTemplate', () => {
 @if (visible; as shown) { <label>{{shown}}</label> } @else { <label>Hidden</label> }
 @for (item of items; track item.id; let i = $index) { <label>{{item.name}} {{i}}</label> } @empty { Empty }
 @switch (state) { @case ("ready") { Ready } @default { Wait } }`, ['heading', 'visible', 'items', 'state']);
-    expect(compact(output)).toContain('const title = ctx.heading');
+    expect(compact(output)).toContain('const $__gefLet0 = () => ctx.heading');
+    expect(compact(output)).toContain('String($__gefLet0() ??');
     expect(compact(output)).toContain('runtime.if(runtime.bind(() => ctx.visible)');
     expect(compact(output)).toContain('runtime.for( runtime.bind(() => ctx.items)');
     expect(compact(output)).toContain('return (item.id)');
@@ -176,6 +177,44 @@ describe('emitGtplTemplate', () => {
     };
     expect(render({ getValue: () => { calls += 1; return 'ready'; } }, runtime)).toBe('ready ');
     expect(calls).toBe(1);
+  });
+
+  it('re-evaluates @let values in bindings, interpolations and event handlers when signals change', () => {
+    const parsed = parseGtpl('@let title = heading.get();\n@let message = "Hello " + title;\n<StLabel [text]="message" (clicked)="select(message)">{{title}}</StLabel>');
+    expect(parsed.diagnostics).toEqual([]);
+    const source = emitGtplTemplate(parsed.nodes);
+    const render = new Function(`return ${source}`)() as (context: unknown, runtime: unknown) => Node;
+    const heading = signal('GEF');
+    const selected: string[] = [];
+    const host: GtplRenderHost<Node> = {
+      destroy: () => {},
+      element: (kind, attributes, children) => ({ kind, value: attributes, children: children ? [children] : [] }),
+      text: (value) => ({ kind: 'text', value }),
+      fragment: (children) => ({ kind: 'fragment', children }),
+      repeat: (state) => ({ kind: 'repeat', value: state.get() }),
+      conditional: (condition, renderBranch, fallback) => condition.get() ? renderBranch(condition.get()) : fallback(),
+      switch: (value, cases, renderDefault) => cases.find((branch) => branch.values.includes(value.get()))?.render()
+        ?? renderDefault?.() ?? { kind: 'fragment', children: [] },
+    };
+    const view = mountGtplTemplate({ heading, select: (value: string) => selected.push(value) }, render, host);
+    const attributes = view.node.value as { text: { get: () => string }; clicked: () => void };
+    const text = view.node.children?.[0]?.value as { get: () => string };
+    expect(attributes.text.get()).toBe('Hello GEF');
+    expect(text.get()).toBe('GEF');
+    attributes.clicked();
+    heading.set('Framework');
+    expect(attributes.text.get()).toBe('Hello Framework');
+    expect(text.get()).toBe('Framework');
+    attributes.clicked();
+    expect(selected).toEqual(['Hello GEF', 'Hello Framework']);
+    view.dispose();
+  });
+
+  it('keeps @let getters scoped and resolves earlier declarations in later ones', () => {
+    const output = emit('@let title = heading; @if (visible) { @let message = title + suffix; <StLabel [text]="message" /> }', ['heading', 'visible', 'suffix']);
+    expect(output).toContain('const $__gefLet0 = () => ctx.heading');
+    expect(output).toContain('const $__gefLet1 = () => ($__gefLet0() + ctx.suffix)');
+    expect(output).toContain('"text": runtime.bind(() => $__gefLet1())');
   });
 
   it('emits lowered two-way bindings as a property and event callback', () => {

@@ -151,16 +151,18 @@ describe('Router', () => {
 
     canLeave = true;
     expect(router.navigate('/preview')).toBe(true);
+    expect(router.navigate('/edit')).toBe(true);
     canLeave = false;
     expect(router.back()).toBe(false);
-    expect(router.url).toBe('/preview');
+    expect(router.url).toBe('/edit');
     expect(router.canGoBack).toBe(true);
     expect(router.canGoForward).toBe(false);
 
     canLeave = true;
     expect(router.back()).toBe(true);
-    expect(router.url).toBe('/edit');
-    expect(router.forward()).toBe(false);
+    expect(router.url).toBe('/preview');
+    canLeave = false;
+    expect(router.forward()).toBe(true);
     expect(router.url).toBe('/edit');
   });
 

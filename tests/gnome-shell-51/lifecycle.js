@@ -1,6 +1,6 @@
 import GLib from 'gi://GLib';
 import St from 'gi://St';
-import { createStRenderHost, ResourceScope, signal } from '../../dist/extension/lib/runtime/index.js';
+import { createStRenderHost, ResourceScope, signal } from '../../dist/runtime/src/index.js';
 
 export function runLifecycleSmokeTest() {
   for (let cycle = 0; cycle < 2; cycle += 1) {

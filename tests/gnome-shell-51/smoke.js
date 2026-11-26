@@ -6,7 +6,7 @@ import {
   createStRenderHost,
   getComponentMetadata,
   signal,
-} from '../../dist/extension/lib/runtime/index.js';
+} from '../../dist/runtime/src/index.js';
 import { runLifecycleSmokeTest } from './lifecycle.js';
 
 Clutter.init(null);

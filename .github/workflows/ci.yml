@@ -175,7 +175,7 @@ jobs:
 
           docker build --tag gef-fedora45-gnome --file - "$RUNNER_TEMP" <<'DOCKERFILE'
           FROM fedora:45
-          RUN dnf install -y systemd nodejs npm gnome-shell mutter-devkit gjs dbus-daemon glib2 \
+          RUN dnf install -y systemd nodejs npm gnome-shell mutter mutter-devkit gjs dbus-daemon glib2 \
               xorg-x11-server-Xvfb xorg-x11-server-Xwayland xorg-x11-xauth \
               mesa-dri-drivers pipewire zip unzip && dnf clean all
           STOPSIGNAL SIGRTMIN+3

@@ -316,6 +316,9 @@ export class ${className} {
   }
 
   if (command === 'check' || command === 'compile') return runTemplateCommand(command, inputArg, outputArg, io, usage);
+
+  io.stderr(`Unknown command: ${command}\n\n${usage}`);
+  return 2;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

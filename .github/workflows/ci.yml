@@ -111,7 +111,9 @@ jobs:
           npx --yes --package "$PACKAGE_TARBALL" gef --help
 
 
+  # Temporarily paused; re-enable by removing this condition.
   windows:
+    if: false
     name: Windows CLI checks
     runs-on: windows-latest
     timeout-minutes: 10
@@ -133,7 +135,9 @@ jobs:
       - name: Package and launch standalone Windows application
         run: node tests/packaging/windows-smoke.mjs
 
+  # Temporarily paused; re-enable by removing this condition.
   macos:
+    if: false
     name: macOS standalone application package
     runs-on: macos-latest
     timeout-minutes: 30

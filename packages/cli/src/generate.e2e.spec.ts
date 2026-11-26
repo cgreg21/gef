@@ -65,6 +65,7 @@ describe('generated project smoke tests', () => {
           compilerOptions: Record<string, unknown>;
         };
         tsconfig.compilerOptions.noEmit = true;
+        delete tsconfig.compilerOptions.rootDir;
         tsconfig.compilerOptions.baseUrl = '.';
         tsconfig.compilerOptions.paths = {
           'gnome-extension-framework/runtime': [resolve(process.cwd(), 'packages/runtime/src/index.ts')],

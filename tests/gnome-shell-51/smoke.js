@@ -1,4 +1,7 @@
+import Clutter from 'gi://Clutter?version=1.0';
 import St from 'gi://St?version=51';
+
+Clutter.init(null);
 import {
   Component,
   PipeRegistry,

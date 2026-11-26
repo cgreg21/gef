@@ -1,4 +1,3 @@
-import Clutter from 'gi://Clutter';
 import St from 'gi://St';
 import {
   Component,
@@ -9,7 +8,6 @@ import {
 } from '../../dist/runtime/src/index.js';
 import { runLifecycleSmokeTest } from './lifecycle.js';
 
-Clutter.init(null);
 runLifecycleSmokeTest();
 
 const state = signal(1);

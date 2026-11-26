@@ -206,6 +206,7 @@ jobs:
           fi
 
           docker exec "$container" useradd --create-home --uid "$(id -u)" ci
+          docker exec "$container" loginctl enable-linger ci
           docker exec "$container" chown -R ci:ci /workspace
           docker exec --user ci "$container" bash -lc "cd /workspace && npm install --ignore-scripts --no-audit --no-fund && npm run test:gnome:generated"
 

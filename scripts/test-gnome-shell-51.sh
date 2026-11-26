@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-for command in gnome-shell gnome-extensions gjs dbus-run-session xvfb-run gdbus; do
+for command in node unzip realpath gnome-shell gnome-extensions gjs dbus-run-session xvfb-run gdbus; do
   if ! command -v "$command" >/dev/null 2>&1; then
     echo "Missing required command: $command" >&2
     exit 2

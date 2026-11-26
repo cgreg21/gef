@@ -182,10 +182,10 @@ jobs:
           CMD ["/sbin/init"]
           DOCKERFILE
 
-          docker run --detach --name "$container" --privileged \
+          docker run --detach --name "$container" --privileged --cgroupns=host \
             --volume "$GITHUB_WORKSPACE:/workspace" \
             --volume /sys/fs/cgroup:/sys/fs/cgroup:rw \
-            --tmpfs /run --tmpfs /tmp \
+            --tmpfs /run --tmpfs /run/lock --tmpfs /tmp \
             --workdir /workspace \
             gef-fedora45-gnome
 
@@ -198,8 +198,9 @@ jobs:
             sleep 1
           done
           if [[ "$ready" -ne 1 ]]; then
-            docker exec "$container" systemctl status systemd-logind.service --no-pager || true
+            docker inspect --format 'Container state: status={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}}' "$container" || true
             docker logs "$container" || true
+            docker exec "$container" systemctl status systemd-logind.service --no-pager || true
             echo "Fedora systemd-logind did not become active." >&2
             exit 1
           fi

@@ -132,7 +132,7 @@ describe('emitGtplTemplate', () => {
     const output = emit(`@let first = value | append:"!"; @let second = value | append:"?"; <StLabel>{{first}} {{second}}</StLabel>`, ['value']);
     expect(output).toContain('const $__gefPipeSites = {};');
     expect(output).toContain('runtime.pipe($__gefPipeSites,');
-    const sites = [...output.matchAll(/runtime\\.pipe\\(\\$__gefPipeSites, (\\d+),/g)].map((match) => match[1]);
+    const sites = [...output.matchAll(/runtime\.pipe\(\$__gefPipeSites, ("[^"]+"),/g)].map((match) => match[1]);
     expect(sites).toHaveLength(2);
     expect(new Set(sites).size).toBe(2);
   });

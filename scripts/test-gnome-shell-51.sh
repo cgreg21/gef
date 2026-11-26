@@ -47,6 +47,17 @@ export LD_LIBRARY_PATH="/usr/lib64/gnome-shell:/usr/lib64/mutter-51${LD_LIBRARY_
 dbus-run-session -- xvfb-run -a bash -euo pipefail -c '
   archive="$1"
   uuid="$2"
+  installed_uuid="$(gnome-extensions install --force --print-uuid "$archive")"
+  if [[ "$installed_uuid" != "$uuid" ]]; then
+    echo "Installed extension UUID does not match archive metadata: $installed_uuid" >&2
+    exit 1
+  fi
+  extension_dir="${XDG_DATA_HOME}/gnome-shell/extensions/${uuid}"
+  if [[ ! -f "$extension_dir/metadata.json" ]]; then
+    echo "GNOME Shell extension was not installed at: $extension_dir" >&2
+    exit 1
+  fi
+
   pipewire >/tmp/gef-pipewire.log 2>&1 &
   pipewire_pid=$!
   gnome-shell --wayland --devkit &
@@ -76,7 +87,6 @@ dbus-run-session -- xvfb-run -a bash -euo pipefail -c '
   fi
 
   gjs -m tests/gnome-shell-51/smoke.js
-  gnome-extensions install --force "$archive"
 
   for cycle in 1 2; do
     gnome-extensions enable "$uuid"

@@ -90,16 +90,18 @@ dbus-run-session -- xvfb-run -a bash -euo pipefail -c '
 
   for cycle in 1 2; do
     gnome-extensions enable "$uuid"
-    if ! gnome-extensions info "$uuid" | grep -q "State: ENABLED"; then
-      echo "Generated extension failed to reach ENABLED state (cycle $cycle)." >&2
-      gnome-extensions info "$uuid" >&2 || true
+    extension_info="$(gnome-extensions info "$uuid")"
+    if ! grep -q "State: ACTIVE" <<< "$extension_info"; then
+      echo "Generated extension failed to reach ACTIVE state (cycle $cycle)." >&2
+      printf '%s\n' "$extension_info" >&2
       exit 1
     fi
 
     gnome-extensions disable "$uuid"
-    if ! gnome-extensions info "$uuid" | grep -q "State: DISABLED"; then
-      echo "Generated extension failed to reach DISABLED state (cycle $cycle)." >&2
-      gnome-extensions info "$uuid" >&2 || true
+    extension_info="$(gnome-extensions info "$uuid")"
+    if ! grep -q "State: INACTIVE" <<< "$extension_info"; then
+      echo "Generated extension failed to reach INACTIVE state (cycle $cycle)." >&2
+      printf '%s\n' "$extension_info" >&2
       exit 1
     fi
   done

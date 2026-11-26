@@ -91,7 +91,7 @@ describe('generated project smoke tests', () => {
               useDefineForClassFields: false,
             },
           }).outputText;
-          const output = join(staged, relative(join(project, 'src'), file).replace(/\\.ts$/, '.js'));
+          const output = join(staged, relative(join(project, 'src'), file).replace(/\.ts$/, '.js'));
           await mkdir(dirname(output), { recursive: true });
           await writeFile(output, javascript);
         }

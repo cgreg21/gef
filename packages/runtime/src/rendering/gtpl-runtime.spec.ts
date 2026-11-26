@@ -50,6 +50,19 @@ describe('createGtplRenderRuntime', () => {
     expect(runtime.text('static')).toEqual({ kind: 'text', value: 'static' });
   });
 
+  it('caches pure pipes independently at each generated expression site', () => {
+    const transform = vi.fn((value: unknown, suffix: unknown) => `${value}${suffix}`);
+    const pipes = new PipeRegistry().register('append', { transform });
+    const runtime = createGtplRenderRuntime(createHost(), pipes);
+    const firstSite = {};
+    const secondSite = {};
+    expect(runtime.pipe(firstSite, 0, 'append', 'gef', '!')).toBe('gef!');
+    expect(runtime.pipe(firstSite, 0, 'append', 'gef', '!')).toBe('gef!');
+    expect(runtime.pipe(secondSite, 0, 'append', 'gef', '?')).toBe('gef?');
+    expect(runtime.pipe(firstSite, 1, 'append', 'gef', '?')).toBe('gef?');
+    expect(transform).toHaveBeenCalledTimes(3);
+  });
+
   it('matches directives and owns their host behavior until actor destruction', () => {
     const setProperty = vi.fn();
     const listen = vi.fn(() => vi.fn());

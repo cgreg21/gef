@@ -6,15 +6,19 @@ export interface RuntimePipe {
 interface PipeEntry {
   readonly pipe: RuntimePipe;
   readonly pure: boolean;
-  hasCachedValue: boolean;
-  lastValue: unknown;
-  lastArguments: readonly unknown[];
-  lastResult: unknown;
+}
+
+interface PipeCache {
+  value: unknown;
+  arguments: readonly unknown[];
+  result: unknown;
 }
 
 /** Explicit registry for pure and impure template pipe transforms. */
 export class PipeRegistry {
   readonly #pipes = new Map<string, PipeEntry>();
+  #siteCaches = new WeakMap<object, Map<number, PipeCache>>();
+  readonly #legacyCaches = new Map<string, PipeCache>();
 
   register(name: string, pipe: RuntimePipe, pure = true): this {
     if (!/^[A-Za-z][A-Za-z0-9_-]*$/.test(name)) throw new TypeError(`Invalid GEF pipe name "${name}".`);
@@ -22,10 +26,6 @@ export class PipeRegistry {
     this.#pipes.set(name, {
       pipe,
       pure,
-      hasCachedValue: false,
-      lastValue: undefined,
-      lastArguments: [],
-      lastResult: undefined,
     });
     return this;
   }
@@ -41,22 +41,34 @@ export class PipeRegistry {
   }
 
   transform(name: string, value: unknown, ...args: unknown[]): unknown {
+    const entry = this.getEntry(name);
+    if (!entry.pure) return entry.pipe.transform(value, ...args);
+    const cached = this.#legacyCaches.get(name);
+    if (cached && Object.is(cached.value, value) && sameArguments(cached.arguments, args)) return cached.result;
+    const result = entry.pipe.transform(value, ...args);
+    this.#legacyCaches.set(name, { value, arguments: [...args], result });
+    return result;
+  }
+
+  transformAt(site: object, siteId: number, name: string, value: unknown, ...args: unknown[]): unknown {
+    const entry = this.getEntry(name);
+    if (!entry.pure) return entry.pipe.transform(value, ...args);
+    let caches = this.#siteCaches.get(site);
+    if (!caches) {
+      caches = new Map();
+      this.#siteCaches.set(site, caches);
+    }
+    const cached = caches.get(siteId);
+    if (cached && Object.is(cached.value, value) && sameArguments(cached.arguments, args)) return cached.result;
+    const result = entry.pipe.transform(value, ...args);
+    caches.set(siteId, { value, arguments: [...args], result });
+    return result;
+  }
+
+  private getEntry(name: string): PipeEntry {
     const entry = this.#pipes.get(name);
     if (!entry) throw new Error(`No GEF pipe registered as "${name}".`);
-    if (entry.pure && entry.hasCachedValue
-      && Object.is(entry.lastValue, value)
-      && sameArguments(entry.lastArguments, args)) {
-      return entry.lastResult;
-    }
-
-    const result = entry.pipe.transform(value, ...args);
-    if (entry.pure) {
-      entry.hasCachedValue = true;
-      entry.lastValue = value;
-      entry.lastArguments = [...args];
-      entry.lastResult = result;
-    }
-    return result;
+    return entry;
   }
 
   has(name: string): boolean {
@@ -65,6 +77,8 @@ export class PipeRegistry {
 
   clear(): void {
     this.#pipes.clear();
+    this.#legacyCaches.clear();
+    this.#siteCaches = new WeakMap();
   }
 }
 

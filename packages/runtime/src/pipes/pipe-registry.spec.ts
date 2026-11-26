@@ -12,6 +12,27 @@ describe('PipeRegistry', () => {
     expect(transform).toHaveBeenCalledTimes(2);
   });
 
+  it('caches pure transforms independently for each expression site', () => {
+    const transform = vi.fn((value: unknown, suffix: unknown) => `${value}${suffix}`);
+    const pipes = new PipeRegistry().register('append', { transform });
+    const firstSite = {};
+    const secondSite = {};
+    expect(pipes.transformAt(firstSite, 0, 'append', 'gef', '!')).toBe('gef!');
+    expect(pipes.transformAt(firstSite, 0, 'append', 'gef', '!')).toBe('gef!');
+    expect(pipes.transformAt(secondSite, 0, 'append', 'gef', '?')).toBe('gef?');
+    expect(pipes.transformAt(firstSite, 1, 'append', 'gef', '?')).toBe('gef?');
+    expect(transform).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not cache impure transforms by expression site', () => {
+    const transform = vi.fn((value: unknown) => value);
+    const pipes = new PipeRegistry().register('clock', { transform }, false);
+    const site = {};
+    pipes.transformAt(site, 0, 'clock', 1);
+    pipes.transformAt(site, 0, 'clock', 1);
+    expect(transform).toHaveBeenCalledTimes(2);
+  });
+
   it('registers a pipe using decorator metadata', () => {
     const transform = vi.fn((value: unknown) => String(value).toUpperCase());
     const pipes = new PipeRegistry().registerMetadata({ name: 'uppercase', pure: true }, { transform });

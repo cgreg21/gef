@@ -63,6 +63,7 @@ export interface GtplSwitchCase<Node> {
 /** Runtime surface targeted by JavaScript emitted by emitGtplTemplate. */
 export interface GtplRenderRuntime<Node> {
   pipe(name: string, value: unknown, ...args: unknown[]): unknown;
+  pipe(site: object, siteId: number, name: string, value: unknown, ...args: unknown[]): unknown;
   bind<T>(get: () => T): GtplBinding<T>;
   element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node | undefined): Node;
   setRouter(router: Router<Node>): void;
@@ -137,8 +138,15 @@ export function createGtplRenderRuntime<Node>(
       }),
     };
   };
+  const pipe = (nameOrSite: string | object, valueOrSiteId: unknown, ...args: unknown[]): unknown => {
+    if (typeof nameOrSite === 'string') return pipes.transform(nameOrSite, valueOrSiteId, ...args);
+    if (typeof valueOrSiteId !== 'number' || typeof args[0] !== 'string') {
+      throw new TypeError('Invalid GTPL pipe expression site.');
+    }
+    return pipes.transformAt(nameOrSite, valueOrSiteId, args[0], args[1], ...args.slice(2));
+  };
   return {
-    pipe: (name, value, ...args) => pipes.transform(name, value, ...args),
+    pipe,
     bind,
     setRouter: (value) => { router = value; },
     element: (name, attributes, children) => {

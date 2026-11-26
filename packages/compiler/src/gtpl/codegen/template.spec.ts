@@ -128,6 +128,15 @@ describe('emitGtplTemplate', () => {
     expect(emitGtplTemplate(parsed.nodes)).toContain('String(ctx.name)');
   });
 
+  it('emits stable, distinct identifiers for pure pipe expression sites', () => {
+    const output = emit('@let first = value | append:"!"; @let second = value | append:"?"; <StLabel>{{first}} {{second}}</StLabel>', ['value']);
+    expect(output).toContain('const $__gefPipeSites = {};');
+    expect(output).toContain('runtime.pipe($__gefPipeSites,');
+    const sites = [...output.matchAll(/runtime\\.pipe\\(\\$__gefPipeSites, (\\d+),/g)].map((match) => match[1]);
+    expect(sites).toHaveLength(2);
+    expect(new Set(sites).size).toBe(2);
+  });
+
   it('emits elements, static attributes and interpolated text', () => {
     const output = emit('<label class="title">Hello {{name}}</label>', ['name']);
     expect(output).toContain('runtime.element("label"');

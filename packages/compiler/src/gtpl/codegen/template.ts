@@ -157,6 +157,7 @@ function expression(
     contextIdentifiers,
     localIdentifiers: [...locals, ...globals],
     ...(localBindings ? { localBindings } : {}),
+    pipeSiteIdentifier: '$__gefPipeSites',
   };
   if (!mappings || !sourcePosition || sourceExpression === undefined) {
     return emitGtplExpressionWithMarkers(node, expressionOptions, () => '');
@@ -372,7 +373,7 @@ function emitGtplTemplateInternal(
     return result;
   };
 
-  const markedCode = '(ctx, runtime) => {\n  return ' + renderNodes(nodes, new Set()) + ';\n}';
+  const markedCode = '(ctx, runtime) => {\n  const $__gefPipeSites = {};\n  return ' + renderNodes(nodes, new Set()) + ';\n}';
   const formattedCode = markedCode;
   let result = '';
   let cursor = 0;

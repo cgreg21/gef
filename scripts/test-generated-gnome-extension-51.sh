@@ -10,7 +10,7 @@ for command in node npm zip gnome-extensions; do
   fi
 done
 
-temporary_root="$(mktemp -d)"
+temporary_root="$(mktemp -d "$root/.gef-gnome-test.XXXXXX")"
 trap 'rm -rf "$temporary_root"' EXIT
 project="$temporary_root/generated-extension"
 

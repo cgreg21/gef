@@ -68,7 +68,7 @@ describe('generated project smoke tests', () => {
           '-p',
           'tsconfig.json',
         ], { cwd: project, encoding: 'utf8' });
-        expect(build.status).toBe(0, build.stdout + build.stderr);
+        expect(build.status, build.stdout + build.stderr).toBe(0);
         expect(await readFile(join(project, 'dist/extension.js'), 'utf8')).toContain('enable()');
 
         const staged = join(project, 'dist');

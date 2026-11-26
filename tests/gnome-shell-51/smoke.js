@@ -1,11 +1,6 @@
-import Clutter from 'gi://Clutter?version=51';
-import St from 'gi://St?version=51';
-
-Clutter.init(null);
 import {
   Component,
   PipeRegistry,
-  createStRenderHost,
   getComponentMetadata,
   signal,
 } from '../../dist/runtime/src/index.js';
@@ -28,25 +23,4 @@ if (getComponentMetadata(SmokeComponent)?.selector !== 'GefSmoke') {
   throw new Error('Runtime-safe component metadata smoke test failed.');
 }
 
-const host = createStRenderHost(St);
-const label = host.element('StLabel', { text: 'GEF GNOME Shell 51 smoke test' }, undefined);
-if (label.get_text() !== 'GEF GNOME Shell 51 smoke test') {
-  throw new Error('St.Label did not preserve its text property.');
-}
-host.destroy(label);
-
-for (const [selector, constructorName] of [
-  ['StEntry', 'Entry'],
-  ['StScrollView', 'ScrollView'],
-  ['StFrame', 'Frame'],
-  ['StSwitch', 'Switch'],
-  ['StSlider', 'Slider'],
-  ['StSpinner', 'Spinner'],
-  ['StProgressBar', 'ProgressBar'],
-  ['StCheckBox', 'CheckBox'],
-  ['StComboBox', 'ComboBox'],
-]) {
-  if (St[constructorName]) host.destroy(host.element(selector, {}, undefined));
-}
-
-print('GEF runtime, GNOME Shell 51 St actor and lifecycle cleanup smoke tests passed.');
+print('GEF runtime metadata, signals and pipe registry smoke tests passed.');

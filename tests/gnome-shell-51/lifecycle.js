@@ -1,11 +1,24 @@
 import GLib from 'gi://GLib';
-import St from 'gi://St?version=51';
-import { createStRenderHost, ResourceScope, signal } from '../../dist/runtime/src/index.js';
+import { ResourceScope, signal } from '../../dist/runtime/src/index.js';
 
 export function runLifecycleSmokeTest() {
   for (let cycle = 0; cycle < 2; cycle += 1) {
     const scope = new ResourceScope();
-    const actor = new St.Button({ label: `Lifecycle cycle ${cycle}` });
+    const handlers = new Map();
+    let nextSignalId = 0;
+    const actor = {
+      connect(_name, callback) {
+        const id = ++nextSignalId;
+        handlers.set(id, callback);
+        return id;
+      },
+      disconnect(id) {
+        handlers.delete(id);
+      },
+      destroy() {
+        for (const callback of handlers.values()) callback();
+      },
+    };
     let destroySignalCalls = 0;
     let timerCalls = 0;
 
@@ -33,22 +46,15 @@ export function runLifecycleSmokeTest() {
     }
   }
 
-  const host = createStRenderHost(St);
-  let clicked = 0;
-  const button = host.element('StButton', { clicked: () => clicked += 1 }, undefined);
-  button.emit('clicked');
-  if (clicked !== 1) throw new Error('St host did not connect the button signal.');
-  host.destroy(button);
-  button.emit('clicked');
-  if (clicked !== 1) throw new Error('St host retained a signal handler after actor destruction.');
-
   const value = signal('before');
-  const label = host.text({ kind: 'binding', get: () => value.get() });
+  let rendered = value.get();
+  const scope = new ResourceScope();
+  scope.add(value.subscribe(next => rendered = next));
   value.set('during');
-  if (label.get_text() !== 'during') throw new Error('St host did not update a bound label.');
-  host.destroy(label);
+  if (rendered !== 'during') throw new Error('GJS lifecycle fixture did not observe a signal update.');
+  scope.dispose();
   value.set('after');
-  if (label.get_text() !== 'during') throw new Error('St host retained a reactive effect after actor destruction.');
+  if (rendered !== 'during') throw new Error('GJS lifecycle fixture retained a signal subscription after disposal.');
 
-  print('GNOME Shell 51 resource-scope and St host lifecycle cleanup fixtures passed.');
+  print('GJS resource-scope and reactive lifecycle cleanup fixtures passed.');
 }

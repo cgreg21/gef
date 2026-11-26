@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import Gtk from 'gi:Gtk-4.0';
 import { runCli } from '../../dist/cli/src/index.js';
 import { createGtkRenderHost, Injector, mountDecoratedComponent } from '../../dist/runtime/src/index.js';
@@ -45,8 +45,44 @@ try {
     component.destroy();
     injector.destroy();
   }
+
+  const application = spawn(process.execPath, [
+    '--import', 'node-gtk/register', 'dist/main.js',
+  ], {
+    cwd: project,
+    env: { ...process.env, GTK_A11Y: 'none' },
+    stdio: 'ignore',
+  });
+  const closed = new Promise((resolveClose) => {
+    application.once('close', (code, signal) => resolveClose({ code, signal }));
+  });
+  const deadline = Date.now() + 15000;
+  let windowId = '';
+
+  try {
+    while (Date.now() < deadline) {
+      if (application.exitCode !== null || application.signalCode !== null) break;
+      const search = spawnSync('xdotool', ['search', '--onlyvisible', '--name', 'generated-app'], {
+        encoding: 'utf8',
+      });
+      windowId = search.status === 0 ? search.stdout.trim().split(/\s+/)[0] ?? '' : '';
+      if (windowId) break;
+      await new Promise((resolveDelay) => setTimeout(resolveDelay, 100));
+    }
+
+    assert.ok(windowId, 'Generated application entry point did not present its GTK window.');
+    application.kill('SIGTERM');
+    const result = await Promise.race([
+      closed,
+      new Promise((resolveDelay) => setTimeout(() => resolveDelay(null), 5000)),
+    ]);
+    assert.ok(result, 'Generated application did not stop after the smoke test signal.');
+    assert.equal(result.signal, 'SIGTERM');
+  } finally {
+    if (application.exitCode === null && application.signalCode === null) application.kill('SIGKILL');
+  }
 } finally {
   await rm(root, { recursive: true, force: true });
 }
 
-process.stdout.write('Generated application Node-GTK runtime smoke test passed.\\n');
+process.stdout.write('Generated application Node-GTK runtime smoke test passed.\n');

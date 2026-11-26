@@ -1,4 +1,4 @@
-import St from 'gi://St';
+import St from 'gi://St?version=51';
 import {
   Component,
   PipeRegistry,

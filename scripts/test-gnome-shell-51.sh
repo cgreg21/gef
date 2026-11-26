@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-for command in node unzip realpath gnome-shell gnome-extensions gjs dbus-run-session xvfb-run gdbus; do
+for command in node unzip realpath gnome-shell gnome-extensions gjs dbus-run-session xvfb-run gdbus pipewire; do
   if ! command -v "$command" >/dev/null 2>&1; then
     echo "Missing required command: $command" >&2
     exit 2
@@ -33,15 +33,19 @@ trap 'rm -rf "$data_home" "$runtime_dir"' EXIT
 export XDG_DATA_HOME="$data_home"
 export XDG_RUNTIME_DIR="$runtime_dir"
 export LIBGL_ALWAYS_SOFTWARE=1
+export GI_TYPELIB_PATH="/usr/lib64/gnome-shell${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
+export LD_LIBRARY_PATH="/usr/lib64/gnome-shell${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 dbus-run-session -- xvfb-run -a bash -euo pipefail -c '
   archive="$1"
   uuid="$2"
+  pipewire >/tmp/gef-pipewire.log 2>&1 &
+  pipewire_pid=$!
   gnome-shell --wayland --devkit &
   shell_pid=$!
   cleanup() {
-    kill "$shell_pid" 2>/dev/null || true
-    wait "$shell_pid" 2>/dev/null || true
+    kill "$shell_pid" "$pipewire_pid" 2>/dev/null || true
+    wait "$shell_pid" "$pipewire_pid" 2>/dev/null || true
   }
   trap cleanup EXIT
 

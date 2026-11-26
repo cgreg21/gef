@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { access, readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
-import { basename, dirname, relative, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { executeGenerationPlan } from './generation/plan.js';

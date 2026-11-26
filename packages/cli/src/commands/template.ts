@@ -10,9 +10,6 @@ export async function runTemplateCommand(
   io: Pick<CliIO, 'readFile' | 'mkdir' | 'writeFile' | 'stdout' | 'stderr'>,
   usage: string,
 ): Promise<number> {
-  io.stderr(`Unknown command "${command}".\n\n${usage}`);
-  return 2;
-}
 if (!inputArg || inputArg.startsWith('-')) {
   io.stderr(`Missing template path.\n\n${usage}`);
   return 2;
@@ -56,4 +53,5 @@ try {
   return 2;
 }
 io.stdout('Generated: ' + output);
+return 0;
 }

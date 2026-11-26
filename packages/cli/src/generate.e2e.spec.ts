@@ -70,7 +70,7 @@ describe('generated project smoke tests', () => {
         tsconfig.compilerOptions.paths = {
           'gnome-extension-framework/runtime': [resolve(process.cwd(), 'packages/runtime/src/index.ts')],
         };
-        await writeFile(tsconfigPath, JSON.stringify(tsconfig, null, 2) + '\\n');
+        await writeFile(tsconfigPath, JSON.stringify(tsconfig, null, 2) + '\n');
 
         const build = spawnSync(process.execPath, [
           resolve(process.cwd(), 'node_modules/typescript/bin/tsc'),

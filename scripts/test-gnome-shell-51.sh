@@ -33,7 +33,7 @@ trap 'rm -rf "$data_home" "$runtime_dir"' EXIT
 export XDG_DATA_HOME="$data_home"
 export XDG_RUNTIME_DIR="$runtime_dir"
 export LIBGL_ALWAYS_SOFTWARE=1
-for typelib in /usr/lib64/gnome-shell/St-51.typelib /usr/lib64/mutter-51/Meta-51.typelib; do
+for typelib in /usr/lib64/gnome-shell/St-51.typelib /usr/lib64/mutter-51/Meta-51.typelib /usr/lib64/mutter-51/Clutter-51.typelib; do
   if [[ ! -f "$typelib" ]]; then
     echo "Missing GNOME Shell 51 runtime typelib: $typelib" >&2
     exit 2

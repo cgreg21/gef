@@ -1,4 +1,4 @@
-import Clutter from 'gi://Clutter?version=1.0';
+import Clutter from 'gi://Clutter?version=51';
 import St from 'gi://St?version=51';
 
 Clutter.init(null);

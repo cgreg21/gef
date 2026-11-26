@@ -53,6 +53,15 @@ describe('Router', () => {
     expect(router.currentRoute?.path).toBe('/users/a b');
   });
 
+  it('parses the root URL and encoded query values without browser URL APIs', () => {
+    const router = new Router([{ path: '/', render: () => ({ kind: 'home' }) }]);
+    expect(router.url).toBe('/');
+    expect(router.currentRoute?.path).toBe('/');
+    expect(router.navigate('/?q=hello+world&q=again#top')).toBe(true);
+    expect(router.currentRoute?.queryParams).toEqual({ q: 'again' });
+    expect(router.currentRoute?.fragment).toBe('top');
+  });
+
   it('exposes query parameters, fragments and route data', () => {
     const router = new Router([
       { path: '/search', data: { title: 'Search' }, render: () => ({ kind: 'search' }) },

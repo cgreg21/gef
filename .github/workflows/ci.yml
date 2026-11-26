@@ -175,6 +175,8 @@ jobs:
               dnf install -y nodejs npm gnome-shell mutter-devkit gjs dbus-daemon glib2 \
                 xorg-x11-server-Xvfb xorg-x11-server-Xwayland xorg-x11-xauth \
                 mesa-dri-drivers zip unzip
+              mkdir -p /run/dbus
+              dbus-daemon --system --fork
               useradd --create-home --uid "$(stat -c "%u" /workspace)" ci
               chown -R ci:ci /workspace
               su - ci -s /bin/bash -c "cd /workspace && npm install --ignore-scripts --no-audit --no-fund && npm run test:gnome:generated"

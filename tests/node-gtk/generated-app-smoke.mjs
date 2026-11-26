@@ -17,6 +17,7 @@ try {
 
   await mkdir(join(project, 'node_modules'), { recursive: true });
   await symlink(repository, join(project, 'node_modules', 'gnome-extension-framework'), 'junction');
+  await symlink(resolve(repository, 'node_modules/node-gtk'), join(project, 'node_modules', 'node-gtk'), 'junction');
 
   const template = join(project, 'src/app/app.component.gtpl');
   const compiled = join(project, 'src/app/app.component.view.js');
@@ -51,8 +52,11 @@ try {
   ], {
     cwd: project,
     env: { ...process.env, GTK_A11Y: 'none' },
-    stdio: 'ignore',
+    stdio: ['ignore', 'pipe', 'pipe'],
   });
+  let applicationOutput = '';
+  application.stdout.setEncoding('utf8').on('data', (chunk) => { applicationOutput += chunk; });
+  application.stderr.setEncoding('utf8').on('data', (chunk) => { applicationOutput += chunk; });
   const closed = new Promise((resolveClose) => {
     application.once('close', (code, signal) => resolveClose({ code, signal }));
   });
@@ -70,7 +74,7 @@ try {
       await new Promise((resolveDelay) => setTimeout(resolveDelay, 100));
     }
 
-    assert.ok(windowId, 'Generated application entry point did not present its GTK window.');
+    assert.ok(windowId, `Generated application entry point did not present its GTK window.\\n${applicationOutput}`);
     application.kill('SIGTERM');
     const result = await Promise.race([
       closed,

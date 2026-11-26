@@ -7,6 +7,7 @@ import { executeGenerationPlan } from './generation/plan.js';
 import { checkGtpl, emitGtplTemplateWithSourceMap } from '../../compiler/src/index.js';
 import { formatDiagnostic, validateWorkspaceConfig } from './validation.js';
 import { runDoctor } from './commands/doctor.js';
+import { runStyles } from './commands/styles.js';
 
 export interface CliIO {
   readFile(path: string): Promise<string>;

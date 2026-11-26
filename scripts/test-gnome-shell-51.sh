@@ -31,6 +31,8 @@ runtime_dir="$(mktemp -d)"
 chmod 700 "$runtime_dir"
 trap 'rm -rf "$data_home" "$runtime_dir"' EXIT
 export XDG_DATA_HOME="$data_home"
+export XDG_CACHE_HOME="$data_home/cache"
+mkdir -p "$XDG_CACHE_HOME"
 export XDG_RUNTIME_DIR="$runtime_dir"
 export LIBGL_ALWAYS_SOFTWARE=1
 for typelib in /usr/lib64/gnome-shell/St-51.typelib /usr/lib64/mutter-51/Meta-51.typelib; do

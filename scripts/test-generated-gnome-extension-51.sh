@@ -36,4 +36,11 @@ if [[ -z "$archive" ]]; then
   exit 1
 fi
 
+for required in extension.js metadata.json app/app.component.view.js runtime/src/index.js shared/src/index.js; do
+  if ! unzip -Z1 "$archive" | grep -Fxq "$required"; then
+    echo "Generated GNOME extension archive is missing required file: $required" >&2
+    exit 1
+  fi
+done
+
 bash "$root/scripts/test-gnome-shell-51.sh" "$archive"

@@ -138,3 +138,6 @@ Après chaque modification fonctionnelle ou corrective :
 4. Pousser sur `main`, puis vérifier la CI du commit exact avant de déclarer le travail terminé.
 
 Ne pas présenter une tâche comme terminée si sa validation échoue ou reste en cours.
+
+
+Le run `45893396612` a montré que l'erreur `Can't recursively copy directory` ne venait pas du contenu ZIP : `gnome-extensions install` extrait d'abord dans `XDG_CACHE_HOME`, puis déplace le dossier vers `XDG_DATA_HOME`. Le harness plaçait ces deux répertoires sur des systèmes de fichiers différents (`~/.cache` et `/tmp`), ce qui forçait GIO à copier récursivement un répertoire, opération non prise en charge par `g_file_copy()`. `XDG_CACHE_HOME` est maintenant placé sous le même répertoire temporaire que `XDG_DATA_HOME`, pour garantir un déplacement atomique sur le même système de fichiers. Le même run a aussi révélé que le squelette généré ne demandait pas au packager GNOME d'inclure ses dépendances et vues compilées : `gnome-extensions pack` reçoit maintenant explicitement `app`, `runtime` et `shared` comme sources supplémentaires, et le harness vérifie leur présence dans l'archive avant l'installation. La validation de l'installation et des cycles enable/disable reste en attente de la CI de ce correctif.

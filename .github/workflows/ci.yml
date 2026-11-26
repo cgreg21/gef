@@ -42,6 +42,7 @@ jobs:
           node --check scripts/package-appimage.mjs
           node --check scripts/package-windows.mjs
           node --check scripts/package-macos.mjs
+          bash -n scripts/test-gnome-shell-51.sh scripts/test-generated-gnome-extension-51.sh
       - name: Smoke test AppImage staging
         run: node tests/packaging/appimage-smoke.mjs
       - name: Install archive tools

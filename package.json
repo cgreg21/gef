@@ -27,7 +27,8 @@
     "kitchen-sink": "npm run build:kitchen-sink && node --import node-gtk/register dist/examples/kitchen-sink/kitchen-sink.js",
     "test:node-gtk:availability": "node --import node-gtk/register tests/node-gtk/availability.mjs",
     "lint": "eslint .",
-    "test:kitchen-sink": "npm run build:kitchen-sink && node --import node-gtk/register tests/node-gtk/kitchen-sink-smoke.mjs"
+    "test:kitchen-sink": "npm run build:kitchen-sink && node --import node-gtk/register tests/node-gtk/kitchen-sink-smoke.mjs",
+    "test:gnome:generated": "npm run build && bash scripts/test-generated-gnome-extension-51.sh"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

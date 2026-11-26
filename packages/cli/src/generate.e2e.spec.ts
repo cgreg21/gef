@@ -58,7 +58,22 @@ describe('generated project smoke tests', () => {
       if (projectType === 'extension') {
         const config = await readFile(join(project, 'src/app/app.config.ts'), 'utf8');
         expect(config).toContain('ApplicationRouterConfig<StActor>');
-        expect(await readFile(join(project, 'src/extension.ts'), 'utf8')).toContain('renderRouterOutlet');
+        const extension = await readFile(join(project, 'src/extension.ts'), 'utf8');
+        expect(extension).toContain('renderRouterOutlet');
+        expect(extension).toContain("import St from 'gi://St'");
+        expect(extension).not.toContain('gi:Gtk-4.0');
+        expect(extension).not.toContain('node-gtk');
+        expect(extension).toContain('if (this.resources) return;');
+        expect(extension).toContain('resources.add(() => injector.destroy());');
+        expect(extension).toContain('resources.add(() => component.destroy());');
+        expect(extension).toContain('resources.add(() => host.destroy(outlet));');
+        expect(extension).toContain('resources.dispose();');
+        expect(extension).toContain('this.resources = undefined;');
+        expect(extension).toContain('resources?.dispose();');
+        expect(extension.indexOf('this.resources = undefined;', extension.indexOf('override disable(): void'))).toBeLessThan(
+          extension.indexOf('resources?.dispose();', extension.indexOf('override disable(): void')),
+        );
+        expect(extension).toContain('catch (error)');
 
         const frameworkBuild = spawnSync(process.execPath, [
           resolve(process.cwd(), 'node_modules/typescript/bin/tsc'),

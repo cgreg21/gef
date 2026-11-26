@@ -78,7 +78,7 @@ function parseUrl(value: string): ParsedUrl {
   const hash = hashIndex < 0 ? '' : value.slice(hashIndex);
   const segments = rawPath.split('/').filter(Boolean).map((segment) => {
     const decoded = decodeUrlPart(segment, `Route URL "${value}" contains an invalid encoded path segment.`);
-    if (decoded === '.' || decoded === '..' || decoded.includes('/') || decoded.includes('\\\\')) {
+    if (decoded === '.' || decoded === '..' || decoded.includes('/') || decoded.includes('\\')) {
       throw new TypeError(`Route URL "${value}" contains an invalid path segment.`);
     }
     return decoded;

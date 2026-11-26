@@ -29,7 +29,7 @@ fi
 data_home="$(mktemp -d)"
 runtime_dir="$(mktemp -d)"
 chmod 700 "$runtime_dir"
-trap 'rm -rf "$data_home" "$runtime_dir"' EXIT
+trap 'rm -rf "$data_home" "$runtime_dir" 2>/dev/null || true' EXIT
 export XDG_DATA_HOME="$data_home"
 export XDG_CACHE_HOME="$data_home/cache"
 mkdir -p "$XDG_CACHE_HOME"

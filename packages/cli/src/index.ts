@@ -555,7 +555,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
       const existing = io.fileExists ? await Promise.all(paths.map((path) => io.fileExists!(path))) : paths.map(() => false);
       if (!force && existing.some(Boolean)) throw new Error('A generated file already exists; use --force to overwrite project files.');
       if (dryRun) {
-        io.stdout(`Generation plan for ${projectType} project ${directory}:\\n${paths.map((path) => `  ${existing[paths.indexOf(path)] ? 'overwrite' : 'create'} ${path}`).join('\\n')}`);
+        io.stdout(`Generation plan for ${projectType} project ${directory}:\n${paths.map((path) => `  ${existing[paths.indexOf(path)] ? 'overwrite' : 'create'} ${path}`).join('\n')}`);
         return 0;
       }
       await io.mkdir(directory);
@@ -645,7 +645,7 @@ export class ${className} {
       const existing = io.fileExists ? await Promise.all(paths.map((path) => io.fileExists!(path))) : paths.map(() => false);
       if (!force && existing.some(Boolean)) throw new Error('A generated file already exists; use --force to overwrite generated files.');
       if (dryRun) {
-        io.stdout(`Generation plan for ${type} ${className}:\\n${paths.map((path, index) => `  ${existing[index] ? 'overwrite' : 'create'} ${path}`).join('\\n')}`);
+        io.stdout(`Generation plan for ${type} ${className}:\n${paths.map((path, index) => `  ${existing[index] ? 'overwrite' : 'create'} ${path}`).join('\n')}`);
         return 0;
       }
       await io.mkdir(directory);

@@ -254,7 +254,7 @@ describe('GEF CLI', () => {
     expect(await runCli(['new', 'planned-project', '--dry-run'], dry.io)).toBe(0);
     expect(dry.writes).toHaveLength(0);
     expect(dry.directories).toHaveLength(0);
-    expect(dry.output.join('\\n')).toContain('Generation plan for extension project');
+    expect(dry.output.join('\n')).toContain('Generation plan for extension project');
 
     const base = createIO('');
     const io: CliIO = { ...base.io, fileExists: async (path) => path.endsWith('package.json') };
@@ -267,7 +267,7 @@ describe('GEF CLI', () => {
     expect(await runCli(['generate', 'component', 'UserCard', '--dry-run'], dry.io)).toBe(0);
     expect(dry.writes).toHaveLength(0);
     expect(dry.directories).toHaveLength(0);
-    expect(dry.output.join('\\n')).toContain('Generation plan for component UserCard');
+    expect(dry.output.join('\n')).toContain('Generation plan for component UserCard');
 
     const base = createIO('');
     const io: CliIO = { ...base.io, fileExists: async (path) => path.endsWith('user-card.ts') };
@@ -281,7 +281,7 @@ describe('GEF CLI', () => {
     expect(await runCli(['new', 'existing-project'], io)).toBe(2);
     expect(base.writes).toHaveLength(0);
     expect(base.directories).toHaveLength(0);
-    expect(base.errors.join('\\n')).toContain('refusing to overwrite');
+    expect(base.errors.join('\\n')).toContain('use --force to overwrite');
   });
 
   it('refuses to overwrite existing generated files before creating directories', async () => {
@@ -290,7 +290,7 @@ describe('GEF CLI', () => {
     expect(await runCli(['generate', 'component', 'UserCard', 'src/components'], io)).toBe(2);
     expect(base.writes).toHaveLength(0);
     expect(base.directories).toHaveLength(0);
-    expect(base.errors.join('\\n')).toContain('refusing to overwrite');
+    expect(base.errors.join('\\n')).toContain('use --force to overwrite');
   });
 
   it('generates a component class and template', async () => {

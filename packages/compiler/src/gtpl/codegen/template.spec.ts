@@ -44,7 +44,7 @@ describe('emitGtplTemplate', () => {
     expect(parsed.diagnostics).toEqual([]);
     const generated = emitGtplTemplateWithSourceMap(parsed.nodes, { source: 'view.gtpl' });
     expect(generated.code).toContain('\n');
-    expect(generated.code).toMatch(/=> \{\n\s+return/);
+    expect(generated.code).toMatch(/=> \{\n\s+const \$__gefPipeSites = \{\};\n\s+return/);
     expect(generated.map.mappings.split(';').length).toBeGreaterThan(1);
     expect(generated.code).not.toContain('__GEF_MAP_');
   });

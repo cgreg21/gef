@@ -27,8 +27,12 @@ if [[ ! "$version" =~ GNOME\ Shell\ 51\. ]]; then
 fi
 
 data_home="$(mktemp -d)"
-trap 'rm -rf "$data_home"' EXIT
+runtime_dir="$(mktemp -d)"
+chmod 700 "$runtime_dir"
+trap 'rm -rf "$data_home" "$runtime_dir"' EXIT
 export XDG_DATA_HOME="$data_home"
+export XDG_RUNTIME_DIR="$runtime_dir"
+export LIBGL_ALWAYS_SOFTWARE=1
 
 dbus-run-session -- xvfb-run -a bash -euo pipefail -c '
   archive="$1"

@@ -86,7 +86,7 @@ describe('generated project smoke tests', () => {
             fileName: file,
             compilerOptions: {
               target: ts.ScriptTarget.ES2022,
-              module: ts.ModuleKind.NodeNext,
+              module: ts.ModuleKind.ESNext,
               experimentalDecorators: true,
               useDefineForClassFields: false,
             },

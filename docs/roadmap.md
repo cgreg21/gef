@@ -9,7 +9,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [x] Corriger les erreurs de parsing TypeScript/ESLint dans le générateur CLI (commit `954c7a9`).
 - [x] Ajouter une régression qui vérifie la syntaxe des sources du squelette généré (tests CLI, CI `45382171668`).
 - [x] Obtenir une CI entièrement verte sur Linux, GTK4/libadwaita, Windows et macOS (commit `b1f2513`, run `45381718868`, quatre jobs réussis).
-- [ ] Ajouter des tests de génération exécutant réellement les projets créés. Le smoke test CLI couvre les deux squelettes ; le test GTK4/Node-GTK construit une application générée, charge son composant décoré et son template compilé, vérifie son libellé natif GTK, puis lance `dist/main.js` et confirme l'apparition de sa fenêtre. L'exécution native du squelette d'extension GNOME reste à couvrir.
+- [ ] Ajouter des tests de génération exécutant réellement les projets créés. Le smoke test CLI couvre les deux squelettes ; le test GTK4/Node-GTK construit une application générée, charge son composant décoré et son template compilé, vérifie son libellé natif GTK, puis lance `dist/main.js` et confirme l'apparition de sa fenêtre. Le squelette d'extension GNOME est maintenant compilé par le vrai `tsc` dans un projet temporaire et son répertoire généré passe `gef ego-check` ; l'installation et les cycles enable/disable en GNOME Shell restent à couvrir.
 - [x] Conserver une séparation stricte entre le runtime GNOME Shell (GJS) et le runtime desktop (Node-GTK).
 
 ## P1 — Génération de projets Angular-like

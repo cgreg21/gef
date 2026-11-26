@@ -1,6 +1,7 @@
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import * as ts from 'typescript';
@@ -58,6 +59,21 @@ describe('generated project smoke tests', () => {
         const config = await readFile(join(project, 'src/app/app.config.ts'), 'utf8');
         expect(config).toContain('ApplicationRouterConfig<StActor>');
         expect(await readFile(join(project, 'src/extension.ts'), 'utf8')).toContain('renderRouterOutlet');
+
+        const dependencies = join(project, 'node_modules');
+        await mkdir(dependencies, { recursive: true });
+        await symlink(resolve(process.cwd()), join(dependencies, 'gnome-extension-framework'), 'junction');
+        const build = spawnSync(process.execPath, [
+          resolve(process.cwd(), 'node_modules/typescript/bin/tsc'),
+          '-p',
+          'tsconfig.json',
+        ], { cwd: project, encoding: 'utf8' });
+        expect(build.status).toBe(0, build.stdout + build.stderr);
+        expect(await readFile(join(project, 'dist/extension.js'), 'utf8')).toContain('enable()');
+
+        const staged = join(project, 'dist');
+        await cp(join(project, 'metadata.json'), join(staged, 'metadata.json'));
+        expect(await runCli(['ego-check', staged])).toBe(0);
       }
 
       if (projectType === 'application') {

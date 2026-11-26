@@ -235,6 +235,27 @@ describe('GEF CLI', () => {
     }
   });
 
+  it('rejects invalid project generation arguments before writing files', async () => {
+    const invalidArguments = [
+      ['new', 'Invalid_Name'],
+      ['new', 'valid-name', '--type'],
+      ['new', 'valid-name', '--type', 'desktop'],
+      ['new', 'valid-name', '--type', 'application', '--type', 'extension'],
+      ['new', 'valid-name', '--unknown'],
+      ['new', 'valid-name', 'first-directory', 'second-directory'],
+      ['new', 'valid-name', '--dry-run', '--dry-run'],
+      ['new', 'valid-name', '--force', '--force'],
+    ];
+
+    for (const args of invalidArguments) {
+      const base = createIO('');
+      expect(await runCli(args, base.io), args.join(' ')).toBe(2);
+      expect(base.writes, args.join(' ')).toHaveLength(0);
+      expect(base.directories, args.join(' ')).toHaveLength(0);
+      expect(base.errors, args.join(' ')).not.toHaveLength(0);
+    }
+  });
+
   it('runs workspace build, test and watch scripts', async () => {
     for (const command of ['build', 'test', 'watch'] as const) {
       const base = createIO('');

@@ -18,7 +18,11 @@ node "$root/dist/cli/src/index.js" new gef-generated-smoke "$project" --type ext
 mkdir -p "$project/node_modules/.bin"
 ln -s "$root" "$project/node_modules/gnome-extension-framework"
 ln -s "$root/node_modules/typescript" "$project/node_modules/typescript"
-ln -s "$root/dist/cli/src/index.js" "$project/node_modules/.bin/gef"
+cat > "$project/node_modules/.bin/gef" <<EOF
+#!/usr/bin/env bash
+exec node "$root/dist/cli/src/index.js" "\$@"
+EOF
+chmod +x "$project/node_modules/.bin/gef"
 ln -s "$root/node_modules/typescript/bin/tsc" "$project/node_modules/.bin/tsc"
 
 (

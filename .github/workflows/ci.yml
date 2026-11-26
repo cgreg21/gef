@@ -172,7 +172,7 @@ jobs:
             --workdir /workspace \
             fedora:45 \
             bash -euo pipefail -c '
-              dnf install -y nodejs npm gnome-shell gjs dbus-daemon glib2 \
+              dnf install -y nodejs npm gnome-shell mutter-devkit gjs dbus-daemon glib2 \
                 xorg-x11-server-Xvfb xorg-x11-server-Xwayland xorg-x11-xauth \
                 mesa-dri-drivers zip unzip
               useradd --create-home --uid "$(stat -c "%u" /workspace)" ci

@@ -37,7 +37,7 @@ export LIBGL_ALWAYS_SOFTWARE=1
 dbus-run-session -- xvfb-run -a bash -euo pipefail -c '
   archive="$1"
   uuid="$2"
-  gnome-shell --nested --wayland &
+  gnome-shell --devkit &
   shell_pid=$!
   cleanup() {
     kill "$shell_pid" 2>/dev/null || true

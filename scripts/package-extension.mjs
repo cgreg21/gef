@@ -93,7 +93,8 @@ run(process.execPath, [cli, 'ego-check', output], 'EGO package validation failed
 const { uuid } = JSON.parse(await readFile(resolve(output, 'metadata.json'), 'utf8'));
 const archive = resolve(root, 'dist', `${uuid}.shell-extension.zip`);
 await rm(archive, { force: true });
-runFrom(output, 'zip', ['-qr', archive, '.'], 'Unable to create the GNOME extension ZIP archive.');
+const archiveEntries = await readdir(output);
+runFrom(output, 'zip', ['-qr', archive, ...archiveEntries], 'Unable to create the GNOME extension ZIP archive.');
 run('unzip', ['-t', archive], 'The generated GNOME extension ZIP archive is invalid.');
 
 const listing = spawnSync('unzip', ['-Z1', archive], { cwd: root, encoding: 'utf8' });

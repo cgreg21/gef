@@ -36,8 +36,9 @@ if [[ -z "$archive" ]]; then
   exit 1
 fi
 
-for required in extension.js metadata.json app/app.component.view.js runtime/src/index.js shared/src/index.js; do
-  if ! unzip -Z1 "$archive" | grep -Fxq "$required"; then
+archive_entries="$(unzip -Z1 "$archive")"
+for required in extension.js metadata.json app/app.component.view.js runtime/src/index.js shared/src/events/event-emitter.js; do
+  if ! grep -Fxq "$required" <<< "$archive_entries"; then
     echo "Generated GNOME extension archive is missing required file: $required" >&2
     echo "Archive entries:" >&2
     unzip -Z1 "$archive" >&2

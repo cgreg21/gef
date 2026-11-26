@@ -17,7 +17,7 @@ interface PipeCache {
 /** Explicit registry for pure and impure template pipe transforms. */
 export class PipeRegistry {
   readonly #pipes = new Map<string, PipeEntry>();
-  #siteCaches = new WeakMap<object, Map<number, PipeCache>>();
+  #siteCaches = new WeakMap<object, Map<string | number, PipeCache>>();
   readonly #legacyCaches = new Map<string, PipeCache>();
 
   register(name: string, pipe: RuntimePipe, pure = true): this {
@@ -50,7 +50,7 @@ export class PipeRegistry {
     return result;
   }
 
-  transformAt(site: object, siteId: number, name: string, value: unknown, ...args: unknown[]): unknown {
+  transformAt(site: object, siteId: string | number, name: string, value: unknown, ...args: unknown[]): unknown {
     const entry = this.getEntry(name);
     if (!entry.pure) return entry.pipe.transform(value, ...args);
     let caches = this.#siteCaches.get(site);

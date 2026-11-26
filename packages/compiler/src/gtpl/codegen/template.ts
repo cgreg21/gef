@@ -158,6 +158,7 @@ function expression(
     localIdentifiers: [...locals, ...globals],
     ...(localBindings ? { localBindings } : {}),
     pipeSiteIdentifier: '$__gefPipeSites',
+    pipeSitePrefix: `${sourcePosition?.line ?? 0}:${sourcePosition?.column ?? 0}`,
   };
   if (!mappings || !sourcePosition || sourceExpression === undefined) {
     return emitGtplExpressionWithMarkers(node, expressionOptions, () => '');

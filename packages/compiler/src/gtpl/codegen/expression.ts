@@ -8,6 +8,7 @@ export interface GtplExpressionOptions {
   /** Generated getters for lexically scoped, reactive @let declarations. */
   readonly localBindings?: ReadonlyMap<string, string>;
   readonly pipeSiteIdentifier?: string;
+  readonly pipeSitePrefix?: string;
 }
 
 /**
@@ -73,7 +74,7 @@ function emitInternal(
         code = `(${emit(node.target)} = ${emit(node.value)})`; break;
       case 'pipe':
         code = options.pipeSiteIdentifier
-          ? `runtime.pipe(${options.pipeSiteIdentifier}, ${node.span.start}, ${JSON.stringify(node.name)}, ${emit(node.expression)}${node.arguments.length ? `, ${node.arguments.map(emit).join(', ')}` : ''})`
+          ? `runtime.pipe(${options.pipeSiteIdentifier}, ${JSON.stringify(`${options.pipeSitePrefix ?? ''}:${node.span.start}`)}, ${JSON.stringify(node.name)}, ${emit(node.expression)}${node.arguments.length ? `, ${node.arguments.map(emit).join(', ')}` : ''})`
           : `runtime.pipe(${JSON.stringify(node.name)}, ${emit(node.expression)}${node.arguments.length ? `, ${node.arguments.map(emit).join(', ')}` : ''})`;
         break;
       case 'array':

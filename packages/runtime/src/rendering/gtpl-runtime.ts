@@ -63,7 +63,7 @@ export interface GtplSwitchCase<Node> {
 /** Runtime surface targeted by JavaScript emitted by emitGtplTemplate. */
 export interface GtplRenderRuntime<Node> {
   pipe(name: string, value: unknown, ...args: unknown[]): unknown;
-  pipe(site: object, siteId: number, name: string, value: unknown, ...args: unknown[]): unknown;
+  pipe(site: object, siteId: string | number, name: string, value: unknown, ...args: unknown[]): unknown;
   bind<T>(get: () => T): GtplBinding<T>;
   element(name: string, attributes: Readonly<Record<string, unknown>>, children: Node | undefined): Node;
   setRouter(router: Router<Node>): void;

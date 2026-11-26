@@ -17,6 +17,7 @@ function createIO(source: string, commandStatus = 0) {
     writeFile: async (path, content) => { writes.push({ path, content }); },
     mkdir: async (path) => { directories.push(path); },
     listFiles: async () => [],
+    fileExists: async () => false,
     run: (command, args) => { commands.push({ command, args }); return { status: commandStatus, output: '' }; },
     stdout: (message) => output.push(message),
     stderr: (message) => errors.push(message),
@@ -246,6 +247,24 @@ describe('GEF CLI', () => {
     };
     expect(await runCli(['package'], io)).toBe(0);
     expect(base.commands).toEqual([{ command: 'npm', args: ['run', 'package'] }]);
+  });
+
+  it('refuses to overwrite existing project files before creating directories', async () => {
+    const base = createIO('');
+    const io: CliIO = { ...base.io, fileExists: async (path) => path.endsWith('package.json') };
+    expect(await runCli(['new', 'existing-project'], io)).toBe(2);
+    expect(base.writes).toHaveLength(0);
+    expect(base.directories).toHaveLength(0);
+    expect(base.errors.join('\\n')).toContain('refusing to overwrite');
+  });
+
+  it('refuses to overwrite existing generated files before creating directories', async () => {
+    const base = createIO('');
+    const io: CliIO = { ...base.io, fileExists: async (path) => path.endsWith('user-card.gtpl') };
+    expect(await runCli(['generate', 'component', 'UserCard', 'src/components'], io)).toBe(2);
+    expect(base.writes).toHaveLength(0);
+    expect(base.directories).toHaveLength(0);
+    expect(base.errors.join('\\n')).toContain('refusing to overwrite');
   });
 
   it('generates a component class and template', async () => {

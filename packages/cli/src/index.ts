@@ -309,29 +309,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     return 0;
   }
 
-  if (command === 'styles') {
-    if (!inputArg || inputArg.startsWith('-')) {
-      io.stderr('Missing SCSS input path.');
-      return 2;
-    }
-    const input = resolve(inputArg);
-    const output = resolve(outputArg ?? (input.replace(/\.scss$/i, '') + '.css'));
-    const result = io.run('npx', ['sass', '--no-source-map', input, output]);
-    if (result.status !== 0) {
-      io.stderr(result.output || 'Sass compiler failed. Install project dependencies.');
-      return 1;
-    }
-    try {
-      const css = await io.readFile(output);
-      const count = reportCssDiagnostics(css, output, io.stderr);
-      if (count > 0) return 1;
-    } catch (error) {
-      io.stderr(`Unable to read compiled stylesheet: ${error instanceof Error ? error.message : String(error)}`);
-      return 2;
-    }
-    io.stdout(`Compiled and validated stylesheet: ${output}`);
-    return 0;
-  }
+  if (command === 'styles') return runStyles(inputArg, outputArg, io);
 
   if (command === 'new') {
     const name = inputArg;

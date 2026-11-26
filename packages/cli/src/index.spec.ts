@@ -249,6 +249,32 @@ describe('GEF CLI', () => {
     expect(base.commands).toEqual([{ command: 'npm', args: ['run', 'package'] }]);
   });
 
+  it('supports dry-run and force for project generation', async () => {
+    const dry = createIO('');
+    expect(await runCli(['new', 'planned-project', '--dry-run'], dry.io)).toBe(0);
+    expect(dry.writes).toHaveLength(0);
+    expect(dry.directories).toHaveLength(0);
+    expect(dry.output.join('\\n')).toContain('Generation plan for extension project');
+
+    const base = createIO('');
+    const io: CliIO = { ...base.io, fileExists: async (path) => path.endsWith('package.json') };
+    expect(await runCli(['new', 'existing-project', '--force'], io)).toBe(0);
+    expect(base.writes.length).toBeGreaterThan(0);
+  });
+
+  it('supports dry-run and force for component generation', async () => {
+    const dry = createIO('');
+    expect(await runCli(['generate', 'component', 'UserCard', '--dry-run'], dry.io)).toBe(0);
+    expect(dry.writes).toHaveLength(0);
+    expect(dry.directories).toHaveLength(0);
+    expect(dry.output.join('\\n')).toContain('Generation plan for component UserCard');
+
+    const base = createIO('');
+    const io: CliIO = { ...base.io, fileExists: async (path) => path.endsWith('user-card.ts') };
+    expect(await runCli(['generate', 'component', 'UserCard', 'src/components', '--force'], io)).toBe(0);
+    expect(base.writes).toHaveLength(2);
+  });
+
   it('refuses to overwrite existing project files before creating directories', async () => {
     const base = createIO('');
     const io: CliIO = { ...base.io, fileExists: async (path) => path.endsWith('package.json') };

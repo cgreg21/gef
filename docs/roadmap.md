@@ -96,7 +96,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [ ] Fiabiliser `gef new` et ses tests de bout en bout.
   Parsing strict des arguments et tests de rejet ajoutés ; la génération et compilation des deux squelettes restent couvertes par les tests E2E existants.
 - [ ] Introduire un plan de génération commun à `gef new` et `gef generate` : préparer les fichiers en mémoire, vérifier les chemins (dont les sorties hors du répertoire cible), les collisions et les fichiers existants, puis seulement écrire. La première prévalidation des collisions est en place : les deux commandes refusent les fichiers existants avant de créer le moindre dossier ; les tests couvrent l'absence d'écriture partielle. L'extraction du plan commun et `--dry-run`/`--force` restent à faire. Une panne d'E/S pendant l'écriture nécessitera un rollback explicite si une atomicité réelle devient nécessaire.
-- [ ] Ajouter `--dry-run` et `--force` au plan de génération ; par défaut, refuser les fichiers existants sans les écraser.
+- [x] Ajouter `--dry-run` et `--force` à `gef new` et `gef generate` : aperçu sans écriture, refus des collisions par défaut et écrasement explicite avec `--force` (tests unitaires dédiés).
 - [ ] Extraire progressivement commandes et générateurs de `packages/cli/src/index.ts` vers des sous-répertoires dédiés, sans changer les commandes publiques ni introduire de framework de commandes.
 - [ ] Centraliser la validation des options des générateurs ; adopter des schémas déclaratifs simples uniquement lorsque plusieurs options le justifient.
 - [ ] Préserver les commentaires et le format de `gef.json` lors de futures modifications automatiques du workspace ; JSONC différé tant que la CLI ne modifie pas cette configuration.

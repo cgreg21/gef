@@ -428,17 +428,25 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     let projectType: 'application' | 'extension' = 'extension';
     let directoryArg: string | undefined;
     let typeProvided = false;
+    let dryRun = false;
+    let force = false;
     for (let index = 2; index < args.length; index++) {
       const argument = args[index]!;
       if (argument === '--type') {
         const value = args[index + 1];
         if (typeProvided || value === undefined || (value !== 'application' && value !== 'extension')) {
-          io.stderr('Usage: gef new <project-name> [directory] [--type application|extension]');
+          io.stderr('Usage: gef new <project-name> [directory] [--type application|extension] [--dry-run] [--force]');
           return 2;
         }
         projectType = value;
         typeProvided = true;
         index++;
+      } else if (argument === '--dry-run') {
+        if (dryRun) { io.stderr('Duplicate option: --dry-run'); return 2; }
+        dryRun = true;
+      } else if (argument === '--force') {
+        if (force) { io.stderr('Duplicate option: --force'); return 2; }
+        force = true;
       } else if (argument.startsWith('-') || directoryArg !== undefined) {
         io.stderr(`Unexpected argument: ${argument}`);
         return 2;
@@ -544,8 +552,11 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
         const relativePath = relative(directory, path);
         return relativePath.startsWith('..') || resolve(directory, relativePath) !== path;
       })) throw new Error('Generated file path escapes the project directory.');
-      if (io.fileExists && (await Promise.all(paths.map((path) => io.fileExists!(path)))).some(Boolean)) {
-        throw new Error('A generated file already exists; refusing to overwrite project files.');
+      const existing = io.fileExists ? await Promise.all(paths.map((path) => io.fileExists!(path))) : paths.map(() => false);
+      if (!force && existing.some(Boolean)) throw new Error('A generated file already exists; use --force to overwrite project files.');
+      if (dryRun) {
+        io.stdout(`Generation plan for ${projectType} project ${directory}:\\n${paths.map((path) => `  ${existing[paths.indexOf(path)] ? 'overwrite' : 'create'} ${path}`).join('\\n')}`);
+        return 0;
       }
       await io.mkdir(directory);
       await io.mkdir(resolve(directory, 'scripts'));
@@ -575,7 +586,24 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     }
     const className = type === 'component' ? name : baseName + suffix;
     const fileName = baseName.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-    const directory = resolve(args[3] ?? '.');
+    let directoryArg: string | undefined;
+    let dryRun = false;
+    let force = false;
+    for (const argument of args.slice(3)) {
+      if (argument === '--dry-run') {
+        if (dryRun) { io.stderr('Duplicate option: --dry-run'); return 2; }
+        dryRun = true;
+      } else if (argument === '--force') {
+        if (force) { io.stderr('Duplicate option: --force'); return 2; }
+        force = true;
+      } else if (argument.startsWith('-') || directoryArg !== undefined) {
+        io.stderr(`Unexpected argument: ${argument}`);
+        return 2;
+      } else {
+        directoryArg = argument;
+      }
+    }
+    const directory = resolve(directoryArg ?? '.');
     const files: Readonly<Record<string, string>> = type === 'component' ? {
       [`${fileName}.ts`]: `import { Component, Input } from 'gnome-extension-framework/runtime';
 
@@ -614,8 +642,11 @@ export class ${className} {
         const relativePath = relative(directory, path);
         return relativePath.startsWith('..') || resolve(directory, relativePath) !== path;
       })) throw new Error('Generated file path escapes the target directory.');
-      if (io.fileExists && (await Promise.all(paths.map((path) => io.fileExists!(path)))).some(Boolean)) {
-        throw new Error('A generated file already exists; refusing to overwrite it.');
+      const existing = io.fileExists ? await Promise.all(paths.map((path) => io.fileExists!(path))) : paths.map(() => false);
+      if (!force && existing.some(Boolean)) throw new Error('A generated file already exists; use --force to overwrite generated files.');
+      if (dryRun) {
+        io.stdout(`Generation plan for ${type} ${className}:\\n${paths.map((path, index) => `  ${existing[index] ? 'overwrite' : 'create'} ${path}`).join('\\n')}`);
+        return 0;
       }
       await io.mkdir(directory);
       for (const [path, source] of Object.entries(files)) {

@@ -1,6 +1,6 @@
-import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join, relative, resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -60,17 +60,17 @@ describe('generated project smoke tests', () => {
         expect(config).toContain('ApplicationRouterConfig<StActor>');
         expect(await readFile(join(project, 'src/extension.ts'), 'utf8')).toContain('renderRouterOutlet');
 
-        const tsconfigPath = join(project, 'tsconfig.json');
-        const tsconfig = JSON.parse(await readFile(tsconfigPath, 'utf8')) as {
-          compilerOptions: Record<string, unknown>;
-        };
-        tsconfig.compilerOptions.noEmit = true;
-        delete tsconfig.compilerOptions.rootDir;
-        tsconfig.compilerOptions.baseUrl = '.';
-        tsconfig.compilerOptions.paths = {
-          'gnome-extension-framework/runtime': [resolve(process.cwd(), 'packages/runtime/src/index.ts')],
-        };
-        await writeFile(tsconfigPath, JSON.stringify(tsconfig, null, 2) + '\n');
+        const frameworkBuild = spawnSync(process.execPath, [
+          resolve(process.cwd(), 'node_modules/typescript/bin/tsc'),
+          '-p',
+          resolve(process.cwd(), 'tsconfig.build.json'),
+        ], { cwd: process.cwd(), encoding: 'utf8' });
+        expect(frameworkBuild.status, frameworkBuild.stdout + frameworkBuild.stderr).toBe(0);
+
+        const frameworkPackage = join(project, 'node_modules/gnome-extension-framework');
+        await mkdir(frameworkPackage, { recursive: true });
+        await cp(resolve(process.cwd(), 'package.json'), join(frameworkPackage, 'package.json'));
+        await cp(resolve(process.cwd(), 'dist'), join(frameworkPackage, 'dist'), { recursive: true });
 
         const build = spawnSync(process.execPath, [
           resolve(process.cwd(), 'node_modules/typescript/bin/tsc'),
@@ -80,22 +80,6 @@ describe('generated project smoke tests', () => {
         expect(build.status, build.stdout + build.stderr).toBe(0);
 
         const staged = join(project, 'dist');
-        for (const file of await sourceFiles(join(project, 'src'))) {
-          const source = await readFile(file, 'utf8');
-          const javascript = ts.transpileModule(source, {
-            fileName: file,
-            compilerOptions: {
-              target: ts.ScriptTarget.ES2022,
-              module: ts.ModuleKind.ESNext,
-              experimentalDecorators: true,
-              useDefineForClassFields: false,
-            },
-          }).outputText;
-          const output = join(staged, relative(join(project, 'src'), file).replace(/\.ts$/, '.js'));
-          await mkdir(dirname(output), { recursive: true });
-          await writeFile(output, javascript);
-        }
-        await cp(compiled, join(staged, 'app/app.component.view.js'));
         await cp(join(project, 'metadata.json'), join(staged, 'metadata.json'));
         expect(await runCli(['ego-check', staged])).toBe(0);
       }

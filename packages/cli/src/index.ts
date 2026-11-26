@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { executeGenerationPlan } from './generation/plan.js';
 import { checkGtpl, emitGtplTemplateWithSourceMap } from '../../compiler/src/index.js';
-import { formatDiagnostic, validateWorkspaceConfig } from './validation.js';
+import { formatDiagnostic } from './validation.js';
 import { runDoctor } from './commands/doctor.js';
 import { runStyles } from './commands/styles.js';
 import { runWorkspaceCommand } from './commands/workspace.js';

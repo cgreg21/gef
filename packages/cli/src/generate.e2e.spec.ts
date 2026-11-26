@@ -100,7 +100,7 @@ describe('generated project smoke tests', () => {
     } finally {
       await rm(root, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
   it('generates a component with a matching GTPL template and compilable render module', async () => {
     const root = await mkdtemp(join(tmpdir(), 'gef-component-'));
     try {

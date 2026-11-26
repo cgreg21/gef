@@ -235,6 +235,25 @@ describe('GEF CLI', () => {
     }
   });
 
+  it('runs workspace build, test and watch scripts', async () => {
+    for (const command of ['build', 'test', 'watch'] as const) {
+      const base = createIO('');
+      expect(await runCli([command], base.io)).toBe(0);
+      expect(base.commands).toEqual([{ command: 'npm', args: ['run', command === 'watch' ? 'dev:watch' : command] }]);
+    }
+  });
+
+  it('rejects workspace commands when gef.json is invalid', async () => {
+    const base = createIO('');
+    const io: CliIO = {
+      ...base.io,
+      readFile: async (path) => path.endsWith('gef.json') ? '{"invalid": true}' : '',
+    };
+    expect(await runCli(['build'], io)).toBe(2);
+    expect(base.commands).toHaveLength(0);
+    expect(base.errors[0]).toContain('Invalid project configuration');
+  });
+
   it('packages Node-GTK applications with the node-gtk bundler', async () => {
     const base = createIO('');
     const io: CliIO = {

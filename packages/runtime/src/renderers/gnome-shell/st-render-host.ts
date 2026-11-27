@@ -102,19 +102,41 @@ function syncRepeatChildren(actor: StActor, current: StActor[], next: StActor[])
   if (current.some((child) => !next.includes(child)) && !actor.remove_child) {
     throw new Error('This St container cannot remove child actors.');
   }
+  const hasNewChildren = next.some((child) => !current.includes(child));
+  if (hasNewChildren && !actor.remove_child) {
+    throw new Error('This St container cannot remove child actors.');
+  }
   const order = [...current];
-  for (let index = 0; index < next.length; index += 1) {
-    const child = next[index]!;
-    const currentIndex = order.indexOf(child);
-    if (currentIndex === index) continue;
-    if (currentIndex === -1) {
-      insert.call(actor, child, index);
-      order.splice(index, 0, child);
-    } else {
+  const inserted: StActor[] = [];
+  try {
+    for (let index = 0; index < next.length; index += 1) {
+      const child = next[index]!;
+      const currentIndex = order.indexOf(child);
+      if (currentIndex === index) continue;
+      if (currentIndex === -1) {
+        insert.call(actor, child, index);
+        inserted.push(child);
+        order.splice(index, 0, child);
+      } else {
+        reorder.call(actor, child, index);
+        order.splice(currentIndex, 1);
+        order.splice(index, 0, child);
+      }
+    }
+  } catch (error) {
+    for (const child of inserted) {
+      actor.remove_child!(child);
+      order.splice(order.indexOf(child), 1);
+    }
+    for (let index = 0; index < current.length; index += 1) {
+      const child = current[index]!;
+      const currentIndex = order.indexOf(child);
+      if (currentIndex === index) continue;
       reorder.call(actor, child, index);
       order.splice(currentIndex, 1);
       order.splice(index, 0, child);
     }
+    throw error;
   }
   for (const child of current) if (!next.includes(child)) {
     actor.remove_child!(child);

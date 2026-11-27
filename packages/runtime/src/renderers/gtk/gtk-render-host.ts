@@ -324,19 +324,44 @@ function syncRepeatChildren(box: GtkActor, current: GtkActor[], next: GtkActor[]
     && ![box.remove_suffix, box.removeSuffix, box.remove, box.set_child, box.setChild].some((method) => typeof method === 'function')) {
     throw new Error('This GTK container cannot remove its child widget.');
   }
+  const hasNewChildren = next.some((child) => !current.includes(child));
+  if (hasNewChildren && ![box.remove_suffix, box.removeSuffix, box.remove, box.set_child, box.setChild]
+    .some((method) => typeof method === 'function')) {
+    throw new Error('This GTK container cannot remove its child widget.');
+  }
   const order = [...current];
+  const inserted: GtkActor[] = [];
   let previous: GtkActor | null = null;
-  for (const child of next) {
-    const index = order.indexOf(child);
-    if (index === -1) {
-      insert.call(box, child, previous);
-      order.splice(previous ? order.indexOf(previous) + 1 : 0, 0, child);
-    } else if (order[index - 1] !== previous) {
-      reorder.call(box, child, previous);
-      order.splice(index, 1);
-      order.splice(previous ? order.indexOf(previous) + 1 : 0, 0, child);
+  try {
+    for (const child of next) {
+      const index = order.indexOf(child);
+      if (index === -1) {
+        insert.call(box, child, previous);
+        inserted.push(child);
+        order.splice(previous ? order.indexOf(previous) + 1 : 0, 0, child);
+      } else if (order[index - 1] !== previous) {
+        reorder.call(box, child, previous);
+        order.splice(index, 1);
+        order.splice(previous ? order.indexOf(previous) + 1 : 0, 0, child);
+      }
+      previous = child;
     }
-    previous = child;
+  } catch (error) {
+    for (const child of inserted) {
+      removeChild(box, child);
+      order.splice(order.indexOf(child), 1);
+    }
+    let previous: GtkActor | null = null;
+    for (const child of current) {
+      const index = order.indexOf(child);
+      if (order[index - 1] !== previous) {
+        reorder.call(box, child, previous);
+        order.splice(index, 1);
+        order.splice(previous ? order.indexOf(previous) + 1 : 0, 0, child);
+      }
+      previous = child;
+    }
+    throw error;
   }
   for (const child of current) if (!next.includes(child)) {
     removeChild(box, child);

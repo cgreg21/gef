@@ -1059,6 +1059,42 @@ describe('createGtkRenderHost', () => {
     host.destroy(list);
   });
 
+  it('restores GTK repeat order when a later insertion fails', () => {
+    class FailingInsertBox extends FakeWidget {
+      insertions = 0;
+      failOnInsertion = 0;
+      override insert_child_after(child: GtkActor, sibling: GtkActor | null): void {
+        this.insertions += 1;
+        if (this.insertions === this.failOnInsertion) throw new Error('attachment failed');
+        super.insert_child_after(child, sibling);
+      }
+    }
+    const host = createGtkRenderHost({ ...createGtk(), Box: FailingInsertBox });
+    const retained = host.text('retained') as FakeWidget;
+    const removed = host.text('removed') as FakeWidget;
+    const values = signal({ items: [
+      { key: 'retained', index: 0, node: retained },
+      { key: 'removed', index: 1, node: removed },
+    ] });
+    const list = host.repeat({ kind: 'binding', get: () => values.get() }) as FailingInsertBox;
+    const firstAdded = host.text('first added') as FakeWidget;
+    const secondAdded = host.text('second added') as FakeWidget;
+    list.failOnInsertion = list.insertions + 2;
+
+    expect(() => values.set({ items: [
+      { key: 'first added', index: 0, node: firstAdded },
+      { key: 'second added', index: 1, node: secondAdded },
+      { key: 'retained', index: 2, node: retained },
+    ] })).toThrow('attachment failed');
+
+    expect(list.children).toEqual([retained, removed]);
+    expect(retained.parent).toBe(list);
+    expect(removed.parent).toBe(list);
+    expect(firstAdded.parent).toBeNull();
+    expect(secondAdded.parent).toBeNull();
+    host.destroy(list);
+  });
+
   it('preserves mounted GTK rows when a repeat insertion fails before removals', () => {
     class FailingInsertBox extends FakeWidget {
       failInsert = false;

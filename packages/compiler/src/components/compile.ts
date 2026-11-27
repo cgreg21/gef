@@ -62,6 +62,8 @@ export interface ComponentUiIrOptions {
   readonly globals?: readonly string[];
   readonly componentTypes?: readonly Function[];
   readonly contextType?: string;
+  /** Native element names accepted alongside decorated components. */
+  readonly nativeElements?: readonly string[];
 }
 
 export interface ComponentUiIrResult extends GtplUiIrResult {
@@ -102,6 +104,7 @@ export function compileGtplComponentToUiIr(
     ...(options.contextType ? { contextType: options.contextType } : {}),
     components: definitions,
     strictComponents: true,
+    nativeElements: options.nativeElements,
   });
   return { ...result, metadata };
 }
@@ -118,6 +121,8 @@ export interface ComponentProjectEntry {
 export interface ComponentProjectUiIrOptions {
   readonly components: readonly ComponentProjectEntry[];
   readonly globals?: readonly string[];
+  /** Native element names shared by every component template in this project. */
+  readonly nativeElements?: readonly string[];
 }
 
 export interface ComponentProjectUiIrResult {
@@ -153,6 +158,7 @@ export function compileGtplComponentsToUiIr(
       ...(entry.componentMembers ? { componentMembers: entry.componentMembers } : {}),
       ...(entry.contextType ? { contextType: entry.contextType } : {}),
       ...(options.globals ? { globals: options.globals } : {}),
+      ...(options.nativeElements ? { nativeElements: options.nativeElements } : {}),
       componentTypes: types.filter((type) => type !== entry.type),
     },
     entry.templateSource,

@@ -9,16 +9,19 @@ export interface GtplComponentDefinition {
 
 export interface GtplComponentValidationOptions {
   readonly components: readonly GtplComponentDefinition[];
+  /** Explicit native element names accepted alongside registered components. */
+  readonly nativeElements?: readonly string[];
   /** Unknown elements are allowed by default for native St actors. */
   readonly strict?: boolean;
 }
 
 export function validateGtplComponents(nodes: readonly GtplNode[], options: GtplComponentValidationOptions): readonly Diagnostic[] {
   const registry = new Map(options.components.map((component) => [component.selector, component]));
+  const nativeElements = new Set(options.nativeElements ?? []);
   const diagnostics: Diagnostic[] = [];
   const visit = (node: GtplNode): void => {
     if (node.kind === 'element') {
-      validateElement(node, registry, options.strict ?? false, diagnostics);
+      validateElement(node, registry, nativeElements, options.strict ?? false, diagnostics);
       node.children.forEach(visit);
     } else if (node.kind === 'if-block') {
       node.branches.forEach((branch) => branch.children.forEach(visit));
@@ -34,10 +37,16 @@ export function validateGtplComponents(nodes: readonly GtplNode[], options: Gtpl
   return diagnostics;
 }
 
-function validateElement(node: ElementNode, registry: ReadonlyMap<string, GtplComponentDefinition>, strict: boolean, diagnostics: Diagnostic[]): void {
+function validateElement(
+  node: ElementNode,
+  registry: ReadonlyMap<string, GtplComponentDefinition>,
+  nativeElements: ReadonlySet<string>,
+  strict: boolean,
+  diagnostics: Diagnostic[],
+): void {
   const component = registry.get(node.name);
   if (!component) {
-    if (strict) diagnostics.push({ code: 'GTPL4101', message: `Unknown component selector "${node.name}".`, span: node.span });
+    if (strict && !nativeElements.has(node.name)) diagnostics.push({ code: 'GTPL4101', message: `Unknown component selector "${node.name}".`, span: node.span });
     return;
   }
   const inputs = new Set(component.inputs ?? []);

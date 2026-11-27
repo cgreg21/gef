@@ -109,6 +109,30 @@ describe('decorated component UI IR', () => {
     }]);
   });
 
+  it('accepts explicitly registered native elements in strict mode', () => {
+    @Component({ selector: 'GefNativeView', template: '<StBox><StLabel /><GtkButton /></StBox>' })
+    class NativeView {}
+
+    const result = compileGtplComponentToUiIr(NativeView, {
+      nativeElements: ['StBox', 'StLabel', 'GtkButton'],
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it('still rejects unregistered elements in strict mode', () => {
+    @Component({ selector: 'GefUnknownView', template: '<StBox><MysteryWidget /></StBox>' })
+    class UnknownView {}
+
+    const result = compileGtplComponentToUiIr(UnknownView, {
+      nativeElements: ['StBox'],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain('GTPL4101');
+  });
+
   it('reports invalid component contracts without producing partial IR', () => {
     @Component({ selector: 'GefSaveButton', template: '<button />' })
     class SaveButton { @Input() label = ''; }

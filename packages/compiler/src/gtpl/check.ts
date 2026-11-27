@@ -13,6 +13,8 @@ export interface GtplCheckOptions extends GtplSemanticOptions {
   readonly components?: readonly GtplComponentDefinition[];
   /** Report unknown element selectors as errors. Defaults to false for native St actors. */
   readonly strictComponents?: boolean;
+  /** Native element names accepted by strict component validation. */
+  readonly nativeElements?: readonly string[];
   /** Optional TypeScript type literal used to check component template expressions. */
   readonly contextType?: string;
 }
@@ -33,6 +35,7 @@ export function checkGtpl(source: string, options: GtplCheckOptions = {}): GtplC
   const components = validateGtplComponents(lowered.nodes, {
     components: options.components ?? [],
     strict: options.strictComponents ?? false,
+    nativeElements: options.nativeElements,
   });
 
   const types = options.contextType

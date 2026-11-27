@@ -43,9 +43,9 @@ Invalid templates return diagnostics and an empty IR. Structural directives and 
 
 ## TypeScript components and UI IR
 
-`compileGtplComponentToUiIr(ComponentType, options)` connects a decorated TypeScript component to the renderer-neutral UI IR. It reads the root component's `@Component` template and accepts child component classes through `componentTypes`. Their selectors, `@Input` names and `@Output` names come directly from decorator metadata. Unknown selectors and invalid bindings produce GTPL diagnostics and an empty IR.
+`compileGtplComponentToUiIr(ComponentType, options)` connects a decorated TypeScript component to the renderer-neutral UI IR. It reads the root component's `@Component` template and accepts child component classes through `componentTypes`. Their selectors, `@Input` names and `@Output` names come directly from decorator metadata. Unknown selectors and invalid bindings produce GTPL diagnostics and an empty IR. Strict validation accepts native elements only when their names are listed in `nativeElements`; pass the target renderer's supported element names explicitly rather than relying on naming conventions.
 
-The root template's TypeScript members are supplied through `componentMembers` (and can be checked against `contextType`). The compiler does not instantiate application classes to discover instance fields. A native backend can consume the returned metadata and UI nodes without depending on GTK or GJS.
+`nativeElements` can be supplied for GTK or GNOME Shell actor names; project compilation shares this list across all templates. The compiler does not embed a platform-specific native registry. The root template's TypeScript members are supplied through `componentMembers` (and can be checked against `contextType`). The compiler does not instantiate application classes to discover instance fields. A native backend can consume the returned metadata and UI nodes without depending on GTK or GJS.
 
 ```ts
 import { compileGtplComponentToUiIr } from 'gnome-extension-framework/compiler';

@@ -46,13 +46,13 @@ const results = [];
 const singleSubscriber = signal(0);
 singleSubscriber.subscribe(() => {});
 results.push(benchmark('signal.set / 1 subscriber', 30000, (count) => {
-  for (let index = 0; index < count; index += 1) singleSubscriber.set(index);
+  for (let index = 0; index < count; index += 1) singleSubscriber.set(index + 1);
 }));
 
 const manySubscribers = signal(0);
 for (let index = 0; index < 16; index += 1) manySubscribers.subscribe(() => {});
 results.push(benchmark('signal.set / 16 subscribers', 20000, (count) => {
-  for (let index = 0; index < count; index += 1) manySubscribers.set(index);
+  for (let index = 0; index < count; index += 1) manySubscribers.set(index + 1);
 }));
 
 const dependency = signal(0);
@@ -66,7 +66,7 @@ const stopEffect = effect(() => {
   effectRuns += 1;
 });
 results.push(benchmark('effect / 3 dependencies', 15000, (count) => {
-  for (let index = 0; index < count; index += 1) dependency.set(index);
+  for (let index = 0; index < count; index += 1) dependency.set(index + 1);
 }));
 stopEffect();
 
@@ -75,7 +75,7 @@ const doubled = computed(() => computedSource.get() * 2);
 let computedValue = doubled.get();
 const stopComputed = doubled.subscribe((value) => { computedValue = value; });
 results.push(benchmark('computed / 1 dependency', 15000, (count) => {
-  for (let index = 0; index < count; index += 1) computedSource.set(index);
+  for (let index = 0; index < count; index += 1) computedSource.set(index + 1);
 }));
 stopComputed();
 doubled.dispose();

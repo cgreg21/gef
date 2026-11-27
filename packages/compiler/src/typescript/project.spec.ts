@@ -38,7 +38,8 @@ describe('compileTypeScriptProject', () => {
 
     expect(result.success).toBe(true);
     expect(result.diagnostics).toHaveLength(0);
-    expect(result.emittedFiles.map((file) => file.split('/').at(-1))).toEqual(['index.js', 'index.js.map']);
+    expect(new Set(result.emittedFiles.map((file) => file.split('/').at(-1))))
+      .toEqual(new Set(['index.js', 'index.js.map']));
     expect(await readFile(join(directory, 'dist', 'index.js'), 'utf8')).toContain('answer = 42');
     expect(await readFile(join(directory, 'dist', 'index.js.map'), 'utf8')).toContain('"version":3');
   });

@@ -26,14 +26,7 @@ export function compileTypeScriptProject(
     config.config,
     ts.sys,
     dirname(configFilePath),
-    {
-      noEmit: false,
-      noEmitOnError: true,
-      emitDeclarationOnly: false,
-      declaration: false,
-      declarationMap: false,
-      ...(options.outDir ? { outDir: resolve(options.outDir) } : {}),
-    },
+    undefined,
     configFilePath,
   );
 
@@ -41,7 +34,16 @@ export function compileTypeScriptProject(
     return { success: false, emittedFiles: [], diagnostics: parsed.errors };
   }
 
-  const program = ts.createProgram(parsed.fileNames, parsed.options);
+  const compilerOptions: ts.CompilerOptions = {
+    ...parsed.options,
+    noEmit: false,
+    noEmitOnError: true,
+    emitDeclarationOnly: false,
+    declaration: false,
+    declarationMap: false,
+    ...(options.outDir ? { outDir: resolve(options.outDir) } : {}),
+  };
+  const program = ts.createProgram(parsed.fileNames, compilerOptions);
   const diagnostics = [...ts.getPreEmitDiagnostics(program)];
 
   if (diagnostics.some((diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error)) {

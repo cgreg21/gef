@@ -85,9 +85,12 @@ function syncRepeatChildren(actor: StActor, current: StActor[], next: StActor[])
     for (const child of next) actor.add_child!(child);
     return [...next];
   }
+  if (current.some((child) => !next.includes(child)) && !actor.remove_child) {
+    throw new Error('This St container cannot remove child actors.');
+  }
   const order = [...current];
   for (const child of current) if (!next.includes(child)) {
-    actor.remove_child?.(child);
+    actor.remove_child!(child);
     order.splice(order.indexOf(child), 1);
   }
   for (let index = 0; index < next.length; index += 1) {

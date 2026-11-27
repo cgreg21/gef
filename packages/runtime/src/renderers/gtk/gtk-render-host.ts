@@ -302,8 +302,22 @@ function syncRepeatChildren(box: GtkActor, current: GtkActor[], next: GtkActor[]
       || box.add_suffix || box.addSuffix || box.add);
     if (current.length && !canRemove) throw new Error('This GTK container cannot remove its child widget.');
     if (next.length && !canAdd) throw new Error('This GTK widget cannot contain child widgets.');
-    for (const child of current) removeChild(box, child);
-    for (const child of next) addChild(box, child);
+    const removed: GtkActor[] = [];
+    const added: GtkActor[] = [];
+    try {
+      for (const child of current) {
+        removeChild(box, child);
+        removed.push(child);
+      }
+      for (const child of next) {
+        addChild(box, child);
+        added.push(child);
+      }
+    } catch (error) {
+      for (const child of added) removeChild(box, child);
+      for (const child of removed) addChild(box, child);
+      throw error;
+    }
     return [...next];
   }
   if (current.some((child) => !next.includes(child))

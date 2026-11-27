@@ -81,8 +81,22 @@ function syncRepeatChildren(actor: StActor, current: StActor[], next: StActor[])
   if (!insert || !reorder) {
     if (current.length && !actor.remove_child) throw new Error('This St container cannot remove child actors.');
     if (next.length && !actor.add_child) throw new Error('This St container cannot contain child actors.');
-    for (const child of current) actor.remove_child!(child);
-    for (const child of next) actor.add_child!(child);
+    const removed: StActor[] = [];
+    const added: StActor[] = [];
+    try {
+      for (const child of current) {
+        actor.remove_child!(child);
+        removed.push(child);
+      }
+      for (const child of next) {
+        actor.add_child!(child);
+        added.push(child);
+      }
+    } catch (error) {
+      for (const child of added) actor.remove_child!(child);
+      for (const child of removed) actor.add_child!(child);
+      throw error;
+    }
     return [...next];
   }
   if (current.some((child) => !next.includes(child)) && !actor.remove_child) {

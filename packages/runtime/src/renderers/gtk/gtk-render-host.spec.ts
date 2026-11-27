@@ -1017,6 +1017,48 @@ describe('createGtkRenderHost', () => {
     host.destroy(list);
   });
 
+  it('restores GTK repeat children when a fallback attachment fails', () => {
+    class FailingFallbackBox extends FakeWidget {
+      failAppend = false;
+      override append(child: GtkActor): void {
+        if (this.failAppend) {
+          this.failAppend = false;
+          throw new Error('attachment failed');
+        }
+        super.append(child);
+      }
+      override insert_child_after(child: GtkActor, sibling: GtkActor | null): void {
+        super.insert_child_after(child, sibling);
+      }
+    }
+    const host = createGtkRenderHost({ ...createGtk(), Box: FailingFallbackBox });
+    const first = host.text('first') as FakeWidget;
+    const second = host.text('second') as FakeWidget;
+    const values = signal({ items: [
+      { key: 'first', index: 0, node: first },
+      { key: 'second', index: 1, node: second },
+    ] });
+    const list = host.repeat({ kind: 'binding', get: () => values.get() }) as FailingFallbackBox;
+    Object.defineProperties(list, {
+      insert_child_after: { value: undefined },
+      insertChildAfter: { value: undefined },
+      reorder_child_after: { value: undefined },
+      reorderChildAfter: { value: undefined },
+    });
+    const added = host.text('added') as FakeWidget;
+    list.failAppend = true;
+
+    expect(() => values.set({ items: [
+      { key: 'added', index: 0, node: added },
+    ] })).toThrow('attachment failed');
+
+    expect(list.children).toEqual([first, second]);
+    expect(first.parent).toBe(list);
+    expect(second.parent).toBe(list);
+    expect(added.parent).toBeNull();
+    host.destroy(list);
+  });
+
   it('preserves mounted GTK rows when a repeat insertion fails before removals', () => {
     class FailingInsertBox extends FakeWidget {
       failInsert = false;

@@ -1014,6 +1014,45 @@ describe('createStRenderHost', () => {
     expect(child.signals.size).toBe(0);
   });
 
+  it('restores St repeat children when a fallback attachment fails', () => {
+    class FailingFallbackBox extends FakeActor {
+      failAdd = false;
+      override add_child(child: StActor): void {
+        if (this.failAdd) {
+          this.failAdd = false;
+          throw new Error('attachment failed');
+        }
+        super.add_child(child);
+      }
+    }
+    const host = createStRenderHost({ ...createSt(), BoxLayout: FailingFallbackBox });
+    const first = host.text('first') as FakeActor;
+    const second = host.text('second') as FakeActor;
+    const values = signal({ items: [
+      { key: 'first', index: 0, node: first },
+      { key: 'second', index: 1, node: second },
+    ] });
+    const list = host.repeat({ kind: 'binding', get: () => values.get() }) as FailingFallbackBox;
+    Object.defineProperties(list, {
+      insert_child_at_index: { value: undefined },
+      insertChildAtIndex: { value: undefined },
+      set_child_at_index: { value: undefined },
+      setChildAtIndex: { value: undefined },
+    });
+    const added = host.text('added') as FakeActor;
+    list.failAdd = true;
+
+    expect(() => values.set({ items: [
+      { key: 'added', index: 0, node: added },
+    ] })).toThrow('attachment failed');
+
+    expect(list.children).toEqual([first, second]);
+    expect(first.destroyed).toBe(false);
+    expect(second.destroyed).toBe(false);
+    expect(added.destroyed).toBe(true);
+    host.destroy(list);
+  });
+
   it('preserves mounted St rows when a repeat insertion fails before removals', () => {
     class FailingInsertBox extends FakeActor {
       failInsert = false;

@@ -31,6 +31,7 @@ afterEach(async () => {
 describe('discoverTypeScriptComponents', () => {
   it('discovers component templates, bindings and instance members without loading modules', async () => {
     const directory = await createProject(`
+      throw new Error('Component modules must not be evaluated during discovery.');
       const Component = (_options: object): ClassDecorator => () => {};
       const Input = (_name?: string): PropertyDecorator => () => {};
       const Output = (_name?: string): PropertyDecorator => () => {};

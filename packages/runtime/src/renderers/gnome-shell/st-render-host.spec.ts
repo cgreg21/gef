@@ -957,7 +957,7 @@ describe('createStRenderHost', () => {
     }) as FakeActor;
 
     expect(list.children).toEqual([child]);
-    expect(child.signals.size).toBe(1);
+    expect(child.signals.size).toBe(2);
     host.destroy(list);
     expect(child.destroyed).toBe(true);
     expect(child.destroyCount).toBe(1);

@@ -98,7 +98,8 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     return runWorkspaceCommand(command, io);
   }
 
-  if (command === 'compile-ts') return runCompileTypeScript(args.slice(1), io);\n  if (command === 'compile-native') return runCompileNative(inputArg, outputArg, io);
+  if (command === 'compile-ts') return runCompileTypeScript(args.slice(1), io);
+  if (command === 'compile-native') return runCompileNative(inputArg, outputArg, io);
 
   if (command === 'styles') return runStyles(inputArg, outputArg, io);
 

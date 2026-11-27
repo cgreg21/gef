@@ -1014,6 +1014,37 @@ describe('createStRenderHost', () => {
     expect(child.signals.size).toBe(0);
   });
 
+  it('preserves mounted St rows when a repeat insertion fails before removals', () => {
+    class FailingInsertBox extends FakeActor {
+      failInsert = false;
+      override insert_child_at_index(child: StActor, index: number): void {
+        if (this.failInsert) throw new Error('attachment failed');
+        super.insert_child_at_index(child, index);
+      }
+    }
+    const host = createStRenderHost({ ...createSt(), BoxLayout: FailingInsertBox });
+    const retained = host.text('retained') as FakeActor;
+    const removed = host.text('removed') as FakeActor;
+    const values = signal({ items: [
+      { key: 'retained', index: 0, node: retained },
+      { key: 'removed', index: 1, node: removed },
+    ] });
+    const list = host.repeat({ kind: 'binding', get: () => values.get() }) as FailingInsertBox;
+    const added = host.text('added') as FakeActor;
+    list.failInsert = true;
+
+    expect(() => values.set({ items: [
+      { key: 'added', index: 0, node: added },
+      { key: 'retained', index: 1, node: retained },
+    ] })).toThrow('attachment failed');
+
+    expect(list.children).toEqual([retained, removed]);
+    expect(retained.destroyed).toBe(false);
+    expect(removed.destroyed).toBe(false);
+    expect(added.destroyed).toBe(true);
+    host.destroy(list);
+  });
+
   it('restores retained St rows when attaching a repeat update fails', () => {
     class FailingInsertBox extends FakeActor {
       failInsert = false;

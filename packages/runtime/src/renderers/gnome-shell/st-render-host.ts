@@ -89,10 +89,6 @@ function syncRepeatChildren(actor: StActor, current: StActor[], next: StActor[])
     throw new Error('This St container cannot remove child actors.');
   }
   const order = [...current];
-  for (const child of current) if (!next.includes(child)) {
-    actor.remove_child!(child);
-    order.splice(order.indexOf(child), 1);
-  }
   for (let index = 0; index < next.length; index += 1) {
     const child = next[index]!;
     const currentIndex = order.indexOf(child);
@@ -105,6 +101,10 @@ function syncRepeatChildren(actor: StActor, current: StActor[], next: StActor[])
       order.splice(currentIndex, 1);
       order.splice(index, 0, child);
     }
+  }
+  for (const child of current) if (!next.includes(child)) {
+    actor.remove_child!(child);
+    order.splice(order.indexOf(child), 1);
   }
   return order;
 }

@@ -306,11 +306,11 @@ function syncRepeatChildren(box: GtkActor, current: GtkActor[], next: GtkActor[]
     for (const child of next) addChild(box, child);
     return [...next];
   }
-  const order = [...current];
-  for (const child of current) if (!next.includes(child)) {
-    removeChild(box, child);
-    order.splice(order.indexOf(child), 1);
+  if (current.some((child) => !next.includes(child))
+    && ![box.remove_suffix, box.removeSuffix, box.remove, box.set_child, box.setChild].some((method) => typeof method === 'function')) {
+    throw new Error('This GTK container cannot remove its child widget.');
   }
+  const order = [...current];
   let previous: GtkActor | null = null;
   for (const child of next) {
     const index = order.indexOf(child);
@@ -323,6 +323,10 @@ function syncRepeatChildren(box: GtkActor, current: GtkActor[], next: GtkActor[]
       order.splice(previous ? order.indexOf(previous) + 1 : 0, 0, child);
     }
     previous = child;
+  }
+  for (const child of current) if (!next.includes(child)) {
+    removeChild(box, child);
+    order.splice(order.indexOf(child), 1);
   }
   return order;
 }

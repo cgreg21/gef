@@ -132,7 +132,7 @@ export function emitGtkC(nodes: readonly UiNode[], options: GtkCOptions = {}): G
   const commonProperties = [...margins, 'halign', 'valign', 'visible'];
 
   function emitElement(element: UiElement, parent?: { id: string; component: string }, position?: { row: number; column: number; rowSpan: number; columnSpan: number }): string | undefined {
-    if (!['GtkBox', 'GtkLabel', 'GtkButton', 'GtkEntry', 'GtkCheckButton'].includes(element.component)) {
+    if (!['GtkBox', 'GtkGrid', 'GtkLabel', 'GtkButton', 'GtkEntry', 'GtkCheckButton'].includes(element.component)) {
       report(`Unsupported GTK element "${element.component}".`);
       return undefined;
     }

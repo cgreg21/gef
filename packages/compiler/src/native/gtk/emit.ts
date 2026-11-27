@@ -45,11 +45,11 @@ export function emitGtkC(nodes: readonly UiNode[]): GtkCResult {
       const orientation = staticProperty(element, 'orientation') ?? 'horizontal';
       const spacing = staticProperty(element, 'spacing') ?? '0';
       if (!['horizontal', 'vertical'].includes(orientation)) report(`Invalid GtkBox orientation "${orientation}".`);
-      if (!/^-?\\d+$/.test(spacing)) report(`GtkBox spacing must be an integer; received "${spacing}".`);
+      if (!/^-?[0-9]+$/.test(spacing)) report(`GtkBox spacing must be an integer; received "${spacing}".`);
       for (const property of element.properties) {
         if (!['orientation', 'spacing'].includes(property.name)) report(`Unsupported GtkBox property "${property.name}".`);
       }
-      lines.push(`GtkWidget *${id} = gtk_box_new(GTK_ORIENTATION_${orientation.toUpperCase()}, ${/^-?\\d+$/.test(spacing) ? spacing : '0'});`);
+      lines.push(`GtkWidget *${id} = gtk_box_new(GTK_ORIENTATION_${orientation.toUpperCase()}, ${/^-?[0-9]+$/.test(spacing) ? spacing : '0'});`);
     } else {
       for (const property of element.properties) {
         if (property.name !== 'label') report(`Unsupported ${element.component} property "${property.name}".`);

@@ -24,13 +24,13 @@ export interface TypeScriptComponentDiscoveryResult {
 
 const DISCOVERY_DIAGNOSTIC = 99001;
 
-function diagnostic(node: ts.Node, message: string): ts.Diagnostic {
+function diagnostic(node: ts.Node, sourceFile: ts.SourceFile, message: string): ts.Diagnostic {
   return {
     category: ts.DiagnosticCategory.Error,
     code: DISCOVERY_DIAGNOSTIC,
-    file: node.getSourceFile(),
-    start: node.getStart(),
-    length: node.getWidth(),
+    file: sourceFile,
+    start: node.pos,
+    length: node.end - node.pos,
     messageText: message,
   };
 }
@@ -70,9 +70,12 @@ function memberName(member: ts.ClassElement): string | undefined {
   return undefined;
 }
 
-function isStatic(member: ts.ClassElement): boolean {
-  return ts.canHaveModifiers(member)
-    && (ts.getModifiers(member) ?? []).some((modifier) => modifier.kind === ts.SyntaxKind.StaticKeyword);
+function isUnavailableMember(member: ts.ClassElement): boolean {
+  if (!ts.canHaveModifiers(member)) return false;
+  return (ts.getModifiers(member) ?? []).some((modifier) =>
+    modifier.kind === ts.SyntaxKind.StaticKeyword
+    || modifier.kind === ts.SyntaxKind.PrivateKeyword
+    || modifier.kind === ts.SyntaxKind.ProtectedKeyword);
 }
 
 function collectBindings(
@@ -95,6 +98,7 @@ function collectBindings(
 
 function discoverComponent(
   declaration: ts.ClassDeclaration,
+  sourceFile: ts.SourceFile,
   diagnostics: ts.Diagnostic[],
 ): TypeScriptComponentDescriptor | undefined {
   const componentDecorator = decorators(declaration).find((decorator) => {
@@ -106,7 +110,7 @@ function discoverComponent(
   const call = decoratorCall(componentDecorator);
   const options = call?.arguments[0];
   if (!options || !ts.isObjectLiteralExpression(options)) {
-    diagnostics.push(diagnostic(componentDecorator, '@Component requires a static object literal.'));
+    diagnostics.push(diagnostic(componentDecorator, sourceFile, '@Component requires a static object literal.'));
     return undefined;
   }
 
@@ -116,13 +120,14 @@ function discoverComponent(
   if (!selector || Boolean(template) === Boolean(templateUrl)) {
     diagnostics.push(diagnostic(
       options,
+      sourceFile,
       '@Component requires a static selector and exactly one non-empty template or templateUrl.',
     ));
     return undefined;
   }
 
   const componentMembers = declaration.members
-    .filter((member) => !isStatic(member))
+    .filter((member) => !isUnavailableMember(member))
     .map(memberName)
     .filter((name): name is string => name !== undefined);
   const inputs = collectBindings(declaration, 'Input');
@@ -130,7 +135,7 @@ function discoverComponent(
 
   return {
     className: declaration.name?.text ?? 'default',
-    fileName: declaration.getSourceFile().fileName,
+    fileName: sourceFile.fileName,
     selector,
     ...(template !== undefined ? { template } : {}),
     ...(templateUrl !== undefined ? { templateUrl } : {}),
@@ -171,7 +176,7 @@ export function discoverTypeScriptComponents(
     if (sourceFile.isDeclarationFile || !parsed.fileNames.includes(sourceFile.fileName)) continue;
     const visit = (node: ts.Node): void => {
       if (ts.isClassDeclaration(node)) {
-        const component = discoverComponent(node, diagnostics);
+        const component = discoverComponent(node, sourceFile, diagnostics);
         if (component) components.push(component);
       }
       ts.forEachChild(node, visit);

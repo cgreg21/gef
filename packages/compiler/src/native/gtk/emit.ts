@@ -132,7 +132,7 @@ export function emitGtkC(nodes: readonly UiNode[], options: GtkCOptions = {}): G
   const commonProperties = [...margins, 'halign', 'valign', 'visible'];
 
   function emitElement(element: UiElement, parent?: { id: string; component: string }, position?: { row: number; column: number; rowSpan: number; columnSpan: number }): string | undefined {
-    if (!['GtkBox', 'GtkGrid', 'GtkLabel', 'GtkButton', 'GtkEntry', 'GtkCheckButton', 'GtkSeparator'].includes(element.component)) {
+    if (!['GtkBox', 'GtkGrid', 'GtkScrolledWindow', 'GtkLabel', 'GtkButton', 'GtkEntry', 'GtkCheckButton', 'GtkSeparator'].includes(element.component)) {
       report(`Unsupported GTK element "${element.component}".`);
       return undefined;
     }
@@ -149,7 +149,34 @@ export function emitGtkC(nodes: readonly UiNode[], options: GtkCOptions = {}): G
     const placementProperties = parent?.component === 'GtkGrid' ? ['row', 'column', 'rowSpan', 'columnSpan'] : [];
     const label = staticProperty(element, 'label');
     const text = staticProperty(element, 'text');
-    if (element.component === 'GtkGrid') {
+    if (element.component === 'GtkScrolledWindow') {
+      const policies = ['never', 'automatic', 'always', 'external'];
+      for (const name of ['hscrollbarPolicy', 'vscrollbarPolicy'] as const) {
+        const value = staticProperty(element, name) ?? 'automatic';
+        if (!policies.includes(value)) {
+          report(`GtkScrolledWindow ${name} must be one of: ${policies.join(', ')}; received "${value}".`);
+        }
+        lines.push(`gtk_scrolled_window_set_${name === 'hscrollbarPolicy' ? 'h' : 'v'}scrollbar_policy(GTK_SCROLLED_WINDOW(${id}), GTK_POLICY_${policies.includes(value) ? value.toUpperCase() : 'AUTOMATIC'});`);
+      }
+      for (const name of ['minContentWidth', 'minContentHeight'] as const) {
+        const value = staticProperty(element, name);
+        if (value === undefined) continue;
+        if (!/^[0-9]+$/.test(value)) {
+          report(`GtkScrolledWindow ${name} must be a non-negative integer; received "${value}".`);
+        } else {
+          lines.push(`gtk_scrolled_window_set_${name === 'minContentWidth' ? 'min_content_width' : 'min_content_height'}(GTK_SCROLLED_WINDOW(${id}), ${value});`);
+        }
+      }
+      for (const property of element.properties) {
+        if (!['hscrollbarPolicy', 'vscrollbarPolicy', 'minContentWidth', 'minContentHeight', ...commonProperties].includes(property.name)) {
+          report(`Unsupported GtkScrolledWindow property "${property.name}".`);
+        }
+      }
+      if (element.children.filter((child) => child.kind === 'element').length > 1) {
+        report('GtkScrolledWindow accepts exactly one child widget.');
+      }
+      lines.push(`GtkWidget *${id} = gtk_scrolled_window_new();`);
+    } else if (element.component === 'GtkGrid') {
       for (const property of element.properties) {
         if (!commonProperties.includes(property.name)) report(`Unsupported GtkGrid property "${property.name}".`);
       }
@@ -250,11 +277,13 @@ export function emitGtkC(nodes: readonly UiNode[], options: GtkCOptions = {}): G
         lines.push(`gtk_grid_attach(GTK_GRID(${parent.id}), ${id}, ${position.column}, ${position.row}, ${position.columnSpan}, ${position.rowSpan});`);
       } else if (parent.component === 'GtkBox') {
         lines.push(`gtk_box_append(GTK_BOX(${parent.id}), ${id});`);
+      } else if (parent.component === 'GtkScrolledWindow') {
+        lines.push(`gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(${parent.id}), ${id});`);
       } else {
         report(`${parent.component} cannot contain child widgets.`);
       }
     }
-    if (element.component === 'GtkBox' || element.component === 'GtkGrid') {
+    if (element.component === 'GtkBox' || element.component === 'GtkGrid' || element.component === 'GtkScrolledWindow') {
       let childIndex = 0;
       for (const child of element.children) {
         if (child.kind === 'element') {

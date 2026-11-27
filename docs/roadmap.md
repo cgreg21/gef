@@ -196,3 +196,5 @@ Le job GNOME utilise Fedora 45 avec systemd, Mutter devkit et GNOME Shell 51. Il
 - [x] Add `gef compile-native <view.gtpl> [output-file]` to compile validated static GTK4 GTPL views through the native GTK compiler API. The command reports GTPL/native diagnostics and defaults the output path to the template filename without its extension.\n- [x] Expose native C callback linking from the CLI with repeatable `--native-source` and `--callback method=symbol` options; validate option syntax and duplicate mappings in CLI tests.
 
 - [x] Add static GTK4 `GtkSeparator` support with validated horizontal/vertical orientation, unit tests and GTK4 C-to-ELF integration coverage.
+
+- [x] Add static GTK4 `GtkScrolledWindow` support with one child, validated scrollbar policies and minimum content dimensions; cover generated C with unit and GTK4 ELF smoke tests.

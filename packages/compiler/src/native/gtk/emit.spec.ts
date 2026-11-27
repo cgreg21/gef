@@ -33,6 +33,27 @@ describe('GTK4 C backend', () => {
     expect(result.diagnostics).toContain('GtkGrid child columnSpan must be an integer greater than or equal to 1; received "0".');
   });
 
+  it('emits GtkScrolledWindow with one child and validated scrolling properties', () => {
+    const ir = compileGtplToUiIr('<GtkScrolledWindow hscrollbarPolicy="never" vscrollbarPolicy="always" minContentWidth="320" minContentHeight="200"><GtkBox><GtkLabel label="Scrollable" /></GtkBox></GtkScrolledWindow>');
+    const result = emitGtkC(ir.nodes);
+    expect(result.success).toBe(true);
+    expect(result.source).toContain('gtk_scrolled_window_new()');
+    expect(result.source).toContain('gtk_scrolled_window_set_hscrollbar_policy(GTK_SCROLLED_WINDOW(widget_0), GTK_POLICY_NEVER);');
+    expect(result.source).toContain('gtk_scrolled_window_set_vscrollbar_policy(GTK_SCROLLED_WINDOW(widget_0), GTK_POLICY_ALWAYS);');
+    expect(result.source).toContain('gtk_scrolled_window_set_min_content_width(GTK_SCROLLED_WINDOW(widget_0), 320);');
+    expect(result.source).toContain('gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(widget_0), 200);');
+    expect(result.source).toContain('gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(widget_0), widget_1);');
+  });
+
+  it('rejects invalid GtkScrolledWindow policies, dimensions and multiple children', () => {
+    const ir = compileGtplToUiIr('<GtkScrolledWindow hscrollbarPolicy="sometimes" minContentWidth="-1"><GtkLabel /><GtkButton /></GtkScrolledWindow>');
+    const result = emitGtkC(ir.nodes);
+    expect(result.success).toBe(false);
+    expect(result.diagnostics).toContain('GtkScrolledWindow hscrollbarPolicy must be one of: never, automatic, always, external; received "sometimes".');
+    expect(result.diagnostics).toContain('GtkScrolledWindow minContentWidth must be a non-negative integer; received "-1".');
+    expect(result.diagnostics).toContain('GtkScrolledWindow accepts exactly one child widget.');
+  });
+
   it('emits horizontal and vertical GtkSeparator widgets', () => {
     const ir = compileGtplToUiIr('<GtkBox><GtkSeparator /><GtkSeparator orientation="vertical" /></GtkBox>');
     const result = emitGtkC(ir.nodes);

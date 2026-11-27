@@ -10,7 +10,7 @@ const ir = compileGtplToUiIr(`
     <GtkLabel label="GEF native C smoke test" marginStart="4" />
     <GtkButton label="Compile" visible="true" (clicked)="this.save()" />
     <GtkEntry text="Ada" placeholderText="Name" editable="false" />
-    <GtkCheckButton label="Enabled" active="true" />\n    <GtkSeparator orientation="horizontal" />
+    <GtkCheckButton label="Enabled" active="true" />\n    <GtkSeparator orientation="horizontal" />\n    <GtkScrolledWindow minContentWidth="240" minContentHeight="120">\n      <GtkLabel label="Scrollable content" />\n    </GtkScrolledWindow>
     <GtkGrid>
       <GtkLabel label="Grid" row="0" column="0" />
       <GtkEntry text="Native" row="0" column="1" />

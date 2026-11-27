@@ -974,10 +974,12 @@ describe('createGtkRenderHost', () => {
       },
       () => host.text('fallback'),
     ) as FakeWidget;
+    const conditionalFallback = conditional.children[0] as FakeWidget;
     FailingBox.remaining = 0;
     expect(() => condition.set(true)).toThrow('attachment failed');
     FailingBox.remaining = -1;
     expect(conditionalNode.signals.size).toBe(0);
+    expect(conditional.children).toEqual([conditionalFallback]);
     host.destroy(conditional);
 
     const selected = signal('fallback');
@@ -993,10 +995,12 @@ describe('createGtkRenderHost', () => {
       }],
       () => host.text('fallback'),
     ) as FakeWidget;
+    const switchFallback = switched.children[0] as FakeWidget;
     FailingBox.remaining = 0;
     expect(() => selected.set('button')).toThrow('attachment failed');
     FailingBox.remaining = -1;
     expect(switchNode.signals.size).toBe(0);
+    expect(switched.children).toEqual([switchFallback]);
     host.destroy(switched);
   });
 

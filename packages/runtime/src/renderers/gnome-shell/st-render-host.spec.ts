@@ -561,6 +561,46 @@ describe('createStRenderHost', () => {
     expect(switchNode.destroyed).toBe(true);
   });
 
+  it('restores previous St branches when attaching a replacement fails', () => {
+    class FailingReplacementBin extends FakeBin {
+      failOn: StActor | undefined;
+      override set_child(child: StActor | null): void {
+        if (child === this.failOn) throw new Error('replacement failed');
+        super.set_child(child);
+      }
+    }
+    const host = createStRenderHost({ ...createSt(), Bin: FailingReplacementBin });
+    const condition = signal(false);
+    const conditionalOld = new FakeActor();
+    const conditionalNext = new FakeActor();
+    const conditional = host.conditional(
+      { kind: 'binding', get: () => condition.get() },
+      () => conditionalNext,
+      () => conditionalOld,
+    ) as FailingReplacementBin;
+    conditional.failOn = conditionalNext;
+    expect(() => condition.set(true)).toThrow('replacement failed');
+    expect(conditional.children).toEqual([conditionalOld]);
+    expect(conditionalOld.destroyed).toBe(false);
+    expect(conditionalNext.destroyed).toBe(true);
+    host.destroy(conditional);
+
+    const selected = signal('idle');
+    const switchOld = new FakeActor();
+    const switchNext = new FakeActor();
+    const switched = host.switch(
+      { kind: 'binding', get: () => selected.get() },
+      [{ values: ['ready'], render: () => switchNext }],
+      () => switchOld,
+    ) as FailingReplacementBin;
+    switched.failOn = switchNext;
+    expect(() => selected.set('ready')).toThrow('replacement failed');
+    expect(switched.children).toEqual([switchOld]);
+    expect(switchOld.destroyed).toBe(false);
+    expect(switchNext.destroyed).toBe(true);
+    host.destroy(switched);
+  });
+
   it('rejects conditional and switch containers without set_child', () => {
     class MissingChildBin extends FakeBin {
       constructor(properties: Record<string, unknown> = {}) {

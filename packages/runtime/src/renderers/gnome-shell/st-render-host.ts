@@ -674,16 +674,19 @@ export function createStRenderHost(
           destroyActor(next);
           throw new Error('This St container cannot set child actors.');
         }
+        let detached = false;
         try {
           if (current) {
             actor.set_child(null);
-            destroyActor(current);
+            detached = true;
           }
           actor.set_child(next);
         } catch (error) {
           if (next !== current) destroyActor(next);
+          if (detached && current) actor.set_child(current);
           throw error;
         }
+        if (current) destroyActor(current);
         current = next;
         }));
         return actor;
@@ -708,16 +711,19 @@ export function createStRenderHost(
           destroyActor(next);
           throw new Error('This St container cannot set child actors.');
         }
+        let detached = false;
         try {
           if (current) {
             actor.set_child(null);
-            destroyActor(current);
+            detached = true;
           }
           actor.set_child(next);
         } catch (error) {
           if (next !== current) destroyActor(next);
+          if (detached && current) actor.set_child(current);
           throw error;
         }
+        if (current) destroyActor(current);
         current = next;
         }));
         return actor;

@@ -881,11 +881,11 @@ export function createGtkRenderHost(
           const value = condition.get();
           const next = value ? render(value) : fallback();
           try {
+            addChild(box, next);
             if (current) {
               removeChild(box, current);
               disposeWidget(current);
             }
-            addChild(box, next);
             children.set(box, [next]);
             current = next;
           } catch (error) {
@@ -903,11 +903,11 @@ export function createGtkRenderHost(
           const selected = cases.find((branch) => branch.values.some((candidate) => Object.is(candidate, value.get())));
           const next = selected?.render() ?? renderDefault?.() ?? makeBox(Gtk, options);
           try {
+            addChild(box, next);
             if (current) {
               removeChild(box, current);
               disposeWidget(current);
             }
-            addChild(box, next);
             children.set(box, [next]);
             current = next;
           } catch (error) {

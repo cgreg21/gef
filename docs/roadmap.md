@@ -164,3 +164,13 @@ Ne pas présenter une tâche comme terminée si sa validation échoue ou reste e
 ## Validation end-to-end GNOME Shell 51
 
 Le job GNOME utilise Fedora 45 avec systemd, Mutter devkit et GNOME Shell 51. Il compile le squelette généré avec TypeScript, construit l'archive EGO, l'installe avant le démarrage du shell, puis vérifie deux cycles d'activation/désactivation et les smoke tests GJS. La CI complète a validé cette chaîne sur le commit `51304d8` (run `45898877575`). Les détails des investigations historiques sont conservés dans l'historique Git plutôt que dans cette roadmap.
+
+
+## P7 — TypeScript vers natif
+
+- [x] Ajouter une API de compilation de projet TypeScript fondée sur le compilateur officiel : lecture de `tsconfig.json`, vérification sémantique, émission JavaScript et source maps, refus d'émission en présence d'erreurs. Tests de compilation réussie, diagnostic de type et configuration absente.
+- [ ] Ajouter une commande CLI dédiée à la compilation TypeScript et intégrer le pipeline aux projets GEF.
+- [ ] Définir une IR commune pour les applications GTK sans réimplémenter le langage TypeScript.
+- [ ] Évaluer le backend natif GTK et son runtime minimal ; mesurer les coûts avant de choisir LLVM ou une autre chaîne de génération.
+- [ ] Conserver une cible GJS séparée : les extensions GNOME Shell doivent rester compatibles avec le runtime JavaScript de GNOME.
+- [ ] Ajouter le packaging exécutable et les tests de lancement natifs par plateforme.

@@ -95,6 +95,6 @@ describe('compileTypeScriptComponentsToUiIr', () => {
     expect(result.success).toBe(false);
     expect(result.components).toEqual([]);
     expect(result.discoveryDiagnostics).toHaveLength(1);
-    expect(result.discoveryDiagnostics[0]?.messageText).toMatch(/static object literal/);
+    expect(result.discoveryDiagnostics[0]?.messageText).toMatch(/static selector/);
   });
 });

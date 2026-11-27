@@ -52,7 +52,7 @@ describe('gef compile-ts', () => {
       '--project', join(directory, 'tsconfig.json'),
       '--out-dir', join(directory, 'build'),
     ], io)).toBe(0);
-    expect(output[0]).toContain('1 files emitted');
+    expect(output[0]).toContain('2 output files emitted');
     expect(errors).toHaveLength(0);
     expect(await readFile(join(directory, 'build', 'index.js'), 'utf8')).toContain('answer = 42');
     expect(await readFile(join(directory, 'build', 'index.js.map'), 'utf8')).toContain('"version":3');

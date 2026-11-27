@@ -948,6 +948,22 @@ describe('createStRenderHost', () => {
     host.destroy(list);
   });
 
+  it('disposes repeated St actors and their signal handlers with the container', () => {
+    const host = createStRenderHost(createSt());
+    const child = host.element('StButton', { clicked: () => undefined }, undefined) as FakeActor;
+    const list = host.repeat({
+      kind: 'binding',
+      get: () => ({ items: [{ key: 'one', index: 0, node: child }] }),
+    }) as FakeActor;
+
+    expect(list.children).toEqual([child]);
+    expect(child.signals.size).toBe(1);
+    host.destroy(list);
+    expect(child.destroyed).toBe(true);
+    expect(child.destroyCount).toBe(1);
+    expect(child.signals.size).toBe(0);
+  });
+
   it('destroys newly rendered repeat nodes when attaching a batch fails', () => {
     class FailingBox extends FakeActor {
       override add_child(_child: StActor): void {

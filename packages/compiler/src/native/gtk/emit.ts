@@ -1,3 +1,4 @@
+import type { ExpressionNode } from '../../gtpl/ast/expression.js';
 import type { UiElement, UiNode } from '../../ir/ui.js';
 
 export interface GtkCResult {
@@ -14,13 +15,61 @@ function cString(value: string): string {
   return JSON.stringify(value).replace(/\\u2028/g, '\\u2028').replace(/\\u2029/g, '\\u2029');
 }
 
+type StaticValue = string | number | boolean | null;
+
+function evaluateStaticExpression(expression: ExpressionNode): StaticValue | undefined {
+  if (expression.kind === 'literal') return expression.value;
+  if (expression.kind === 'unary') {
+    const value = evaluateStaticExpression(expression.argument);
+    if (expression.operator === '!' && typeof value === 'boolean') return !value;
+    if (expression.operator === '+' && typeof value === 'number') return value;
+    if (expression.operator === '-' && typeof value === 'number') return -value;
+    return undefined;
+  }
+  if (expression.kind === 'conditional') {
+    const test = evaluateStaticExpression(expression.test);
+    if (typeof test !== 'boolean') return undefined;
+    return evaluateStaticExpression(test ? expression.consequent : expression.alternate);
+  }
+  if (expression.kind !== 'binary') return undefined;
+  const left = evaluateStaticExpression(expression.left);
+  const right = evaluateStaticExpression(expression.right);
+  if (left === undefined || right === undefined) return undefined;
+  const operator = expression.operator;
+  if (operator === '&&' || operator === '||' || operator === '??') {
+    if (operator === '??') return left ?? right;
+    if (typeof left !== 'boolean' || typeof right !== 'boolean') return undefined;
+    return operator === '&&' ? left && right : left || right;
+  }
+  if (operator === '===' || operator === '!==') {
+    const equal = typeof left === typeof right && left === right;
+    return operator === '===' ? equal : !equal;
+  }
+  if (typeof left === 'number' && typeof right === 'number') {
+    switch (operator) {
+      case '+': return left + right;
+      case '-': return left - right;
+      case '*': return left * right;
+      case '/': return right === 0 ? undefined : left / right;
+      case '%': return right === 0 ? undefined : left % right;
+      case '**': return left ** right;
+      case '<': return left < right;
+      case '>': return left > right;
+      case '<=': return left <= right;
+      case '>=': return left >= right;
+      default: return undefined;
+    }
+  }
+  if (operator === '+' && typeof left === 'string' && typeof right === 'string') return left + right;
+  return undefined;
+}
+
 function staticProperty(element: UiElement, name: string): string | undefined {
   const property = element.properties.find((item) => item.name === name);
   if (!property) return undefined;
   if (property.value.kind === 'static') return property.value.value;
-  const expression = property.value.expression;
-  if (expression.kind === 'literal' && expression.value !== null) return String(expression.value);
-  return undefined;
+  const value = evaluateStaticExpression(property.value.expression);
+  return value === undefined || value === null ? undefined : String(value);
 }
 
 function emitCommonProperties(element: UiElement, id: string, lines: string[], report: (message: string) => void): void {
@@ -72,9 +121,8 @@ export function emitGtkC(nodes: readonly UiNode[]): GtkCResult {
       report(`${element.component} events and references are not supported by the static C backend.`);
     }
     for (const property of element.properties) {
-      if (property.value.kind === 'binding'
-        && (property.value.expression.kind !== 'literal' || property.value.expression.value === null)) {
-        report(`Dynamic property "${property.name}" is not supported by the static C backend; only non-null literal bindings are supported.`);
+      if (property.value.kind === 'binding' && staticProperty(element, property.name) === undefined) {
+        report(`Property binding "${property.name}" is not a compile-time constant supported by the static C backend.`);
       }
     }
 

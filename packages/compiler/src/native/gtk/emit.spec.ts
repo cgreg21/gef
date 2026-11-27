@@ -62,7 +62,7 @@ describe('GTK4 C backend', () => {
     const result = emitGtkC(ir.nodes);
     expect(result.success).toBe(false);
     expect(result.source).toBe('');
-    expect(result.diagnostics).toContain('Dynamic property "label" is not supported by the static C backend; only non-null literal bindings are supported.');
+    expect(result.diagnostics).toContain('Property binding "label" is not a compile-time constant supported by the static C backend.');
   });
 
 
@@ -75,12 +75,28 @@ describe('GTK4 C backend', () => {
     expect(result.source).toContain('gtk_widget_set_visible(widget_1, false);');
   });
 
+  it('evaluates constant unary, binary and conditional property expressions', () => {
+    const ir = compileGtplToUiIr(`<GtkBox [spacing]="2 + 3 * 4"><GtkLabel [label]="'GEF' + ' GTK'" [visible]="!(1 > 2)" /></GtkBox>`);
+    const result = emitGtkC(ir.nodes);
+    expect(result.success).toBe(true);
+    expect(result.source).toContain('gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 14)');
+    expect(result.source).toContain('gtk_label_new("GEF GTK")');
+    expect(result.source).toContain('gtk_widget_set_visible(widget_1, true);');
+  });
+
+  it('rejects runtime and unsupported property expressions', () => {
+    const ir = compileGtplToUiIr(`<GtkBox><GtkLabel [label]="title" /><GtkEntry [text]="null" /><GtkLabel [label]="1 + title" /></GtkBox>`);
+    const result = emitGtkC(ir.nodes);
+    expect(result.success).toBe(false);
+    expect(result.diagnostics).toContain('Property binding "label" is not a compile-time constant supported by the static C backend.');
+    expect(result.diagnostics).toContain('Property binding "text" is not a compile-time constant supported by the static C backend.');
+  });
   it('rejects non-literal and null property bindings', () => {
     const ir = compileGtplToUiIr('<GtkBox><GtkLabel [label]="title" /><GtkEntry [text]="null" /></GtkBox>');
     const result = emitGtkC(ir.nodes);
     expect(result.success).toBe(false);
-    expect(result.diagnostics).toContain('Dynamic property "label" is not supported by the static C backend; only non-null literal bindings are supported.');
-    expect(result.diagnostics).toContain('Dynamic property "text" is not supported by the static C backend; only non-null literal bindings are supported.');
+    expect(result.diagnostics).toContain('Property binding "label" is not a compile-time constant supported by the static C backend.');
+    expect(result.diagnostics).toContain('Property binding "text" is not a compile-time constant supported by the static C backend.');
   });
 
   it('rejects unsupported widget names', () => {

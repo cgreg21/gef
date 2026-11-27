@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../compiler/src/index.js', async (importOriginal) => {
@@ -45,7 +46,7 @@ describe('gef compile-native', () => {
     const { io } = createIO();
 
     expect(await runCompileNative(['view.gtpl'], io)).toBe(0);
-    expect(compile.mock.calls[0]?.[1].outputFile).toMatch(/view$/);
+    expect(compile.mock.calls[0]?.[1].outputFile).toBe(resolve('view'));
   });
 
   it('rejects invalid GTPL before invoking the native compiler', async () => {
@@ -69,7 +70,7 @@ describe('gef compile-native', () => {
     const { io } = createIO();
     expect(await runCompileNative(['view.gtpl', '--native-source', 'src/callbacks.c', '--callback', 'save=gef_on_save'], io)).toBe(0);
     expect(compile.mock.calls[0]?.[1]).toMatchObject({
-      nativeSources: [expect.stringMatching(/src[/\\\\]callbacks\\.c$/)],
+      nativeSources: [resolve('src/callbacks.c')],
       callbacks: { save: 'gef_on_save' },
     });
   });

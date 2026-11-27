@@ -49,7 +49,7 @@ export async function runCompileNative(
   for (const diagnostic of ir.diagnostics) io.stderr(formatDiagnostic(source, input, diagnostic));
   if (!ir.success) return 1;
 
-  const defaultName = basename(input).replace(/\\.gtpl$/i, '') || 'application';
+  const defaultName = basename(input).replace(/\.gtpl$/i, '') || 'application';
   const outputFile = resolve(outputArg ?? resolve(dirname(input), defaultName));
   const result = await compileGtkNative(ir.nodes, {
     outputFile,

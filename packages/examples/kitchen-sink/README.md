@@ -14,7 +14,7 @@ La navigation entre les écrans utilise le routeur GEF (`/overview`, `/actions`,
 
 ## Composants GEF
 
-Le registre du Kitchen Sink part de `createGtkUiRegistry()` : les douze composants UI publics sont donc disponibles dans les templates. Actions utilise `GefButton` et `GefLabel`. Forms utilise les champs et boutons GEF. Preferences utilise `GefLabel`, `GefSwitch` et `GefCheckbox`, avec des bindings de propriétés booléennes typés. Le champ numérique reste un `GtkSpinButton`, car la bibliothèque UI ne propose pas encore de composant numérique dédié.
+Le registre du Kitchen Sink part de `createGtkUiRegistry()` : les douze composants UI publics sont donc disponibles dans les templates. Actions utilise `GefButton` et `GefLabel`. Forms utilise les champs et boutons GEF. Preferences utilise `GefLabel`, `GefSwitch` et `GefCheckbox`, avec des bindings de propriétés booléennes typés et des libellés associés par composition. Le champ numérique reste un `GtkSpinButton`, car la bibliothèque UI ne propose pas encore de composant numérique dédié.
 
 L'application déclare aussi deux composants de démonstration dans `components.ts` :
 

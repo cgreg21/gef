@@ -15,8 +15,14 @@
     </Flex>
     <GefSwitch [active]="true" />
   </Flex>
-  <GefCheckbox [checked]="true" />
-  <GefCheckbox [checked]="false" />
+  <Flex direction="row" gap="8">
+    <GefCheckbox [checked]="true" />
+    <GefLabel text="Start with the desktop" />
+  </Flex>
+  <Flex direction="row" gap="8">
+    <GefCheckbox [checked]="false" />
+    <GefLabel text="Include beta releases" />
+  </Flex>
   <GtkSeparator orientation="horizontal" />
   <GefLabel text="Update frequency" />
   <GtkSpinButton value="6" />

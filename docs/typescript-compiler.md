@@ -120,3 +120,8 @@ gef compile-native src/app.gtpl dist/my-app
 ```
 
 The output argument is optional; when omitted, the executable is written beside the template using its filename without the `.gtpl` suffix. The CLI accepts the native `GtkBox`, `GtkLabel`, `GtkButton`, `GtkEntry` and `GtkCheckButton` elements. Bindings, events, references, control-flow blocks and unsupported properties are rejected with source diagnostics. This command compiles a static GTPL view; it does not yet compile decorated TypeScript components or their application logic. GNOME Shell extensions continue to use the separate GJS/JavaScript build.
+
+
+### GTK native literal bindings
+
+The GTK4 C backend accepts property bindings whose GTPL expression is a single non-null literal (string, number or boolean). These values are emitted as compile-time constants. Identifiers, member access, calls, operators, null and other runtime expressions remain unsupported and produce diagnostics; they are never silently replaced with defaults.

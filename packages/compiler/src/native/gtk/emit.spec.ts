@@ -65,6 +65,24 @@ describe('GTK4 C backend', () => {
     expect(result.diagnostics).toContain('Dynamic property "label" is not supported by the static C backend.');
   });
 
+
+  it('emits literal property bindings as static GTK values', () => {
+    const ir = compileGtplToUiIr('<GtkBox [spacing]="4"><GtkLabel [label]="\'Hello\'" [visible]="false" /></GtkBox>');
+    const result = emitGtkC(ir.nodes);
+    expect(result.success).toBe(true);
+    expect(result.source).toContain('gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4)');
+    expect(result.source).toContain('gtk_label_new("Hello")');
+    expect(result.source).toContain('gtk_widget_set_visible(widget_1, false);');
+  });
+
+  it('rejects non-literal and null property bindings', () => {
+    const ir = compileGtplToUiIr('<GtkBox><GtkLabel [label]="title" /><GtkEntry [text]="null" /></GtkBox>');
+    const result = emitGtkC(ir.nodes);
+    expect(result.success).toBe(false);
+    expect(result.diagnostics).toContain('Dynamic property "label" is not supported by the static C backend; only non-null literal bindings are supported.');
+    expect(result.diagnostics).toContain('Dynamic property "text" is not supported by the static C backend; only non-null literal bindings are supported.');
+  });
+
   it('rejects unsupported widget names', () => {
     const ir = compileGtplToUiIr('<GtkTextView />');
     const result = emitGtkC(ir.nodes);

@@ -16,8 +16,11 @@ function cString(value: string): string {
 
 function staticProperty(element: UiElement, name: string): string | undefined {
   const property = element.properties.find((item) => item.name === name);
-  if (!property || property.value.kind !== 'static') return undefined;
-  return property.value.value;
+  if (!property) return undefined;
+  if (property.value.kind === 'static') return property.value.value;
+  const expression = property.value.expression;
+  if (expression.kind === 'literal' && expression.value !== null) return String(expression.value);
+  return undefined;
 }
 
 function emitCommonProperties(element: UiElement, id: string, lines: string[], report: (message: string) => void): void {
@@ -69,8 +72,9 @@ export function emitGtkC(nodes: readonly UiNode[]): GtkCResult {
       report(`${element.component} events and references are not supported by the static C backend.`);
     }
     for (const property of element.properties) {
-      if (property.value.kind !== 'static') {
-        report(`Dynamic property "${property.name}" is not supported by the static C backend.`);
+      if (property.value.kind === 'binding'
+        && (property.value.expression.kind !== 'literal' || property.value.expression.value === null)) {
+        report(`Dynamic property "${property.name}" is not supported by the static C backend; only non-null literal bindings are supported.`);
       }
     }
 

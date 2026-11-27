@@ -761,6 +761,33 @@ describe('createGtkRenderHost', () => {
     expect([...widget.classes].sort()).toEqual(['base', 'disabled']);
   });
 
+  it('keeps mounted GTK branches when a binding selects the same widget', () => {
+    const host = createGtkRenderHost(createGtk());
+    const condition = signal(true);
+    const conditionalNode = host.text('conditional') as FakeWidget;
+    const conditional = host.conditional(
+      { kind: 'binding', get: () => condition.get() },
+      () => conditionalNode,
+      () => conditionalNode,
+    ) as FakeWidget;
+    condition.set('still true');
+    expect(conditional.children).toEqual([conditionalNode]);
+    expect(conditionalNode.parent).toBe(conditional);
+
+    const selected = signal('first');
+    const switchNode = host.text('switch') as FakeWidget;
+    const switched = host.switch(
+      { kind: 'binding', get: () => selected.get() },
+      [{ values: ['first', 'second'], render: () => switchNode }],
+      () => host.text('default'),
+    ) as FakeWidget;
+    selected.set('second');
+    expect(switched.children).toEqual([switchNode]);
+    expect(switchNode.parent).toBe(switched);
+    host.destroy(conditional);
+    host.destroy(switched);
+  });
+
   it('updates conditional branches and keyed loop children', () => {
     const host = createGtkRenderHost(createGtk());
     const runtime = createGtplRenderRuntime(host);

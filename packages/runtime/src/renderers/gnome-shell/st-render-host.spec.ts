@@ -509,6 +509,35 @@ describe('createStRenderHost', () => {
     expect(label.properties.text).toBe('second');
   });
 
+  it('keeps mounted St branches when a binding selects the same actor', () => {
+    const host = createStRenderHost(createSt());
+    const condition = signal(true);
+    const conditionalNode = host.text('conditional') as FakeActor;
+    const conditional = host.conditional(
+      { kind: 'binding', get: () => condition.get() },
+      () => conditionalNode,
+      () => conditionalNode,
+    ) as FakeBin;
+    condition.set('still true');
+    expect(conditional.children).toEqual([conditionalNode]);
+    expect(conditionalNode.destroyed).toBe(false);
+
+    const selected = signal('first');
+    const switchNode = host.text('switch') as FakeActor;
+    const switched = host.switch(
+      { kind: 'binding', get: () => selected.get() },
+      [{ values: ['first', 'second'], render: () => switchNode }],
+      () => host.text('default'),
+    ) as FakeBin;
+    selected.set('second');
+    expect(switched.children).toEqual([switchNode]);
+    expect(switchNode.destroyed).toBe(false);
+    host.destroy(conditional);
+    host.destroy(switched);
+    expect(conditionalNode.destroyCount).toBe(1);
+    expect(switchNode.destroyCount).toBe(1);
+  });
+
   it('updates conditional and switch branches when their signals change', () => {
     const host = createStRenderHost(createSt());
     const runtime = createGtplRenderRuntime(host);

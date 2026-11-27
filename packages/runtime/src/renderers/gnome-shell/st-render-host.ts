@@ -670,6 +670,7 @@ export function createStRenderHost(
         resources.add(effect(() => {
         const value = condition.get();
         const next = value ? render(value) : fallback();
+        if (next === current) return;
         if (!actor.set_child) {
           destroyActor(next);
           throw new Error('This St container cannot set child actors.');
@@ -707,6 +708,7 @@ export function createStRenderHost(
         resources.add(effect(() => {
         const selected = cases.find((branch) => branch.values.some((candidate) => Object.is(candidate, value.get())));
         const next = selected?.render() ?? renderDefault?.() ?? makeContainer([]);
+        if (next === current) return;
         if (!actor.set_child) {
           destroyActor(next);
           throw new Error('This St container cannot set child actors.');

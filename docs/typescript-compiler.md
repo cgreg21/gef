@@ -79,3 +79,19 @@ if (!project.success) {
 ```
 
 The registry is explicit and deterministic: duplicate selectors and classes without `@Component` metadata are rejected. The compiler still does not instantiate application classes. `discoverTypeScriptComponents({ configFilePath })` scans the source files selected by `tsconfig.json` and returns static descriptors for `@Component` classes, including selector, inline/external template, `@Input`, `@Output` and public instance member names. Discovery reads the TypeScript AST only and never imports application modules. Decorator options must be static object literals with string-literal values; dynamic expressions are reported as diagnostics rather than evaluated.
+
+
+### Compiling discovered TypeScript components
+
+Use `compileTypeScriptComponentsToUiIr({ configFilePath })` to connect static component discovery directly to the shared UI IR compiler. It discovers all `@Component` classes selected by `tsconfig.json`, builds one selector/input/output registry, and compiles every template without importing application modules.
+
+Native element names remain target-specific and must be passed with `nativeElements`. External templates are supplied in `templateSources`, keyed by their absolute path resolved relative to the declaring TypeScript file. Duplicate selectors and missing external template sources fail explicitly; invalid templates retain per-component diagnostics.
+
+```ts
+import { compileTypeScriptComponentsToUiIr } from 'gnome-extension-framework/compiler';
+
+const project = compileTypeScriptComponentsToUiIr({
+  configFilePath: 'tsconfig.json',
+  nativeElements: ['StLabel', 'StButton'],
+});
+```

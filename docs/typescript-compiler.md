@@ -99,7 +99,7 @@ const project = compileTypeScriptComponentsToUiIr({
 
 ## GTK4 native C backend (experimental)
 
-The compiler exports `emitGtkC(nodes)` from the package root. The first backend supports static `GtkBox`, `GtkLabel`, `GtkButton`, `GtkEntry` and `GtkCheckButton` trees. It emits a GTK4 C application using `GtkApplication`; compile the generated source with a C compiler and GTK4 flags from `pkg-config --cflags --libs gtk4`.
+The compiler exports `emitGtkC(nodes)` from the package root. The first backend supports static `GtkBox`, `GtkLabel`, `GtkButton`, `GtkEntry` and `GtkCheckButton` trees. For `GtkButton` click events, pass `callbacks` to `emitGtkC` or `compileGtkNative`: it maps a zero-argument GTPL handler such as `this.save()` to a C symbol. The callback implementation must be supplied in `nativeSources` and must use the GTK signal signature `void callback(GtkButton *button, gpointer user_data)`. GEF emits the declaration and `g_signal_connect`; it does not translate TypeScript method bodies into C. Unsupported event shapes are rejected. It emits a GTK4 C application using `GtkApplication`; compile the generated source with a C compiler and GTK4 flags from `pkg-config --cflags --libs gtk4`.
 
 Bindings, events, references, control-flow nodes, unsupported properties and unsupported widgets are rejected with diagnostics. A failed result has an empty source string: unsupported IR is never silently omitted. This is a first static-code-generation milestone, not yet a complete TypeScript-to-native compiler or a CLI command.
 

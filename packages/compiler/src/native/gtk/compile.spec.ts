@@ -34,6 +34,21 @@ describe('GTK4 native compiler', () => {
     ]), { encoding: 'utf8' });
   });
 
+  it('links caller-provided native callback implementations', async () => {
+    directory = await mkdtemp(join(tmpdir(), 'gef-native-test-'));
+    run.mockReturnValueOnce({ status: 0, stdout: '-I/usr/include/gtk-4.0 -lgtk-4', stderr: '', error: undefined } as never);
+    run.mockReturnValueOnce({ status: 0, stdout: '', stderr: '', error: undefined } as never);
+    const eventNodes = compileGtplToUiIr('<GtkButton (clicked)="this.save()" />').nodes;
+    const nativeSource = join(directory, 'callbacks.c');
+    const result = await compileGtkNative(eventNodes, {
+      outputFile: join(directory, 'application'),
+      callbacks: { save: 'gef_on_save' },
+      nativeSources: [nativeSource],
+    });
+    expect(result.success).toBe(true);
+    expect(run).toHaveBeenNthCalledWith(2, 'cc', expect.arrayContaining([nativeSource]), { encoding: 'utf8' });
+  });
+
   it('returns a diagnostic when GTK4 development files are missing', async () => {
     run.mockReturnValueOnce({ status: 1, stdout: '', stderr: 'gtk4.pc not found', error: undefined } as never);
     const result = await compileGtkNative(nodes, { outputFile: '/tmp/gef-native-test' });

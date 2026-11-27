@@ -39,6 +39,23 @@ describe('GTK4 C backend', () => {
     expect(result.source).toContain('gtk_check_button_set_active(GTK_CHECK_BUTTON(widget_2), true);');
   });
 
+  it('connects GtkButton clicked events to explicitly mapped native callbacks', () => {
+    const ir = compileGtplToUiIr('<GtkButton label="Save" (clicked)="this.save()" />');
+    const result = emitGtkC(ir.nodes, { callbacks: { save: 'gef_on_save' } });
+    expect(result.success).toBe(true);
+    expect(result.source).toContain('extern void gef_on_save(GtkButton *button, gpointer user_data);');
+    expect(result.source).toContain('g_signal_connect(widget_0, "clicked", G_CALLBACK(gef_on_save), NULL);');
+  });
+
+  it('rejects unsupported event handlers and invalid callback symbols', () => {
+    const unsupported = emitGtkC(compileGtplToUiIr('<GtkButton (clicked)="this.save(value)" />').nodes, { callbacks: { save: 'gef_on_save' } });
+    expect(unsupported.success).toBe(false);
+    expect(unsupported.diagnostics[0]).toContain('requires a zero-argument this.method() handler');
+    const invalid = emitGtkC(compileGtplToUiIr('<GtkButton (clicked)="this.save()" />').nodes, { callbacks: { save: 'gef-on-save' } });
+    expect(invalid.success).toBe(false);
+    expect(invalid.diagnostics[0]).toContain('requires a valid native callback symbol');
+  });
+
   it('rejects invalid entry and check button boolean values', () => {
     const ir = compileGtplToUiIr('<GtkBox><GtkEntry editable="yes" /><GtkCheckButton active="1" /></GtkBox>');
     const result = emitGtkC(ir.nodes);

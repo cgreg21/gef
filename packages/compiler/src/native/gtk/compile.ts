@@ -3,12 +3,14 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { UiNode } from '../../ir/ui.js';
-import { emitGtkC } from './emit.js';
+import { emitGtkC, type GtkCOptions } from './emit.js';
 
 export interface GtkNativeCompileOptions {
   outputFile: string;
   compiler?: string;
   pkgConfig?: string;
+  callbacks?: GtkCOptions['callbacks'];
+  nativeSources?: readonly string[];
 }
 
 export interface GtkNativeCompileResult {
@@ -23,7 +25,7 @@ export async function compileGtkNative(
   options: GtkNativeCompileOptions,
 ): Promise<GtkNativeCompileResult> {
   const outputFile = resolve(options.outputFile);
-  const generated = emitGtkC(nodes);
+  const generated = emitGtkC(nodes, { callbacks: options.callbacks });
   if (!generated.success) {
     return { success: false, outputFile, diagnostics: generated.diagnostics };
   }
@@ -48,7 +50,7 @@ export async function compileGtkNative(
     const flags = pkgConfig.stdout.trim().split(/\s+/).filter(Boolean);
     await mkdir(dirname(outputFile), { recursive: true });
     const compilation = spawnSync(options.compiler ?? 'cc', [
-      '-std=gnu11', sourceFile, '-o', outputFile, ...flags,
+      '-std=gnu11', sourceFile, ...(options.nativeSources ?? []), '-o', outputFile, ...flags,
     ], { encoding: 'utf8' });
     if (compilation.error || compilation.status !== 0) {
       return {

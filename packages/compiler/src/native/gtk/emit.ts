@@ -1,6 +1,11 @@
 import type { ExpressionNode } from '../../gtpl/ast/expression.js';
 import type { UiElement, UiNode } from '../../ir/ui.js';
 
+export interface GtkCOptions {
+  /** Maps TypeScript handler method names to externally implemented C callback symbols. */
+  readonly callbacks?: Readonly<Record<string, string>>;
+}
+
 export interface GtkCResult {
   readonly success: boolean;
   readonly source: string;
@@ -118,10 +123,11 @@ function emitCommonProperties(element: UiElement, id: string, lines: string[], r
 }
 
 /** Emit a small, deliberately static GTK4 C application from UI IR. */
-export function emitGtkC(nodes: readonly UiNode[]): GtkCResult {
+export function emitGtkC(nodes: readonly UiNode[], options: GtkCOptions = {}): GtkCResult {
   const diagnostics: string[] = [];
   const lines: string[] = [];
   let nextId = 0;
+  const callbackSymbols = new Set<string>();
   const report = (message: string): void => { diagnostics.push(message); };
   const commonProperties = [...margins, 'halign', 'valign', 'visible'];
 
@@ -130,8 +136,8 @@ export function emitGtkC(nodes: readonly UiNode[]): GtkCResult {
       report(`Unsupported GTK element "${element.component}".`);
       return undefined;
     }
-    if (element.events.length || element.references.length) {
-      report(`${element.component} events and references are not supported by the static C backend.`);
+    if (element.references.length) {
+      report(`${element.component} references are not supported by the static C backend.`);
     }
     for (const property of element.properties) {
       if (property.value.kind === 'binding' && staticProperty(element, property.name) === undefined) {
@@ -199,6 +205,27 @@ export function emitGtkC(nodes: readonly UiNode[]): GtkCResult {
       }
     }
 
+    for (const event of element.events) {
+      if (element.component !== 'GtkButton' || event.name !== 'clicked'
+        || event.handler.kind !== 'call' || event.handler.optional
+        || event.handler.arguments.length !== 0 || event.handler.callee.kind !== 'member'
+        || event.handler.callee.optional || event.handler.callee.computed
+        || event.handler.callee.object.kind !== 'identifier'
+        || event.handler.callee.object.name !== 'this'
+        || typeof event.handler.callee.property !== 'string') {
+        report(`${element.component} event "${event.name}" requires a zero-argument this.method() handler on GtkButton.`);
+        continue;
+      }
+      const method = event.handler.callee.property;
+      const symbol = options.callbacks?.[method];
+      if (!symbol || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(symbol)) {
+        report(`GtkButton event handler "${method}" requires a valid native callback symbol in GtkCOptions.callbacks.`);
+        continue;
+      }
+      callbackSymbols.add(symbol);
+      lines.push(`g_signal_connect(${id}, "clicked", G_CALLBACK(${symbol}), NULL);`);
+    }
+
     emitCommonProperties(element, id, lines, report);
     if (parent) lines.push(`gtk_box_append(GTK_BOX(${parent}), ${id});`);
     if (element.component === 'GtkBox') {
@@ -223,6 +250,7 @@ export function emitGtkC(nodes: readonly UiNode[]): GtkCResult {
 
   const source = [
     '#include <gtk/gtk.h>',
+    ...[...callbackSymbols].sort().map((symbol) => `extern void ${symbol}(GtkButton *button, gpointer user_data);`),
     '',
     'static void activate(GtkApplication *app, gpointer user_data) {',
     '  (void) user_data;',

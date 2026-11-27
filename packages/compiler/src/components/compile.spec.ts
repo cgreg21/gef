@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { Component, Input } from './api.js';
-import { compileGtplComponent } from './compile.js';
+import { Component, Input, Output } from './api.js';
+import { EventEmitter } from './events/event-emitter.js';
+import { compileGtplComponent, compileGtplComponentToUiIr } from './compile.js';
 
 describe('compileGtplComponent', () => {
   it('compiles decorated component metadata and emits a context-aware render function', () => {
@@ -74,5 +75,68 @@ describe('compileGtplComponent', () => {
   it('requires component metadata', () => {
     expect(() => compileGtplComponent(class Plain {}, { componentMembers: [] }))
       .toThrow(/without @Component/);
+  });
+});
+
+describe('decorated component UI IR', () => {
+  it('links template selectors, inputs and outputs to component metadata', () => {
+    @Component({ selector: 'GefSaveButton', template: '<button />' })
+    class SaveButton {
+      @Input() label = '';
+      @Output() readonly clicked = new EventEmitter<void>();
+    }
+    @Component({
+      selector: 'GefEditor',
+      template: '<GefSaveButton [label]="title" (clicked)="save()" />',
+    })
+    class Editor {
+      title = 'Save';
+      save(): void {}
+    }
+
+    const result = compileGtplComponentToUiIr(Editor, {
+      componentMembers: ['title', 'save'],
+      componentTypes: [SaveButton],
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.metadata.selector).toBe('GefEditor');
+    expect(result.nodes).toMatchObject([{
+      kind: 'element',
+      component: 'GefSaveButton',
+      properties: [{ name: 'label', value: { kind: 'binding', expression: { kind: 'identifier', name: 'title' } } }],
+      events: [{ name: 'clicked', handler: { kind: 'call' } }],
+    }]);
+  });
+
+  it('reports invalid component contracts without producing partial IR', () => {
+    @Component({ selector: 'GefSaveButton', template: '<button />' })
+    class SaveButton { @Input() label = ''; }
+    @Component({ selector: 'GefInvalidEditor', template: '<GefSaveButton [caption]="title" />' })
+    class InvalidEditor {}
+
+    const result = compileGtplComponentToUiIr(InvalidEditor, {
+      componentMembers: ['title'],
+      componentTypes: [SaveButton],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.nodes).toEqual([]);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain('GTPL4102');
+  });
+
+  it('rejects undecorated and duplicate component registrations', () => {
+    @Component({ selector: 'GefEditor', template: '<GefSaveButton />' })
+    class Editor {}
+    class Plain {}
+    expect(() => compileGtplComponentToUiIr(Editor, { componentTypes: [Plain] })).toThrow(/@Component metadata/);
+
+    @Component({ selector: 'GefSaveButton', template: '<button />' })
+    class SaveButton {}
+    @Component({ selector: 'GefSaveButton', template: '<button />' })
+    class DuplicateSaveButton {}
+    expect(() => compileGtplComponentToUiIr(Editor, {
+      componentTypes: [SaveButton, DuplicateSaveButton],
+    })).toThrow(/Duplicate component selector/);
   });
 });

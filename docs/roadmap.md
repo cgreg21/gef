@@ -174,7 +174,7 @@ Le job GNOME utilise Fedora 45 avec systemd, Mutter devkit et GNOME Shell 51. Il
 - [x] Ajouter la commande CLI `gef compile-ts` avec sélection de tsconfig, surcharge du dossier de sortie et diagnostics TypeScript ; tests CLI dédiés.
 - [x] Intégrer `gef compile-ts` aux commandes de build des deux squelettes `gef new` (application GTK et extension GNOME Shell) ; les tests E2E compilent réellement les projets générés via le frontend GEF.
 - [x] Introduire une première IR UI indépendante des runtimes GTK/GJS : éléments, propriétés, événements, références, texte, déclarations locales et contrôle de flux GTPL. Les expressions restent des AST, les templates invalides ne produisent pas d'IR partielle ; tests de structure et diagnostics.
-- [ ] Définir le contrat de liaison entre les composants TypeScript et cette IR pour les applications GTK.
+- [x] Définir le premier contrat de liaison entre composants TypeScript décorés et UI IR : `compileGtplComponentToUiIr()` résout les sélecteurs, entrées et sorties depuis `@Component` / `@Input` / `@Output`, valide les templates et refuse les registres ambigus ; tests de liaison et de diagnostics ajoutés. La découverte des champs d'instance reste explicite via `componentMembers` pour ne jamais instancier les classes pendant la compilation.
 - [ ] Évaluer le backend natif GTK et son runtime minimal ; mesurer les coûts avant de choisir LLVM ou une autre chaîne de génération.
 - [ ] Conserver une cible GJS séparée : les extensions GNOME Shell doivent rester compatibles avec le runtime JavaScript de GNOME.
 - [ ] Ajouter le packaging exécutable et les tests de lancement natifs par plateforme.

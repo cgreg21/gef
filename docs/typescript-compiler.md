@@ -40,3 +40,18 @@ The command defaults to `tsconfig.json`, accepts `--project` / `-p` and an optio
 The compiler exports `compileGtplToUiIr(source)` from the package root. It validates and lowers a GTPL view into a renderer-neutral UI tree containing elements, properties, events, references, text, local declarations and control-flow nodes. Binding and control-flow expressions remain expression ASTs; the IR does not import GTK, GJS or Node-GTK and does not execute application code. A backend can consume this shape without depending on the GTPL parser's source-node representation.
 
 Invalid templates return diagnostics and an empty IR. Structural directives and two-way bindings are lowered before the IR is created.
+
+## TypeScript components and UI IR
+
+`compileGtplComponentToUiIr(ComponentType, options)` connects a decorated TypeScript component to the renderer-neutral UI IR. It reads the root component's `@Component` template and accepts child component classes through `componentTypes`. Their selectors, `@Input` names and `@Output` names come directly from decorator metadata. Unknown selectors and invalid bindings produce GTPL diagnostics and an empty IR.
+
+The root template's TypeScript members are supplied through `componentMembers` (and can be checked against `contextType`). The compiler does not instantiate application classes to discover instance fields. A native backend can consume the returned metadata and UI nodes without depending on GTK or GJS.
+
+```ts
+import { compileGtplComponentToUiIr } from 'gnome-extension-framework/compiler';
+
+const result = compileGtplComponentToUiIr(EditorComponent, {
+  componentMembers: ['title', 'save'],
+  componentTypes: [SaveButtonComponent],
+});
+```

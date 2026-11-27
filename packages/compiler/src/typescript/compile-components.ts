@@ -56,8 +56,10 @@ export function compileTypeScriptComponentsToUiIr(
     let source = component.template ?? '';
     if (component.templateUrl) {
       const templatePath = resolve(dirname(component.fileName), component.templateUrl);
-      source = options.templateSources?.[templatePath];
-      if (source === undefined) {
+      const providedSource = options.templateSources?.[templatePath];
+      if (providedSource !== undefined) {
+        source = providedSource;
+      } else {
         try {
           source = readFileSync(templatePath, 'utf8');
         } catch {

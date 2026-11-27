@@ -985,6 +985,48 @@ describe('createGtkRenderHost', () => {
     host.destroy(list);
   });
 
+  it('restores retained GTK rows when attaching a repeat update fails', () => {
+    class FailingInsertBox extends FakeWidget {
+      failInsert = false;
+      override insert_child_after(child: GtkActor, sibling: GtkActor | null): void {
+        if (this.failInsert) throw new Error('attachment failed');
+        super.insert_child_after(child, sibling);
+      }
+    }
+    const Gtk = { ...createGtk(), Box: FailingInsertBox };
+    const host = createGtkRenderHost(Gtk);
+    const runtime = createGtplRenderRuntime(host);
+    const values = signal([{ id: 'first', label: 'first' }]);
+    let second: FakeWidget | undefined;
+    const list = runtime.for(
+      runtime.bind(() => values.get()),
+      (item, _index, _count, registerUpdate) => {
+        let current = item;
+        registerUpdate((nextItem) => { current = nextItem; });
+        const widget = host.element('GtkLabel', {
+          label: runtime.bind(() => current.label),
+        }, undefined) as FakeWidget;
+        if (item.id === 'second') second = widget;
+        return widget;
+      },
+      (item) => item.id,
+      () => host.text('empty'),
+    ) as FailingInsertBox;
+    const first = list.children[0] as FakeWidget;
+    list.failInsert = true;
+
+    expect(() => values.set([
+      { id: 'first', label: 'updated' },
+      { id: 'second', label: 'second' },
+    ])).toThrow('attachment failed');
+
+    expect(list.children).toEqual([first]);
+    expect(first.properties.label).toBe('first');
+    expect(second?.parent).toBeNull();
+    expect(second?.signals.size).toBe(0);
+    host.destroy(list);
+  });
+
   it('cleans up new repeat children when GTK attachment fails', () => {
     FailingBox.remaining = -1;
     const Gtk = { ...createGtk(), Box: FailingBox };

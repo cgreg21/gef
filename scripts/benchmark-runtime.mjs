@@ -1,6 +1,6 @@
 import { performance } from 'node:perf_hooks';
 import { computed, effect, signal } from '../dist/runtime/src/index.js';
-import { emitGtplTemplate, parseGtpl } from '../dist/compiler/src/index.js';
+import { emitGtplExpression, emitGtplTemplate, parseGtpl, parseGtplExpression } from '../dist/compiler/src/index.js';
 
 const samples = 5;
 
@@ -91,6 +91,27 @@ results.push(benchmark('effect / dynamic dependency switch', 10000, (count) => {
   for (let index = 0; index < count; index += 1) branch.set(!branch.get());
 }));
 stopDynamicEffect();
+
+
+const expressionSource = 'user.profile.name + format(user.score * multiplier, settings.precision) + (active ? labels.ready : labels.waiting)';
+const expressionResult = parseGtplExpression(expressionSource);
+if (expressionResult.diagnostics.length > 0 || !expressionResult.expression) {
+  throw new Error('Benchmark expression is invalid.');
+}
+const expression = expressionResult.expression;
+const expressionContext = [
+  'user', 'format', 'multiplier', 'settings', 'active', 'labels',
+  ...Array.from({ length: 18 }, (_, index) => `context${index}`),
+];
+
+results.push(benchmark('GTPL expression generation / default context', 20000, (count) => {
+  for (let index = 0; index < count; index += 1) emitGtplExpression(expression);
+}));
+results.push(benchmark('GTPL expression generation / 24 context identifiers', 20000, (count) => {
+  for (let index = 0; index < count; index += 1) {
+    emitGtplExpression(expression, { contextIdentifiers: expressionContext });
+  }
+}));
 
 results.push(benchmark('GTPL parse', 1000, (count) => {
   for (let index = 0; index < count; index += 1) parseGtpl(template);

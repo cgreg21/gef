@@ -127,16 +127,19 @@ Champ de saisie texte.
 | Propriété | Type | Défaut | Description |
 | --- | --- | --- | --- |
 | `value` | `string` | `''` | Valeur courante |
+| `placeholder` | `string` | `''` | Indication affichée lorsque le champ est vide |
+| `disabled` | `boolean` | `false` | Désactive la saisie et le focus |
 
 | Événement | Valeur émise |
 | --- | --- |
 | `valueChange` | `string` |
 
 ```html
-<GefInput value="Nom de l'extension" (valueChange)="onNameChange($event)" />
+<GefInput placeholder="Nom de l'extension" value="Mon extension" (valueChange)="onNameChange($event)" />
+<GefInput placeholder="Lecture seule" disabled="true" />
 ```
 
-Rendu : `Gtk.Entry` ou `St.Entry`. La valeur est synchronisée avec le composant et l'événement `valueChange` transmet la nouvelle chaîne.
+Rendu : `Gtk.Entry` ou `St.Entry`. La valeur, l'indication et l'état désactivé sont synchronisés avec le widget natif. L'événement `valueChange` transmet la nouvelle chaîne.
 
 ### GefCheckbox
 

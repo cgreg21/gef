@@ -50,6 +50,9 @@ export function createStUiRegistry(): ComponentRegistry<StActor> {
     (input: GefInput, runtime: GtplRenderRuntime<StActor>) => runtime.element(
       'StEntry',
       {
+        'hint-text': runtime.bind(() => input.placeholder),
+        reactive: runtime.bind(() => !input.disabled),
+        can_focus: runtime.bind(() => !input.disabled),
         text: runtime.bind(() => input.value),
         textChange: (value: string) => {
           input.value = value;

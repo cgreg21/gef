@@ -44,6 +44,8 @@ export function createGtkUiRegistry(): ComponentRegistry<GtkActor> {
     (input: GefInput, runtime: GtplRenderRuntime<GtkActor>) => runtime.element(
       'GtkEntry',
       {
+        'placeholder-text': runtime.bind(() => input.placeholder),
+        sensitive: runtime.bind(() => !input.disabled),
         text: runtime.bind(() => input.value),
         textChange: (value: string) => {
           input.value = value;

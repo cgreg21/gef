@@ -16,22 +16,40 @@ function createRuntime<Node>() {
 }
 
 describe('GefInput', () => {
-  it('declares a value input and valueChange output', () => {
+  it('declares value, placeholder and disabled inputs with a valueChange output', () => {
     expect(getComponentMetadata(GefInput)).toMatchObject({
       selector: 'GefInput',
-      inputs: ['value'],
+      inputs: ['value', 'placeholder', 'disabled'],
       outputs: ['valueChange'],
     });
   });
 
   it.each([
-    ['GNOME Shell', createStUiRegistry, 'StEntry', 'text'],
-    ['GTK4', createGtkUiRegistry, 'GtkEntry', 'text'],
-  ])('keeps the native input synchronized on %s', (_platform, createRegistry, nativeName, property) => {
+    {
+      platform: 'GNOME Shell',
+      createRegistry: createStUiRegistry,
+      nativeName: 'StEntry',
+      valueProperty: 'text',
+      placeholderProperty: 'hint-text',
+      enabledProperties: ['reactive', 'can_focus'],
+    },
+    {
+      platform: 'GTK4',
+      createRegistry: createGtkUiRegistry,
+      nativeName: 'GtkEntry',
+      valueProperty: 'text',
+      placeholderProperty: 'placeholder-text',
+      enabledProperties: ['sensitive'],
+    },
+  ])('keeps the native input synchronized on $platform', ({
+    createRegistry, nativeName, valueProperty, placeholderProperty, enabledProperties,
+  }) => {
     const definition = createRegistry().match('GefInput', {});
     expect(definition).toBeDefined();
     const input = definition!.create(new Injector()) as GefInput;
     input.value = 'initial';
+    input.placeholder = 'Type here';
+    input.disabled = true;
     const { runtime, element } = createRuntime<StActor | GtkActor>();
     const changed = vi.fn();
     input.valueChange.subscribe(changed);
@@ -39,21 +57,41 @@ describe('GefInput', () => {
     definition!.render(input, runtime as never);
 
     expect(element).toHaveBeenCalledWith(nativeName, expect.objectContaining({
-      [property]: expect.objectContaining({ kind: 'binding' }),
+      [valueProperty]: expect.objectContaining({ kind: 'binding' }),
+      [placeholderProperty]: expect.objectContaining({ kind: 'binding' }),
+      ...Object.fromEntries(enabledProperties.map((name) => [name, expect.objectContaining({ kind: 'binding' })])),
       textChange: expect.any(Function),
     }), undefined);
+
     const attributes = element.mock.calls[0]![1];
-    const binding = attributes[property] as { get(): string };
-    let rendered = '';
-    const stop = effect(() => { rendered = binding.get(); });
-    expect(rendered).toBe('initial');
+    const valueBinding = attributes[valueProperty] as { get(): string };
+    const placeholderBinding = attributes[placeholderProperty] as { get(): string };
+    let renderedValue = '';
+    let renderedPlaceholder = '';
+    const renderedEnabled: boolean[] = [];
+    const stops = [
+      effect(() => { renderedValue = valueBinding.get(); }),
+      effect(() => { renderedPlaceholder = placeholderBinding.get(); }),
+      ...enabledProperties.map((name) => effect(() => {
+        renderedEnabled.push((attributes[name] as { get(): boolean }).get());
+      })),
+    ];
+
+    expect(renderedValue).toBe('initial');
+    expect(renderedPlaceholder).toBe('Type here');
+    expect(renderedEnabled).toEqual(enabledProperties.map(() => false));
 
     input.value = 'updated';
-    expect(rendered).toBe('updated');
+    input.placeholder = 'Updated hint';
+    input.disabled = false;
+    expect(renderedValue).toBe('updated');
+    expect(renderedPlaceholder).toBe('Updated hint');
+    expect(renderedEnabled.slice(enabledProperties.length)).toEqual(enabledProperties.map(() => true));
+
     (attributes.textChange as (value: string) => void)('typed');
     expect(input.value).toBe('typed');
-    expect(rendered).toBe('typed');
+    expect(renderedValue).toBe('typed');
     expect(changed).toHaveBeenCalledWith('typed');
-    stop();
+    for (const stop of stops) stop();
   });
 });

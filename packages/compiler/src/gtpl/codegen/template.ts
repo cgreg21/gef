@@ -150,8 +150,11 @@ function expression(
   if (!node) throw new Error('Cannot generate GTPL: an expression has no valid AST.');
   const identifiers = new Set<string>();
   collectIdentifiers(node, identifiers);
-  const contextIdentifiers = options.componentMembers
-    ?? new Set([...identifiers].filter((name) => !locals.has(name)));
+  let contextIdentifiers = options.componentMembers;
+  if (!contextIdentifiers) {
+    for (const name of locals) identifiers.delete(name);
+    contextIdentifiers = identifiers;
+  }
   const expressionOptions = {
     contextIdentifiers,
     localIdentifiers: locals,

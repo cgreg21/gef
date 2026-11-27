@@ -84,6 +84,13 @@ describe('GTK4 C backend', () => {
     expect(result.source).toContain('gtk_widget_set_visible(widget_1, true);');
   });
 
+  it('rejects non-finite numeric constant expressions', () => {
+    const ir = compileGtplToUiIr('<GtkBox [spacing]="10 ** 10000" />');
+    const result = emitGtkC(ir.nodes);
+    expect(result.success).toBe(false);
+    expect(result.diagnostics).toContain('Property binding "spacing" is not a compile-time constant supported by the static C backend.');
+  });
+
   it('rejects runtime and unsupported property expressions', () => {
     const ir = compileGtplToUiIr(`<GtkBox><GtkLabel [label]="title" /><GtkEntry [text]="null" /><GtkLabel [label]="1 + title" /></GtkBox>`);
     const result = emitGtkC(ir.nodes);

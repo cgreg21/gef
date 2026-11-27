@@ -18,12 +18,19 @@ function cString(value: string): string {
 type StaticValue = string | number | boolean | null;
 
 function evaluateStaticExpression(expression: ExpressionNode): StaticValue | undefined {
-  if (expression.kind === 'literal') return expression.value;
+  if (expression.kind === 'literal') {
+    return typeof expression.value === 'number' && !Number.isFinite(expression.value)
+      ? undefined
+      : expression.value;
+  }
   if (expression.kind === 'unary') {
     const value = evaluateStaticExpression(expression.argument);
     if (expression.operator === '!' && typeof value === 'boolean') return !value;
     if (expression.operator === '+' && typeof value === 'number') return value;
-    if (expression.operator === '-' && typeof value === 'number') return -value;
+    if (expression.operator === '-' && typeof value === 'number') {
+      const result = -value;
+      return Number.isFinite(result) ? result : undefined;
+    }
     return undefined;
   }
   if (expression.kind === 'conditional') {
@@ -47,17 +54,23 @@ function evaluateStaticExpression(expression: ExpressionNode): StaticValue | und
   }
   if (typeof left === 'number' && typeof right === 'number') {
     switch (operator) {
-      case '+': return left + right;
-      case '-': return left - right;
-      case '*': return left * right;
-      case '/': return right === 0 ? undefined : left / right;
-      case '%': return right === 0 ? undefined : left % right;
-      case '**': return left ** right;
       case '<': return left < right;
       case '>': return left > right;
       case '<=': return left <= right;
       case '>=': return left >= right;
-      default: return undefined;
+      default: {
+        let result: number;
+        switch (operator) {
+          case '+': result = left + right; break;
+          case '-': result = left - right; break;
+          case '*': result = left * right; break;
+          case '/': if (right === 0) return undefined; result = left / right; break;
+          case '%': if (right === 0) return undefined; result = left % right; break;
+          case '**': result = left ** right; break;
+          default: return undefined;
+        }
+        return Number.isFinite(result) ? result : undefined;
+      }
     }
   }
   if (operator === '+' && typeof left === 'string' && typeof right === 'string') return left + right;

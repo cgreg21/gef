@@ -750,6 +750,29 @@ describe('createStRenderHost', () => {
     host.destroy(list);
   });
 
+  it('rejects repeat containers without the native child APIs', () => {
+    class MissingChildApiBox extends FakeActor {
+      constructor(properties: Record<string, unknown> = {}) {
+        super(properties);
+        Object.defineProperties(this, {
+          insert_child_at_index: { value: undefined },
+          set_child_at_index: { value: undefined },
+          add_child: { value: undefined },
+          remove_child: { value: undefined },
+        });
+      }
+    }
+    const host = createStRenderHost({ ...createSt(), BoxLayout: MissingChildApiBox });
+    const child = host.text('child') as FakeActor;
+
+    expect(() => host.repeat({
+      kind: 'binding',
+      get: () => ({ items: [{ key: 'child', index: 0, render: () => child }] }),
+    })).toThrow('This St container cannot contain child actors.');
+    expect(child.destroyed).toBe(true);
+    expect(child.destroyCount).toBe(1);
+  });
+
   it('destroys newly rendered repeat nodes when attaching a batch fails', () => {
     class FailingBox extends FakeActor {
       override add_child(_child: StActor): void {

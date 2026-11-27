@@ -31,7 +31,7 @@ try {
     '  (void) user_data;',
     '}',
     '',
-  ].join('\\n'), 'utf8');
+  ].join('\n'), 'utf8');
 
   const pkgConfig = spawnSync('pkg-config', ['--cflags', '--libs', 'gtk4'], { encoding: 'utf8' });
   if (pkgConfig.error || pkgConfig.status !== 0) {
@@ -51,7 +51,7 @@ try {
   if (symbols.error || symbols.status !== 0) {
     throw new Error(symbols.error?.message ?? symbols.stderr ?? 'Could not inspect linked GTK4 executable symbols.');
   }
-  assert.match(symbols.stdout, /\\bT gef_on_save\\b/, 'The native callback implementation must be linked into the executable.');
+  assert.match(symbols.stdout, /\bT gef_on_save\b/, 'The native callback implementation must be linked into the executable.');
   assert.deepEqual([...binary.subarray(0, 4)], [0x7f, 0x45, 0x4c, 0x46], 'The output must be an ELF executable.');
   process.stdout.write('GTK4 C backend linked a native button callback into a valid ELF executable.\n');
 } finally {

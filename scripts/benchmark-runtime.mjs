@@ -1,5 +1,5 @@
 import { performance } from 'node:perf_hooks';
-import { effect, signal } from '../dist/runtime/src/index.js';
+import { computed, effect, signal } from '../dist/runtime/src/index.js';
 import { emitGtplTemplate, parseGtpl } from '../dist/compiler/src/index.js';
 
 const samples = 5;
@@ -70,6 +70,28 @@ results.push(benchmark('effect / 3 dependencies', 15000, (count) => {
 }));
 stopEffect();
 
+const computedSource = signal(0);
+const doubled = computed(() => computedSource.get() * 2);
+let computedValue = doubled.get();
+const stopComputed = doubled.subscribe((value) => { computedValue = value; });
+results.push(benchmark('computed / 1 dependency', 15000, (count) => {
+  for (let index = 0; index < count; index += 1) computedSource.set(index);
+}));
+stopComputed();
+doubled.dispose();
+
+const branch = signal(false);
+const left = signal(0);
+const right = signal(0);
+const stopDynamicEffect = effect(() => {
+  if (branch.get()) right.get();
+  else left.get();
+});
+results.push(benchmark('effect / dynamic dependency switch', 10000, (count) => {
+  for (let index = 0; index < count; index += 1) branch.set(!branch.get());
+}));
+stopDynamicEffect();
+
 results.push(benchmark('GTPL parse', 1000, (count) => {
   for (let index = 0; index < count; index += 1) parseGtpl(template);
 }));
@@ -88,5 +110,6 @@ console.log(JSON.stringify({
   samples,
   templateCharacters: template.length,
   effectRuns,
+  computedValue,
   results,
 }, null, 2));

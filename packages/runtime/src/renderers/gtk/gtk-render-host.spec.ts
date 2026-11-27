@@ -770,7 +770,7 @@ describe('createGtkRenderHost', () => {
       () => conditionalNode,
       () => conditionalNode,
     ) as FakeWidget;
-    condition.set('still true');
+    condition.set(false);
     expect(conditional.children).toEqual([conditionalNode]);
     expect(conditionalNode.parent).toBe(conditional);
 

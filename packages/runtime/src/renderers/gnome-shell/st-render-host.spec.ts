@@ -964,6 +964,48 @@ describe('createStRenderHost', () => {
     expect(child.signals.size).toBe(0);
   });
 
+  it('restores retained St rows when attaching a repeat update fails', () => {
+    class FailingInsertBox extends FakeActor {
+      failInsert = false;
+      override insert_child_at_index(child: StActor, index: number): void {
+        if (this.failInsert) throw new Error('attachment failed');
+        super.insert_child_at_index(child, index);
+      }
+    }
+    const St = { ...createSt(), BoxLayout: FailingInsertBox };
+    const host = createStRenderHost(St);
+    const runtime = createGtplRenderRuntime(host);
+    const values = signal([{ id: 'first', label: 'first' }]);
+    let second: FakeActor | undefined;
+    const list = runtime.for(
+      runtime.bind(() => values.get()),
+      (item, _index, _count, registerUpdate) => {
+        let current = item;
+        registerUpdate((nextItem) => { current = nextItem; });
+        const actor = host.element('StLabel', {
+          text: runtime.bind(() => current.label),
+        }, undefined) as FakeActor;
+        if (item.id === 'second') second = actor;
+        return actor;
+      },
+      (item) => item.id,
+      () => host.text('empty'),
+    ) as FailingInsertBox;
+    const first = list.children[0] as FakeActor;
+    list.failInsert = true;
+
+    expect(() => values.set([
+      { id: 'first', label: 'updated' },
+      { id: 'second', label: 'second' },
+    ])).toThrow('attachment failed');
+
+    expect(list.children).toEqual([first]);
+    expect(first.properties.text).toBe('first');
+    expect(second?.destroyed).toBe(true);
+    expect(second?.destroyCount).toBe(1);
+    host.destroy(list);
+  });
+
   it('destroys newly rendered repeat nodes when attaching a batch fails', () => {
     class FailingBox extends FakeActor {
       override add_child(_child: StActor): void {

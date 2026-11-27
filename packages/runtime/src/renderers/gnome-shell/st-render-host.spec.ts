@@ -948,6 +948,38 @@ describe('createStRenderHost', () => {
     host.destroy(list);
   });
 
+  it('reconciles repeated St rows through fallback child APIs', () => {
+    class FallbackBox extends FakeActor {
+      constructor(properties: Record<string, unknown> = {}) {
+        super(properties);
+        Object.defineProperties(this, {
+          insert_child_at_index: { value: undefined },
+          set_child_at_index: { value: undefined },
+        });
+      }
+    }
+    const host = createStRenderHost({ ...createSt(), BoxLayout: FallbackBox });
+    const first = host.text('first') as FakeActor;
+    const removed = host.text('removed') as FakeActor;
+    const last = host.text('last') as FakeActor;
+    const values = signal({ items: [
+      { key: 'first', index: 0, node: first },
+      { key: 'removed', index: 1, node: removed },
+    ] });
+    const list = host.repeat({ kind: 'binding', get: () => values.get() }) as FakeActor;
+
+    expect(list.children).toEqual([first, removed]);
+    values.set({ items: [
+      { key: 'last', index: 0, node: last },
+      { key: 'first', index: 1, node: first },
+    ] });
+    expect(list.children).toEqual([last, first]);
+    expect(first.destroyed).toBe(false);
+    expect(last.destroyed).toBe(false);
+    expect(removed.destroyed).toBe(true);
+    host.destroy(list);
+  });
+
   it('disposes repeated St actors and their signal handlers with the container', () => {
     const host = createStRenderHost(createSt());
     const child = host.element('StButton', { clicked: () => undefined }, undefined) as FakeActor;

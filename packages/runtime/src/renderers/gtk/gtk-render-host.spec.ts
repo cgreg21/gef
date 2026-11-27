@@ -936,6 +936,38 @@ describe('createGtkRenderHost', () => {
     host.destroy(list);
   });
 
+  it('reconciles GTK repeat rows through fallback child APIs', () => {
+    class FallbackBox extends FakeWidget {
+      constructor(properties: Record<string, unknown> = {}) {
+        super(properties);
+        Object.defineProperties(this, {
+          insert_child_after: { value: undefined },
+          reorder_child_after: { value: undefined },
+        });
+      }
+    }
+    const host = createGtkRenderHost({ ...createGtk(), Box: FallbackBox });
+    const first = host.text('first');
+    const removed = host.text('removed');
+    const last = host.text('last');
+    const values = signal({ items: [
+      { key: 'first', index: 0, node: first },
+      { key: 'removed', index: 1, node: removed },
+    ] });
+    const list = host.repeat({ kind: 'binding', get: () => values.get() }) as FakeWidget;
+
+    expect(list.children).toEqual([first, removed]);
+    values.set({ items: [
+      { key: 'last', index: 0, node: last },
+      { key: 'first', index: 1, node: first },
+    ] });
+    expect(list.children).toEqual([last, first]);
+    expect((first as FakeWidget).parent).toBe(list);
+    expect((last as FakeWidget).parent).toBe(list);
+    expect((removed as FakeWidget).parent).toBeNull();
+    host.destroy(list);
+  });
+
   it('disposes repeat children with their GTK container', () => {
     const host = createGtkRenderHost(createGtk());
     const child = host.element('GtkButton', { clicked: () => undefined }, undefined) as FakeWidget;

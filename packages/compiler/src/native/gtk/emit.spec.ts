@@ -69,6 +69,6 @@ describe('GTK4 C backend', () => {
     const ir = compileGtplToUiIr('<GtkTextView />');
     const result = emitGtkC(ir.nodes);
     expect(result.success).toBe(false);
-    expect(result.diagnostics[0]).toContain('Unsupported GTK element "GtkEntry"');
+    expect(result.diagnostics[0]).toContain('Unsupported GTK element "GtkTextView"');
   });
 });

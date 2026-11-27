@@ -46,9 +46,9 @@ describe('compileTypeScriptComponentsToUiIr', () => {
     });
     expect(result.success).toBe(true);
     expect(result.components).toHaveLength(2);
-    expect(result.components[0].nodes[0]).toMatchObject({ kind: 'element', component: 'StLabel' });
-    expect(result.components[1].nodes[0]).toMatchObject({ kind: 'element', component: 'GefButton' });
-    expect(result.components[1].diagnostics).toEqual([]);
+    expect(result.components[0]?.nodes[0]).toMatchObject({ kind: 'element', component: 'StLabel' });
+    expect(result.components[1]?.nodes[0]).toMatchObject({ kind: 'element', component: 'GefButton' });
+    expect(result.components[1]?.diagnostics).toEqual([]);
   });
 
   it('loads external templates relative to their declaring source file', async () => {
@@ -64,7 +64,7 @@ describe('compileTypeScriptComponentsToUiIr', () => {
       nativeElements: ['StLabel'],
     });
     expect(result.success).toBe(true);
-    expect(result.components[0].nodes[0]).toMatchObject({ kind: 'element', component: 'StLabel' });
+    expect(result.components[0]?.nodes[0]).toMatchObject({ kind: 'element', component: 'StLabel' });
   });
 
   it('rejects duplicate selectors', async () => {

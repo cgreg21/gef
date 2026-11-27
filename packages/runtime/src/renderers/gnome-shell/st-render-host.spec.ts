@@ -856,6 +856,29 @@ describe('createStRenderHost', () => {
     host.destroy(list);
   });
 
+  it('rejects fallback repeat removal when the St container has no remove_child API', () => {
+    class MissingFallbackRemoveBox extends FakeActor {
+      constructor(properties: Record<string, unknown> = {}) {
+        super(properties);
+        Object.defineProperties(this, {
+          insert_child_at_index: { value: undefined },
+          set_child_at_index: { value: undefined },
+          remove_child: { value: undefined },
+        });
+      }
+    }
+    const host = createStRenderHost({ ...createSt(), BoxLayout: MissingFallbackRemoveBox });
+    const first = host.text('first') as FakeActor;
+    const values = signal({ items: [{ key: 'first', index: 0, node: first }] });
+    const list = host.repeat({ kind: 'binding', get: () => values.get() }) as FakeActor;
+
+    expect(list.children).toEqual([first]);
+    expect(() => values.set({ items: [] })).toThrow('This St container cannot remove child actors.');
+    expect(list.children).toEqual([first]);
+    expect(first.destroyed).toBe(false);
+    host.destroy(list);
+  });
+
   it('destroys newly rendered repeat nodes when attaching a batch fails', () => {
     class FailingBox extends FakeActor {
       override add_child(_child: StActor): void {

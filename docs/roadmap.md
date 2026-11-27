@@ -49,6 +49,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [x] Aligner le rollback des branches conditionnelles et `switch` : si l'attachement natif St échoue, détruire le nœud rendu avant de propager l'erreur ; tests de parité ciblés ajoutés côté GNOME Shell.
 - [x] Refuser les conteneurs St sans `set_child` pour les blocs conditionnels et `switch`, détruire le nœud préparé et lever une erreur explicite plutôt que de signaler un rendu réussi sans attachement.
 - [x] Refuser une réconciliation `@for` incrémentale St qui doit supprimer des acteurs lorsque le conteneur ne fournit pas `remove_child`, au lieu de mettre à jour silencieusement l'ordre logique sans retirer l'acteur natif ; test de régression vérifiant que la liste montée reste intacte.
+- [x] Couvrir aussi le chemin de repli `@for` St sans API d'insertion/réordonnancement : l'absence de `remove_child` est refusée avant le détachement des lignes déjà montées, avec un test qui vérifie la conservation de la liste.
 - [x] Prévalider les capacités d'ajout et de suppression dans le chemin de repli `@for` GTK avant de détacher les enfants existants ; le comportement rejoint le contrôle préalable du renderer St et un test vérifie que la liste montée reste intacte si l'ajout est impossible.
 - [x] Couvrir aussi l'échec du détachement de l'ancienne branche `@if`/`switch` : le nouveau nœud est détruit et l'ancienne branche reste cohérente ; le test vérifie le rollback avec des acteurs distincts pour les deux branches.
 - [ ] Mesurer et réduire les mises à jour et allocations inutiles.

@@ -297,6 +297,12 @@ function syncRepeatChildren(box: GtkActor, current: GtkActor[], next: GtkActor[]
   const insert = box.insert_child_after ?? box.insertChildAfter;
   const reorder = box.reorder_child_after ?? box.reorderChildAfter;
   if (!insert || !reorder) {
+    const canRemove = ['remove_suffix', 'removeSuffix', 'remove', 'set_child', 'setChild']
+      .some((name) => typeof (box as unknown as Record<string, unknown>)[name] === 'function');
+    const canAdd = ['set_child', 'setChild', 'append', 'pack_start', 'packStart', 'add_suffix', 'addSuffix', 'add']
+      .some((name) => typeof (box as unknown as Record<string, unknown>)[name] === 'function');
+    if (current.length && !canRemove) throw new Error('This GTK container cannot remove its child widget.');
+    if (next.length && !canAdd) throw new Error('This GTK widget cannot contain child widgets.');
     for (const child of current) removeChild(box, child);
     for (const child of next) addChild(box, child);
     return [...next];

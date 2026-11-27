@@ -923,6 +923,25 @@ describe('createGtkRenderHost', () => {
     expect(child.signals.size).toBe(0);
   });
 
+  it('checks GTK repeat fallback capabilities before detaching mounted children', () => {
+    const host = createGtkRenderHost(createGtk());
+    const first = host.text('first') as FakeWidget;
+    const values = signal({ items: [{ key: 'first', index: 0, node: first }] });
+    const list = host.repeat({ kind: 'binding', get: () => values.get() }) as FakeWidget;
+    for (const name of ['insert_child_after', 'insertChildAfter', 'reorder_child_after', 'reorderChildAfter', 'append', 'add', 'add_suffix', 'addSuffix', 'pack_start', 'packStart', 'set_child', 'setChild']) {
+      Object.defineProperty(list, name, { value: undefined });
+    }
+    const next = host.text('next') as FakeWidget;
+
+    expect(() => values.set({ items: [{ key: 'next', index: 0, node: next }] }))
+      .toThrow('This GTK widget cannot contain child widgets.');
+    expect(list.children).toEqual([first]);
+    expect(first.parent).toBe(list);
+    expect(first.signals.size).toBe(0);
+    expect(next.signals.size).toBe(0);
+    host.destroy(list);
+  });
+
   it('cleans up new repeat children when GTK attachment fails', () => {
     FailingBox.remaining = -1;
     const Gtk = { ...createGtk(), Box: FailingBox };

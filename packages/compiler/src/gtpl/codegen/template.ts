@@ -11,7 +11,7 @@ import { emitGtplExpressionWithMarkers } from './expression.js';
 
 export interface GtplTemplateOptions {
   /** Component fields referenced by expressions; emitted as ctx.field. */
-  readonly componentMembers?: readonly string[];
+  readonly componentMembers?: readonly string[] | ReadonlySet<string>;
   /** Framework globals which should remain unqualified. */
   readonly globals?: readonly string[];
 }
@@ -150,12 +150,11 @@ function expression(
   if (!node) throw new Error('Cannot generate GTPL: an expression has no valid AST.');
   const identifiers = new Set<string>();
   collectIdentifiers(node, identifiers);
-  const globals = new Set([...BUILTIN_GLOBALS, ...(options.globals ?? [])]);
   const contextIdentifiers = options.componentMembers
-    ?? [...identifiers].filter((name) => !locals.has(name) && !globals.has(name));
+    ?? new Set([...identifiers].filter((name) => !locals.has(name)));
   const expressionOptions = {
     contextIdentifiers,
-    localIdentifiers: [...locals, ...globals],
+    localIdentifiers: locals,
     ...(localBindings ? { localBindings } : {}),
     pipeSiteIdentifier: '$__gefPipeSites',
     pipeSitePrefix: `${sourcePosition?.line ?? 0}:${sourcePosition?.column ?? 0}`,
@@ -187,6 +186,9 @@ function emitGtplTemplateInternal(
   nodes: readonly GtplNode[],
   options: GtplTemplateOptions,
 ): { code: string; nodeMappings: NodeMapping[] } {
+  if (options.componentMembers && !(options.componentMembers instanceof Set)) {
+    options = { ...options, componentMembers: new Set(options.componentMembers) };
+  }
   const nodeMappings: NodeMapping[] = [];
   const reservedNames = new Set<string>();
   collectTemplateNames(nodes, reservedNames);
@@ -374,7 +376,7 @@ function emitGtplTemplateInternal(
     return result;
   };
 
-  const markedCode = '(ctx, runtime) => {\n  const $__gefPipeSites = {};\n  return ' + renderNodes(nodes, new Set()) + ';\n}';
+  const markedCode = '(ctx, runtime) => {\n  const $__gefPipeSites = {};\n  return ' + renderNodes(nodes, new Set([...BUILTIN_GLOBALS, ...(options.globals ?? [])])) + ';\n}';
   const formattedCode = markedCode;
   let result = '';
   let cursor = 0;

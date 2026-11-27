@@ -113,6 +113,13 @@ results.push(benchmark('GTPL expression generation / 24 context identifiers', 20
   }
 }));
 
+results.push(benchmark('GTPL expression generation / 24 context identifiers (Set)', 20000, (count) => {
+  const contextIdentifiers = new Set(expressionContext);
+  for (let index = 0; index < count; index += 1) {
+    emitGtplExpression(expression, { contextIdentifiers });
+  }
+}));
+
 results.push(benchmark('GTPL parse', 1000, (count) => {
   for (let index = 0; index < count; index += 1) parseGtpl(template);
 }));

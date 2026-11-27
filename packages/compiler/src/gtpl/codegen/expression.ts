@@ -2,9 +2,9 @@ import type { ExpressionNode } from '../ast/expression.js';
 
 export interface GtplExpressionOptions {
   /** Component members are read from the generated render function's context. */
-  readonly contextIdentifiers?: readonly string[];
+  readonly contextIdentifiers?: readonly string[] | ReadonlySet<string>;
   /** Names already declared in the current generated lexical scope. */
-  readonly localIdentifiers?: readonly string[];
+  readonly localIdentifiers?: readonly string[] | ReadonlySet<string>;
   /** Generated getters for lexically scoped, reactive @let declarations. */
   readonly localBindings?: ReadonlyMap<string, string>;
   readonly pipeSiteIdentifier?: string;
@@ -37,8 +37,8 @@ function emitInternal(
   options: GtplExpressionOptions,
   markNode?: (node: ExpressionNode) => string,
 ): string {
-  const context = new Set(options.contextIdentifiers ?? []);
-  const locals = new Set(options.localIdentifiers ?? []);
+  const context = options.contextIdentifiers instanceof Set ? options.contextIdentifiers : new Set(options.contextIdentifiers ?? []);
+  const locals = options.localIdentifiers instanceof Set ? options.localIdentifiers : new Set(options.localIdentifiers ?? []);
   const emit = (node: ExpressionNode): string => {
     const marker = markNode?.(node) ?? '';
     let code: string;

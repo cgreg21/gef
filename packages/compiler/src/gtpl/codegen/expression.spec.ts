@@ -10,6 +10,15 @@ function emit(source: string): string {
 }
 
 describe('emitGtplExpression', () => {
+  it('reuses identifier sets when emitting expressions', () => {
+    const result = parseGtplExpression('name + $event');
+    expect(result.diagnostics).toEqual([]);
+    expect(emitGtplExpression(result.expression!, {
+      contextIdentifiers: new Set(['name']),
+      localIdentifiers: new Set(['$event']),
+    })).toBe('(ctx.name + $event)');
+  });
+
   it('preserves binary precedence and grouping', () => {
     expect(emit('1 + 2 * 3')).toBe('(1 + (2 * 3))');
     expect(emit('(1 + 2) * 3')).toBe('((1 + 2) * 3)');

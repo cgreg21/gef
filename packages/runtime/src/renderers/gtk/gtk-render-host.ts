@@ -324,9 +324,10 @@ function syncRepeatChildren(box: GtkActor, current: GtkActor[], next: GtkActor[]
     && ![box.remove_suffix, box.removeSuffix, box.remove, box.set_child, box.setChild].some((method) => typeof method === 'function')) {
     throw new Error('This GTK container cannot remove its child widget.');
   }
-  const hasNewChildren = next.some((child) => !current.includes(child));
-  if (hasNewChildren && ![box.remove_suffix, box.removeSuffix, box.remove, box.set_child, box.setChild]
-    .some((method) => typeof method === 'function')) {
+  const newChildren = next.filter((child) => !current.includes(child));
+  if (newChildren.length > 0 && (current.length > 0 || newChildren.length > 1)
+    && ![box.remove_suffix, box.removeSuffix, box.remove, box.set_child, box.setChild]
+      .some((method) => typeof method === 'function')) {
     throw new Error('This GTK container cannot remove its child widget.');
   }
   const order = [...current];

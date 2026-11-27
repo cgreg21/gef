@@ -102,8 +102,8 @@ function syncRepeatChildren(actor: StActor, current: StActor[], next: StActor[])
   if (current.some((child) => !next.includes(child)) && !actor.remove_child) {
     throw new Error('This St container cannot remove child actors.');
   }
-  const hasNewChildren = next.some((child) => !current.includes(child));
-  if (hasNewChildren && !actor.remove_child) {
+  const newChildren = next.filter((child) => !current.includes(child));
+  if (newChildren.length > 0 && (current.length > 0 || newChildren.length > 1) && !actor.remove_child) {
     throw new Error('This St container cannot remove child actors.');
   }
   const order = [...current];

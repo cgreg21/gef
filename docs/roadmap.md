@@ -186,3 +186,7 @@ Le job GNOME utilise Fedora 45 avec systemd, Mutter devkit et GNOME Shell 51. Il
 
 - [x] Introduire un premier backend expérimental GTK4 C depuis l'UI IR : génération d'une application statique pour `GtkBox`, `GtkLabel` et `GtkButton`, avec rejet explicite des bindings et constructions non prises en charge. La compilation ELF est validée en CI ; le runtime dynamique reste à réaliser.
 - [ ] Étendre le backend GTK4 C aux propriétés statiques communes (`marginTop/Bottom/Start/End`, `halign`, `valign`, `visible`) ; valider les valeurs et compiler le code généré avec GTK4.
+
+- [x] Add the GTK4 native compilation API: generate C from the shared UI IR, resolve GTK4 flags with pkg-config and invoke a native C compiler without a shell.
+- [ ] Extend the native backend from static GTK widgets to typed expressions, bindings and event handlers.
+- [ ] Add a CLI entry point for compiling a GTK UI project to a native executable.

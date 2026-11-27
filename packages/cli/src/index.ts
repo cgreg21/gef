@@ -10,6 +10,7 @@ import { runStyles } from './commands/styles.js';
 import { runWorkspaceCommand } from './commands/workspace.js';
 import { runEgoCheck } from './commands/ego-check.js';
 import { runTemplateCommand } from './commands/template.js';
+import { runCompileTypeScript } from './commands/compile-ts.js';
 
 export interface CliIO {
   readFile(path: string): Promise<string>;
@@ -51,6 +52,7 @@ const usage = `GEF - GNOME Extension Framework
 Usage:
   gef check <template.gtpl>
   gef compile <template.gtpl> [output.js]
+  gef compile-ts [tsconfig.json] [--project tsconfig.json] [--out-dir directory]
   gef styles <input.scss> [output.css]
   gef new <project-name> [directory] [--type application|extension]
   gef generate component <Name> [directory]
@@ -68,6 +70,7 @@ Usage:
 Commands:
   check      Parse, lower and validate a GTPL template.
   compile    Emit a JavaScript render-function module.
+  compile-ts Compile a TypeScript project and report type diagnostics.
   styles     Compile SCSS and validate GNOME theme CSS compatibility.
   new        Create a Node-GTK application or GNOME Shell extension project.
   generate   Generate a component, directive, service or pipe.
@@ -93,6 +96,8 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
   if (command === 'build' || command === 'test' || command === 'package' || command === 'watch') {
     return runWorkspaceCommand(command, io);
   }
+
+  if (command === 'compile-ts') return runCompileTypeScript(args.slice(1), io);
 
   if (command === 'styles') return runStyles(inputArg, outputArg, io);
 

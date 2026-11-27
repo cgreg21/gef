@@ -950,6 +950,22 @@ describe('createGtkRenderHost', () => {
     expect(child.signals.size).toBe(0);
   });
 
+  it('rejects incremental repeat removal when the GTK container has no removal API', () => {
+    const host = createGtkRenderHost(createGtk());
+    const first = host.text('first') as FakeWidget;
+    const values = signal({ items: [{ key: 'first', index: 0, node: first }] });
+    const list = host.repeat({ kind: 'binding', get: () => values.get() }) as FakeWidget;
+    for (const name of ['remove_suffix', 'removeSuffix', 'remove', 'set_child', 'setChild']) {
+      Object.defineProperty(list, name, { value: undefined });
+    }
+
+    expect(list.children).toEqual([first]);
+    expect(() => values.set({ items: [] })).toThrow('This GTK container cannot remove its child widget.');
+    expect(list.children).toEqual([first]);
+    expect(first.parent).toBe(list);
+    host.destroy(list);
+  });
+
   it('checks GTK repeat fallback capabilities before detaching mounted children', () => {
     const host = createGtkRenderHost(createGtk());
     const first = host.text('first') as FakeWidget;

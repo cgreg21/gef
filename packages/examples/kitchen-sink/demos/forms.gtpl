@@ -8,7 +8,7 @@
   <GefLabel text="Search a package" />
   <GefSearchInput placeholder="Search packages…" />
   <GefLabel text="Credentials" />
-  <GefPasswordInput showPeekIcon="true" />
+  <GefPasswordInput [showPeekIcon]="true" />
   <Flex direction="row" gap="8">
     <GefButton label="Cancel" />
     <GefButton label="Create extension" />

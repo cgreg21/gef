@@ -5,7 +5,7 @@
       <GefLabel text="Automatic updates" />
       <GefLabel text="Install stable updates automatically" />
     </Flex>
-    <GtkSwitch active="true" />
+    <GefSwitch [active]="true" />
   </Flex>
   <GtkSeparator orientation="horizontal" />
   <Flex direction="row" gap="12">
@@ -13,10 +13,10 @@
       <GefLabel text="Show notifications" />
       <GefLabel text="Notify when an update is available" />
     </Flex>
-    <GtkSwitch active="true" />
+    <GefSwitch [active]="true" />
   </Flex>
-  <GtkCheckButton label="Start with the desktop" active="true" />
-  <GtkCheckButton label="Include beta releases" active="false" />
+  <GefCheckbox [checked]="true" />
+  <GefCheckbox [checked]="false" />
   <GtkSeparator orientation="horizontal" />
   <GefLabel text="Update frequency" />
   <GtkSpinButton value="6" />

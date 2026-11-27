@@ -7,14 +7,14 @@ Application GTK4 écrite en TypeScript. Elle présente les composants et les tem
 - **Overview** — cartes de statistiques.
 - **Actions** — boutons GEF, actions et contrôles natifs.
 - **Forms** — champs texte, recherche, texte multiligne, mot de passe et boutons GEF.
-- **Preferences** — libellés GEF, interrupteurs et cases à cocher natifs, valeurs numériques.
+- **Preferences** — libellés, interrupteurs et cases à cocher GEF, champ numérique GTK natif.
 - **Layouts** — mises en page Flex, Sidebar et Grid.
 
 La navigation entre les écrans utilise le routeur GEF (`/overview`, `/actions`, `/forms`, `/preferences`, `/layouts`) et propose des commandes **Back**/**Forward** qui reflètent les possibilités de l'historique. Chaque écran possède un bouton **View source** pour consulter son template GTPL.
 
 ## Composants GEF
 
-Le registre du Kitchen Sink part de `createGtkUiRegistry()` : les douze composants UI publics sont donc disponibles dans les templates. Les démonstrations Actions et Forms utilisent `GefButton` ; Actions et Preferences utilisent `GefLabel`. Les interrupteurs, cases à cocher et champs numériques de Preferences restent natifs GTK, car leurs valeurs initiales booléennes et numériques ne sont pas encore reliées à une API de formulaire GEF.
+Le registre du Kitchen Sink part de `createGtkUiRegistry()` : les douze composants UI publics sont donc disponibles dans les templates. Actions utilise `GefButton` et `GefLabel`. Forms utilise les champs et boutons GEF. Preferences utilise `GefLabel`, `GefSwitch` et `GefCheckbox`, avec des bindings de propriétés booléennes typés. Le champ numérique reste un `GtkSpinButton`, car la bibliothèque UI ne propose pas encore de composant numérique dédié.
 
 L'application déclare aussi deux composants de démonstration dans `components.ts` :
 

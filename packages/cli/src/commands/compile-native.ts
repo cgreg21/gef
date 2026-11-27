@@ -3,7 +3,7 @@ import { compileGtplToUiIr, compileGtkNative } from '../../../compiler/src/index
 import { formatDiagnostic } from '../validation.js';
 import type { CliIO } from '../index.js';
 
-const nativeElements = ['GtkBox', 'GtkLabel', 'GtkButton'];
+const nativeElements = ['GtkBox', 'GtkLabel', 'GtkButton', 'GtkEntry', 'GtkCheckButton'];
 
 export async function runCompileNative(
   inputArg: string | undefined,

@@ -9,6 +9,8 @@ const ir = compileGtplToUiIr(`
   <GtkBox orientation="vertical" spacing="8" marginTop="12" halign="center">
     <GtkLabel label="GEF native C smoke test" marginStart="4" />
     <GtkButton label="Compile" visible="true" />
+    <GtkEntry text="Ada" placeholderText="Name" editable="false" />
+    <GtkCheckButton label="Enabled" active="true" />
   </GtkBox>
 `);
 assert.equal(ir.success, true, 'The GTK template must compile to UI IR.');

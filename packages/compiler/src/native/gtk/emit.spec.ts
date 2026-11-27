@@ -26,6 +26,27 @@ describe('GTK4 C backend', () => {
     expect(result.source).toContain('gtk_widget_set_valign(widget_1, GTK_ALIGN_END);');
   });
 
+  it('emits static GTK entry and check button widgets', () => {
+    const ir = compileGtplToUiIr('<GtkBox><GtkEntry text="Ada" placeholderText="Name" editable="false" visibility="false" /><GtkCheckButton label="Enabled" active="true" /></GtkBox>');
+    const result = emitGtkC(ir.nodes);
+    expect(result.success).toBe(true);
+    expect(result.source).toContain('gtk_entry_new()');
+    expect(result.source).toContain('gtk_editable_set_text(GTK_EDITABLE(widget_1), "Ada");');
+    expect(result.source).toContain('gtk_entry_set_placeholder_text(GTK_ENTRY(widget_1), "Name");');
+    expect(result.source).toContain('gtk_editable_set_editable(GTK_EDITABLE(widget_1), false);');
+    expect(result.source).toContain('gtk_entry_set_visibility(GTK_ENTRY(widget_1), false);');
+    expect(result.source).toContain('gtk_check_button_new_with_label("Enabled")');
+    expect(result.source).toContain('gtk_check_button_set_active(GTK_CHECK_BUTTON(widget_2), true);');
+  });
+
+  it('rejects invalid entry and check button boolean values', () => {
+    const ir = compileGtplToUiIr('<GtkBox><GtkEntry editable="yes" /><GtkCheckButton active="1" /></GtkBox>');
+    const result = emitGtkC(ir.nodes);
+    expect(result.success).toBe(false);
+    expect(result.diagnostics).toContain('GtkEntry editable must be "true" or "false"; received "yes".');
+    expect(result.diagnostics).toContain('GtkCheckButton active must be "true" or "false"; received "1".');
+  });
+
   it('rejects invalid common property values', () => {
     const ir = compileGtplToUiIr('<GtkLabel marginTop="-2" halign="middle" visible="yes" />');
     const result = emitGtkC(ir.nodes);

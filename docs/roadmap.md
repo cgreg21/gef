@@ -182,13 +182,13 @@ Le job GNOME utilise Fedora 45 avec systemd, Mutter devkit et GNOME Shell 51. Il
 - [ ] Évaluer le backend natif GTK et son runtime minimal ; mesurer les coûts avant de choisir LLVM ou une autre chaîne de génération.
 - [ ] Conserver une cible GJS séparée : les extensions GNOME Shell doivent rester compatibles avec le runtime JavaScript de GNOME.
 - [ ] Ajouter le packaging exécutable et les tests de lancement natifs par plateforme.
-- [ ] Compiler le C statique produit depuis l'UI IR en exécutable ELF dans le job GTK4 (`libgtk-4-dev`, `pkg-config`, compilateur C) ; vérifier l'en-tête ELF sans lancer l'interface graphique.
+- [x] Compiler le C statique produit depuis l'UI IR en exécutable ELF dans le job GTK4 (`libgtk-4-dev`, `pkg-config`, compilateur C) ; vérifier l'en-tête ELF sans lancer l'interface graphique.
 
-- [x] Introduire un premier backend expérimental GTK4 C depuis l'UI IR : génération d'une application statique pour `GtkBox`, `GtkLabel` et `GtkButton`, avec rejet explicite des bindings et constructions non prises en charge. La compilation ELF est validée en CI ; le runtime dynamique reste à réaliser.
-- [ ] Étendre le backend GTK4 C aux propriétés statiques communes (`marginTop/Bottom/Start/End`, `halign`, `valign`, `visible`) ; valider les valeurs et compiler le code généré avec GTK4.
+- [x] Introduire un premier backend expérimental GTK4 C depuis l'UI IR : génération d'une application statique pour `GtkBox`, `GtkLabel`, `GtkButton`, `GtkEntry` et `GtkCheckButton`, avec rejet explicite des bindings et constructions non prises en charge. La compilation ELF est validée en CI ; le runtime dynamique reste à réaliser.
+- [x] Étendre le backend GTK4 C aux propriétés statiques communes (`marginTop/Bottom/Start/End`, `halign`, `valign`, `visible`) ; valider les valeurs et compiler le code généré avec GTK4.
 
 - [x] Add the GTK4 native compilation API: generate C from the shared UI IR, resolve GTK4 flags with pkg-config and invoke a native C compiler without a shell.
-- [ ] Extend the native backend from static GTK widgets to typed expressions, bindings and event handlers.
-- [ ] Add a CLI entry point for compiling a GTK UI project to a native executable.
+- [x] Extend the static GTK backend with native `GtkEntry` and `GtkCheckButton` widgets, including validated text, placeholder, editable, visibility and active properties.\n- [ ] Extend the native backend from static GTK widgets to typed expressions, bindings and event handlers.
+- [x] Add a CLI entry point for compiling a GTK UI project to a native executable.
 
 - [x] Add `gef compile-native <view.gtpl> [output-file]` to compile validated static GTK4 GTPL views through the native GTK compiler API. The command reports GTPL/native diagnostics and defaults the output path to the template filename without its extension.

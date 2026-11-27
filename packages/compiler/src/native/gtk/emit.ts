@@ -8,6 +8,7 @@ export interface GtkCResult {
 
 const alignments = ['fill', 'start', 'end', 'center', 'baseline'] as const;
 const margins = ['marginTop', 'marginBottom', 'marginStart', 'marginEnd'] as const;
+const booleanValues = ['true', 'false'];
 
 function cString(value: string): string {
   return JSON.stringify(value).replace(/\\u2028/g, '\\u2028').replace(/\\u2029/g, '\\u2029');
@@ -60,7 +61,7 @@ export function emitGtkC(nodes: readonly UiNode[]): GtkCResult {
   const commonProperties = [...margins, 'halign', 'valign', 'visible'];
 
   function emitElement(element: UiElement, parent?: string): string | undefined {
-    if (!['GtkBox', 'GtkLabel', 'GtkButton'].includes(element.component)) {
+    if (!['GtkBox', 'GtkLabel', 'GtkButton', 'GtkEntry', 'GtkCheckButton'].includes(element.component)) {
       report(`Unsupported GTK element "${element.component}".`);
       return undefined;
     }
@@ -75,6 +76,7 @@ export function emitGtkC(nodes: readonly UiNode[]): GtkCResult {
 
     const id = `widget_${nextId++}`;
     const label = staticProperty(element, 'label');
+    const text = staticProperty(element, 'text');
     if (element.component === 'GtkBox') {
       const orientation = staticProperty(element, 'orientation') ?? 'horizontal';
       const spacing = staticProperty(element, 'spacing') ?? '0';
@@ -86,26 +88,49 @@ export function emitGtkC(nodes: readonly UiNode[]): GtkCResult {
         }
       }
       lines.push(`GtkWidget *${id} = gtk_box_new(GTK_ORIENTATION_${orientation.toUpperCase()}, ${/^-?[0-9]+$/.test(spacing) ? spacing : '0'});`);
-    } else {
+    } else if (element.component === 'GtkLabel') {
       for (const property of element.properties) {
-        if (property.name !== 'label' && !commonProperties.includes(property.name)) {
-          report(`Unsupported ${element.component} property "${property.name}".`);
+        if (property.name !== 'label' && !commonProperties.includes(property.name)) report(`Unsupported GtkLabel property "${property.name}".`);
+      }
+      const childText = element.children.filter((node) => node.kind === 'text')
+        .flatMap((node) => node.parts)
+        .map((part) => part.kind === 'text' ? part.value : '');
+      const hasExpression = element.children.some((node) => node.kind === 'text'
+        && node.parts.some((part) => part.kind === 'expression'));
+      if (hasExpression) report('GtkLabel interpolation is not supported by the static C backend.');
+      if (element.children.some((node) => node.kind !== 'text')) report('GtkLabel element children are not supported by the static C backend.');
+      const content = childText.join('');
+      if (label !== undefined && content.trim()) report('GtkLabel cannot combine a label property with child text.');
+      lines.push(`GtkWidget *${id} = gtk_label_new(${cString(label ?? content)});`);
+    } else if (element.component === 'GtkButton' || element.component === 'GtkCheckButton') {
+      for (const property of element.properties) {
+        if (property.name !== 'label' && !(element.component === 'GtkCheckButton' && property.name === 'active') && !commonProperties.includes(property.name)) report(`Unsupported ${element.component} property "${property.name}".`);
+      }
+      if (element.children.length) report(`${element.component} child nodes are not supported; use its static label property.`);
+      const constructor = element.component === 'GtkButton' ? 'gtk_button_new_with_label' : 'gtk_check_button_new_with_label';
+      lines.push(`GtkWidget *${id} = ${constructor}(${cString(label ?? '')});`);
+      if (element.component === 'GtkCheckButton') {
+        const active = staticProperty(element, 'active');
+        if (active !== undefined) {
+          if (!booleanValues.includes(active)) report(`GtkCheckButton active must be "true" or "false"; received "${active}".`);
+          else lines.push(`gtk_check_button_set_active(GTK_CHECK_BUTTON(${id}), ${active});`);
         }
       }
-      if (element.component === 'GtkLabel') {
-        const text = element.children.filter((node) => node.kind === 'text')
-          .flatMap((node) => node.parts)
-          .map((part) => part.kind === 'text' ? part.value : '');
-        const hasExpression = element.children.some((node) => node.kind === 'text'
-          && node.parts.some((part) => part.kind === 'expression'));
-        if (hasExpression) report('GtkLabel interpolation is not supported by the static C backend.');
-        if (element.children.some((node) => node.kind !== 'text')) report('GtkLabel element children are not supported by the static C backend.');
-        const content = text.join('');
-        if (label !== undefined && content.trim()) report('GtkLabel cannot combine a label property with child text.');
-        lines.push(`GtkWidget *${id} = gtk_label_new(${cString(label ?? content)});`);
-      } else {
-        if (element.children.length) report('GtkButton child nodes are not supported; use its static label property.');
-        lines.push(`GtkWidget *${id} = gtk_button_new_with_label(${cString(label ?? '')});`);
+    } else {
+      for (const property of element.properties) {
+        if (!['text', 'placeholderText', 'editable', 'visibility'].includes(property.name) && !commonProperties.includes(property.name)) report(`Unsupported GtkEntry property "${property.name}".`);
+      }
+      if (element.children.length) report('GtkEntry child nodes are not supported.');
+      lines.push(`GtkWidget *${id} = gtk_entry_new();`);
+      if (text !== undefined) lines.push(`gtk_editable_set_text(GTK_EDITABLE(${id}), ${cString(text)});`);
+      const placeholder = staticProperty(element, 'placeholderText');
+      if (placeholder !== undefined) lines.push(`gtk_entry_set_placeholder_text(GTK_ENTRY(${id}), ${cString(placeholder)});`);
+      for (const name of ['editable', 'visibility'] as const) {
+        const value = staticProperty(element, name);
+        if (value === undefined) continue;
+        if (!booleanValues.includes(value)) report(`GtkEntry ${name} must be "true" or "false"; received "${value}".`);
+        else if (name === 'editable') lines.push(`gtk_editable_set_editable(GTK_EDITABLE(${id}), ${value});`);
+        else lines.push(`gtk_entry_set_visibility(GTK_ENTRY(${id}), ${value});`);
       }
     }
 

@@ -99,7 +99,7 @@ const project = compileTypeScriptComponentsToUiIr({
 
 ## GTK4 native C backend (experimental)
 
-The compiler exports `emitGtkC(nodes)` from the package root. The first backend is intentionally limited to static `GtkBox`, `GtkLabel` and `GtkButton` trees. It emits a GTK4 C application using `GtkApplication`; compile the generated source with a C compiler and GTK4 flags from `pkg-config --cflags --libs gtk4`.
+The compiler exports `emitGtkC(nodes)` from the package root. The first backend supports static `GtkBox`, `GtkLabel`, `GtkButton`, `GtkEntry` and `GtkCheckButton` trees. It emits a GTK4 C application using `GtkApplication`; compile the generated source with a C compiler and GTK4 flags from `pkg-config --cflags --libs gtk4`.
 
 Bindings, events, references, control-flow nodes, unsupported properties and unsupported widgets are rejected with diagnostics. A failed result has an empty source string: unsupported IR is never silently omitted. This is a first static-code-generation milestone, not yet a complete TypeScript-to-native compiler or a CLI command.
 
@@ -119,4 +119,4 @@ On a Linux build host with GTK4 development files, `pkg-config` and a C compiler
 gef compile-native src/app.gtpl dist/my-app
 ```
 
-The output argument is optional; when omitted, the executable is written beside the template using its filename without the `.gtpl` suffix. The first CLI target accepts only the native `GtkBox`, `GtkLabel` and `GtkButton` elements. Bindings, events, references, control-flow blocks and unsupported properties are rejected with source diagnostics. This command compiles a static GTPL view; it does not yet compile decorated TypeScript components or their application logic. GNOME Shell extensions continue to use the separate GJS/JavaScript build.
+The output argument is optional; when omitted, the executable is written beside the template using its filename without the `.gtpl` suffix. The CLI accepts the native `GtkBox`, `GtkLabel`, `GtkButton`, `GtkEntry` and `GtkCheckButton` elements. Bindings, events, references, control-flow blocks and unsupported properties are rejected with source diagnostics. This command compiles a static GTPL view; it does not yet compile decorated TypeScript components or their application logic. GNOME Shell extensions continue to use the separate GJS/JavaScript build.

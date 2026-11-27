@@ -561,6 +561,33 @@ describe('createStRenderHost', () => {
     expect(switchNode.destroyed).toBe(true);
   });
 
+  it('rejects conditional and switch containers without set_child', () => {
+    class MissingChildBin extends FakeBin {
+      constructor(properties: Record<string, unknown> = {}) {
+        super(properties);
+        Object.defineProperty(this, 'set_child', { value: undefined });
+      }
+    }
+    const host = createStRenderHost({ ...createSt(), Bin: MissingChildBin });
+    const conditionalNode = new FakeActor();
+    expect(() => host.conditional(
+      { kind: 'binding', get: () => true },
+      () => conditionalNode,
+      () => new FakeActor(),
+    )).toThrow('This St container cannot set child actors.');
+    expect(conditionalNode.destroyed).toBe(true);
+    expect(conditionalNode.destroyCount).toBe(1);
+
+    const switchNode = new FakeActor();
+    expect(() => host.switch(
+      { kind: 'binding', get: () => 'ready' },
+      [{ values: ['ready'], render: () => switchNode }],
+      () => new FakeActor(),
+    )).toThrow('This St container cannot set child actors.');
+    expect(switchNode.destroyed).toBe(true);
+    expect(switchNode.destroyCount).toBe(1);
+  });
+
   it('reconciles repeated items by key when a collection signal changes', () => {
     const host = createStRenderHost(createSt());
     const runtime = createGtplRenderRuntime(host);

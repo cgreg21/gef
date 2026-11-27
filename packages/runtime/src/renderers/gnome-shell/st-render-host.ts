@@ -661,12 +661,16 @@ export function createStRenderHost(
         resources.add(effect(() => {
         const value = condition.get();
         const next = value ? render(value) : fallback();
+        if (!actor.set_child) {
+          destroyActor(next);
+          throw new Error('This St container cannot set child actors.');
+        }
         if (current) {
-          actor.set_child?.(null);
+          actor.set_child(null);
           destroyActor(current);
         }
         try {
-          actor.set_child?.(next);
+          actor.set_child(next);
         } catch (error) {
           destroyActor(next);
           throw error;
@@ -691,12 +695,16 @@ export function createStRenderHost(
         resources.add(effect(() => {
         const selected = cases.find((branch) => branch.values.some((candidate) => Object.is(candidate, value.get())));
         const next = selected?.render() ?? renderDefault?.() ?? makeContainer([]);
+        if (!actor.set_child) {
+          destroyActor(next);
+          throw new Error('This St container cannot set child actors.');
+        }
         if (current) {
-          actor.set_child?.(null);
+          actor.set_child(null);
           destroyActor(current);
         }
         try {
-          actor.set_child?.(next);
+          actor.set_child(next);
         } catch (error) {
           destroyActor(next);
           throw error;

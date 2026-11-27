@@ -55,7 +55,7 @@ export async function runCompileTypeScript(
     }
     if (!result.success) return 1;
 
-    io.stdout(`TypeScript compilation succeeded: ${result.emittedFiles.length} files emitted.`);
+    io.stdout(`TypeScript compilation succeeded: ${result.emittedFiles.length} output files emitted.`);
     return 0;
   } catch (error) {
     io.stderr(`TypeScript compilation failed: ${error instanceof Error ? error.message : String(error)}`);

@@ -62,7 +62,7 @@ const result = compileGtplComponentToUiIr(EditorComponent, {
 For a project containing several decorated components, use `compileGtplComponentsToUiIr({ components })`. Register the component classes once; every template is then checked against the same selector, input and output contracts. Per-component `componentMembers`, `contextType` and external `templateSource` are supplied on each entry. The result preserves one `ComponentUiIrResult` per component, so diagnostics in one template do not discard valid IR from other templates.
 
 ```ts
-const project = compileGtplComponentsToUiIr({
+const discovered = discoverTypeScriptComponents({ configFilePath: 'tsconfig.json' });\n// The descriptors are static source metadata; they are not instantiated classes.\n\nconst project = compileGtplComponentsToUiIr({
   components: [
     { type: EditorComponent, componentMembers: ['title', 'save'] },
     { type: SaveButtonComponent, componentMembers: ['label'] },
@@ -78,4 +78,4 @@ if (!project.success) {
 }
 ```
 
-The registry is explicit and deterministic: duplicate selectors and classes without `@Component` metadata are rejected. The compiler still does not instantiate application classes or discover source files implicitly.
+The registry is explicit and deterministic: duplicate selectors and classes without `@Component` metadata are rejected. The compiler still does not instantiate application classes. `discoverTypeScriptComponents({ configFilePath })` scans the source files selected by `tsconfig.json` and returns static descriptors for `@Component` classes, including selector, inline/external template, `@Input`, `@Output` and public instance member names. Discovery reads the TypeScript AST only and never imports application modules. Decorator options must be static object literals with string-literal values; dynamic expressions are reported as diagnostics rather than evaluated.

@@ -41,6 +41,11 @@ import {
   GefCheckbox,
   GefSwitch,
   GefProgressBar,
+  GefPasswordInput,
+  GefSearchInput,
+  GefSelect,
+  GefSlider,
+  GefTextArea,
   createStUiRegistry,
   createGtkUiRegistry,
 } from 'gnome-extension-framework/ui';
@@ -191,6 +196,99 @@ Indicateur de progression déterminé.
 
 Rendu : `Gtk.ProgressBar` ou `St.ProgressBar`. La fraction représente 65 % dans cet exemple.
 
+### GefPasswordInput
+
+Champ de saisie de mot de passe.
+
+| Propriété | Type | Défaut | Description |
+| --- | --- | --- | --- |
+| `value` | `string` | `''` | Valeur courante |
+| `showPeekIcon` | `boolean` | `true` | Affiche l'icône permettant de révéler temporairement le mot de passe |
+
+| Événement | Valeur émise |
+| --- | --- |
+| `valueChange` | `string` |
+
+```html
+<GefPasswordInput showPeekIcon="true" (valueChange)="onPasswordChange($event)" />
+```
+
+Rendu : `Gtk.PasswordEntry` ou `St.PasswordEntry`.
+
+### GefSearchInput
+
+Champ de recherche avec indication facultative.
+
+| Propriété | Type | Défaut |
+| --- | --- | --- |
+| `value` | `string` | `''` |
+| `placeholder` | `string` | `''` |
+
+| Événement | Valeur émise |
+| --- | --- |
+| `valueChange` | `string` |
+
+```html
+<GefSearchInput placeholder="Rechercher…" (valueChange)="filterItems($event)" />
+```
+
+Rendu : `Gtk.SearchEntry` ou `St.Entry` avec `hint-text`. Le renderer GNOME Shell utilise une entrée St standard, pas un widget de recherche distinct.
+
+### GefSelect
+
+Sélection d'une valeur parmi une liste de chaînes.
+
+| Propriété | Type | Défaut | Description |
+| --- | --- | --- | --- |
+| `options` | `string[]` | `[]` | Libellés proposés |
+| `value` | `string` | `''` | Valeur sélectionnée |
+
+| Événement | Valeur émise |
+| --- | --- |
+| `selectedChange` | `string` |
+
+```html
+<GefSelect options="['Clair', 'Sombre']" value="Sombre" (selectedChange)="setTheme($event)" />
+```
+
+Rendu : `Gtk.DropDown` ou `St.Select`. L'API actuelle manipule des chaînes ; les objets d'options avec libellé et identifiant ne sont pas encore pris en charge.
+
+### GefSlider
+
+Curseur numérique normalisé.
+
+| Propriété | Type | Défaut | Description |
+| --- | --- | --- | --- |
+| `value` | `number` | `0` | Valeur bornée entre 0 et 1 |
+
+| Événement | Valeur émise |
+| --- | --- |
+| `valueChange` | `number` |
+
+```html
+<GefSlider value="0.5" (valueChange)="setLevel($event)" />
+```
+
+Rendu : `Gtk.Scale` ou `St.Slider`. Les valeurs inférieures à 0 ou supérieures à 1 sont bornées ; les valeurs non finies sont refusées.
+
+### GefTextArea
+
+Champ de saisie multiligne.
+
+| Propriété | Type | Défaut |
+| --- | --- | --- |
+| `value` | `string` | `''` |
+
+| Événement | Valeur émise |
+| --- | --- |
+| `valueChange` | `string` |
+
+```html
+<GefTextArea (valueChange)="onDescriptionChange($event)" />
+```
+
+Rendu : `Gtk.TextView` dans un `Gtk.ScrolledWindow` ou `St.TextArea`.
+
 ## Exemples GTPL
 
 ### Formulaire de préférences
@@ -310,9 +408,14 @@ Pour les syntaxes de binding, expressions, conditions et boucles, consulter le [
 | Label | Gtk.Label | St.Label |
 | Icône | Gtk.Image | St.Icon |
 | Saisie | Gtk.Entry | St.Entry |
+| Mot de passe | Gtk.PasswordEntry | St.PasswordEntry |
+| Recherche | Gtk.SearchEntry | St.Entry |
+| Sélection | Gtk.DropDown | St.Select |
+| Curseur | Gtk.Scale | St.Slider |
+| Texte multiligne | Gtk.TextView dans Gtk.ScrolledWindow | St.TextArea |
 | Case à cocher | Gtk.CheckButton | St.CheckBox |
 | Interrupteur | Gtk.Switch | St.Switch |
-| Progression | Gtk.ProgressBar | St.ProgressBar |
+| Progression | Gtk.ProgressBar | St.Label avec indicateur textuel |
 
 Les apparences, tailles, animations, thèmes et détails d'accessibilité restent ceux du toolkit natif. Le framework uniformise les propriétés et événements documentés, pas le pixel-perfect entre GTK et St.
 
@@ -328,7 +431,7 @@ Les apparences, tailles, animations, thèmes et détails d'accessibilité resten
 
 ## Limites connues
 
-- La bibliothèque UI comprend actuellement sept composants `Gef*` : Button, Label, Icon, Input, Checkbox, Switch et ProgressBar.
+- La bibliothèque UI comprend actuellement douze composants `Gef*` : Button, Label, Icon, Input, PasswordInput, SearchInput, TextArea, Select, Slider, Checkbox, Switch et ProgressBar.
 - Les conteneurs Flex/Grid sont des éléments GTPL natifs, pas des composants de la bibliothèque `Gef*`.
 - Le retour à la ligne Flex, les poids `grow` par enfant et une justification commune GTK/St ne sont pas exposés dans le renderer GTPL.
 - Les breakpoints et calculs responsive sont disponibles dans l'API de layout, mais la reconfiguration native automatique à chaque changement de taille n'est pas fournie par ces exemples.

@@ -91,7 +91,7 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [x] Connecter les changements de largeur natifs aux breakpoints via `BreakpointObserver.observe(widget)` ; écoute `notify::width` et libère le signal à la désinscription.
 - [ ] Étendre les options de layout GTPL : retour à la ligne, poids `grow` par enfant et justification cohérente entre GTK et St. Les renderers refusent explicitement `wrap` et `grow` non pris en charge par les widgets natifs (tests GTK/St et guide runtimes) ; `Grid` et `expand` restent les solutions natives actuelles.
 - [x] Compléter `GefInput` avec `placeholder` et `disabled`, synchronisés vers `Gtk.Entry` et `St.Entry` avec tests des bindings réactifs sur les deux plateformes.
-- [ ] Enrichir la bibliothèque de composants uniquement selon les besoins démontrés par les exemples.
+- [x] Documenter les composants UI déjà exportés et rendus par les deux registres : PasswordInput, SearchInput, TextArea, Select et Slider. Décrire leurs entrées/sorties, limites et widgets natifs ; corriger le tableau de compatibilité de ProgressBar.
 
 ## P5 — Démonstration et documentation
 

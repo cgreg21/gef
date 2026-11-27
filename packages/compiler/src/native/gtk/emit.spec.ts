@@ -33,6 +33,24 @@ describe('GTK4 C backend', () => {
     expect(result.diagnostics).toContain('GtkGrid child columnSpan must be an integer greater than or equal to 1; received "0".');
   });
 
+  it('emits horizontal and vertical GtkSeparator widgets', () => {
+    const ir = compileGtplToUiIr('<GtkBox><GtkSeparator /><GtkSeparator orientation="vertical" /></GtkBox>');
+    const result = emitGtkC(ir.nodes);
+    expect(result.success).toBe(true);
+    expect(result.source).toContain('gtk_separator_new(GTK_ORIENTATION_HORIZONTAL)');
+    expect(result.source).toContain('gtk_separator_new(GTK_ORIENTATION_VERTICAL)');
+    expect(result.source).toContain('gtk_box_append(GTK_BOX(widget_0), widget_1)');
+    expect(result.source).toContain('gtk_box_append(GTK_BOX(widget_0), widget_2)');
+  });
+
+  it('rejects invalid GtkSeparator properties and children', () => {
+    const ir = compileGtplToUiIr('<GtkSeparator orientation="diagonal"><GtkLabel /></GtkSeparator>');
+    const result = emitGtkC(ir.nodes);
+    expect(result.success).toBe(false);
+    expect(result.diagnostics).toContain('GtkSeparator orientation must be "horizontal" or "vertical"; received "diagonal".');
+    expect(result.diagnostics).toContain('GtkSeparator child nodes are not supported.');
+  });
+
   it('emits common static GTK widget properties', () => {
     const ir = compileGtplToUiIr('<GtkBox marginTop="12" halign="center" visible="false"><GtkLabel label="Hello" marginStart="4" valign="end" /></GtkBox>');
     const result = emitGtkC(ir.nodes);

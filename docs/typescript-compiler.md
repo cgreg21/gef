@@ -99,14 +99,14 @@ const project = compileTypeScriptComponentsToUiIr({
 
 ## GTK4 native C backend (experimental)
 
-The compiler exports `emitGtkC(nodes)` from the package root. The backend supports static `GtkBox` and `GtkGrid` containers with `GtkLabel`, `GtkButton`, `GtkEntry` and `GtkCheckButton` children. Grid children accept `row` and `column` (defaulting to row 0 and their child index), plus positive `rowSpan` and `columnSpan` (default 1). For `GtkButton` click events, pass `callbacks` to `emitGtkC` or `compileGtkNative`: it maps a zero-argument GTPL handler such as `this.save()` to a C symbol. The callback implementation must be supplied in `nativeSources` and must use the GTK signal signature `void callback(GtkButton *button, gpointer user_data)`. GEF emits the declaration and `g_signal_connect`; it does not translate TypeScript method bodies into C. Unsupported event shapes are rejected. It emits a GTK4 C application using `GtkApplication`; compile the generated source with a C compiler and GTK4 flags from `pkg-config --cflags --libs gtk4`.
+The compiler exports `emitGtkC(nodes)` from the package root. The backend supports static `GtkBox` and `GtkGrid` containers with `GtkLabel`, `GtkButton`, `GtkEntry`, `GtkCheckButton` and `GtkSeparator` children. Grid children accept `row` and `column` (defaulting to row 0 and their child index), plus positive `rowSpan` and `columnSpan` (default 1). For `GtkButton` click events, pass `callbacks` to `emitGtkC` or `compileGtkNative`: it maps a zero-argument GTPL handler such as `this.save()` to a C symbol. The callback implementation must be supplied in `nativeSources` and must use the GTK signal signature `void callback(GtkButton *button, gpointer user_data)`. GEF emits the declaration and `g_signal_connect`; it does not translate TypeScript method bodies into C. Unsupported event shapes are rejected. It emits a GTK4 C application using `GtkApplication`; compile the generated source with a C compiler and GTK4 flags from `pkg-config --cflags --libs gtk4`.
 
 Bindings, events, references, control-flow nodes, unsupported properties and unsupported widgets are rejected with diagnostics. A failed result has an empty source string: unsupported IR is never silently omitted. This is a first static-code-generation milestone, not yet a complete TypeScript-to-native compiler or a CLI command.
 
 
 ## GTK4 native compilation API
 
-`emitGtkC(nodes)` emits a static GTK4 C application for `GtkBox`, `GtkGrid`, `GtkLabel`, `GtkButton`, `GtkEntry` and `GtkCheckButton`. The asynchronous `compileGtkNative(nodes, { outputFile })` API compiles that source into a native executable using `pkg-config --cflags --libs gtk4` and a C compiler (default: `cc`). The compiler and pkg-config executable can be overridden with `compiler` and `pkgConfig`.
+`emitGtkC(nodes)` emits a static GTK4 C application for `GtkBox`, `GtkGrid`, `GtkLabel`, `GtkButton`, `GtkEntry`, `GtkCheckButton` and `GtkSeparator`. The asynchronous `compileGtkNative(nodes, { outputFile })` API compiles that source into a native executable using `pkg-config --cflags --libs gtk4` and a C compiler (default: `cc`). The compiler and pkg-config executable can be overridden with `compiler` and `pkgConfig`.
 
 The build host must have GTK4 development files, `pkg-config` and a C compiler installed. Commands are invoked without a shell. Temporary C source is removed after compilation; the resulting executable is written to the requested output path. Unsupported widgets, bindings, events, references and control-flow nodes fail with diagnostics rather than being silently omitted. This backend currently targets GTK4/Linux; it is not yet a general TypeScript-to-native compiler.
 
@@ -125,3 +125,8 @@ The output argument is optional; when omitted, the executable is written beside 
 ### GTK native literal bindings
 
 The GTK4 C backend accepts property bindings whose GTPL expression is a single non-null literal (string, number or boolean). These values are emitted as compile-time constants. Identifiers, member access, calls, operators, null and other runtime expressions remain unsupported and produce diagnostics; they are never silently replaced with defaults.
+
+
+### GtkSeparator
+
+The static GTK4 backend supports `GtkSeparator` as a leaf widget. Its optional `orientation` property accepts `horizontal` (default) or `vertical`; unsupported values and child nodes are rejected. Common widget properties such as margins, alignment and visibility remain available.

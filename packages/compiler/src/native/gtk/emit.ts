@@ -132,7 +132,7 @@ export function emitGtkC(nodes: readonly UiNode[], options: GtkCOptions = {}): G
   const commonProperties = [...margins, 'halign', 'valign', 'visible'];
 
   function emitElement(element: UiElement, parent?: { id: string; component: string }, position?: { row: number; column: number; rowSpan: number; columnSpan: number }): string | undefined {
-    if (!['GtkBox', 'GtkGrid', 'GtkLabel', 'GtkButton', 'GtkEntry', 'GtkCheckButton'].includes(element.component)) {
+    if (!['GtkBox', 'GtkGrid', 'GtkLabel', 'GtkButton', 'GtkEntry', 'GtkCheckButton', 'GtkSeparator'].includes(element.component)) {
       report(`Unsupported GTK element "${element.component}".`);
       return undefined;
     }
@@ -193,7 +193,7 @@ export function emitGtkC(nodes: readonly UiNode[], options: GtkCOptions = {}): G
           else lines.push(`gtk_check_button_set_active(GTK_CHECK_BUTTON(${id}), ${active});`);
         }
       }
-    } else {
+    } else if (element.component === 'GtkEntry') {
       for (const property of element.properties) {
         if (!['text', 'placeholderText', 'editable', 'visibility'].includes(property.name) && ![...commonProperties, ...placementProperties].includes(property.name)) report(`Unsupported GtkEntry property "${property.name}".`);
       }
@@ -209,6 +209,18 @@ export function emitGtkC(nodes: readonly UiNode[], options: GtkCOptions = {}): G
         else if (name === 'editable') lines.push(`gtk_editable_set_editable(GTK_EDITABLE(${id}), ${value});`);
         else lines.push(`gtk_entry_set_visibility(GTK_ENTRY(${id}), ${value});`);
       }
+    } else {
+      const orientation = staticProperty(element, 'orientation') ?? 'horizontal';
+      if (!['horizontal', 'vertical'].includes(orientation)) {
+        report(`GtkSeparator orientation must be "horizontal" or "vertical"; received "${orientation}".`);
+      }
+      for (const property of element.properties) {
+        if (property.name !== 'orientation' && ![...commonProperties, ...placementProperties].includes(property.name)) {
+          report(`Unsupported GtkSeparator property "${property.name}".`);
+        }
+      }
+      if (element.children.length) report('GtkSeparator child nodes are not supported.');
+      lines.push(`GtkWidget *${id} = gtk_separator_new(GTK_ORIENTATION_${['horizontal', 'vertical'].includes(orientation) ? orientation.toUpperCase() : 'HORIZONTAL'});`);
     }
 
     for (const event of element.events) {

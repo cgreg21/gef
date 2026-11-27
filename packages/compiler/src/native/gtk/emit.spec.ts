@@ -15,6 +15,24 @@ describe('GTK4 C backend', () => {
     expect(result.source).toContain('gtk_box_append(GTK_BOX(widget_0), widget_1)');
   });
 
+  it('emits GtkGrid children with validated cell positions and spans', () => {
+    const ir = compileGtplToUiIr('<GtkGrid><GtkLabel label="Name" row="0" column="0" /><GtkEntry text="Ada" row="0" column="1" columnSpan="2" /><GtkButton label="Save" row="1" column="0" rowSpan="2" /></GtkGrid>');
+    const result = emitGtkC(ir.nodes);
+    expect(result.success).toBe(true);
+    expect(result.source).toContain('GtkWidget *widget_0 = gtk_grid_new();');
+    expect(result.source).toContain('gtk_grid_attach(GTK_GRID(widget_0), widget_1, 0, 0, 1, 1);');
+    expect(result.source).toContain('gtk_grid_attach(GTK_GRID(widget_0), widget_2, 1, 0, 2, 1);');
+    expect(result.source).toContain('gtk_grid_attach(GTK_GRID(widget_0), widget_3, 0, 1, 1, 2);');
+  });
+
+  it('rejects invalid GtkGrid child coordinates and spans', () => {
+    const ir = compileGtplToUiIr('<GtkGrid><GtkLabel label="Bad" row="-1" columnSpan="0" /></GtkGrid>');
+    const result = emitGtkC(ir.nodes);
+    expect(result.success).toBe(false);
+    expect(result.diagnostics).toContain('GtkGrid child row must be an integer greater than or equal to 0; received "-1".');
+    expect(result.diagnostics).toContain('GtkGrid child columnSpan must be an integer greater than or equal to 1; received "0".');
+  });
+
   it('emits common static GTK widget properties', () => {
     const ir = compileGtplToUiIr('<GtkBox marginTop="12" halign="center" visible="false"><GtkLabel label="Hello" marginStart="4" valign="end" /></GtkBox>');
     const result = emitGtkC(ir.nodes);

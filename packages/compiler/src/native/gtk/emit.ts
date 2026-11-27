@@ -131,7 +131,7 @@ export function emitGtkC(nodes: readonly UiNode[], options: GtkCOptions = {}): G
   const report = (message: string): void => { diagnostics.push(message); };
   const commonProperties = [...margins, 'halign', 'valign', 'visible'];
 
-  function emitElement(element: UiElement, parent?: string): string | undefined {
+  function emitElement(element: UiElement, parent?: { id: string; component: string }, position?: { row: number; column: number; rowSpan: number; columnSpan: number }): string | undefined {
     if (!['GtkBox', 'GtkLabel', 'GtkButton', 'GtkEntry', 'GtkCheckButton'].includes(element.component)) {
       report(`Unsupported GTK element "${element.component}".`);
       return undefined;
@@ -146,22 +146,28 @@ export function emitGtkC(nodes: readonly UiNode[], options: GtkCOptions = {}): G
     }
 
     const id = `widget_${nextId++}`;
+    const placementProperties = parent?.component === 'GtkGrid' ? ['row', 'column', 'rowSpan', 'columnSpan'] : [];
     const label = staticProperty(element, 'label');
     const text = staticProperty(element, 'text');
-    if (element.component === 'GtkBox') {
+    if (element.component === 'GtkGrid') {
+      for (const property of element.properties) {
+        if (!commonProperties.includes(property.name)) report(`Unsupported GtkGrid property "${property.name}".`);
+      }
+      lines.push(`GtkWidget *${id} = gtk_grid_new();`);
+    } else if (element.component === 'GtkBox') {
       const orientation = staticProperty(element, 'orientation') ?? 'horizontal';
       const spacing = staticProperty(element, 'spacing') ?? '0';
       if (!['horizontal', 'vertical'].includes(orientation)) report(`Invalid GtkBox orientation "${orientation}".`);
       if (!/^-?[0-9]+$/.test(spacing)) report(`GtkBox spacing must be an integer; received "${spacing}".`);
       for (const property of element.properties) {
-        if (!['orientation', 'spacing', ...commonProperties].includes(property.name)) {
+        if (!['orientation', 'spacing', ...commonProperties, ...placementProperties].includes(property.name)) {
           report(`Unsupported GtkBox property "${property.name}".`);
         }
       }
       lines.push(`GtkWidget *${id} = gtk_box_new(GTK_ORIENTATION_${orientation.toUpperCase()}, ${/^-?[0-9]+$/.test(spacing) ? spacing : '0'});`);
     } else if (element.component === 'GtkLabel') {
       for (const property of element.properties) {
-        if (property.name !== 'label' && !commonProperties.includes(property.name)) report(`Unsupported GtkLabel property "${property.name}".`);
+        if (property.name !== 'label' && ![...commonProperties, ...placementProperties].includes(property.name)) report(`Unsupported GtkLabel property "${property.name}".`);
       }
       const childText = element.children.filter((node) => node.kind === 'text')
         .flatMap((node) => node.parts)
@@ -175,7 +181,7 @@ export function emitGtkC(nodes: readonly UiNode[], options: GtkCOptions = {}): G
       lines.push(`GtkWidget *${id} = gtk_label_new(${cString(label ?? content)});`);
     } else if (element.component === 'GtkButton' || element.component === 'GtkCheckButton') {
       for (const property of element.properties) {
-        if (property.name !== 'label' && !(element.component === 'GtkCheckButton' && property.name === 'active') && !commonProperties.includes(property.name)) report(`Unsupported ${element.component} property "${property.name}".`);
+        if (property.name !== 'label' && !(element.component === 'GtkCheckButton' && property.name === 'active') && ![...commonProperties, ...placementProperties].includes(property.name)) report(`Unsupported ${element.component} property "${property.name}".`);
       }
       if (element.children.length) report(`${element.component} child nodes are not supported; use its static label property.`);
       const constructor = element.component === 'GtkButton' ? 'gtk_button_new_with_label' : 'gtk_check_button_new_with_label';
@@ -189,7 +195,7 @@ export function emitGtkC(nodes: readonly UiNode[], options: GtkCOptions = {}): G
       }
     } else {
       for (const property of element.properties) {
-        if (!['text', 'placeholderText', 'editable', 'visibility'].includes(property.name) && !commonProperties.includes(property.name)) report(`Unsupported GtkEntry property "${property.name}".`);
+        if (!['text', 'placeholderText', 'editable', 'visibility'].includes(property.name) && ![...commonProperties, ...placementProperties].includes(property.name)) report(`Unsupported GtkEntry property "${property.name}".`);
       }
       if (element.children.length) report('GtkEntry child nodes are not supported.');
       lines.push(`GtkWidget *${id} = gtk_entry_new();`);
@@ -227,10 +233,41 @@ export function emitGtkC(nodes: readonly UiNode[], options: GtkCOptions = {}): G
     }
 
     emitCommonProperties(element, id, lines, report);
-    if (parent) lines.push(`gtk_box_append(GTK_BOX(${parent}), ${id});`);
-    if (element.component === 'GtkBox') {
+    if (parent) {
+      if (parent.component === 'GtkGrid' && position) {
+        lines.push(`gtk_grid_attach(GTK_GRID(${parent.id}), ${id}, ${position.column}, ${position.row}, ${position.columnSpan}, ${position.rowSpan});`);
+      } else if (parent.component === 'GtkBox') {
+        lines.push(`gtk_box_append(GTK_BOX(${parent.id}), ${id});`);
+      } else {
+        report(`${parent.component} cannot contain child widgets.`);
+      }
+    }
+    if (element.component === 'GtkBox' || element.component === 'GtkGrid') {
+      let childIndex = 0;
       for (const child of element.children) {
-        if (child.kind === 'element') emitElement(child, id);
+        if (child.kind === 'element') {
+          if (element.component === 'GtkGrid') {
+            const readCoordinate = (name: string, fallback: number, minimum: number): number => {
+              const value = staticProperty(child, name);
+              if (value === undefined) return fallback;
+              if (!/^[0-9]+$/.test(value) || Number(value) < minimum) {
+                report(`GtkGrid child ${name} must be an integer greater than or equal to ${minimum}; received "${value}".`);
+                return fallback;
+              }
+              return Number(value);
+            };
+            const childPosition = {
+              row: readCoordinate('row', 0, 0),
+              column: readCoordinate('column', childIndex, 0),
+              rowSpan: readCoordinate('rowSpan', 1, 1),
+              columnSpan: readCoordinate('columnSpan', 1, 1),
+            };
+            emitElement(child, { id, component: element.component }, childPosition);
+          } else {
+            emitElement(child, { id, component: element.component });
+          }
+          childIndex++;
+        }
         else if (child.kind !== 'text' || child.parts.some((part) => part.kind !== 'text' || part.value.trim())) {
           report(`GtkBox child node "${child.kind}" is not supported by the static C backend.`);
         }

@@ -11,6 +11,10 @@ const ir = compileGtplToUiIr(`
     <GtkButton label="Compile" visible="true" (clicked)="this.save()" />
     <GtkEntry text="Ada" placeholderText="Name" editable="false" />
     <GtkCheckButton label="Enabled" active="true" />
+    <GtkGrid>
+      <GtkLabel label="Grid" row="0" column="0" />
+      <GtkEntry text="Native" row="0" column="1" />
+    </GtkGrid>
   </GtkBox>
 `);
 assert.equal(ir.success, true, 'The GTK template must compile to UI IR.');

@@ -66,7 +66,7 @@ describe('GTK4 C backend', () => {
   });
 
   it('rejects unsupported widget names', () => {
-    const ir = compileGtplToUiIr('<GtkEntry />');
+    const ir = compileGtplToUiIr('<GtkTextView />');
     const result = emitGtkC(ir.nodes);
     expect(result.success).toBe(false);
     expect(result.diagnostics[0]).toContain('Unsupported GTK element "GtkEntry"');

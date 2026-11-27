@@ -43,7 +43,7 @@ describe('GTK4 native compiler', () => {
   });
 
   it('does not invoke native tools for unsupported UI nodes', async () => {
-    const invalid = compileGtplToUiIr('<GtkEntry />');
+    const invalid = compileGtplToUiIr('<GtkTextView />');
     const result = await compileGtkNative(invalid.nodes, { outputFile: '/tmp/gef-native-test' });
     expect(result.success).toBe(false);
     expect(result.diagnostics[0]).toContain('Unsupported GTK element');

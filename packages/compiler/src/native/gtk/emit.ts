@@ -115,7 +115,7 @@ export function emitGtkC(nodes: readonly UiNode[]): GtkCResult {
     '  return status;',
     '}',
     '',
-  ].join('\\n');
+  ].join(String.fromCharCode(10));
 
   return { success: diagnostics.length === 0, source: diagnostics.length ? '' : source, diagnostics };
 }

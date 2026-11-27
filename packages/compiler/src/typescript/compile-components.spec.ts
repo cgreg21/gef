@@ -1,6 +1,6 @@
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { compileTypeScriptComponentsToUiIr } from './compile-components.js';
 
@@ -57,14 +57,22 @@ describe('compileTypeScriptComponentsToUiIr', () => {
       @Component({ selector: 'GefExternal', templateUrl: './external.gtpl' })
       class External {}
     `);
-    const templatePath = resolve(directory, 'src', 'external.gtpl');
+    await writeFile(join(directory, 'src', 'external.gtpl'), '<StLabel>External</StLabel>');
     const result = compileTypeScriptComponentsToUiIr({
       configFilePath: join(directory, 'tsconfig.json'),
-      templateSources: { [templatePath]: '<StLabel>External</StLabel>' },
       nativeElements: ['StLabel'],
     });
     expect(result.success).toBe(true);
     expect(result.components[0]?.nodes[0]).toMatchObject({ kind: 'element', component: 'StLabel' });
+  });
+
+  it('reports a clear error when an external template file is missing', async () => {
+    const directory = await createProject(`
+      const Component = (_options: object): ClassDecorator => () => {};
+      @Component({ selector: 'GefMissing', templateUrl: './missing.gtpl' }) class Missing {}
+    `);
+    expect(() => compileTypeScriptComponentsToUiIr({ configFilePath: join(directory, 'tsconfig.json') }))
+      .toThrow(/Cannot read template for component "GefMissing"/);
   });
 
   it('rejects duplicate selectors', async () => {
@@ -86,5 +94,7 @@ describe('compileTypeScriptComponentsToUiIr', () => {
     const result = compileTypeScriptComponentsToUiIr({ configFilePath: join(directory, 'tsconfig.json') });
     expect(result.success).toBe(false);
     expect(result.components).toEqual([]);
+    expect(result.discoveryDiagnostics).toHaveLength(1);
+    expect(result.discoveryDiagnostics[0]?.messageText).toMatch(/static object literal/);
   });
 });

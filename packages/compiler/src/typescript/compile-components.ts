@@ -1,4 +1,6 @@
+import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import type * as ts from 'typescript';
 import type { Diagnostic } from '../gtpl/diagnostics/diagnostic.js';
 import { compileGtplToUiIr, type UiNode } from '../ir/ui.js';
 import type { TypeScriptComponentDescriptor } from './components.js';
@@ -21,6 +23,7 @@ export interface TypeScriptComponentUiIr {
 export interface TypeScriptComponentProjectUiIrResult {
   readonly success: boolean;
   readonly components: readonly TypeScriptComponentUiIr[];
+  readonly discoveryDiagnostics: readonly ts.Diagnostic[];
 }
 
 /** Discovers and compiles project components without importing application modules. */
@@ -28,7 +31,9 @@ export function compileTypeScriptComponentsToUiIr(
   options: TypeScriptComponentProjectOptions = {},
 ): TypeScriptComponentProjectUiIrResult {
   const discovered = discoverTypeScriptComponents(options);
-  if (!discovered.success) return { success: false, components: [] };
+  if (!discovered.success) {
+    return { success: false, components: [], discoveryDiagnostics: discovered.diagnostics };
+  }
   if (discovered.components.length === 0) {
     throw new TypeError('No @Component classes were found in the TypeScript project.');
   }
@@ -48,15 +53,19 @@ export function compileTypeScriptComponentsToUiIr(
   }));
 
   const components = discovered.components.map((component): TypeScriptComponentUiIr => {
-    let source = component.template;
+    let source = component.template ?? '';
     if (component.templateUrl) {
       const templatePath = resolve(dirname(component.fileName), component.templateUrl);
       source = options.templateSources?.[templatePath];
       if (source === undefined) {
-        throw new TypeError(`Component "${component.selector}" requires template source at "${templatePath}".`);
+        try {
+          source = readFileSync(templatePath, 'utf8');
+        } catch {
+          throw new TypeError(`Cannot read template for component "${component.selector}" at "${templatePath}".`);
+        }
       }
     }
-    const result = compileGtplToUiIr(source!, {
+    const result = compileGtplToUiIr(source, {
       componentMembers: component.componentMembers,
       components: definitions,
       strictComponents: true,
@@ -67,5 +76,9 @@ export function compileTypeScriptComponentsToUiIr(
     return { component, nodes: result.nodes, diagnostics: result.diagnostics };
   });
 
-  return { success: components.every((component) => component.diagnostics.length === 0), components };
+  return {
+    success: components.every((component) => component.diagnostics.length === 0),
+    components,
+    discoveryDiagnostics: discovered.diagnostics,
+  };
 }

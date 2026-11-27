@@ -85,7 +85,7 @@ The registry is explicit and deterministic: duplicate selectors and classes with
 
 Use `compileTypeScriptComponentsToUiIr({ configFilePath })` to connect static component discovery directly to the shared UI IR compiler. It discovers all `@Component` classes selected by `tsconfig.json`, builds one selector/input/output registry, and compiles every template without importing application modules.
 
-Native element names remain target-specific and must be passed with `nativeElements`. External templates are supplied in `templateSources`, keyed by their absolute path resolved relative to the declaring TypeScript file. Duplicate selectors and missing external template sources fail explicitly; invalid templates retain per-component diagnostics.
+Native element names remain target-specific and must be passed with `nativeElements`. External templates declared with `templateUrl` are read as UTF-8 files relative to the declaring TypeScript file. For virtual filesystems or tests, `templateSources` can override file contents by absolute resolved path. Missing files fail with a component-specific error. TypeScript discovery diagnostics are returned in `discoveryDiagnostics`; GTPL diagnostics remain attached to each component.
 
 ```ts
 import { compileTypeScriptComponentsToUiIr } from 'gnome-extension-framework/compiler';

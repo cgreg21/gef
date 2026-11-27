@@ -599,10 +599,9 @@ describe('createStRenderHost', () => {
     const condition = signal(false);
     const conditionalOld = new FakeActor();
     const conditionalNext = new FakeActor();
-    let conditionalRender = 0;
     const conditional = host.conditional(
       { kind: 'binding', get: () => condition.get() },
-      () => conditionalRender++ === 0 ? conditionalOld : conditionalNext,
+      () => conditionalNext,
       () => conditionalOld,
     ) as FakeBin;
     expect(conditional.children[0]).toBe(conditionalOld);
@@ -614,10 +613,9 @@ describe('createStRenderHost', () => {
     const selected = signal('idle');
     const switchOld = new FakeActor();
     const switchNext = new FakeActor();
-    let switchRender = 0;
     const switched = host.switch(
       { kind: 'binding', get: () => selected.get() },
-      [{ values: ['ready'], render: () => switchRender++ === 0 ? switchOld : switchNext }],
+      [{ values: ['ready'], render: () => switchNext }],
       () => switchOld,
     ) as FakeBin;
     expect(switched.children[0]).toBe(switchOld);

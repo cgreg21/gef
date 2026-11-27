@@ -38,6 +38,9 @@ describe('GTK4 C backend', () => {
     const result = emitGtkC(ir.nodes);
     expect(result.success).toBe(true);
     expect(result.source).toContain('gtk_scrolled_window_new()');
+    expect(result.source.indexOf('GtkWidget *widget_0 = gtk_scrolled_window_new();')).toBeLessThan(
+      result.source.indexOf('gtk_scrolled_window_set_hscrollbar_policy'),
+    );
     expect(result.source).toContain('gtk_scrolled_window_set_hscrollbar_policy(GTK_SCROLLED_WINDOW(widget_0), GTK_POLICY_NEVER);');
     expect(result.source).toContain('gtk_scrolled_window_set_vscrollbar_policy(GTK_SCROLLED_WINDOW(widget_0), GTK_POLICY_ALWAYS);');
     expect(result.source).toContain('gtk_scrolled_window_set_min_content_width(GTK_SCROLLED_WINDOW(widget_0), 320);');

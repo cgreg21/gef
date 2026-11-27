@@ -150,6 +150,7 @@ export function emitGtkC(nodes: readonly UiNode[], options: GtkCOptions = {}): G
     const label = staticProperty(element, 'label');
     const text = staticProperty(element, 'text');
     if (element.component === 'GtkScrolledWindow') {
+      lines.push(`GtkWidget *${id} = gtk_scrolled_window_new();`);
       const policies = ['never', 'automatic', 'always', 'external'];
       for (const name of ['hscrollbarPolicy', 'vscrollbarPolicy'] as const) {
         const value = staticProperty(element, name) ?? 'automatic';
@@ -175,7 +176,6 @@ export function emitGtkC(nodes: readonly UiNode[], options: GtkCOptions = {}): G
       if (element.children.filter((child) => child.kind === 'element').length > 1) {
         report('GtkScrolledWindow accepts exactly one child widget.');
       }
-      lines.push(`GtkWidget *${id} = gtk_scrolled_window_new();`);
     } else if (element.component === 'GtkGrid') {
       for (const property of element.properties) {
         if (!commonProperties.includes(property.name)) report(`Unsupported GtkGrid property "${property.name}".`);

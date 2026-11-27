@@ -424,17 +424,20 @@ export function createGtkRenderHost(
           else if (value) classes.push(name.slice(6));
         }
       }
-      const activeClasses = new Set<string>();
+      let activeClasses = new Set<string>();
+      let nextClasses = new Set<string>();
       const syncClasses = (): void => {
-        const next = new Set(classes);
+        nextClasses.clear();
+        for (const name of classes) nextClasses.add(name);
         for (const item of classBindings) {
           const value = item.binding.get();
-          for (const name of (item.name ? (value ? [item.name] : []) : classNames(value))) next.add(name);
+          for (const name of (item.name ? (value ? [item.name] : []) : classNames(value))) nextClasses.add(name);
         }
-        for (const name of activeClasses) if (!next.has(name)) (actor.remove_css_class ?? actor.removeCssClass)?.call(actor, name);
-        for (const name of next) if (!activeClasses.has(name)) (actor.add_css_class ?? actor.addCssClass)?.call(actor, name);
-        activeClasses.clear();
-        for (const name of next) activeClasses.add(name);
+        for (const name of activeClasses) if (!nextClasses.has(name)) (actor.remove_css_class ?? actor.removeCssClass)?.call(actor, name);
+        for (const name of nextClasses) if (!activeClasses.has(name)) (actor.add_css_class ?? actor.addCssClass)?.call(actor, name);
+        const previousClasses = activeClasses;
+        activeClasses = nextClasses;
+        nextClasses = previousClasses;
       };
       if (classBindings.length > 0) scope.add(effect(syncClasses));
       else syncClasses();
@@ -720,19 +723,22 @@ export function createGtkRenderHost(
         if (hasReactiveStyle) scope.add(effect(syncStyle));
         else syncStyle();
         }
-        const activeClasses = new Set<string>();
+        let activeClasses = new Set<string>();
+      let nextClasses = new Set<string>();
         const syncClasses = (): void => {
-          const next = new Set(classes);
+          nextClasses.clear();
+        for (const name of classes) nextClasses.add(name);
           for (const item of classBindings) {
             const value = item.binding.get();
             if (item.name ? Boolean(value) : true) {
-              for (const name of (item.name ? [item.name] : classNames(value))) next.add(name);
+              for (const name of (item.name ? [item.name] : classNames(value))) nextClasses.add(name);
             }
           }
-          for (const name of activeClasses) if (!next.has(name)) (actor.remove_css_class ?? actor.removeCssClass)?.call(actor, name);
-          for (const name of next) if (!activeClasses.has(name)) (actor.add_css_class ?? actor.addCssClass)?.call(actor, name);
-          activeClasses.clear();
-          for (const name of next) activeClasses.add(name);
+          for (const name of activeClasses) if (!nextClasses.has(name)) (actor.remove_css_class ?? actor.removeCssClass)?.call(actor, name);
+          for (const name of nextClasses) if (!activeClasses.has(name)) (actor.add_css_class ?? actor.addCssClass)?.call(actor, name);
+          const previousClasses = activeClasses;
+          activeClasses = nextClasses;
+          nextClasses = previousClasses;
         };
         if (classBindings.length > 0) scope.add(effect(syncClasses));
         syncClasses();

@@ -62,7 +62,7 @@ describe('GTK4 C backend', () => {
     const result = emitGtkC(ir.nodes);
     expect(result.success).toBe(false);
     expect(result.source).toBe('');
-    expect(result.diagnostics).toContain('Dynamic property "label" is not supported by the static C backend.');
+    expect(result.diagnostics).toContain('Dynamic property "label" is not supported by the static C backend; only non-null literal bindings are supported.');
   });
 
 

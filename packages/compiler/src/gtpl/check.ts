@@ -35,7 +35,7 @@ export function checkGtpl(source: string, options: GtplCheckOptions = {}): GtplC
   const components = validateGtplComponents(lowered.nodes, {
     components: options.components ?? [],
     strict: options.strictComponents ?? false,
-    nativeElements: options.nativeElements,
+    ...(options.nativeElements ? { nativeElements: options.nativeElements } : {}),
   });
 
   const types = options.contextType

@@ -104,7 +104,7 @@ export function compileGtplComponentToUiIr(
     ...(options.contextType ? { contextType: options.contextType } : {}),
     components: definitions,
     strictComponents: true,
-    nativeElements: options.nativeElements,
+    ...(options.nativeElements ? { nativeElements: options.nativeElements } : {}),
   });
   return { ...result, metadata };
 }

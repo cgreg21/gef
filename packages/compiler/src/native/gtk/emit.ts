@@ -61,6 +61,7 @@ export function emitGtkC(nodes: readonly UiNode[]): GtkCResult {
         const hasExpression = element.children.some((node) => node.kind === 'text'
           && node.parts.some((part) => part.kind === 'expression'));
         if (hasExpression) report('GtkLabel interpolation is not supported by the static C backend.');
+        if (element.children.some((node) => node.kind !== 'text')) report('GtkLabel element children are not supported by the static C backend.');
         const content = text.join('');
         if (label !== undefined && content.trim()) report('GtkLabel cannot combine a label property with child text.');
         lines.push(`GtkWidget *${id} = gtk_label_new(${cString(label ?? content)});`);

@@ -6,3 +6,4 @@ export * from './typescript/compile-components.js';
 
 export * from './styles/st-css.js';
 export * from './ir/ui.js';
+export * from './native/gtk/index.js';

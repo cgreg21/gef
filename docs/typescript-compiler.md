@@ -95,3 +95,10 @@ const project = compileTypeScriptComponentsToUiIr({
   nativeElements: ['StLabel', 'StButton'],
 });
 ```
+
+
+## GTK4 native C backend (experimental)
+
+The compiler exports `emitGtkC(nodes)` from the package root. The first backend is intentionally limited to static `GtkBox`, `GtkLabel` and `GtkButton` trees. It emits a GTK4 C application using `GtkApplication`; compile the generated source with a C compiler and GTK4 flags from `pkg-config --cflags --libs gtk4`.
+
+Bindings, events, references, control-flow nodes, unsupported properties and unsupported widgets are rejected with diagnostics. A failed result has an empty source string: unsupported IR is never silently omitted. This is a first static-code-generation milestone, not yet a complete TypeScript-to-native compiler or a CLI command.

@@ -11,6 +11,7 @@ import { runWorkspaceCommand } from './commands/workspace.js';
 import { runEgoCheck } from './commands/ego-check.js';
 import { runTemplateCommand } from './commands/template.js';
 import { runCompileTypeScript } from './commands/compile-ts.js';
+import { runCompileNative } from './commands/compile-native.js';
 
 export interface CliIO {
   readFile(path: string): Promise<string>;
@@ -97,7 +98,7 @@ export async function runCli(args: readonly string[] = process.argv.slice(2), io
     return runWorkspaceCommand(command, io);
   }
 
-  if (command === 'compile-ts') return runCompileTypeScript(args.slice(1), io);
+  if (command === 'compile-ts') return runCompileTypeScript(args.slice(1), io);\n  if (command === 'compile-native') return runCompileNative(inputArg, outputArg, io);
 
   if (command === 'styles') return runStyles(inputArg, outputArg, io);
 

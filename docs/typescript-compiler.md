@@ -109,3 +109,14 @@ Bindings, events, references, control-flow nodes, unsupported properties and uns
 `emitGtkC(nodes)` emits a static GTK4 C application for `GtkBox`, `GtkLabel` and `GtkButton`. The asynchronous `compileGtkNative(nodes, { outputFile })` API compiles that source into a native executable using `pkg-config --cflags --libs gtk4` and a C compiler (default: `cc`). The compiler and pkg-config executable can be overridden with `compiler` and `pkgConfig`.
 
 The build host must have GTK4 development files, `pkg-config` and a C compiler installed. Commands are invoked without a shell. Temporary C source is removed after compilation; the resulting executable is written to the requested output path. Unsupported widgets, bindings, events, references and control-flow nodes fail with diagnostics rather than being silently omitted. This backend currently targets GTK4/Linux; it is not yet a general TypeScript-to-native compiler.
+
+
+## Native GTK4 CLI
+
+On a Linux build host with GTK4 development files, `pkg-config` and a C compiler installed, compile a static GTK template directly to an executable:
+
+```sh
+gef compile-native src/app.gtpl dist/my-app
+```
+
+The output argument is optional; when omitted, the executable is written beside the template using its filename without the `.gtpl` suffix. The first CLI target accepts only the native `GtkBox`, `GtkLabel` and `GtkButton` elements. Bindings, events, references, control-flow blocks and unsupported properties are rejected with source diagnostics. This command compiles a static GTPL view; it does not yet compile decorated TypeScript components or their application logic. GNOME Shell extensions continue to use the separate GJS/JavaScript build.

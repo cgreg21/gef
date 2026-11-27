@@ -190,3 +190,5 @@ Le job GNOME utilise Fedora 45 avec systemd, Mutter devkit et GNOME Shell 51. Il
 - [x] Add the GTK4 native compilation API: generate C from the shared UI IR, resolve GTK4 flags with pkg-config and invoke a native C compiler without a shell.
 - [ ] Extend the native backend from static GTK widgets to typed expressions, bindings and event handlers.
 - [ ] Add a CLI entry point for compiling a GTK UI project to a native executable.
+
+- [x] Add `gef compile-native <view.gtpl> [output-file]` to compile validated static GTK4 GTPL views through the native GTK compiler API. The command reports GTPL/native diagnostics and defaults the output path to the template filename without its extension.

@@ -663,7 +663,12 @@ export function createStRenderHost(
           actor.set_child?.(null);
           destroyActor(current);
         }
-        actor.set_child?.(next);
+        try {
+          actor.set_child?.(next);
+        } catch (error) {
+          destroyActor(next);
+          throw error;
+        }
         current = next;
         }));
         return actor;
@@ -688,7 +693,12 @@ export function createStRenderHost(
           actor.set_child?.(null);
           destroyActor(current);
         }
-        actor.set_child?.(next);
+        try {
+          actor.set_child?.(next);
+        } catch (error) {
+          destroyActor(next);
+          throw error;
+        }
         current = next;
         }));
         return actor;

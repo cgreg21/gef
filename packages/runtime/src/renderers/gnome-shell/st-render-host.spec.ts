@@ -539,6 +539,28 @@ describe('createStRenderHost', () => {
     expect(selected.destroyCount).toBe(1);
   });
 
+  it('destroys conditional and switch branches when St attachment fails', () => {
+    class FailingBin extends FakeBin {
+      override set_child(_child: StActor | null): void { throw new Error('attachment failed'); }
+    }
+    const host = createStRenderHost({ ...createSt(), Bin: FailingBin });
+    const conditionalNode = new FakeActor();
+    expect(() => host.conditional(
+      { kind: 'binding', get: () => true },
+      () => conditionalNode,
+      () => new FakeActor(),
+    )).toThrow('attachment failed');
+    expect(conditionalNode.destroyed).toBe(true);
+
+    const switchNode = new FakeActor();
+    expect(() => host.switch(
+      { kind: 'binding', get: () => 'ready' },
+      [{ values: ['ready'], render: () => switchNode }],
+      () => new FakeActor(),
+    )).toThrow('attachment failed');
+    expect(switchNode.destroyed).toBe(true);
+  });
+
   it('reconciles repeated items by key when a collection signal changes', () => {
     const host = createStRenderHost(createSt());
     const runtime = createGtplRenderRuntime(host);

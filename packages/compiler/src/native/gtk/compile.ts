@@ -25,7 +25,7 @@ export async function compileGtkNative(
   options: GtkNativeCompileOptions,
 ): Promise<GtkNativeCompileResult> {
   const outputFile = resolve(options.outputFile);
-  const generated = emitGtkC(nodes, { callbacks: options.callbacks });
+  const generated = emitGtkC(nodes, options.callbacks ? { callbacks: options.callbacks } : {});
   if (!generated.success) {
     return { success: false, outputFile, diagnostics: generated.diagnostics };
   }

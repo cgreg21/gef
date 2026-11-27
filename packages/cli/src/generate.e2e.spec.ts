@@ -23,6 +23,10 @@ describe('generated project smoke tests', () => {
       };
       expect(config.defaultProject).toBe(name);
       expect(config.projects[name]).toMatchObject({ projectType, sourceRoot: 'src' });
+      const generatedPackage = JSON.parse(await readFile(join(project, 'package.json'), 'utf8')) as {
+        scripts: { build: string };
+      };
+      expect(generatedPackage.scripts.build).toContain('gef compile-ts --project tsconfig.json');
 
       const template = join(project, 'src/app/app.component.gtpl');
       expect(await runCli(['check', template])).toBe(0);

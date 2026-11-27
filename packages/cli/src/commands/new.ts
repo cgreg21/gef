@@ -107,7 +107,7 @@ export async function runNew(
       ].join('\n') + '\n',
       'src/gjs.d.ts': `declare module 'gi://St' { const St: any; export default St; }\ndeclare module 'gi://Clutter' { const Clutter: any; export default Clutter; }\ndeclare module 'resource:///org/gnome/shell/ui/main.js' { export const panel: any; }\ndeclare module 'resource:///org/gnome/shell/ui/panelMenu.js' { export class Button { constructor(alignment: number, name: string); add_child(child: any): void; destroy(): void; } }\ndeclare module 'resource:///org/gnome/shell/extensions/extension.js' { export class Extension { enable(): void; disable(): void; } }\n`,
       'tsconfig.json': JSON.stringify({ compilerOptions: { target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', experimentalDecorators: true, useDefineForClassFields: false, strict: true, skipLibCheck: true, allowJs: true, rootDir: 'src', outDir: 'dist', types: [] }, include: ['src/**/*.ts', 'src/**/*.d.ts', 'src/**/*.js'], exclude: ['node_modules', 'dist'] }, null, 2) + '\n',
-      'package.json': JSON.stringify({ name, version: '1.0.0', private: true, type: 'module', scripts: { build: 'gef compile src/app/app.component.gtpl src/app/app.component.view.js && tsc -p tsconfig.json', package: 'npm run build && node scripts/package.mjs' }, dependencies: { 'gnome-extension-framework': '^0.1.0-alpha.2' }, devDependencies: { typescript: '^5.9.3' } }, null, 2) + '\n',
+      'package.json': JSON.stringify({ name, version: '1.0.0', private: true, type: 'module', scripts: { build: 'gef compile src/app/app.component.gtpl src/app/app.component.view.js && gef compile-ts --project tsconfig.json', package: 'npm run build && node scripts/package.mjs' }, dependencies: { 'gnome-extension-framework': '^0.1.0-alpha.2' }, devDependencies: { typescript: '^5.9.3' } }, null, 2) + '\n',
       'src/app/app.component.ts': `import { Component } from 'gnome-extension-framework/runtime';\n\n@Component({ selector: 'app-root', templateUrl: './app.component.gtpl' })\nexport default class AppComponent {\n  readonly title = '${name}';\n}\n`,
       'src/app/app.component.gtpl': '<StButton class="panel-button" reactive="true" can_focus="true" track_hover="true"><StLabel>{{ title }}</StLabel></StButton>\n',
       'src/app/app.config.ts': "import type { ApplicationRouterConfig, StActor } from 'gnome-extension-framework/runtime';\n\nexport const appConfig = Object.freeze({\n  shellVersion: '51',\n  router: { initialUrl: '/', routes: [{ path: '/' }] } satisfies ApplicationRouterConfig<StActor>,\n});\n",
@@ -119,7 +119,7 @@ export async function runNew(
         name, version: '1.0.0', private: true, type: 'module', main: 'dist/main.js',
         bundle: { name: applicationTitle, id: applicationId, entry: 'dist/main.js', gtk: 4 },
         scripts: {
-          build: 'gef compile src/app/app.component.gtpl src/app/app.component.view.js && tsc -p tsconfig.json',
+          build: 'gef compile src/app/app.component.gtpl src/app/app.component.view.js && gef compile-ts --project tsconfig.json',
           start: 'node --import node-gtk/register dist/main.js',
           test: 'node --test',
           package: 'npm run build && node scripts/package.mjs',

@@ -170,7 +170,8 @@ Le job GNOME utilise Fedora 45 avec systemd, Mutter devkit et GNOME Shell 51. Il
 ## P7 — TypeScript vers natif
 
 - [x] Ajouter une API de compilation de projet TypeScript fondée sur le compilateur officiel : lecture de `tsconfig.json`, vérification sémantique, émission JavaScript et source maps, refus d'émission en présence d'erreurs. Tests de compilation réussie, diagnostic de type et configuration absente.
-- [x] Ajouter la commande CLI `gef compile-ts` avec sélection de tsconfig, surcharge du dossier de sortie et diagnostics TypeScript ; tests CLI dédiés.\n- [ ] Intégrer le pipeline aux projets GEF générés.
+- [x] Ajouter la commande CLI `gef compile-ts` avec sélection de tsconfig, surcharge du dossier de sortie et diagnostics TypeScript ; tests CLI dédiés.
+- [x] Intégrer `gef compile-ts` aux commandes de build des deux squelettes `gef new` (application GTK et extension GNOME Shell) ; les tests E2E compilent réellement les projets générés via le frontend GEF.
 - [ ] Définir une IR commune pour les applications GTK sans réimplémenter le langage TypeScript.
 - [ ] Évaluer le backend natif GTK et son runtime minimal ; mesurer les coûts avant de choisir LLVM ou une autre chaîne de génération.
 - [ ] Conserver une cible GJS séparée : les extensions GNOME Shell doivent rester compatibles avec le runtime JavaScript de GNOME.

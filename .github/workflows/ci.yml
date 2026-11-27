@@ -228,7 +228,7 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Install GTK4 integration dependencies
-        run: sudo apt-get update && sudo apt-get install -y gjs gir1.2-gtk-4.0 gir1.2-adw-1 libglib2.0-bin libgirepository-1.0-1 gir1.2-girepository-2.0 xvfb xdotool
+        run: sudo apt-get update && sudo apt-get install -y gjs gir1.2-gtk-4.0 libgtk-4-dev gir1.2-adw-1 libglib2.0-bin libgirepository-1.0-1 gir1.2-girepository-2.0 xvfb xdotool
       - name: Install Node-GTK runtime
         run: npm install --no-save --package-lock=false node-gtk@4.1.1 --no-audit --no-fund
       - name: GTK4 and libadwaita runtime smoke test
@@ -239,5 +239,7 @@ jobs:
           GTK_A11Y=none xvfb-run -a gjs -m tests/gtk4/kitchen-sink-smoke.js
       - name: Node-GTK renderer smoke test
         run: npm run build && node dist/cli/src/index.js compile tests/node-gtk/smoke.gtpl dist/node-gtk-view.js && GTK_A11Y=none xvfb-run -a node --import node-gtk/register tests/node-gtk/smoke.mjs
+      - name: Compile generated GTK4 C application to ELF
+        run: node tests/gtk4/gtk-c-backend-smoke.mjs
       - name: Execute generated application component with Node-GTK
         run: GTK_A11Y=none xvfb-run -a node --import node-gtk/register tests/node-gtk/generated-app-smoke.mjs

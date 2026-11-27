@@ -1,20 +1,20 @@
 <Flex direction="column" gap="16" margin-top="20">
   <GefSectionHeader title="Actions and feedback" description="Reusable GEF components compose with native GTK controls." />
   <Flex direction="row" gap="8">
-    <GtkButton label="Create extension" />
-    <GtkButton label="Preview" />
+    <GefButton label="Create extension" />
+    <GefButton label="Preview" />
   </Flex>
   <GtkSeparator orientation="horizontal" />
-  <GtkLabel label="Destructive action" xalign="0" />
+  <GefLabel text="Destructive action" />
   <Flex direction="row" gap="8">
-    <GtkButton label="Remove extension" />
-    <GtkButton label="Cancel" />
+    <GefButton label="Remove extension" />
+    <GefButton label="Cancel" />
   </Flex>
-  <GtkLabel label="Button groups can be composed with Flex and Grid." xalign="0" />
+  <GefLabel text="Button groups can be composed with Flex and Grid." />
   <Grid columns="2" gap="8">
-    <GtkButton label="General" />
-    <GtkButton label="Appearance" />
-    <GtkButton label="Keyboard" />
-    <GtkButton label="About" />
+    <GefButton label="General" />
+    <GefButton label="Appearance" />
+    <GefButton label="Keyboard" />
+    <GefButton label="About" />
   </Grid>
 </Flex>

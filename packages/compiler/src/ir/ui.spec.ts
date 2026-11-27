@@ -15,12 +15,13 @@ describe('GTPL UI IR', () => {
 
     expect(result.success).toBe(true);
     expect(result.diagnostics).toEqual([]);
-    expect(result.nodes[0]).toMatchObject({
+    const heading = result.nodes.find((node) => node.kind === 'let');
+    expect(heading).toMatchObject({
       kind: 'let',
       name: 'heading',
       expression: { kind: 'identifier', name: 'title' },
     });
-    const root = result.nodes[1];
+    const root = result.nodes.find((node) => node.kind === 'element');
     expect(root).toMatchObject({
       kind: 'element',
       component: 'GtkBox',

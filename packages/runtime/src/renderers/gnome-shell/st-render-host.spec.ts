@@ -906,6 +906,24 @@ describe('createStRenderHost', () => {
     expect(child.destroyCount).toBe(1);
   });
 
+  it('preflights St repeat fallback APIs before detaching mounted actors', () => {
+    const host = createStRenderHost(createSt());
+    const first = host.text('first') as FakeActor;
+    const values = signal({ items: [{ key: 'first', index: 0, node: first }] });
+    const list = host.repeat({ kind: 'binding', get: () => values.get() }) as FakeActor;
+    for (const name of ['insert_child_at_index', 'insertChildAtIndex', 'set_child_at_index', 'setChildAtIndex', 'add_child']) {
+      Object.defineProperty(list, name, { value: undefined });
+    }
+    const next = host.text('next') as FakeActor;
+
+    expect(() => values.set({ items: [{ key: 'next', index: 0, node: next }] }))
+      .toThrow('This St container cannot contain child actors.');
+    expect(list.children).toEqual([first]);
+    expect(first.destroyed).toBe(false);
+    expect(next.destroyed).toBe(true);
+    host.destroy(list);
+  });
+
   it('rejects incremental repeat removal when the St container has no remove_child API', () => {
     class MissingRemoveBox extends FakeActor {
       constructor(properties: Record<string, unknown> = {}) {

@@ -55,3 +55,27 @@ const result = compileGtplComponentToUiIr(EditorComponent, {
   componentTypes: [SaveButtonComponent],
 });
 ```
+
+
+### Compiling a component set
+
+For a project containing several decorated components, use `compileGtplComponentsToUiIr({ components })`. Register the component classes once; every template is then checked against the same selector, input and output contracts. Per-component `componentMembers`, `contextType` and external `templateSource` are supplied on each entry. The result preserves one `ComponentUiIrResult` per component, so diagnostics in one template do not discard valid IR from other templates.
+
+```ts
+const project = compileGtplComponentsToUiIr({
+  components: [
+    { type: EditorComponent, componentMembers: ['title', 'save'] },
+    { type: SaveButtonComponent, componentMembers: ['label'] },
+  ],
+});
+
+if (!project.success) {
+  for (const component of project.components) {
+    for (const diagnostic of component.diagnostics) {
+      console.error(component.metadata.selector, diagnostic);
+    }
+  }
+}
+```
+
+The registry is explicit and deterministic: duplicate selectors and classes without `@Component` metadata are rejected. The compiler still does not instantiate application classes or discover source files implicitly.

@@ -105,3 +105,61 @@ export function compileGtplComponentToUiIr(
   });
   return { ...result, metadata };
 }
+
+
+export interface ComponentProjectEntry {
+  readonly type: Function;
+  readonly componentMembers?: readonly string[];
+  readonly contextType?: string;
+  /** Source for components that declare templateUrl. */
+  readonly templateSource?: string;
+}
+
+export interface ComponentProjectUiIrOptions {
+  readonly components: readonly ComponentProjectEntry[];
+  readonly globals?: readonly string[];
+}
+
+export interface ComponentProjectUiIrResult {
+  readonly success: boolean;
+  readonly components: readonly ComponentUiIrResult[];
+}
+
+/**
+ * Compiles a set of decorated components against one shared selector registry.
+ * Each component is compiled even when another template has diagnostics.
+ */
+export function compileGtplComponentsToUiIr(
+  options: ComponentProjectUiIrOptions,
+): ComponentProjectUiIrResult {
+  if (options.components.length === 0) {
+    throw new TypeError('At least one component is required to compile a UI IR project.');
+  }
+
+  const types = options.components.map(({ type }) => type);
+  const selectors = new Set<string>();
+  for (const type of types) {
+    const metadata = getComponentMetadata(type);
+    if (!metadata) throw new TypeError('Every project component must have @Component metadata.');
+    if (selectors.has(metadata.selector)) {
+      throw new TypeError(`Duplicate component selector "${metadata.selector}" in the UI IR project.`);
+    }
+    selectors.add(metadata.selector);
+  }
+
+  const components = options.components.map((entry) => compileGtplComponentToUiIr(
+    entry.type,
+    {
+      ...(entry.componentMembers ? { componentMembers: entry.componentMembers } : {}),
+      ...(entry.contextType ? { contextType: entry.contextType } : {}),
+      ...(options.globals ? { globals: options.globals } : {}),
+      componentTypes: types.filter((type) => type !== entry.type),
+    },
+    entry.templateSource,
+  ));
+
+  return {
+    success: components.every((component) => component.success),
+    components,
+  };
+}

@@ -119,7 +119,7 @@ On a Linux build host with GTK4 development files, `pkg-config` and a C compiler
 gef compile-native src/app.gtpl dist/my-app
 ```
 
-The output argument is optional; when omitted, the executable is written beside the template using its filename without the `.gtpl` suffix. The CLI accepts the native `GtkBox`, `GtkLabel`, `GtkButton`, `GtkEntry` and `GtkCheckButton` elements. Bindings, events, references, control-flow blocks and unsupported properties are rejected with source diagnostics. This command compiles a static GTPL view; it does not yet compile decorated TypeScript components or their application logic. GNOME Shell extensions continue to use the separate GJS/JavaScript build.
+The output argument is optional; when omitted, the executable is written beside the template using its filename without the `.gtpl` suffix. The CLI accepts the native `GtkBox`, `GtkLabel`, `GtkButton`, `GtkEntry` and `GtkCheckButton` elements. Bindings, events, references, control-flow blocks and unsupported properties are rejected with source diagnostics. Repeat `--native-source file.c` to link callback implementations and `--callback method=symbol` to map a zero-argument GTPL handler to its C function (for example, `gef compile-native app.gtpl app --native-source src/callbacks.c --callback save=gef_on_save`). Callback method names must be unique and C symbols valid. This command compiles a static GTPL view; it does not yet compile decorated TypeScript components or their application logic. GNOME Shell extensions continue to use the separate GJS/JavaScript build.
 
 
 ### GTK native literal bindings

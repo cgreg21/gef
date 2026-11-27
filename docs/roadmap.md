@@ -192,4 +192,4 @@ Le job GNOME utilise Fedora 45 avec systemd, Mutter devkit et GNOME Shell 51. Il
 - [x] Connect `GtkButton (clicked)` to an explicitly mapped external C callback; support zero-argument `this.method()` handlers, validate C symbols, link caller-provided native sources and reject unsupported handler expressions. TypeScript method bodies are not translated to C.
 - [x] Add a CLI entry point for compiling a GTK UI project to a native executable.
 
-- [x] Add `gef compile-native <view.gtpl> [output-file]` to compile validated static GTK4 GTPL views through the native GTK compiler API. The command reports GTPL/native diagnostics and defaults the output path to the template filename without its extension.
+- [x] Add `gef compile-native <view.gtpl> [output-file]` to compile validated static GTK4 GTPL views through the native GTK compiler API. The command reports GTPL/native diagnostics and defaults the output path to the template filename without its extension.\n- [x] Expose native C callback linking from the CLI with repeatable `--native-source` and `--callback method=symbol` options; validate option syntax and duplicate mappings in CLI tests.

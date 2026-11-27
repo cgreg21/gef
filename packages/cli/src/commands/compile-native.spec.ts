@@ -31,7 +31,7 @@ describe('gef compile-native', () => {
     compile.mockResolvedValue({ success: true, outputFile: '/tmp/demo', diagnostics: [] });
     const { io, output, errors } = createIO();
 
-    expect(await runCompileNative('view.gtpl', 'dist/demo', io)).toBe(0);
+    expect(await runCompileNative(['view.gtpl', 'dist/demo'], io)).toBe(0);
     expect(compile).toHaveBeenCalledWith(
       expect.arrayContaining([expect.objectContaining({ kind: 'element', component: 'GtkLabel' })]),
       { outputFile: expect.stringMatching(/dist[/\\]demo$/) },
@@ -44,14 +44,14 @@ describe('gef compile-native', () => {
     compile.mockResolvedValue({ success: true, outputFile: '/tmp/view', diagnostics: [] });
     const { io } = createIO();
 
-    expect(await runCompileNative('view.gtpl', undefined, io)).toBe(0);
+    expect(await runCompileNative(['view.gtpl'], io)).toBe(0);
     expect(compile.mock.calls[0]?.[1].outputFile).toMatch(/view$/);
   });
 
   it('rejects invalid GTPL before invoking the native compiler', async () => {
     const { io, errors } = createIO('<GtkLabel [label]="invalid +" />');
 
-    expect(await runCompileNative('view.gtpl', undefined, io)).toBe(1);
+    expect(await runCompileNative(['view.gtpl'], io)).toBe(1);
     expect(compile).not.toHaveBeenCalled();
     expect(errors.join('\\n')).toContain('GTPL');
   });
@@ -60,15 +60,39 @@ describe('gef compile-native', () => {
     compile.mockResolvedValue({ success: false, outputFile: '/tmp/demo', diagnostics: ['GTK4 development files not found'] });
     const { io, errors } = createIO();
 
-    expect(await runCompileNative('view.gtpl', 'demo', io)).toBe(1);
+    expect(await runCompileNative(['view.gtpl', 'demo'], io)).toBe(1);
     expect(errors.join('\\n')).toContain('GTK4 development files not found');
+  });
+
+  it('passes native sources and callback mappings to the compiler', async () => {
+    compile.mockResolvedValue({ success: true, outputFile: '/tmp/view', diagnostics: [] });
+    const { io } = createIO();
+    expect(await runCompileNative(['view.gtpl', '--native-source', 'src/callbacks.c', '--callback', 'save=gef_on_save'], io)).toBe(0);
+    expect(compile.mock.calls[0]?.[1]).toMatchObject({
+      nativeSources: [expect.stringMatching(/src[/\\\\]callbacks\\.c$/)],
+      callbacks: { save: 'gef_on_save' },
+    });
+  });
+
+  it('rejects malformed or duplicate callback options', async () => {
+    const { io, errors } = createIO();
+    expect(await runCompileNative(['view.gtpl', '--callback', 'save=bad-symbol!'], io)).toBe(2);
+    expect(await runCompileNative(['view.gtpl', '--callback', 'save=first', '--callback', 'save=second'], io)).toBe(2);
+    expect(errors).toHaveLength(2);
+    expect(compile).not.toHaveBeenCalled();
+  });
+
+  it('rejects unknown options and extra positional arguments', async () => {
+    const { io } = createIO();
+    expect(await runCompileNative(['view.gtpl', '--unknown'], io)).toBe(2);
+    expect(await runCompileNative(['view.gtpl', 'out', 'extra'], io)).toBe(2);
   });
 
   it('reports missing input files', async () => {
     const { io, errors } = createIO();
     io.readFile = async () => { throw new Error('missing'); };
 
-    expect(await runCompileNative('missing.gtpl', undefined, io)).toBe(2);
+    expect(await runCompileNative(['missing.gtpl'], io)).toBe(2);
     expect(errors.join('\\n')).toContain('Unable to read');
     expect(compile).not.toHaveBeenCalled();
   });
@@ -76,7 +100,7 @@ describe('gef compile-native', () => {
   it('requires an input template', async () => {
     const { io, errors } = createIO();
 
-    expect(await runCompileNative(undefined, undefined, io)).toBe(2);
+    expect(await runCompileNative([], io)).toBe(2);
     expect(errors[0]).toContain('Usage: gef compile-native');
   });
 });

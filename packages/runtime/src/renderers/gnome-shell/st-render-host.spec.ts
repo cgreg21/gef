@@ -588,6 +588,45 @@ describe('createStRenderHost', () => {
     expect(switchNode.destroyCount).toBe(1);
   });
 
+  it('destroys replacement branches when detaching the previous St child fails', () => {
+    class FailingDetachBin extends FakeBin {
+      override set_child(child: StActor | null): void {
+        if (child === null) throw new Error('detach failed');
+        super.set_child(child);
+      }
+    }
+    const host = createStRenderHost({ ...createSt(), Bin: FailingDetachBin });
+    const condition = signal(false);
+    const conditionalOld = new FakeActor();
+    const conditionalNext = new FakeActor();
+    let conditionalRender = 0;
+    const conditional = host.conditional(
+      { kind: 'binding', get: () => condition.get() },
+      () => conditionalRender++ === 0 ? conditionalOld : conditionalNext,
+      () => conditionalOld,
+    ) as FakeBin;
+    expect(conditional.children[0]).toBe(conditionalOld);
+    expect(() => condition.set(true)).toThrow('detach failed');
+    expect(conditionalNext.destroyed).toBe(true);
+    expect(conditional.children[0]).toBe(conditionalOld);
+    host.destroy(conditional);
+
+    const selected = signal('idle');
+    const switchOld = new FakeActor();
+    const switchNext = new FakeActor();
+    let switchRender = 0;
+    const switched = host.switch(
+      { kind: 'binding', get: () => selected.get() },
+      [{ values: ['ready'], render: () => switchRender++ === 0 ? switchOld : switchNext }],
+      () => switchOld,
+    ) as FakeBin;
+    expect(switched.children[0]).toBe(switchOld);
+    expect(() => selected.set('ready')).toThrow('detach failed');
+    expect(switchNext.destroyed).toBe(true);
+    expect(switched.children[0]).toBe(switchOld);
+    host.destroy(switched);
+  });
+
   it('reconciles repeated items by key when a collection signal changes', () => {
     const host = createStRenderHost(createSt());
     const runtime = createGtplRenderRuntime(host);

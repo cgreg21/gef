@@ -665,14 +665,14 @@ export function createStRenderHost(
           destroyActor(next);
           throw new Error('This St container cannot set child actors.');
         }
-        if (current) {
-          actor.set_child(null);
-          destroyActor(current);
-        }
         try {
+          if (current) {
+            actor.set_child(null);
+            destroyActor(current);
+          }
           actor.set_child(next);
         } catch (error) {
-          destroyActor(next);
+          if (next !== current) destroyActor(next);
           throw error;
         }
         current = next;
@@ -699,14 +699,14 @@ export function createStRenderHost(
           destroyActor(next);
           throw new Error('This St container cannot set child actors.');
         }
-        if (current) {
-          actor.set_child(null);
-          destroyActor(current);
-        }
         try {
+          if (current) {
+            actor.set_child(null);
+            destroyActor(current);
+          }
           actor.set_child(next);
         } catch (error) {
-          destroyActor(next);
+          if (next !== current) destroyActor(next);
           throw error;
         }
         current = next;

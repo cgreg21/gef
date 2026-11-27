@@ -6,7 +6,7 @@ Application GTK4 écrite en TypeScript. Elle présente les composants et les tem
 
 - **Overview** — cartes de statistiques.
 - **Actions** — boutons, actions et contrôles natifs.
-- **Forms** — champs texte, recherche et mot de passe.
+- **Forms** — champs texte, recherche, texte multiligne, mot de passe et boutons GEF.
 - **Preferences** — interrupteurs, cases à cocher et valeurs numériques.
 - **Layouts** — mises en page Flex, Sidebar et Grid.
 
@@ -14,12 +14,14 @@ La navigation entre les écrans utilise le routeur GEF (`/overview`, `/actions`,
 
 ## Composants GEF
 
-L'application déclare deux composants réutilisables dans `components.ts` :
+Le registre du Kitchen Sink part de `createGtkUiRegistry()` : les douze composants UI publics sont donc disponibles dans les templates. La démonstration Forms utilise directement `GefLabel`, `GefInput`, `GefTextArea`, `GefSearchInput`, `GefPasswordInput` et `GefButton`.
+
+L'application déclare aussi deux composants de démonstration dans `components.ts` :
 
 - `GefSectionHeader` — titre et description.
 - `GefMetricCard` — titre, valeur et détail.
 
-Ils utilisent les décorateurs et métadonnées GEF, puis sont enregistrés dans un `ComponentRegistry`. Les templates les utilisent directement.
+Ces composants utilisent les décorateurs et métadonnées GEF, puis sont ajoutés au registre UI GTK.
 
 ## Lancer l'application
 
@@ -41,6 +43,6 @@ Prérequis : Node.js 22+, GTK4 et la dépendance Node-GTK du projet.
 ## Fichiers
 
 - `kitchen-sink.ts` — application, routeur GEF et navigation.
-- `components.ts` — composants GEF de démonstration.
+- `components.ts` — composants GEF de démonstration et registre UI GTK.
 - `demos/` — écrans GTPL.
 - `kitchen-sink.js` — point d'entrée GJS.

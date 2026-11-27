@@ -1,16 +1,16 @@
 <Flex direction="column" gap="14" margin-top="20">
-  <GefSectionHeader title="Create an extension" description="A practical form composed from GTK widgets and GEF layout components." />
-  <GtkLabel label="Basic information" xalign="0" />
-  <GtkLabel label="Extension name" xalign="0" />
-  <GtkEntry placeholder-text="e.g. Workspace Navigator" />
-  <GtkLabel label="Description" xalign="0" />
-  <GtkEntry placeholder-text="What does your extension do?" />
-  <GtkLabel label="Search a package" xalign="0" />
-  <GtkSearchEntry placeholder-text="Search packages…" />
-  <GtkLabel label="Credentials" xalign="0" />
-  <GtkPasswordEntry placeholder-text="Access token" />
+  <GefSectionHeader title="Create an extension" description="A practical form composed from GEF UI components and layout primitives." />
+  <GefLabel text="Basic information" />
+  <GefLabel text="Extension name" />
+  <GefInput placeholder="e.g. Workspace Navigator" />
+  <GefLabel text="Description" />
+  <GefTextArea />
+  <GefLabel text="Search a package" />
+  <GefSearchInput placeholder="Search packages…" />
+  <GefLabel text="Credentials" />
+  <GefPasswordInput showPeekIcon="true" />
   <Flex direction="row" gap="8">
-    <GtkButton label="Cancel" />
-    <GtkButton label="Create extension" />
+    <GefButton label="Cancel" />
+    <GefButton label="Create extension" />
   </Flex>
 </Flex>

@@ -92,12 +92,13 @@ Cette roadmap présente les priorités du framework. Les cases cochées correspo
 - [ ] Étendre les options de layout GTPL : retour à la ligne, poids `grow` par enfant et justification cohérente entre GTK et St. Les renderers refusent explicitement `wrap` et `grow` non pris en charge par les widgets natifs (tests GTK/St et guide runtimes) ; `Grid` et `expand` restent les solutions natives actuelles.
 - [x] Compléter `GefInput` avec `placeholder` et `disabled`, synchronisés vers `Gtk.Entry` et `St.Entry` avec tests des bindings réactifs sur les deux plateformes.
 - [x] Documenter les composants UI déjà exportés et rendus par les deux registres : PasswordInput, SearchInput, TextArea, Select et Slider. Décrire leurs entrées/sorties, limites et widgets natifs ; corriger le tableau de compatibilité de ProgressBar.
+- [x] Utiliser les composants UI GEF dans le formulaire du Kitchen Sink et construire son registre à partir de `createGtkUiRegistry()` ; le smoke test Node-GTK monte les cinq écrans avec le registre complet.
 
 ## P5 — Démonstration et documentation
 
 - [x] Organiser le Kitchen Sink en écrans de démonstration distincts.
 - [x] Écrire le shell du Kitchen Sink en TypeScript et l'intégrer au runtime GTK de GEF.
-- [x] Ajouter des composants GEF réutilisables dans le Kitchen Sink (`GefSectionHeader`, `GefMetricCard`).
+- [x] Ajouter des composants GEF réutilisables dans le Kitchen Sink (`GefSectionHeader`, `GefMetricCard`) et intégrer les composants UI publics dans le formulaire Forms.
 - [x] Fournir un accès au code GTPL de chaque démonstration.
 - [x] Documenter le catalogue UI, les conteneurs, les événements et les différences entre GTK et GNOME Shell.
 - [x] Simplifier le README principal et celui du Kitchen Sink.

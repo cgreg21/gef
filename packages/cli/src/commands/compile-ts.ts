@@ -12,6 +12,7 @@ export async function runCompileTypeScript(
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
+    if (argument === undefined) continue;
 
     if (argument === '--project' || argument === '-p') {
       const value = args[index + 1];

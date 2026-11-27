@@ -184,4 +184,5 @@ Le job GNOME utilise Fedora 45 avec systemd, Mutter devkit et GNOME Shell 51. Il
 - [ ] Ajouter le packaging exécutable et les tests de lancement natifs par plateforme.
 - [ ] Compiler le C statique produit depuis l'UI IR en exécutable ELF dans le job GTK4 (`libgtk-4-dev`, `pkg-config`, compilateur C) ; vérifier l'en-tête ELF sans lancer l'interface graphique.
 
-- [x] Introduire un premier backend expérimental GTK4 C depuis l'UI IR : génération d'une application statique pour `GtkBox`, `GtkLabel` et `GtkButton`, avec rejet explicite des bindings et constructions non prises en charge. La compilation ELF et le runtime dynamique restent à réaliser.
+- [x] Introduire un premier backend expérimental GTK4 C depuis l'UI IR : génération d'une application statique pour `GtkBox`, `GtkLabel` et `GtkButton`, avec rejet explicite des bindings et constructions non prises en charge. La compilation ELF est validée en CI ; le runtime dynamique reste à réaliser.
+- [ ] Étendre le backend GTK4 C aux propriétés statiques communes (`marginTop/Bottom/Start/End`, `halign`, `valign`, `visible`) ; valider les valeurs et compiler le code généré avec GTK4.

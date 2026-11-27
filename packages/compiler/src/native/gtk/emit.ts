@@ -6,15 +6,49 @@ export interface GtkCResult {
   readonly diagnostics: readonly string[];
 }
 
+const alignments = ['fill', 'start', 'end', 'center', 'baseline'] as const;
+const margins = ['marginTop', 'marginBottom', 'marginStart', 'marginEnd'] as const;
+
 function cString(value: string): string {
-  return JSON.stringify(value).replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+  return JSON.stringify(value).replace(/\\u2028/g, '\\u2028').replace(/\\u2029/g, '\\u2029');
 }
 
 function staticProperty(element: UiElement, name: string): string | undefined {
   const property = element.properties.find((item) => item.name === name);
-  if (!property) return undefined;
-  if (property.value.kind !== 'static') return undefined;
+  if (!property || property.value.kind !== 'static') return undefined;
   return property.value.value;
+}
+
+function emitCommonProperties(element: UiElement, id: string, lines: string[], report: (message: string) => void): void {
+  for (const name of margins) {
+    const value = staticProperty(element, name);
+    if (value === undefined) continue;
+    if (!/^[0-9]+$/.test(value)) {
+      report(`${element.component} ${name} must be a non-negative integer; received "${value}".`);
+      continue;
+    }
+    const setter = name.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+    lines.push(`gtk_widget_set_${setter}(${id}, ${value});`);
+  }
+
+  for (const name of ['halign', 'valign'] as const) {
+    const value = staticProperty(element, name);
+    if (value === undefined) continue;
+    if (!(alignments as readonly string[]).includes(value)) {
+      report(`${element.component} ${name} must be one of: ${alignments.join(', ')}; received "${value}".`);
+      continue;
+    }
+    lines.push(`gtk_widget_set_${name}(${id}, GTK_ALIGN_${value.toUpperCase()});`);
+  }
+
+  const visible = staticProperty(element, 'visible');
+  if (visible !== undefined) {
+    if (!['true', 'false'].includes(visible)) {
+      report(`${element.component} visible must be "true" or "false"; received "${visible}".`);
+    } else {
+      lines.push(`gtk_widget_set_visible(${id}, ${visible});`);
+    }
+  }
 }
 
 /** Emit a small, deliberately static GTK4 C application from UI IR. */
@@ -22,8 +56,8 @@ export function emitGtkC(nodes: readonly UiNode[]): GtkCResult {
   const diagnostics: string[] = [];
   const lines: string[] = [];
   let nextId = 0;
-
   const report = (message: string): void => { diagnostics.push(message); };
+  const commonProperties = [...margins, 'halign', 'valign', 'visible'];
 
   function emitElement(element: UiElement, parent?: string): string | undefined {
     if (!['GtkBox', 'GtkLabel', 'GtkButton'].includes(element.component)) {
@@ -47,12 +81,16 @@ export function emitGtkC(nodes: readonly UiNode[]): GtkCResult {
       if (!['horizontal', 'vertical'].includes(orientation)) report(`Invalid GtkBox orientation "${orientation}".`);
       if (!/^-?[0-9]+$/.test(spacing)) report(`GtkBox spacing must be an integer; received "${spacing}".`);
       for (const property of element.properties) {
-        if (!['orientation', 'spacing'].includes(property.name)) report(`Unsupported GtkBox property "${property.name}".`);
+        if (!['orientation', 'spacing', ...commonProperties].includes(property.name)) {
+          report(`Unsupported GtkBox property "${property.name}".`);
+        }
       }
       lines.push(`GtkWidget *${id} = gtk_box_new(GTK_ORIENTATION_${orientation.toUpperCase()}, ${/^-?[0-9]+$/.test(spacing) ? spacing : '0'});`);
     } else {
       for (const property of element.properties) {
-        if (property.name !== 'label') report(`Unsupported ${element.component} property "${property.name}".`);
+        if (property.name !== 'label' && !commonProperties.includes(property.name)) {
+          report(`Unsupported ${element.component} property "${property.name}".`);
+        }
       }
       if (element.component === 'GtkLabel') {
         const text = element.children.filter((node) => node.kind === 'text')
@@ -71,10 +109,8 @@ export function emitGtkC(nodes: readonly UiNode[]): GtkCResult {
       }
     }
 
-    if (parent) {
-      const parentElement = parent;
-      lines.push(`gtk_box_append(GTK_BOX(${parentElement}), ${id});`);
-    }
+    emitCommonProperties(element, id, lines, report);
+    if (parent) lines.push(`gtk_box_append(GTK_BOX(${parent}), ${id});`);
     if (element.component === 'GtkBox') {
       for (const child of element.children) {
         if (child.kind === 'element') emitElement(child, id);
@@ -82,8 +118,6 @@ export function emitGtkC(nodes: readonly UiNode[]): GtkCResult {
           report(`GtkBox child node "${child.kind}" is not supported by the static C backend.`);
         }
       }
-    } else if (element.component !== 'GtkLabel') {
-      // Child validation is handled above for buttons.
     }
     return id;
   }

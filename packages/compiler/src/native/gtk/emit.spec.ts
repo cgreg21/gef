@@ -15,6 +15,27 @@ describe('GTK4 C backend', () => {
     expect(result.source).toContain('gtk_box_append(GTK_BOX(widget_0), widget_1)');
   });
 
+  it('emits common static GTK widget properties', () => {
+    const ir = compileGtplToUiIr('<GtkBox marginTop="12" halign="center" visible="false"><GtkLabel label="Hello" marginStart="4" valign="end" /></GtkBox>');
+    const result = emitGtkC(ir.nodes);
+    expect(result.success).toBe(true);
+    expect(result.source).toContain('gtk_widget_set_margin_top(widget_0, 12);');
+    expect(result.source).toContain('gtk_widget_set_halign(widget_0, GTK_ALIGN_CENTER);');
+    expect(result.source).toContain('gtk_widget_set_visible(widget_0, false);');
+    expect(result.source).toContain('gtk_widget_set_margin_start(widget_1, 4);');
+    expect(result.source).toContain('gtk_widget_set_valign(widget_1, GTK_ALIGN_END);');
+  });
+
+  it('rejects invalid common property values', () => {
+    const ir = compileGtplToUiIr('<GtkLabel marginTop="-2" halign="middle" visible="yes" />');
+    const result = emitGtkC(ir.nodes);
+    expect(result.success).toBe(false);
+    expect(result.source).toBe('');
+    expect(result.diagnostics).toContain('GtkLabel marginTop must be a non-negative integer; received "-2".');
+    expect(result.diagnostics).toContain('GtkLabel halign must be one of: fill, start, end, center, baseline; received "middle".');
+    expect(result.diagnostics).toContain('GtkLabel visible must be "true" or "false"; received "yes".');
+  });
+
   it('rejects bindings and unsupported control flow instead of emitting incomplete C', () => {
     const ir = compileGtplToUiIr('<GtkLabel [label]="title" />');
     const result = emitGtkC(ir.nodes);

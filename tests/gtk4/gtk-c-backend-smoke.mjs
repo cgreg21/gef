@@ -6,9 +6,9 @@ import { join } from 'node:path';
 import { compileGtplToUiIr, emitGtkC } from '../../dist/compiler/src/index.js';
 
 const ir = compileGtplToUiIr(`
-  <GtkBox orientation="vertical" spacing="8">
-    <GtkLabel label="GEF native C smoke test" />
-    <GtkButton label="Compile" />
+  <GtkBox orientation="vertical" spacing="8" marginTop="12" halign="center">
+    <GtkLabel label="GEF native C smoke test" marginStart="4" />
+    <GtkButton label="Compile" visible="true" />
   </GtkBox>
 `);
 assert.equal(ir.success, true, 'The GTK template must compile to UI IR.');
